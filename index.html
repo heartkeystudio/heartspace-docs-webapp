@@ -827,6 +827,34 @@
         try { await openCloudProjectPicker(); updateEditorPermissions(); }
         catch (error) { statusMessage(error.message || 'Não foi possível abrir o projeto.', 'pending'); }
       };
+      const requestDashboardSession = () => new Promise(resolve => {
+        const source = new URLSearchParams(location.search).get('source');
+        let dashboardOrigin = '';
+        try { dashboardOrigin = new URL(docsConfig.dashboardUrl).origin; } catch (_) {}
+        if (source !== 'dashboard' || !window.opener || !dashboardOrigin) { resolve(false); return; }
+        authGate.hidden = true;
+        authStatus.textContent = 'Conectando à sessão do Dashboard…';
+        let finished = false;
+        let timeout;
+        const finish = received => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
+          window.removeEventListener('message', receiveSession);
+          try { window.opener = null; } catch (_) {}
+          resolve(received);
+        };
+        const receiveSession = event => {
+          if (event.origin !== dashboardOrigin || event.source !== window.opener || event.data?.type !== 'heartspace-docs-session') return;
+          if (!event.data.accessToken) { finish(false); return; }
+          saveAuthSession({ access_token: event.data.accessToken, refresh_token: event.data.refreshToken, expires_at: event.data.expiresAt });
+          finish(true);
+        };
+        window.addEventListener('message', receiveSession);
+        timeout = setTimeout(() => finish(false), 6000);
+        try { window.opener.postMessage({ type: 'heartspace-docs-session-request' }, dashboardOrigin); }
+        catch (_) { finish(false); }
+      });
       document.querySelector('#auth-form').addEventListener('submit', async event => {
         event.preventDefault();
         const button = document.querySelector('#auth-submit'); button.disabled = true; authStatus.textContent = 'Enviando link de acesso…';
@@ -860,7 +888,7 @@
         [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
         currentAccessToken = ''; currentUser = null; clearInterval(remotePollTimer); authGate.hidden = false; document.querySelector('#sign-out').hidden = true;
       });
-      startOnlineDocs();
+      requestDashboardSession().finally(startOnlineDocs);
       const escapeHtml = value => value.replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
       const closeSlashMenu = () => {
         slashMenu.classList.remove('open');
