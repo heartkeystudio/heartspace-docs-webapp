@@ -1,0 +1,2161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111114">
+  <title>Docs — Heartspace</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111114;
+      --rail: #17171b;
+      --panel: #1d1d22;
+      --panel-hover: #29282f;
+      --paper: #202024;
+      --line: rgba(255,255,255,.09);
+      --text: #f0edf2;
+      --muted: #aaa5b0;
+      --quiet: #77727e;
+      --purple: #c887ed;
+      --purple-soft: rgba(177,94,222,.14);
+      --green: #8bd5ac;
+      --editor-width: 760px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 720px; width:100%; height: 100vh; height:100dvh; overflow: hidden; color: var(--text); background: var(--bg); font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input { color: inherit; font: inherit; }
+    button { border: 0; cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+    .app { display: grid; grid-template-columns: 252px minmax(0,1fr); width:100%; height: 100vh; height:100dvh; overflow:hidden; }
+    .sidebar { display: flex; min-height: 0; flex-direction: column; padding: 18px 14px 14px; border-right: 1px solid var(--line); background: var(--rail); }
+    .brand { display:flex; align-items:center; gap:11px; height:42px; padding:0 8px; color:#f4eff7; font-size:19px; font-weight:750; letter-spacing:.12em; }
+    .brand-mark { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; color:white; background:linear-gradient(145deg,#b541dd,#7138b4); box-shadow:0 5px 18px #a333c63b; font-size:17px; letter-spacing:0; }
+    .sidebar-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; margin:20px 0 10px; }
+    .primary-button, .secondary-button, .square-button { min-height:38px; border:1px solid var(--line); border-radius:9px; background:#222126; transition:background .15s,border-color .15s; }
+    .primary-button { padding:0 12px; text-align:left; font-weight:650; }
+    .primary-button span { margin-right:7px; color:var(--purple); }
+    .secondary-button { padding:0 12px; color:#ded8e2; }
+    .primary-button:hover,.secondary-button:hover,.square-button:hover,.tool:hover { background:var(--panel-hover); }
+    .sidebar-shortcuts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .sidebar-shortcuts button { overflow:hidden; min-height:35px; padding:0 10px; border-radius:8px; color:#c7c1ca; background:#222126; text-overflow:ellipsis; white-space:nowrap; }
+    .search { position:relative; margin:14px 0 21px; }
+    .search .search-icon { position:absolute; top:9px; left:11px; color:var(--quiet); }
+    .search input { width:100%; height:37px; padding:0 11px 0 34px; border:1px solid var(--line); border-radius:8px; outline:none; background:#111115; }
+    .search input:focus { border-color:#9762b2; }
+    .nav-section { margin-bottom:20px; }
+    .section-heading-row { display:flex; align-items:center; gap:4px; }
+    .section-heading { display:flex; align-items:center; gap:7px; flex:1; width:100%; padding:4px 3px 8px; color:#d8d3dc; background:none; text-align:left; font-weight:650; }
+    .section-heading .chevron { color:var(--quiet); font-size:11px; }
+    .add-button { width:28px; height:28px; margin-bottom:4px; border-radius:6px; color:#c9c1ce; background:transparent; font-size:18px; }
+    .add-button:hover { background:#ffffff0b; color:#f4eff7; }
+    .tree { display:grid; gap:2px; }
+    .tree-item { display:flex; align-items:center; gap:9px; min-height:34px; padding:0 9px; border-radius:7px; color:#bdb7c1; background:transparent; text-align:left; }
+    .tree-item .doc-icon { color:#918998; font-size:14px; }
+    .tree-item.active { color:#f4eff7; background:var(--purple-soft); box-shadow:inset 2px 0 #bd79df; }
+    .tree-item.active .doc-icon { color:#d5a4ed; }
+    .tree-item:hover:not(.active) { background:#ffffff08; }
+    .tree-item small { margin-left:auto; color:var(--quiet); }
+    .sidebar-spacer { flex:1; }
+    .sidebar-footer { display:flex; align-items:center; gap:9px; padding:12px 7px 2px; border-top:1px solid var(--line); color:#c8c2cc; }
+    .avatar { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; color:#eadcf2; background:#473551; font-size:12px; }
+    .workspace { display:grid; grid-template-rows:52px 48px minmax(0,1fr); min-width:0; min-height:0; overflow:hidden; }
+    .topbar { position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:0 22px; border-bottom:1px solid var(--line); background:#151518; }
+    .topbar-left,.topbar-right { display:flex; align-items:center; gap:13px; }
+    .crumb { color:var(--muted); font-size:12px; }
+    .crumb strong { color:#e9e3ed; font-weight:600; }
+    .save-state { display:flex; align-items:center; gap:7px; color:#aaa5b0; font-size:12px; }
+    .transfer-status { color:#c9a7db; font-size:11px; }
+    .save-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px #8bd5ac66; }
+    .project-picker { width:190px; height:32px; padding:0 9px; border:1px solid var(--line); border-radius:7px; color:#e5dfea; background:#1b1a1f; }
+    .auth-gate { position:fixed; z-index:30; inset:0; display:grid; place-items:center; padding:24px; background:#0e0d11ed; backdrop-filter:blur(14px); }
+    .auth-gate[hidden] { display:none; }
+    .auth-card { width:min(100%,430px); padding:30px; border:1px solid #ffffff16; border-radius:16px; background:#1b1a20; box-shadow:0 24px 90px #0009; }
+    .auth-card h1 { margin:0 0 7px; font-size:24px; }
+    .auth-card p { margin:0 0 22px; color:var(--muted); }
+    .auth-card label { display:block; margin-bottom:7px; color:#ded8e3; font-size:13px; }
+    .auth-card input { width:100%; height:42px; margin-bottom:12px; padding:0 12px; border:1px solid var(--line); border-radius:8px; background:#111115; }
+    .auth-card button { min-height:40px; padding:0 14px; border-radius:8px; color:#fff; background:#743e90; }
+    .auth-status { min-height:22px; margin-top:12px!important; color:#c9a7db!important; font-size:13px; }
+    .top-button { display:flex; align-items:center; gap:7px; min-height:31px; padding:0 10px; border:1px solid transparent; border-radius:7px; color:#c7c1cc; background:transparent; }
+    .top-button:hover { border-color:var(--line); background:#ffffff08; }
+    .toolbar { position:relative; z-index:2; display:flex; align-items:center; gap:5px; padding:0 17px; border-bottom:1px solid var(--line); background:#202024; }
+    .tool { display:flex; align-items:center; justify-content:center; gap:7px; height:32px; padding:0 10px; border-radius:7px; color:#d5d0d9; background:transparent; }
+    .tool.icon-only { width:34px; padding:0; font-size:16px; }
+    .tool.active { color:#e8c6f7; background:#a346c325; }
+    .tool-separator { width:1px; height:20px; margin:0 5px; background:var(--line); }
+    .toolbar-spacer { flex:1; }
+    .focus-button { color:#d6cbdc; }
+    .editor-area { position:relative; min-height:0; overflow:auto; overscroll-behavior:contain; background:radial-gradient(ellipse at 50% -30%,#242228 0,transparent 65%),#17171a; }
+    .editor-wrap { width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:24px 24px 84px; }
+    .editor-meta { display:flex; align-items:center; justify-content:space-between; max-width:var(--editor-width); margin:0 auto 16px; color:#88838e; font-size:11px; }
+    .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; }
+    .doc-title { margin:0 0 12px; color:#f3eff4; font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
+    .doc-subtitle { display:block; box-sizing:border-box; width:100%; min-height:1.5em; margin:0 0 36px; padding:0; border:0; border-radius:3px; outline:none; overflow:hidden; resize:none; background:transparent; color:#aaa4b0; font:inherit; font-size:15px; line-height:1.5; }
+    .doc-subtitle:focus { box-shadow:0 1px 0 var(--accent); }
+    .doc-subtitle::placeholder { color:#77717e; }
+    .content { min-height:400px; outline:none; color:#ddd8e1; font-size:16px; line-height:1.8; }
+    .content p { margin:0 0 17px; }
+    .content [data-indent] { margin-inline-start:var(--line-indent,0px); }
+    .content h2 { margin:34px 0 12px; color:#f0ebf3; font-size:23px; line-height:1.35; letter-spacing:-.025em; }
+    .content figure[data-docs-image] { display:flex; flex-direction:column; width:min(100%,760px); margin:28px auto; }
+    .content figure[data-docs-image] img { display:block; width:100%; max-height:680px; border-radius:8px; object-fit:contain; }
+    .content figure[data-docs-image] figcaption { min-height:1.4em; margin-top:9px; color:#aaa4b0; font-size:13px; text-align:center; outline:none; }
+    .content figure[data-caption-position="top"] figcaption { order:-1; margin:0 0 9px; }
+    .content figure[data-caption-align="left"] figcaption { text-align:left; }
+    .content figure[data-caption-align="right"] figcaption { text-align:right; }
+    .content figure[data-image-style="banner"] { width:100%; max-width:none; margin-inline:0; }
+    .content figure[data-image-style="banner"] img { height:300px; max-height:none; object-fit:cover; }
+    .content figure[data-image-style="framed"] img { padding:8px; border:1px solid #ffffff24; background:#101014; }
+    .content figure[data-image-style="rounded"] img { border-radius:24px; }
+    .content figure[data-docs-image] figcaption:empty::before { content:attr(data-placeholder); color:#77717e; pointer-events:none; }
+    .content ul { padding-left:24px; }
+    .content li { padding-left:4px; margin:6px 0; }
+    .content code { padding:2px 6px; border:1px solid #ffffff10; border-radius:5px; color:#e2b6f4; background:#151519; font: .88em ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .content mark { padding:1px 4px; border-radius:4px; color:#fff3c1; background:#8c6a29a8; }
+    .content a { color:#c997f3; text-decoration-color:#a862d3a8; text-underline-offset:3px; }
+    .content table { width:100%; margin:20px 0; border-collapse:collapse; table-layout:fixed; }
+    .content th,.content td { min-width:90px; padding:9px 12px; border:1px solid #ffffff1c; text-align:left; vertical-align:top; }
+    .content th { color:#f0eaf4; background:#ffffff08; font-weight:600; }
+    .content td:empty::after { content:'\00a0'; }
+    .content th:empty::before { color:#77727d; content:attr(data-placeholder); pointer-events:none; }
+    .mermaid-block { margin:20px 0; overflow:hidden; border:1px solid #ffffff18; border-radius:10px; background:#19191e; }
+    .mermaid-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid #ffffff12; color:#aaa4b0; font-size:11px; }
+    .mermaid-toolbar button { padding:5px 10px; border:1px solid #ffffff1b; border-radius:6px; color:#e7d5f0; background:#ffffff08; }
+    .mermaid-source { margin:0; padding:14px; overflow:auto; color:#e4d3ef; background:#151519; white-space:pre-wrap; outline:none; }
+    .mermaid-source code { display:block; padding:0; border:0; color:inherit; background:transparent; white-space:inherit; }
+    .mermaid-preview { max-width:100%; padding:20px; overflow:auto; background:#17171b; }
+    .mermaid-preview[hidden],.mermaid-source[hidden],.mermaid-status[hidden] { display:none; }
+    .mermaid-preview svg { display:block; max-width:100%; height:auto; margin:auto; }
+    .mermaid-status { padding:7px 12px; color:#8f8996; font-size:11px; }
+    .mermaid-status[data-error="true"] { color:#f09ba0; }
+    .content ul[data-list-type="checklist"] { padding:0; list-style:none; }
+    .content li[data-checklist-item] { display:flex; align-items:center; gap:10px; padding:0; min-height:30px; }
+    .checklist-box { width:17px; height:17px; flex:0 0 17px; margin:0 2px 0 1px; accent-color:#8bd5ac; cursor:pointer; }
+    .checklist-text { min-width:20px; min-height:1.8em; flex:1; outline:none; }
+    .checklist-text:empty::before { color:#77727d; content:attr(data-placeholder); pointer-events:none; }
+    li[data-checklist-item][data-checked="true"] .checklist-text { color:#928d97; text-decoration:line-through; }
+    .callout { --callout-accent:#77b9ee; margin:20px 0; overflow:hidden; border:1px solid color-mix(in srgb,var(--callout-accent) 32%,transparent); border-left:3px solid var(--callout-accent); border-radius:9px; background:var(--callout-surface,color-mix(in srgb,var(--callout-accent) 8%,#1c1b20)); }
+    .callout[data-callout-type="abstract"],.callout[data-callout-type="summary"] { --callout-accent:#67d9d0; }
+    .callout[data-callout-type="info"],.callout[data-callout-type="todo"] { --callout-accent:#77b9ee; }
+    .callout[data-callout-type="tip"],.callout[data-callout-type="success"] { --callout-accent:#73d49a; }
+    .callout[data-callout-type="question"],.callout[data-callout-type="faq"] { --callout-accent:#bd91ed; }
+    .callout[data-callout-type="warning"] { --callout-accent:#e9b85d; }
+    .callout[data-callout-type="failure"],.callout[data-callout-type="danger"],.callout[data-callout-type="error"],.callout[data-callout-type="bug"] { --callout-accent:#ed777d; }
+    .callout[data-callout-type="example"] { --callout-accent:#d89ce8; }
+    .callout[data-callout-type="quote"] { --callout-accent:#a8a2b0; }
+    .callout[data-callout-type="callout_info"] { --callout-accent:#4ea1ff; --callout-surface:#17263d; }
+    .callout[data-callout-type="callout_warning"] { --callout-accent:#f2b84b; --callout-surface:#3a2b12; }
+    .callout[data-callout-type="callout_idea"] { --callout-accent:#b58cff; --callout-surface:#2d2145; }
+    .callout[data-callout-type="callout_decision"] { --callout-accent:#55cf90; --callout-surface:#16382d; }
+    .callout[data-callout-type="callout_open"] { --callout-accent:#91a7bd; --callout-surface:#24303c; }
+    .callout[data-callout-type="callout_review"] { --callout-accent:#ee7ca8; --callout-surface:#3c242f; }
+    .callout[data-callout-type="callout_risk"] { --callout-accent:#f06b72; --callout-surface:#411f24; }
+    .callout[data-callout-type="callout_reference"] { --callout-accent:#54c9c2; --callout-surface:#183538; }
+    .callout-heading { display:flex; align-items:center; gap:10px; min-height:43px; padding:8px 12px 4px; color:var(--callout-accent); font-weight:700; }
+    .callout-icon { display:grid; place-items:center; width:20px; height:20px; font-size:17px; }
+    .callout-icon[data-icon="info"],.callout-icon[data-icon="warning"],.callout-icon[data-icon="idea"] { display:block; background-color:var(--callout-accent); color:transparent; mask-position:center; mask-repeat:no-repeat; mask-size:contain; }
+    .callout-icon[data-icon="info"] { mask-image:url("./assets/docs/info_icon.svg"); }
+    .callout-icon[data-icon="warning"] { mask-image:url("./assets/docs/warning_icon.svg"); }
+    .callout-icon[data-icon="idea"] { mask-image:url("./assets/docs/idea_icon.svg"); }
+    .callout-title { min-width:0; flex:1; outline:none; }
+    .callout-body { padding:0 13px 10px 42px; color:#ddd8e1; }
+    .callout-body > :first-child { margin-top:0; }
+    .callout-body > :last-child { margin-bottom:3px; }
+    .callout-toggle { display:grid; place-items:center; width:28px; height:28px; border-radius:6px; color:var(--callout-accent); background:transparent; cursor:pointer; }
+    .callout-toggle:hover { background:#ffffff10; }
+    .callout[data-collapsed="true"] .callout-toggle { transform:rotate(-90deg); }
+    .callout-body[hidden] { display:none; }
+    .placeholder { color:#77727d; }
+    .bottom-status { position:fixed; right:20px; bottom:16px; z-index:2; display:flex; align-items:center; gap:9px; }
+    .word-count { padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:#aaa4b0; background:#1d1d22eF; font-size:11px; backdrop-filter:blur(12px); }
+    .publish { min-height:37px; padding:0 14px; border:1px solid #b764db66; border-radius:8px; color:#f1e6f7; background:#7f39a4; box-shadow:0 5px 24px #863ca344; font-weight:650; }
+    .publish:hover { background:#9147b6; }
+    .slash-menu { position:fixed; z-index:5; display:none; width:300px; max-height:min(360px,calc(100vh - 24px)); overflow:auto; padding:7px; border:1px solid #ffffff19; border-radius:12px; background:#242329; box-shadow:0 18px 55px #0009; }
+    .slash-menu.open { display:block; }
+    .slash-menu-heading { padding:8px 9px 7px; color:#928c99; font-size:10px; font-weight:750; line-height:1.45; letter-spacing:.06em; text-transform:uppercase; }
+    .slash-option { display:flex; align-items:center; gap:11px; width:100%; min-height:39px; padding:5px 9px; border-radius:7px; color:#e3dee7; background:transparent; text-align:left; }
+    .slash-option[aria-selected="true"] { color:#fff; background:#8e4baa66; }
+    .slash-option-icon { display:grid; place-items:center; width:25px; height:25px; flex:0 0 25px; border:1px solid #ffffff14; border-radius:6px; color:#dab2ed; font-size:13px; }
+    .slash-option-icon[data-icon="info"],.slash-option-icon[data-icon="warning"],.slash-option-icon[data-icon="idea"] { border:0; border-radius:0; background-color:#dab2ed; color:transparent; mask-position:center; mask-repeat:no-repeat; mask-size:contain; }
+    .slash-option-icon[data-icon="info"] { mask-image:url("./assets/docs/info_icon.svg"); }
+    .slash-option-icon[data-icon="warning"] { mask-image:url("./assets/docs/warning_icon.svg"); }
+    .slash-option-icon[data-icon="idea"] { mask-image:url("./assets/docs/idea_icon.svg"); }
+    .slash-option-copy { display:grid; gap:1px; }
+    .slash-option-copy small { color:#aaa3af; font-size:10px; }
+    .slash-folder-arrow { margin-left:auto; color:#bdb5c5; font-size:20px; line-height:1; }
+    .slash-empty { padding:12px 10px; color:#aaa3af; }
+    @media(max-width:1050px) { .app{grid-template-columns:220px minmax(0,1fr)} .page{padding:48px 54px 75px} .toolbar{gap:1px;padding:0 9px}.tool{padding:0 7px} }
+    @media(max-width:800px) { body{min-width:0}.app{grid-template-columns:58px minmax(0,1fr)} .sidebar{padding:13px 8px}.brand{justify-content:center;padding:0}.brand-name,.sidebar-actions,.sidebar-shortcuts,.search,.nav-section,.sidebar-footer{display:none}.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 12px}.toolbar{overflow:auto}.tool:not(.icon-only){font-size:0}.tool:not(.icon-only)::first-letter{font-size:14px}.editor-wrap{width:100%;padding:16px 12px 70px}.page{padding:42px 28px 60px}.doc-title{font-size:29px}.bottom-status{right:12px;bottom:12px}.word-count{display:none} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegação do Docs">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
+      <div class="sidebar-actions"><button class="primary-button" type="button" id="new-doc"><span>＋</span>Novo documento</button><button class="secondary-button" type="button" id="fast-doc">Rápido</button></div>
+      <div class="sidebar-shortcuts"><button type="button" title="Histórico de versões">Versões</button><button type="button" title="Revisão do documento">Revisão</button></div>
+      <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar documentos  Ctrl K" aria-label="Buscar documentos"></label>
+      <section class="nav-section">
+        <div class="section-heading-row"><button class="section-heading" type="button" aria-expanded="true" aria-controls="document-list"><span class="chevron">⌄</span> Documentos</button><button class="add-button" id="add-doc" type="button" aria-label="Criar documento" title="Criar documento">＋</button></div>
+        <nav class="tree" id="document-list" aria-label="Documentos"></nav>
+      </section>
+      <section class="nav-section">
+        <button class="section-heading" type="button" aria-expanded="true" aria-controls="recent-list"><span class="chevron">⌄</span> Recentes</button>
+        <nav class="tree" id="recent-list" aria-label="Documentos recentes"></nav>
+      </section>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-footer"><span class="avatar" aria-hidden="true">H</span><span>Workspace Heartspace</span></div>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="topbar-left"><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
+        <div class="topbar-right"><span class="save-state" id="save-state"><span class="save-dot"></span>Salvo neste dispositivo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><button class="top-button" type="button" id="sync-refresh" hidden>Atualizar</button><button class="top-button" type="button" id="import-markdown">Importar .md</button><button class="top-button" type="button" id="export-markdown">Exportar .md</button><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false">◉ <span>Modo foco</span></button><button class="top-button" type="button" id="sign-out" hidden>Sair</button></div>
+      </header>
+      <nav class="toolbar" aria-label="Ferramentas de edição">
+        <button class="tool icon-only" type="button" id="undo" title="Desfazer">↶</button><button class="tool icon-only" type="button" id="redo" title="Refazer">↷</button><span class="tool-separator"></span>
+        <button class="tool" type="button" data-command="bold"><b>B</b></button><button class="tool" type="button" data-command="italic"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
+        <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><span class="tool-separator"></span>
+        <button class="tool" type="button" data-command="insertUnorderedList">Lista</button><button class="tool" type="button" data-command="insertOrderedList">Numerada</button><button class="tool" type="button" data-command="formatBlock" data-value="pre">Código</button><span class="tool-separator"></span>
+        <button class="tool" type="button" id="insert-diagram">＋ Diagrama</button><div class="toolbar-spacer"></div><button class="tool focus-button" type="button" id="outline-toggle">☷ <span>Estrutura</span></button>
+      </nav>
+      <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
+      <section class="editor-area" aria-label="Área do documento">
+        <div class="editor-wrap">
+          <div class="editor-meta"><span>DOCUMENTO</span><span>Digite / para inserir · ↑ ↓ navegam · Enter abre/insere · Backspace volta</span></div>
+          <article class="page">
+            <h1 class="doc-title" id="doc-title" contenteditable="true" spellcheck="false">Guia de produção</h1>
+            <textarea class="doc-subtitle" id="doc-subtitle" rows="1" aria-label="Subtítulo do documento" placeholder="Adicione um subtítulo…">Um espaço para organizar ideias, decisões e o trabalho que vem pela frente.</textarea>
+            <div class="content" id="editor" contenteditable="true" role="textbox" aria-label="Conteúdo do documento. Digite barra para abrir o menu de blocos." aria-multiline="true" aria-haspopup="listbox" aria-expanded="false" aria-controls="slash-menu">
+              <p>Escrever deve ser simples: abra o documento e continue de onde parou. A estrutura acompanha o pensamento sem disputar atenção com ele.</p>
+              <h2>Comece com uma ideia</h2>
+              <p>Use títulos para dar forma ao texto. Quando ajudar a explicar um fluxo, acrescente uma lista, um trecho de código ou um diagrama.</p>
+              <ul><li>Capturar ideias sem interromper o ritmo</li><li>Organizar o conteúdo quando fizer sentido</li><li>Retomar o trabalho mesmo sem conexão</li></ul>
+              <p>Conecte um projeto para salvar e compartilhar as alterações com a equipe.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+      <div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span><button class="publish" type="button">Publicar no Heartspace</button></div>
+    </main>
+  </div>
+  <section class="auth-gate" id="auth-gate" hidden aria-labelledby="auth-title">
+    <form class="auth-card" id="auth-form">
+      <div class="brand" style="padding:0 0 16px"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
+      <h1 id="auth-title">Entre para abrir o Docs</h1>
+      <p>Acesse com sua conta Heartspace. O projeto e as permissões são conferidos antes de carregar os documentos.</p>
+      <label for="auth-email">E-mail da conta</label><input id="auth-email" type="email" autocomplete="email" required placeholder="voce@equipe.com">
+      <button type="submit" id="auth-submit">Enviar link de acesso</button>
+      <button type="button" id="local-mode" style="margin:10px 0 0;color:#d4cadb;background:transparent;border:1px solid #ffffff20">Continuar no protótipo local</button>
+      <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <script src="config.js"></script>
+  <script>
+    (() => {
+      const editor = document.querySelector('#editor');
+      const title = document.querySelector('#doc-title');
+      const subtitle = document.querySelector('#doc-subtitle');
+      const saveState = document.querySelector('#save-state');
+      const transferStatus = document.querySelector('#transfer-status');
+      const slashMenu = document.querySelector('#slash-menu');
+      const slashOptions = document.querySelector('#slash-options');
+      const slashHeading = slashMenu.querySelector('.slash-menu-heading');
+      let storageKey = 'heartspace-docs-web-prototype-v1';
+      const docsConfig = window.HEARTSPACE_DOCS_CONFIG || {};
+      let currentUser = null;
+      let currentAccessToken = '';
+      let currentProjectId = '';
+      let projectCapabilities = {};
+      let dirtyDocumentIds = new Set();
+      let remotePollTimer = null;
+      let remoteSaveInProgress = new Set();
+      const requestedProjectId = new URLSearchParams(location.search).get('project_id') || '';
+      const commands = [
+        { label: 'Texto', detail: 'Parágrafo normal', icon: '¶', kind: 'block', value: 'p' },
+        { label: 'Título 1', detail: 'Título principal', icon: 'H1', kind: 'block', value: 'h1' },
+        { label: 'Título 2', detail: 'Título de seção', icon: 'H2', kind: 'block', value: 'h2' },
+        { label: 'Título 3', detail: 'Subseção', icon: 'H3', kind: 'block', value: 'h3' },
+        { label: 'Lista com marcadores', detail: 'Organize itens sem ordem', icon: '•', kind: 'list' },
+        { label: 'Lista numerada', detail: 'Organize etapas em sequência', icon: '1.', kind: 'ordered' },
+        { label: 'Lista de tarefas', detail: 'Checklist para acompanhar', icon: '☐', kind: 'tasks' },
+        { label: 'Imagem do dispositivo', detail: 'Insira uma imagem com descrição e legenda', icon: '▧', kind: 'image' },
+        { label: 'Legenda acima da imagem', detail: 'Posicione a legenda antes da imagem', icon: '↑', kind: 'image-caption-position', value: 'top' },
+        { label: 'Legenda abaixo da imagem', detail: 'Posicione a legenda depois da imagem', icon: '↓', kind: 'image-caption-position', value: 'bottom' },
+        { label: 'Legenda alinhada à esquerda', detail: 'Alinhe o texto da legenda', icon: '⇤', kind: 'image-caption-align', value: 'left' },
+        { label: 'Legenda centralizada', detail: 'Alinhe o texto da legenda', icon: '↔', kind: 'image-caption-align', value: 'center' },
+        { label: 'Legenda alinhada à direita', detail: 'Alinhe o texto da legenda', icon: '⇥', kind: 'image-caption-align', value: 'right' },
+        { label: 'Estilo de imagem: padrão', detail: 'Imagem contida e centralizada', icon: '▧', kind: 'image-style', value: 'standard' },
+        { label: 'Estilo de imagem: banner', detail: 'Imagem larga com recorte panorâmico', icon: '▰', kind: 'image-style', value: 'banner' },
+        { label: 'Estilo de imagem: moldura', detail: 'Adicione uma borda discreta', icon: '▣', kind: 'image-style', value: 'framed' },
+        { label: 'Estilo de imagem: arredondada', detail: 'Cantos mais suaves', icon: '◉', kind: 'image-style', value: 'rounded' },
+        { label: 'Alinhar à esquerda', detail: 'Alinhe o parágrafo à margem esquerda', icon: '⇤', kind: 'align', value: 'justifyLeft' },
+        { label: 'Centralizar', detail: 'Centralize o parágrafo', icon: '↔', kind: 'align', value: 'justifyCenter' },
+        { label: 'Alinhar à direita', detail: 'Alinhe o parágrafo à margem direita', icon: '⇥', kind: 'align', value: 'justifyRight' },
+        { label: 'Justificar', detail: 'Alinhe o texto às duas margens', icon: '☷', kind: 'align', value: 'justifyFull' },
+        { label: 'Tabela', detail: 'Comece simples e acrescente colunas quando precisar', icon: '▦', kind: 'table' },
+        { label: 'Adicionar coluna à esquerda', detail: 'Na tabela da célula atual', icon: '⇤', kind: 'table-column', value: 'left' },
+        { label: 'Adicionar coluna à direita', detail: 'Na tabela da célula atual', icon: '⇥', kind: 'table-column', value: 'right' },
+        { label: 'Adicionar linha acima', detail: 'Na tabela da célula atual', icon: '↑', kind: 'table-row', value: 'above' },
+        { label: 'Adicionar linha abaixo', detail: 'Na tabela da célula atual', icon: '↓', kind: 'table-row', value: 'below' },
+        { label: 'Excluir linha atual', detail: 'Remove esta linha e seu conteúdo', icon: '−▤', kind: 'table-delete-row' },
+        { label: 'Excluir coluna atual', detail: 'Remove esta coluna e seu conteúdo', icon: '−▥', kind: 'table-delete-column' },
+        { label: 'Excluir tabela', detail: 'Remove a tabela inteira do documento', icon: '×▦', kind: 'table-delete' },
+        { label: 'Citação', detail: 'Destaque uma referência', icon: '“', kind: 'block', value: 'blockquote' },
+        { label: 'Bloco de código', detail: 'Trecho monoespaçado', icon: '</>', kind: 'block', value: 'pre' },
+        { label: 'Divisor', detail: 'Separador visual', icon: '―', kind: 'divider' },
+        { label: 'Diagrama Mermaid', detail: 'Comece um fluxograma editável', icon: '◇', kind: 'diagram' },
+        { label: 'Callouts', detail: '17 tipos de chamada', icon: '▰', kind: 'folder', id: 'callouts', children: [
+          { label: 'Callout: Nota', detail: 'Destaque uma observação', icon: 'ⓘ', iconAsset: 'info', kind: 'callout', value: 'note' },
+          { label: 'Callout: Informação', detail: 'Contexto e informação útil', icon: 'ⓘ', iconAsset: 'info', kind: 'callout', value: 'info' },
+          { label: 'Callout: Dica', detail: 'Sugestão ou boa prática', icon: '✦', iconAsset: 'idea', kind: 'callout', value: 'tip' },
+          { label: 'Callout: Sucesso', detail: 'Resultado ou confirmação positiva', icon: '✓', kind: 'callout', value: 'success' },
+          { label: 'Callout: Pergunta', detail: 'Questão para investigar', icon: '?', kind: 'callout', value: 'question' },
+          { label: 'Callout: Aviso', detail: 'Atenção a um risco ou cuidado', icon: '!', iconAsset: 'warning', kind: 'callout', value: 'warning' },
+          { label: 'Callout: Falha', detail: 'Problema ou resultado negativo', icon: '×', iconAsset: 'warning', kind: 'callout', value: 'failure' },
+          { label: 'Callout: Exemplo', detail: 'Exemplo ou caso ilustrativo', icon: '◇', kind: 'callout', value: 'example' },
+          { label: 'Callout: Citação', detail: 'Trecho citado ou referência', icon: '❞', kind: 'callout', value: 'quote' },
+          { label: 'Chamada informativa', detail: 'Contexto e informação útil', icon: 'ℹ️', iconAsset: 'info', kind: 'callout', value: 'callout_info' },
+          { label: 'Chamada de atenção', detail: 'Aviso importante', icon: '⚠️', iconAsset: 'warning', kind: 'callout', value: 'callout_warning' },
+          { label: 'Chamada de ideia', detail: 'Ideia ou sugestão', icon: '💡', iconAsset: 'idea', kind: 'callout', value: 'callout_idea' },
+          { label: 'Decisão', detail: 'Decisão tomada', icon: '✓', kind: 'callout', value: 'callout_decision' },
+          { label: 'Em aberto', detail: 'Questão ainda sem decisão', icon: '◌', kind: 'callout', value: 'callout_open' },
+          { label: 'Precisa de revisão', detail: 'Conteúdo a revisar', icon: '↻', kind: 'callout', value: 'callout_review' },
+          { label: 'Risco', detail: 'Risco identificado', icon: '⚠', iconAsset: 'warning', kind: 'callout', value: 'callout_risk' },
+          { label: 'Referência', detail: 'Referência ou fonte', icon: '↗', kind: 'callout', value: 'callout_reference' }
+        ] },
+        { label: 'Negrito', detail: 'Continue escrevendo em negrito', icon: 'B', kind: 'inline', value: 'bold' },
+        { label: 'Itálico', detail: 'Continue escrevendo em itálico', icon: 'I', kind: 'inline', value: 'italic' },
+        { label: 'Tachado', detail: 'Risque o texto', icon: 'S̶', kind: 'inline', value: 'strikeThrough' },
+        { label: 'Sublinhado', detail: 'Sublinhe o texto', icon: 'U̲', kind: 'inline', value: 'underline' },
+        { label: 'Código inline', detail: 'Destaque um trecho de código', icon: '</>', kind: 'inline-markup', value: 'code' },
+        { label: 'Realce', detail: 'Destaque um trecho do texto', icon: '▰', kind: 'inline-markup', value: 'mark' },
+        { label: 'Link', detail: 'Insira um endereço e edite o rótulo', icon: '↗', kind: 'link' },
+        { label: 'Modelo: GDD', detail: 'Documento de design de jogo', icon: '✦', kind: 'template', value: 'gdd' },
+        { label: 'Modelo: Especificação', detail: 'Proposta e escopo de recurso', icon: '✦', kind: 'template', value: 'spec' },
+        { label: 'Modelo: Notas de reunião', detail: 'Pauta, decisões e próximos passos', icon: '✦', kind: 'template', value: 'meeting' }
+      ];
+      const allCommands = commands.slice();
+      const commandGroups = [
+        { label: 'Títulos', detail: 'Outros níveis de título', icon: 'H1', labels: ['Título 1', 'Título 3'] },
+        { label: 'Listas', detail: 'Lista numerada', icon: '☷', labels: ['Lista numerada'] },
+        { label: 'Tabelas', detail: 'Linhas, colunas e estrutura da tabela', icon: '▦', labels: ['Tabela', 'Adicionar linha acima', 'Adicionar linha abaixo', 'Adicionar coluna à esquerda', 'Adicionar coluna à direita', 'Excluir linha atual', 'Excluir coluna atual', 'Excluir tabela'] },
+        { label: 'Imagens', detail: 'Estilo da imagem e posição da legenda', icon: '▧', labels: ['Imagem do dispositivo', 'Legenda acima da imagem', 'Legenda abaixo da imagem', 'Legenda alinhada à esquerda', 'Legenda centralizada', 'Legenda alinhada à direita', 'Estilo de imagem: padrão', 'Estilo de imagem: banner', 'Estilo de imagem: moldura', 'Estilo de imagem: arredondada'] },
+        { label: 'Alinhamento', detail: 'Posição do texto no parágrafo', icon: '↔', labels: ['Alinhar à esquerda', 'Centralizar', 'Alinhar à direita', 'Justificar'] },
+        { label: 'Blocos', detail: 'Citações, código e diagramas', icon: '▤', labels: ['Citação', 'Bloco de código', 'Divisor', 'Diagrama Mermaid'] },
+        { label: 'Formatação', detail: 'Efeitos de texto e código inline', icon: 'Aa', labels: ['Tachado', 'Sublinhado', 'Código inline', 'Realce'] },
+        { label: 'Modelos', detail: 'Estruturas prontas para começar', icon: '✦', labels: ['Modelo: GDD', 'Modelo: Especificação', 'Modelo: Notas de reunião'] }
+      ];
+      const frequentLabels = new Set(['Texto', 'Título 2', 'Lista com marcadores', 'Lista de tarefas', 'Imagem do dispositivo', 'Callouts', 'Negrito', 'Itálico', 'Link']);
+      const alignmentFolder = {
+        label: 'Alinhamento', detail: 'Posição do texto no parágrafo', icon: '↔', kind: 'folder', id: 'alignment',
+        children: ['Alinhar à esquerda', 'Centralizar', 'Alinhar à direita', 'Justificar'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
+      };
+      const imageOptionsFolder = {
+        label: 'Opções desta imagem', detail: 'Legenda, alinhamento e estilo', icon: '▧', kind: 'folder', id: 'image-options',
+        children: ['Legenda acima da imagem', 'Legenda abaixo da imagem', 'Legenda alinhada à esquerda', 'Legenda centralizada', 'Legenda alinhada à direita', 'Estilo de imagem: padrão', 'Estilo de imagem: banner', 'Estilo de imagem: moldura', 'Estilo de imagem: arredondada'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
+      };
+      const moreOptions = commandGroups.map(group => ({
+        label: group.label,
+        detail: group.detail,
+        icon: group.icon,
+        kind: 'folder',
+        id: group.label.toLocaleLowerCase('pt-BR').replace(/\s+/g, '-'),
+        children: group.labels.map(label => allCommands.find(command => command.label === label)).filter(Boolean)
+      }));
+      commands.splice(0, commands.length,
+        ...allCommands.filter(command => frequentLabels.has(command.label)),
+        alignmentFolder,
+        { label: 'Mais opções', detail: 'Títulos, tabelas, imagens, blocos e modelos', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
+      );
+      let saveTimer;
+      let slashRange = null;
+      let slashTableCell = null;
+      let slashImageFigure = null;
+      let toolbarRange = null;
+      let pendingImageRange = null;
+      const imageObjectUrls = new Set();
+      const imageStorePromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { reject(new Error('Armazenamento local de imagens indisponível')); return; }
+        const request = indexedDB.open('heartspace-docs-assets-v1', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('images');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Não foi possível abrir o armazenamento de imagens'));
+      });
+      imageStorePromise.catch(() => {});
+      const storeImage = async (id, blob) => {
+        const db = await imageStorePromise;
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction('images', 'readwrite');
+          transaction.objectStore('images').put(blob, id);
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error || new Error('Falha ao salvar imagem'));
+        });
+      };
+      const loadImage = async id => {
+        const db = await imageStorePromise;
+        return new Promise((resolve, reject) => {
+          const request = db.transaction('images', 'readonly').objectStore('images').get(id);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error || new Error('Falha ao carregar imagem'));
+        });
+      };
+      const hydrateImages = async root => {
+        for (const image of root.querySelectorAll('img[data-local-image]')) {
+          try {
+            const blob = await loadImage(image.dataset.localImage);
+            if (!blob) continue;
+            const url = URL.createObjectURL(blob);
+            imageObjectUrls.add(url);
+            image.src = url;
+          } catch (_) { /* mantém o bloco editável se o arquivo local estiver indisponível */ }
+        }
+      };
+      const blobToDataUrl = blob => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('Falha ao preparar imagem para exportação'));
+        reader.readAsDataURL(blob);
+      });
+      const persistEmbeddedImages = async root => {
+        for (const image of root.querySelectorAll('img[src^="data:image/"]')) {
+          const blob = await (await fetch(image.src)).blob();
+          const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+          await storeImage(id, blob);
+          image.dataset.localImage = id;
+          image.removeAttribute('src');
+        }
+        await hydrateImages(root);
+      };
+      let filteredCommands = [];
+      let selectedCommand = 0;
+      let slashFolderStack = [];
+      let dismissedSlash = false;
+      const documentList = document.querySelector('#document-list');
+      const recentList = document.querySelector('#recent-list');
+      let documents = [];
+      let activeDocumentId = '';
+      const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', dirty: Boolean(data.dirty), title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const renderLibrary = () => {
+        const query = document.querySelector('#search').value.trim().toLocaleLowerCase('pt-BR');
+        const renderItem = (record, recent = false) => {
+          const button = document.createElement('button');
+          button.type = 'button'; button.className = `tree-item${record.id === activeDocumentId ? ' active' : ''}`; button.dataset.docId = record.id;
+          button.innerHTML = `<span class="doc-icon">${recent ? '◷' : '▤'}</span>`;
+          const label = document.createElement('span'); label.textContent = record.title || 'Sem título'; button.append(label);
+          if (recent) { const time = document.createElement('small'); time.textContent = record.remoteId ? 'online' : 'local'; button.append(time); }
+          button.hidden = Boolean(query && !`${record.title} ${record.subtitle}`.toLocaleLowerCase('pt-BR').includes(query));
+          button.addEventListener('click', () => openDocument(record.id));
+          return button;
+        };
+        documentList.replaceChildren(...documents.map(record => renderItem(record)));
+        recentList.replaceChildren(...[...documents].sort((a, b) => b.savedAt.localeCompare(a.savedAt)).slice(0, 5).map(record => renderItem(record, true)));
+      };
+      const persistLibrary = () => localStorage.setItem(storageKey, JSON.stringify({ version: 2, activeDocumentId, documents }));
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        if (saved?.version === 2 && Array.isArray(saved.documents) && saved.documents.length) {
+          documents = saved.documents.filter(item => item && typeof item.id === 'string' && typeof item.body === 'string').map(makeRecord);
+          activeDocumentId = documents.some(item => item.id === saved.activeDocumentId) ? saved.activeDocumentId : documents[0].id;
+        } else if (saved && typeof saved.title === 'string' && typeof saved.body === 'string') {
+          documents = [makeRecord({ title: saved.title.replace(/<[^>]*>/g, '').trim() || 'Guia de produção', subtitle: saved.subtitle || '', body: saved.body, savedAt: saved.savedAt })];
+          activeDocumentId = documents[0].id;
+        } else {
+          documents = [makeRecord({ title: title.textContent, subtitle: subtitle.value, body: editor.innerHTML })];
+          activeDocumentId = documents[0].id;
+        }
+        const activeRecord = documents.find(item => item.id === activeDocumentId);
+        if (activeRecord) {
+          title.textContent = activeRecord.title;
+          subtitle.value = activeRecord.subtitle;
+          editor.innerHTML = activeRecord.body;
+          hydrateImages(editor);
+        }
+      } catch (_) { /* conteúdo de exemplo continua disponível */ }
+      renderLibrary();
+      try { persistLibrary(); } catch (_) { /* o editor continua disponível mesmo sem armazenamento persistente */ }
+      const updateDocumentLabel = () => {
+        const label = title.textContent.trim() || 'Sem título';
+        document.querySelector('.topbar-left strong').textContent = label;
+        const activeRecord = documents.find(item => item.id === activeDocumentId);
+        if (activeRecord) activeRecord.title = label;
+        renderLibrary();
+      };
+      const resizeSubtitle = () => {
+        subtitle.style.height = 'auto';
+        subtitle.style.height = `${subtitle.scrollHeight}px`;
+      };
+      resizeSubtitle();
+      updateDocumentLabel();
+      editor.querySelectorAll('ul[data-list-type="checklist"] > li').forEach(item => { item.dataset.checklistItem = 'true'; });
+      const updateCount = () => {
+        const words = (editor.innerText.trim().match(/\S+/g) || []).length;
+        document.querySelector('#word-count').textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'}`;
+      };
+      const serializeEditorBody = () => {
+        const snapshot = editor.cloneNode(true);
+        snapshot.querySelectorAll('[data-mermaid-block]').forEach(block => {
+          const source = block.querySelector('.mermaid-source');
+          const preview = block.querySelector('.mermaid-preview');
+          const button = block.querySelector('[data-mermaid-preview]');
+          const status = block.querySelector('.mermaid-status');
+          if (source) source.hidden = false;
+          if (preview) { preview.replaceChildren(); preview.hidden = true; }
+          if (button) { button.textContent = 'Prévia'; button.setAttribute('aria-pressed', 'false'); }
+          if (status) { status.textContent = 'Fonte Mermaid editável'; status.dataset.error = 'false'; }
+          delete block.dataset.mermaidView;
+        });
+        snapshot.querySelectorAll('img[data-local-image]').forEach(image => image.removeAttribute('src'));
+        return snapshot.innerHTML;
+      };
+      const queueSave = () => {
+        saveState.innerHTML = `<span class="save-dot" style="background:#e8be77"></span>${currentProjectId ? 'Salvando…' : 'Salvando localmente…'}`;
+        updateCount();
+        const editedRecord = documents.find(item => item.id === activeDocumentId);
+        if (currentProjectId && editedRecord) { editedRecord.dirty = true; dirtyDocumentIds.add(editedRecord.id); }
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          try {
+            const activeRecord = documents.find(item => item.id === activeDocumentId);
+            if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+            persistLibrary(); renderLibrary();
+            if (currentProjectId && activeRecord) syncRecord(activeRecord);
+            else saveState.innerHTML = '<span class="save-dot"></span>Salvo neste dispositivo';
+          } catch (_) {
+            saveState.textContent = 'Não foi possível salvar neste navegador';
+          }
+        }, 450);
+      };
+      editor.addEventListener('input', queueSave);
+      title.addEventListener('input', () => { updateDocumentLabel(); queueSave(); });
+      subtitle.addEventListener('input', () => { resizeSubtitle(); queueSave(); });
+      updateCount();
+      document.addEventListener('selectionchange', () => {
+        const selection = window.getSelection();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (range && editor.contains(range.commonAncestorContainer)) toolbarRange = range.cloneRange();
+      });
+      document.querySelectorAll('[data-command]').forEach(button => {
+        button.addEventListener('mousedown', event => event.preventDefault());
+        button.addEventListener('click', () => {
+        if (toolbarRange && editor.contains(toolbarRange.commonAncestorContainer)) {
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(toolbarRange);
+        } else editor.focus();
+        const alignmentCommand = button.dataset.command.startsWith('justify');
+        if (!alignmentCommand || !applyTextAlignment(button.dataset.command)) {
+          document.execCommand(button.dataset.command, false, button.dataset.value || null);
+        }
+        toolbarRange = null;
+        queueSave();
+        });
+      });
+      document.querySelector('#undo').addEventListener('click', () => { editor.focus(); document.execCommand('undo'); queueSave(); });
+      document.querySelector('#redo').addEventListener('click', () => { editor.focus(); document.execCommand('redo'); queueSave(); });
+      document.querySelector('#focus-toggle').addEventListener('click', event => {
+        const enabled = document.body.classList.toggle('focus-mode');
+        document.querySelector('.sidebar').style.display = enabled ? 'none' : '';
+        document.querySelector('.app').style.gridTemplateColumns = enabled ? 'minmax(0,1fr)' : '';
+        event.currentTarget.setAttribute('aria-pressed', String(enabled));
+      });
+      document.querySelector('#insert-diagram').addEventListener('click', () => {
+        editor.focus();
+        insertMermaidBlock();
+        queueSave();
+      });
+      document.querySelector('#search').addEventListener('input', event => {
+        renderLibrary();
+      });
+      const flushSave = () => {
+        clearTimeout(saveTimer);
+        try {
+          const activeRecord = documents.find(item => item.id === activeDocumentId);
+          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+          persistLibrary();
+          if (currentProjectId && activeRecord) syncRecord(activeRecord);
+        } catch (_) { saveState.textContent = 'Não foi possível salvar neste navegador'; }
+      };
+      const openDocument = id => {
+        if (id === activeDocumentId) return;
+        flushSave();
+        const record = documents.find(item => item.id === id); if (!record) return;
+        activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; editor.innerHTML = record.body;
+        hydrateImages(editor); resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary();
+        saveState.innerHTML = '<span class="save-dot"></span>Salvo neste dispositivo';
+      };
+      const createDocument = (quick = false) => {
+        flushSave();
+        const record = makeRecord({ title: quick ? 'Anotação rápida' : 'Novo documento', projectId: currentProjectId });
+        documents.unshift(record); activeDocumentId = record.id;
+        title.textContent = record.title; subtitle.value = ''; editor.innerHTML = '<p><br></p>';
+        resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
+        (quick ? editor : title).focus(); queueSave();
+      };
+      document.querySelector('#new-doc').addEventListener('click', () => createDocument(false));
+      document.querySelector('#fast-doc').addEventListener('click', () => createDocument(true));
+      document.querySelector('#add-doc').addEventListener('click', () => createDocument(false));
+      document.querySelectorAll('.section-heading').forEach(heading => heading.addEventListener('click', () => {
+        const target = document.getElementById(heading.getAttribute('aria-controls'));
+        const expanded = heading.getAttribute('aria-expanded') === 'true'; heading.setAttribute('aria-expanded', String(!expanded));
+        heading.querySelector('.chevron').textContent = expanded ? '›' : '⌄'; target.hidden = expanded;
+      }));
+      const authGate = document.querySelector('#auth-gate');
+      const authStatus = document.querySelector('#auth-status');
+      const authTokenKey = 'heartspace-docs-access-token';
+      const authRefreshKey = 'heartspace-docs-refresh-token';
+      const authExpiresKey = 'heartspace-docs-expires-at';
+      const projectPicker = document.querySelector('#project-picker');
+      const statusMessage = (message, state = '') => {
+        const dot = document.createElement('span'); dot.className = 'save-dot';
+        if (state) dot.style.background = '#e8be77';
+        saveState.replaceChildren(dot, document.createTextNode(message));
+      };
+      const apiFetch = async (path, options = {}, token = currentAccessToken) => {
+        if (!docsConfig.supabaseUrl || !docsConfig.publishableKey) throw new Error('A conexão do Docs ainda não está configurada.');
+        const headers = new Headers(options.headers || {});
+        headers.set('apikey', docsConfig.publishableKey);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+        if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+        let response = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}${path}`, { ...options, headers });
+        if (response.status === 401 && !path.startsWith('/auth/v1/token') && localStorage.getItem(authRefreshKey)) {
+          const refresh = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: { apikey: docsConfig.publishableKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: localStorage.getItem(authRefreshKey) }) });
+          if (refresh.ok) {
+            saveAuthSession(await refresh.json());
+            const retryHeaders = new Headers(options.headers || {}); retryHeaders.set('apikey', docsConfig.publishableKey); retryHeaders.set('Authorization', `Bearer ${currentAccessToken}`);
+            if (options.body && !retryHeaders.has('Content-Type')) retryHeaders.set('Content-Type', 'application/json');
+            response = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}${path}`, { ...options, headers: retryHeaders });
+          }
+        }
+        const raw = await response.text();
+        let data = null; try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
+        if (!response.ok) throw new Error(data?.message || data?.error || `Serviço indisponível (${response.status}).`);
+        return data;
+      };
+      const saveAuthSession = session => {
+        currentAccessToken = session.access_token || '';
+        if (currentAccessToken) localStorage.setItem(authTokenKey, currentAccessToken);
+        if (session.refresh_token) localStorage.setItem(authRefreshKey, session.refresh_token);
+        if (session.expires_at) localStorage.setItem(authExpiresKey, String(session.expires_at));
+      };
+      const obtainAccessToken = async () => {
+        const callback = new URLSearchParams(location.hash.slice(1));
+        if (callback.get('access_token')) {
+          saveAuthSession({ access_token: callback.get('access_token'), refresh_token: callback.get('refresh_token'), expires_at: callback.get('expires_at') });
+          history.replaceState({}, document.title, location.pathname + location.search);
+        }
+        let token = currentAccessToken || localStorage.getItem(authTokenKey) || '';
+        const expiresAt = Number(localStorage.getItem(authExpiresKey) || 0);
+        if (token && (!expiresAt || expiresAt > Date.now() / 1000 + 60)) return token;
+        const refreshToken = localStorage.getItem(authRefreshKey);
+        if (!refreshToken) return '';
+        const session = await apiFetch('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) }, '');
+        saveAuthSession(session); return currentAccessToken;
+      };
+      const getProjectAccess = async projectId => apiFetch('/rest/v1/rpc/heartspace_project_access', { method: 'POST', body: JSON.stringify({ target_project_id: projectId }) });
+      const canOpenProject = access => Boolean(access?.capabilities?.docs_view);
+      const canEditProject = access => Boolean(access?.capabilities?.docs_edit);
+      const updateEditorPermissions = () => {
+        const editable = !currentProjectId || canEditProject({ capabilities: projectCapabilities });
+        title.contentEditable = String(editable); subtitle.disabled = !editable; editor.contentEditable = String(editable);
+        document.querySelector('#new-doc').disabled = Boolean(currentProjectId && !editable);
+        document.querySelector('#add-doc').disabled = Boolean(currentProjectId && !editable);
+        document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
+      };
+      const parseRemoteContent = content => {
+        if (typeof content === 'string') { try { content = JSON.parse(content); } catch (_) { content = {}; } }
+        return content && typeof content === 'object' ? content : {};
+      };
+      const remoteToRecord = row => {
+        const content = parseRemoteContent(row.content);
+        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+      };
+      const saveProjectCache = () => { try { persistLibrary(); } catch (_) {} };
+      const refreshProjectDocs = async (initial = false) => {
+        if (!currentProjectId) return;
+        const query = new URLSearchParams({ select: 'id,project_id,title,content,author,created_at,updated_at', project_id: `eq.${currentProjectId}`, order: 'updated_at.desc' });
+        const rows = await apiFetch(`/rest/v1/docs?${query}`);
+        const oldByRemoteId = new Map(documents.filter(record => record.remoteId).map(record => [record.remoteId, record]));
+        const next = rows.map(row => {
+          const old = oldByRemoteId.get(row.id);
+          if (old && (old.dirty || dirtyDocumentIds.has(old.id))) {
+            if (old.remoteUpdatedAt !== row.updated_at) old.remoteConflict = true;
+            return old;
+          }
+          return remoteToRecord(row);
+        });
+        const cachedLocal = documents.filter(record => !record.remoteId && record.projectId === currentProjectId);
+        documents = [...next, ...cachedLocal];
+        if (!documents.some(record => record.id === activeDocumentId)) activeDocumentId = documents[0]?.id || '';
+        if (!activeDocumentId && initial) {
+          if (canEditProject({ capabilities: projectCapabilities })) createDocument(false);
+          else { title.textContent = 'Sem documentos'; subtitle.value = ''; editor.innerHTML = '<p><br></p>'; updateDocumentLabel(); updateCount(); statusMessage('Este projeto ainda não tem documentos'); }
+          return;
+        }
+        const active = documents.find(record => record.id === activeDocumentId);
+        if (active && (initial || !dirtyDocumentIds.has(active.id))) {
+          title.textContent = active.title; subtitle.value = active.subtitle; editor.innerHTML = active.body;
+          resizeSubtitle(); updateDocumentLabel(); updateCount(); hydrateImages(editor);
+        }
+        saveProjectCache(); renderLibrary();
+        const conflict = documents.some(record => record.remoteConflict);
+        document.querySelector('#sync-refresh').textContent = conflict ? 'Recarregar versão remota' : 'Atualizar';
+        if (conflict) statusMessage('Outra pessoa atualizou este documento; seu rascunho foi preservado', 'pending');
+      };
+      const loadCloudProject = async (projectId, knownProject = null) => {
+        if (currentProjectId && currentProjectId !== projectId) flushSave();
+        const access = await getProjectAccess(projectId);
+        if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
+        currentProjectId = projectId; projectCapabilities = access.capabilities || {};
+        sessionStorage.setItem('heartspace-docs-active-project', projectId);
+        const project = knownProject || await apiFetch(`/rest/v1/projects?select=id,name&id=eq.${encodeURIComponent(projectId)}&limit=1`);
+        const projectName = Array.isArray(project) ? project[0]?.name : project?.name;
+        document.querySelector('.topbar-left .crumb').textContent = projectName || 'Projeto';
+        storageKey = `heartspace-docs-project-${projectId}`;
+        const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        if (cached?.version === 2 && Array.isArray(cached.documents)) {
+          documents = cached.documents.map(makeRecord); activeDocumentId = cached.activeDocumentId || '';
+        } else { documents = []; activeDocumentId = ''; }
+        projectPicker.hidden = false;
+        updateEditorPermissions();
+        await refreshProjectDocs(true);
+        document.querySelector('#sync-refresh').hidden = false;
+        statusMessage('Conectado ao projeto');
+        clearInterval(remotePollTimer);
+        remotePollTimer = setInterval(() => refreshProjectDocs(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
+      };
+      const syncRecord = async record => {
+        const targetProjectId = record.projectId || currentProjectId;
+        if (!targetProjectId || !currentAccessToken || remoteSaveInProgress.has(record.id) || !canEditProject({ capabilities: projectCapabilities })) return;
+        const syncKey = record.id;
+        remoteSaveInProgress.add(syncKey);
+        let retryAfterSave = false;
+        const captured = { title: record.title || 'Sem título', subtitle: record.subtitle || '', body: record.body || '<p><br></p>', savedAt: record.savedAt };
+        statusMessage('Sincronizando com o projeto…', 'pending');
+        try {
+          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body };
+          if (!record.remoteId) {
+            const inserted = await apiFetch('/rest/v1/docs', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ project_id: targetProjectId, type: 'page', status: 'draft', title: captured.title, author: currentUser?.email || 'Membro', content }) });
+            const row = Array.isArray(inserted) ? inserted[0] : inserted;
+            if (!row?.id) throw new Error('O documento não foi criado no projeto.');
+            const previousId = record.id;
+            record.remoteId = row.id; record.id = row.id; record.remoteUpdatedAt = row.updated_at || ''; record.projectId = targetProjectId;
+            if (activeDocumentId === previousId) activeDocumentId = row.id;
+            dirtyDocumentIds.delete(previousId); record.dirty = false;
+          } else {
+            const result = await apiFetch('/rest/v1/rpc/heartspace_save_doc_content', { method: 'POST', body: JSON.stringify({ p_doc_id: record.remoteId, p_content: content, p_expected_updated_at: record.remoteUpdatedAt || null, p_author_name: currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro' }) });
+            if (result?.conflict) { record.remoteConflict = true; throw new Error('Outra pessoa salvou uma versão mais recente. Seu rascunho local foi preservado.'); }
+            if (!result?.success) throw new Error(result?.reason === 'forbidden' ? 'Sua permissão de edição mudou.' : 'A gravação remota não foi concluída.');
+            record.remoteUpdatedAt = result.updated_at || record.remoteUpdatedAt;
+            if (record.title !== captured.title) record.title = captured.title;
+            await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ title: captured.title }) }).then(rows => { if (rows?.[0]?.updated_at) record.remoteUpdatedAt = rows[0].updated_at; });
+            dirtyDocumentIds.delete(record.id); record.dirty = false; record.remoteConflict = false;
+          }
+          const changedDuringSave = record.savedAt !== captured.savedAt;
+          if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); }
+          if (changedDuringSave) { record.dirty = true; dirtyDocumentIds.add(record.id); retryAfterSave = true; }
+          else if (!documents.some(item => item.remoteConflict)) statusMessage('Sincronizado com o projeto');
+        } catch (error) {
+          record.dirty = true; dirtyDocumentIds.add(record.id);
+          if (currentProjectId === targetProjectId) { saveProjectCache(); statusMessage(error.message || 'Falha ao sincronizar; rascunho local preservado', 'pending'); }
+        } finally {
+          remoteSaveInProgress.delete(syncKey);
+          if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
+        }
+      };
+      const openCloudProjectPicker = async () => {
+        const query = new URLSearchParams({ select: 'id,name,studio_id,status', order: 'created_at.desc' });
+        let projects = [];
+        try { projects = await apiFetch(`/rest/v1/projects?${query}`); } catch (_) { /* link de abertura pode fornecer só um id */ }
+        const permitted = [];
+        for (const project of Array.isArray(projects) ? projects : []) {
+          try { const access = await getProjectAccess(project.id); if (canOpenProject(access)) permitted.push(project); } catch (_) {}
+        }
+        const preferred = requestedProjectId || sessionStorage.getItem('heartspace-docs-active-project') || '';
+        if (preferred) {
+          const candidate = permitted.find(project => project.id === preferred) || { id: preferred, name: 'Projeto selecionado' };
+          await loadCloudProject(candidate.id, permitted.find(project => project.id === candidate.id) || candidate);
+        } else if (permitted.length) {
+          projectPicker.replaceChildren(...permitted.map(project => new Option(project.name || 'Projeto', project.id)));
+          await loadCloudProject(permitted[0].id, permitted[0]);
+        } else {
+          throw new Error('Nenhum projeto com acesso ao Docs foi encontrado. Abra o Docs pelo Dashboard com um projeto selecionado.');
+        }
+        projectPicker.replaceChildren(...permitted.map(project => new Option(project.name || 'Projeto', project.id)));
+        if (!Array.from(projectPicker.options).some(option => option.value === currentProjectId)) projectPicker.add(new Option('Projeto atual', currentProjectId));
+        projectPicker.value = currentProjectId;
+      };
+      const startOnlineDocs = async () => {
+        try { currentAccessToken = await obtainAccessToken(); }
+        catch (error) { authStatus.textContent = error.message || 'Não foi possível renovar a sessão.'; }
+        if (!currentAccessToken) { authGate.hidden = false; return; }
+        try { currentUser = await apiFetch('/auth/v1/user'); }
+        catch (error) {
+          [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
+          currentAccessToken = ''; authGate.hidden = false; authStatus.textContent = 'Sua sessão expirou. Entre novamente para continuar.'; return;
+        }
+        authGate.hidden = true; document.querySelector('#sign-out').hidden = false;
+        try { await openCloudProjectPicker(); updateEditorPermissions(); }
+        catch (error) { statusMessage(error.message || 'Não foi possível abrir o projeto.', 'pending'); }
+      };
+      document.querySelector('#auth-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = document.querySelector('#auth-submit'); button.disabled = true; authStatus.textContent = 'Enviando link de acesso…';
+        try {
+          const redirectTo = location.origin + location.pathname + location.search;
+          await apiFetch('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email: document.querySelector('#auth-email').value.trim(), create_user: false, options: { emailRedirectTo: redirectTo } }) }, '');
+          authStatus.textContent = 'Confira seu e-mail e abra o link neste navegador para continuar.';
+        } catch (error) { authStatus.textContent = error.message || 'Não foi possível enviar o link agora.'; }
+        finally { button.disabled = false; }
+      });
+      document.querySelector('#local-mode').addEventListener('click', () => { authGate.hidden = true; statusMessage('Modo local — este rascunho não está compartilhado'); });
+      projectPicker.addEventListener('change', async () => {
+        const previousProject = currentProjectId;
+        try { await loadCloudProject(projectPicker.value, projectPicker.selectedOptions[0]?.textContent ? { id: projectPicker.value, name: projectPicker.selectedOptions[0].textContent } : null); }
+        catch (error) { projectPicker.value = previousProject; statusMessage(error.message, 'pending'); }
+      });
+      document.querySelector('#sync-refresh').addEventListener('click', async () => {
+        const conflict = documents.find(record => record.id === activeDocumentId && record.remoteConflict);
+        if (conflict) {
+          if (!confirm('Recarregar a versão do projeto? Seu rascunho local continuará guardado neste navegador.')) return;
+          documents.push(makeRecord({ ...conflict, id: makeId(), remoteId: '', remoteUpdatedAt: '', dirty: false, title: `${conflict.title} (rascunho local)` }));
+          dirtyDocumentIds.delete(conflict.id); conflict.dirty = false; conflict.remoteConflict = false;
+          saveProjectCache();
+        }
+        try { await refreshProjectDocs(false); for (const record of documents.filter(item => item.dirty)) syncRecord(record); }
+        catch (error) { statusMessage(error.message || 'Não foi possível atualizar.', 'pending'); }
+      });
+      document.querySelector('#sign-out').addEventListener('click', async () => {
+        try { await apiFetch('/auth/v1/logout', { method: 'POST' }); } catch (_) {}
+        [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
+        currentAccessToken = ''; currentUser = null; clearInterval(remotePollTimer); authGate.hidden = false; document.querySelector('#sign-out').hidden = true;
+      });
+      startOnlineDocs();
+      const escapeHtml = value => value.replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+      const closeSlashMenu = () => {
+        slashMenu.classList.remove('open');
+        slashMenu.setAttribute('aria-hidden', 'true');
+        editor.setAttribute('aria-expanded', 'false');
+        editor.removeAttribute('aria-activedescendant');
+        slashFolderStack = [];
+        slashHeading.textContent = 'Inserir bloco';
+      };
+      const placeSlashMenu = () => {
+        if (!slashRange) return;
+        const rect = slashRange.getBoundingClientRect();
+        const left = Math.max(10, Math.min(rect.left, window.innerWidth - 316));
+        const below = rect.bottom + 8;
+        const top = below + 360 < window.innerHeight ? below : Math.max(10, rect.top - 360);
+        slashMenu.style.left = `${left}px`;
+        slashMenu.style.top = `${top}px`;
+      };
+      const matchesSlashCommand = (command, query) => {
+        const normalizedQuery = query.toLocaleLowerCase('pt-BR');
+        const ownMatch = `${command.label} ${command.detail}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery);
+        return ownMatch || Boolean(command.children?.some(child => matchesSlashCommand(child, query)));
+      };
+      const renderSlashMenu = query => {
+        const activeSlashFolder = slashFolderStack.at(-1);
+        const source = activeSlashFolder?.children || (slashImageFigure ? [imageOptionsFolder, ...commands] : commands);
+        filteredCommands = source.filter(command => matchesSlashCommand(command, query));
+        const breadcrumb = slashFolderStack.map(folder => folder.label).join(' › ');
+        slashHeading.textContent = breadcrumb ? `${breadcrumb} · ↑↓ navegam · Enter abre/insere · Backspace volta` : 'Inserir bloco · Enter abre/insere';
+        selectedCommand = Math.min(selectedCommand, Math.max(0, filteredCommands.length - 1));
+        slashOptions.replaceChildren();
+        if (!filteredCommands.length) {
+          const empty = document.createElement('div');
+          empty.className = 'slash-empty';
+          empty.textContent = 'Nenhum comando encontrado';
+          slashOptions.append(empty);
+          editor.removeAttribute('aria-activedescendant');
+          return;
+        }
+        filteredCommands.forEach((command, index) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.id = `slash-option-${index}`;
+          option.className = `slash-option${command.kind === 'folder' ? ' slash-folder' : ''}`;
+          option.setAttribute('role', 'option');
+          option.setAttribute('aria-selected', String(index === selectedCommand));
+          if (command.kind === 'folder') option.setAttribute('aria-expanded', 'false');
+          const iconAsset = command.iconAsset ? ` data-icon="${escapeHtml(command.iconAsset)}"` : '';
+          option.innerHTML = `<span class="slash-option-icon"${iconAsset} aria-hidden="true">${command.iconAsset ? '' : escapeHtml(command.icon)}</span><span class="slash-option-copy"><span>${escapeHtml(command.label)}</span><small>${escapeHtml(command.detail)}</small></span>${command.kind === 'folder' ? '<span class="slash-folder-arrow" aria-hidden="true">›</span>' : ''}`;
+          option.addEventListener('mousedown', event => event.preventDefault());
+          option.addEventListener('click', () => applyCommand(index));
+          slashOptions.append(option);
+        });
+        editor.setAttribute('aria-activedescendant', `slash-option-${selectedCommand}`);
+      };
+      const updateSlashMenu = () => {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) {
+          closeSlashMenu();
+          return;
+        }
+        const node = selection.anchorNode;
+        if (node.nodeType !== Node.TEXT_NODE) { closeSlashMenu(); return; }
+        const beforeCaret = node.textContent.slice(0, selection.anchorOffset);
+        const match = beforeCaret.match(/(?:^|\s)\/([^\s/]*)$/u);
+        if (!match || dismissedSlash) { closeSlashMenu(); return; }
+        const slashIndex = beforeCaret.length - match[0].length + (match[0].startsWith(' ') ? 1 : 0);
+        const anchorElement = node.parentElement;
+        slashTableCell = anchorElement?.closest('th,td') || null;
+        slashImageFigure = anchorElement?.closest('figcaption')?.closest('figure[data-docs-image]') || null;
+        slashRange = document.createRange();
+        slashRange.setStart(node, slashIndex);
+        slashRange.setEnd(node, selection.anchorOffset);
+        selectedCommand = 0;
+        renderSlashMenu(match[1]);
+        slashMenu.classList.add('open');
+        slashMenu.setAttribute('aria-hidden', 'false');
+        editor.setAttribute('aria-expanded', 'true');
+        placeSlashMenu();
+      };
+      const insertAtCaret = html => {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const fragment = range.createContextualFragment(html);
+        const last = fragment.lastChild;
+        range.insertNode(fragment);
+        if (last) {
+          range.setStartAfter(last);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      };
+      let mermaidBlockSequence = 0;
+      let mermaidLibraryPromise = null;
+      const buildMermaidBlock = (id, source) => {
+        const figure = document.createElement('figure');
+        figure.id = id;
+        figure.className = 'mermaid-block';
+        figure.dataset.mermaidBlock = 'true';
+        const toolbar = document.createElement('figcaption');
+        toolbar.className = 'mermaid-toolbar';
+        toolbar.contentEditable = 'false';
+        const label = document.createElement('span');
+        label.textContent = 'Diagrama Mermaid';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.mermaidPreview = 'true';
+        button.setAttribute('aria-pressed', 'false');
+        button.textContent = 'Prévia';
+        toolbar.append(label, button);
+        const pre = document.createElement('pre');
+        pre.className = 'mermaid-source';
+        pre.contentEditable = 'true';
+        pre.setAttribute('aria-label', 'Fonte do diagrama Mermaid');
+        const code = document.createElement('code');
+        code.className = 'language-mermaid';
+        code.textContent = source;
+        pre.append(code);
+        const preview = document.createElement('div');
+        preview.className = 'mermaid-preview';
+        preview.hidden = true;
+        preview.setAttribute('aria-label', 'Prévia do diagrama Mermaid');
+        const status = document.createElement('div');
+        status.className = 'mermaid-status';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        status.textContent = 'Fonte Mermaid editável';
+        figure.append(toolbar, pre, preview, status);
+        return figure;
+      };
+      const insertMermaidBlock = () => {
+        mermaidBlockSequence += 1;
+        const id = `docs-mermaid-${Date.now()}-${mermaidBlockSequence}`;
+        const figure = buildMermaidBlock(id, 'flowchart TD\n  ideia[Ideia] --> proximo[Próximo passo]');
+        const after = document.createElement('p');
+        after.innerHTML = '<br>';
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const anchorElement = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const currentBlock = anchorElement?.closest('p,h1,h2,h3,blockquote');
+        if (currentBlock && editor.contains(currentBlock) && !currentBlock.textContent.trim() && !currentBlock.querySelector('img,table,hr')) {
+          currentBlock.replaceWith(figure, after);
+        } else {
+          const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+          if (!range) return;
+          range.insertNode(figure);
+          figure.after(after);
+        }
+        placeCaret(figure.querySelector('.mermaid-source code'));
+      };
+      const loadMermaid = () => {
+        if (!mermaidLibraryPromise) {
+          mermaidLibraryPromise = new Promise((resolve, reject) => {
+            if (window.mermaid) {
+              resolve(window.mermaid);
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = './vendor/mermaid/mermaid-12.0.0.min.js';
+            script.async = true;
+            script.onload = () => window.mermaid ? resolve(window.mermaid) : reject(new Error('Biblioteca Mermaid indisponível'));
+            script.onerror = () => reject(new Error('Não foi possível carregar a biblioteca Mermaid local'));
+            document.head.append(script);
+          }).then(mermaid => {
+            mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'dark' });
+            return mermaid;
+          }).catch(error => {
+            mermaidLibraryPromise = null;
+            throw error;
+          });
+        }
+        return mermaidLibraryPromise;
+      };
+      let mermaidRenderSequence = 0;
+      const renderMermaidBlock = async figure => {
+        const source = figure.querySelector('.mermaid-source');
+        const preview = figure.querySelector('.mermaid-preview');
+        const button = figure.querySelector('[data-mermaid-preview]');
+        const status = figure.querySelector('.mermaid-status');
+        const definition = source?.innerText.trim();
+        if (!definition || !preview || !button || !status) return;
+        button.disabled = true;
+        status.hidden = false;
+        status.dataset.error = 'false';
+        status.textContent = 'Gerando prévia…';
+        try {
+          const mermaid = await loadMermaid();
+          mermaidRenderSequence += 1;
+          const result = await mermaid.render(`heartspace-mermaid-${mermaidRenderSequence}`, definition);
+          preview.innerHTML = result.svg;
+          source.hidden = true;
+          preview.hidden = false;
+          figure.dataset.mermaidView = 'preview';
+          button.textContent = 'Editar fonte';
+          button.setAttribute('aria-pressed', 'true');
+          status.textContent = 'Prévia do diagrama';
+        } catch (error) {
+          status.dataset.error = 'true';
+          status.textContent = `Não foi possível gerar a prévia: ${error?.message || 'verifique a fonte do diagrama e a conexão'}`;
+        } finally {
+          button.disabled = false;
+        }
+      };
+      const toggleMermaidPreview = button => {
+        const figure = button.closest('[data-mermaid-block]');
+        if (!figure) return;
+        if (figure.dataset.mermaidView === 'preview') {
+          figure.querySelector('.mermaid-source').hidden = false;
+          figure.querySelector('.mermaid-preview').hidden = true;
+          figure.dataset.mermaidView = 'source';
+          button.textContent = 'Prévia';
+          button.setAttribute('aria-pressed', 'false');
+          figure.querySelector('.mermaid-status').textContent = 'Fonte Mermaid editável';
+          return;
+        }
+        renderMermaidBlock(figure);
+      };
+      editor.addEventListener('click', event => {
+        const button = event.target.closest?.('[data-mermaid-preview]');
+        if (!button) return;
+        event.preventDefault();
+        toggleMermaidPreview(button);
+      });
+      let normalizedMermaidNesting = false;
+      const outerMermaidBlocks = [...editor.querySelectorAll('[data-mermaid-block]')]
+        .filter(block => !block.parentElement?.closest('[data-mermaid-block]'));
+      outerMermaidBlocks.forEach(block => {
+        const descendants = [...block.querySelectorAll('[data-mermaid-block]')];
+        if (!descendants.length) return;
+        const deepest = descendants[descendants.length - 1];
+        const source = deepest.querySelector('.mermaid-source code')?.textContent || '';
+        block.replaceWith(buildMermaidBlock(block.id || `docs-mermaid-recovered-${Date.now()}`, source));
+        normalizedMermaidNesting = true;
+      });
+      const migratedMermaidBlocks = [...editor.querySelectorAll('pre > code.language-mermaid')]
+        .filter(code => !code.closest('[data-mermaid-block]'));
+      migratedMermaidBlocks.forEach((code, index) => {
+        const legacyBlock = code.closest('pre');
+        const id = `docs-mermaid-migrated-${Date.now()}-${index}`;
+        const figure = buildMermaidBlock(id, code.textContent);
+        const paragraph = legacyBlock.parentElement?.matches('p') && legacyBlock.parentElement.childNodes.length === 1 ? legacyBlock.parentElement : null;
+        if (paragraph) paragraph.replaceWith(figure);
+        else legacyBlock.replaceWith(figure);
+      });
+      if (migratedMermaidBlocks.length || normalizedMermaidNesting) queueSave();
+      void (async () => {
+        for (const figure of editor.querySelectorAll('[data-mermaid-block]')) {
+          await renderMermaidBlock(figure);
+        }
+      })();
+      const templateHtml = kind => ({
+        gdd: '<h1>Game Design Document</h1><h2>Visão geral</h2><p>Qual é a ideia central?</p><h2>Pilares de design</h2><ul><li>Primeiro pilar</li><li>Segundo pilar</li></ul><h2>Loop principal</h2><p>Descreva o que a pessoa faz, aprende e busca dominar.</p><h2>Sistemas</h2><p><br></p><h2>Referências</h2><p><br></p>',
+        spec: '<h1>Especificação de recurso</h1><h2>Problema</h2><p>Que necessidade queremos atender?</p><h2>Objetivo</h2><p><br></p><h2>Experiência proposta</h2><p><br></p><h2>Escopo</h2><ul><li>Incluído</li><li>Fora do escopo</li></ul><h2>Critérios de conclusão</h2><ul><li><br></li></ul>',
+        meeting: '<h1>Notas de reunião</h1><p><strong>Data:</strong> <br><strong>Participantes:</strong> </p><h2>Pauta</h2><ul><li><br></li></ul><h2>Decisões</h2><ul><li><br></li></ul><h2>Próximos passos</h2><ul><li><br></li></ul>'
+      }[kind]);
+      const formatCurrentBlock = tagName => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount) return false;
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+        const block = node?.closest('p,h1,h2,h3');
+        if (!block || !editor.contains(block) || block.textContent.trim()) return false;
+        const replacement = document.createElement(tagName);
+        replacement.innerHTML = '<br>';
+        block.replaceWith(replacement);
+        placeCaret(replacement);
+        return true;
+      };
+      const applyTextAlignment = command => {
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const block = element?.closest('p,h1,h2,h3,blockquote,li,th,td');
+        if (!block || !editor.contains(block)) return false;
+        const alignment = ({ justifyLeft: 'left', justifyCenter: 'center', justifyRight: 'right', justifyFull: 'justify' })[command];
+        if (!alignment) return false;
+        if (alignment === 'left') block.style.removeProperty('text-align');
+        else block.style.textAlign = alignment;
+        return true;
+      };
+      function applyCommand(index) {
+        const command = filteredCommands[index];
+        if (!command || !slashRange) return;
+        if (command.kind === 'folder') {
+          slashFolderStack.push(command);
+          selectedCommand = 0;
+          renderSlashMenu(slashRange.toString().replace(/^\//, ''));
+          placeSlashMenu();
+          return;
+        }
+        const selection = window.getSelection();
+        slashRange.deleteContents();
+        slashRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(slashRange);
+        closeSlashMenu();
+        dismissedSlash = false;
+        if (command.kind === 'block') {
+          if (!formatCurrentBlock(command.value)) document.execCommand('formatBlock', false, command.value);
+        }
+        else if (command.kind === 'align') applyTextAlignment(command.value);
+        else if (command.kind === 'list') document.execCommand('insertUnorderedList');
+        else if (command.kind === 'ordered') document.execCommand('insertOrderedList');
+        else if (command.kind === 'tasks') insertChecklist();
+        else if (command.kind === 'image') {
+          const selection = window.getSelection();
+          pendingImageRange = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+          document.querySelector('#image-file').click();
+        }
+        else if (command.kind === 'image-caption-position' && slashImageFigure) slashImageFigure.dataset.captionPosition = command.value;
+        else if (command.kind === 'image-caption-align' && slashImageFigure) slashImageFigure.dataset.captionAlign = command.value;
+        else if (command.kind === 'image-style' && slashImageFigure) {
+          if (command.value === 'standard') delete slashImageFigure.dataset.imageStyle;
+          else slashImageFigure.dataset.imageStyle = command.value;
+        }
+        else if (command.kind === 'table') insertTable();
+        else if (command.kind === 'table-column') addTableColumn(command.value);
+        else if (command.kind === 'table-row') addTableRow(command.value);
+        else if (command.kind === 'table-delete-row') deleteTableRow();
+        else if (command.kind === 'table-delete-column') deleteTableColumn();
+        else if (command.kind === 'table-delete') deleteTable();
+        else if (command.kind === 'callout') insertCallout(command.value);
+        else if (command.kind === 'divider') insertAtCaret('<hr><p><br></p>');
+        else if (command.kind === 'diagram') insertMermaidBlock();
+        else if (command.kind === 'inline') applyInlineCommand(command.value);
+        else if (command.kind === 'inline-markup') insertInlineMarkup(command.value);
+        else if (command.kind === 'link') insertLink();
+        else if (command.kind === 'template') insertAtCaret(templateHtml(command.value));
+        editor.focus();
+        slashTableCell = null;
+        slashImageFigure = null;
+        queueSave();
+      }
+      let checklistSequence = 0;
+      const checklistContentMarkup = () => '<input class="checklist-box" type="checkbox" contenteditable="false" aria-label="Marcar tarefa"><span class="checklist-text" data-checklist-text="true" data-placeholder="Nome da tarefa" contenteditable="true"></span>';
+      const checklistItemMarkup = () => `<li data-checklist-item="true">${checklistContentMarkup()}</li>`;
+      const calloutDefinitions = {
+        note: ['Nota', 'ⓘ'], abstract: ['Resumo', '▤'], summary: ['Resumo', '▤'], info: ['Informação', 'ⓘ'], todo: ['Tarefa', '☐'], tip: ['Dica', '✦'], success: ['Sucesso', '✓'], question: ['Pergunta', '?'], faq: ['Pergunta frequente', '?'], warning: ['Aviso', '!'], failure: ['Falha', '×'], danger: ['Perigo', '⚠'], error: ['Erro', '×'], bug: ['Bug', '⚙'], example: ['Exemplo', '◇'], quote: ['Citação', '❞'],
+        callout_info: ['Chamada informativa', 'ℹ️'], callout_warning: ['Chamada de atenção', '⚠️'], callout_idea: ['Chamada de ideia', '💡'], callout_decision: ['Decisão', '✓'], callout_open: ['Em aberto', '◌'], callout_review: ['Precisa de revisão', '↻'], callout_risk: ['Risco', '⚠'], callout_reference: ['Referência', '↗']
+      };
+      const calloutIconAsset = type => {
+        if (['note', 'info', 'callout_info'].includes(type)) return 'info';
+        if (['warning', 'failure', 'danger', 'error', 'bug', 'callout_warning', 'callout_risk', 'callout_review'].includes(type)) return 'warning';
+        if (['tip', 'callout_idea'].includes(type)) return 'idea';
+        return '';
+      };
+      const createCallout = (type, customTitle = '', fold = '') => {
+        const normalizedType = /^[a-z][a-z0-9_-]*$/i.test(type) ? type.toLowerCase() : 'note';
+        const definition = calloutDefinitions[normalizedType] || [normalizedType.replace(/[-_]/g, ' ').replace(/^\w/, character => character.toUpperCase()), 'ⓘ'];
+        const callout = document.createElement('aside');
+        callout.className = 'callout';
+        callout.dataset.calloutType = normalizedType;
+        callout.dataset.collapsed = String(fold === '-');
+        const heading = document.createElement('div');
+        heading.className = 'callout-heading';
+        const icon = document.createElement('span');
+        icon.className = 'callout-icon';
+        icon.contentEditable = 'false';
+        const iconAsset = calloutIconAsset(normalizedType);
+        if (iconAsset) icon.dataset.icon = iconAsset;
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = definition[1];
+        const headingText = document.createElement('span');
+        headingText.className = 'callout-title';
+        headingText.contentEditable = 'true';
+        headingText.textContent = customTitle || definition[0];
+        heading.append(icon, headingText);
+        let toggle = null;
+        if (fold === '+' || fold === '-') {
+          toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'callout-toggle';
+          toggle.contentEditable = 'false';
+          toggle.setAttribute('aria-label', fold === '-' ? 'Expandir callout' : 'Recolher callout');
+          toggle.setAttribute('aria-expanded', String(fold !== '-'));
+          toggle.textContent = '⌄';
+          heading.append(toggle);
+        }
+        const body = document.createElement('div');
+        body.className = 'callout-body';
+        body.contentEditable = 'true';
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        body.append(paragraph);
+        if (fold === '-') body.hidden = true;
+        callout.append(heading, body);
+        return callout;
+      };
+      let calloutSequence = 0;
+      const insertCallout = type => {
+        calloutSequence += 1;
+        const calloutId = `new-callout-${Date.now()}-${calloutSequence}`;
+        const definition = calloutDefinitions[type] || [type, 'ⓘ'];
+        const iconAsset = calloutIconAsset(type);
+        const iconData = iconAsset ? ` data-icon="${iconAsset}"` : '';
+        const iconText = iconAsset ? '' : escapeHtml(definition[1]);
+        const html = `<aside id="${calloutId}" class="callout" data-callout-type="${escapeHtml(type)}" data-collapsed="false"><div class="callout-heading"><span class="callout-icon"${iconData} contenteditable="false" aria-hidden="true">${iconText}</span><span class="callout-title" contenteditable="true">${escapeHtml(definition[0])}</span></div><div class="callout-body" contenteditable="true"><p><br></p></div></aside>`;
+        document.execCommand('insertHTML', false, html);
+        placeCaret(editor.querySelector(`#${calloutId} .callout-body p`));
+      };
+      const convertMarkdownCallout = () => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return false;
+        const node = selection.anchorNode;
+        const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+        const block = element?.closest('p,div');
+        if (!block || block === editor || !editor.contains(block)) return false;
+        const source = block.textContent.trim();
+        const match = source.match(/^>\s*\[!([a-z][a-z0-9_-]*)\]([+-]?)(?:\s+(.+))?$/i);
+        if (!match) return false;
+        const callout = createCallout(match[1], (match[3] || '').trim(), match[2]);
+        block.replaceWith(callout);
+        if (match[2] === '-') placeCaret(callout.querySelector('.callout-title'), true);
+        else placeCaret(callout.querySelector('.callout-body p'));
+        return true;
+      };
+      const placeCaret = (element, atEnd = false) => {
+        if (!element) return;
+        editor.focus();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        range.collapse(!atEnd);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+      const insertChecklist = () => {
+        checklistSequence += 1;
+        const listId = `new-checklist-${Date.now()}-${checklistSequence}`;
+        document.execCommand('insertHTML', false, `<ul id="${listId}" data-list-type="checklist">${checklistItemMarkup()}</ul>`);
+        placeCaret(editor.querySelector(`#${listId} [data-checklist-text]`));
+      };
+      let tableSequence = 0;
+      const insertTable = () => {
+        tableSequence += 1;
+        const tableId = `new-table-${Date.now()}-${tableSequence}`;
+        const table = document.createElement('table');
+        table.id = tableId;
+        table.dataset.docsTable = 'true';
+        table.innerHTML = '<thead><tr><th scope="col" data-placeholder="Cabeçalho"></th><th scope="col" data-placeholder="Cabeçalho"></th></tr></thead><tbody><tr><td><br></td><td><br></td></tr></tbody>';
+        const after = document.createElement('p');
+        after.innerHTML = '<br>';
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const anchorElement = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const currentBlock = anchorElement?.closest('p,h1,h2,h3,blockquote');
+        if (currentBlock && editor.contains(currentBlock) && !currentBlock.textContent.trim() && !currentBlock.querySelector('img,table,hr')) {
+          currentBlock.replaceWith(table, after);
+        } else {
+          const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+          if (!range) return;
+          range.insertNode(table);
+          table.after(after);
+        }
+        placeCaret(editor.querySelector(`#${tableId} th`));
+      };
+      const addTableColumn = side => {
+        const context = getCurrentTableCell();
+        if (!context) return;
+        const { cell: currentCell, table } = context;
+        const insertAt = currentCell.cellIndex + (side === 'right' ? 1 : 0);
+        let focusCell = null;
+        [...table.rows].forEach(row => {
+          const cell = row.closest('thead') ? document.createElement('th') : document.createElement('td');
+          if (cell.tagName === 'TH') {
+            cell.scope = 'col';
+            cell.dataset.placeholder = 'Cabeçalho';
+          } else cell.innerHTML = '<br>';
+          row.insertBefore(cell, row.cells[insertAt] || null);
+          if (row === currentCell.parentElement) focusCell = cell;
+        });
+        placeCaret(focusCell || currentCell);
+      };
+      const getCurrentTableCell = () => {
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const anchorElement = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const cell = anchorElement?.closest('th,td');
+        const table = cell?.closest('table[data-docs-table]');
+        if (cell && table) return { cell, table };
+        const savedCell = slashTableCell;
+        const savedTable = savedCell?.closest('table[data-docs-table]');
+        return savedCell?.isConnected && savedTable ? { cell: savedCell, table: savedTable } : null;
+      };
+      const addTableRow = position => {
+        const context = getCurrentTableCell();
+        if (!context) return;
+        const { cell, table } = context;
+        const activeRow = cell.parentElement;
+        const row = document.createElement('tr');
+        const isHeader = activeRow.closest('thead');
+        for (let index = 0; index < activeRow.cells.length; index += 1) {
+          const newCell = document.createElement(isHeader ? 'th' : 'td');
+          if (isHeader) { newCell.scope = 'col'; newCell.dataset.placeholder = 'Cabeçalho'; }
+          else newCell.innerHTML = '<br>';
+          row.append(newCell);
+        }
+        activeRow.insertAdjacentElement(position === 'above' ? 'beforebegin' : 'afterend', row);
+        placeCaret(row.cells[Math.min(cell.cellIndex, row.cells.length - 1)]);
+      };
+      const deleteTableRow = () => {
+        const context = getCurrentTableCell();
+        if (!context) return;
+        const { cell, table } = context;
+        if (table.rows.length <= 1) return;
+        const row = cell.parentElement;
+        const nextRow = row.nextElementSibling || row.previousElementSibling;
+        row.remove();
+        if (nextRow?.cells.length) placeCaret(nextRow.cells[Math.min(cell.cellIndex, nextRow.cells.length - 1)]);
+      };
+      const deleteTableColumn = () => {
+        const context = getCurrentTableCell();
+        if (!context) return;
+        const { cell, table } = context;
+        if (table.rows[0]?.cells.length <= 1) return;
+        const columnIndex = cell.cellIndex;
+        const activeRow = cell.parentElement;
+        [...table.rows].forEach(row => row.cells[columnIndex]?.remove());
+        placeCaret(activeRow.cells[Math.min(columnIndex, activeRow.cells.length - 1)]);
+      };
+      const deleteTable = () => {
+        const context = getCurrentTableCell();
+        if (!context) return;
+        const { table } = context;
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        table.after(paragraph);
+        table.remove();
+        placeCaret(paragraph);
+      };
+      const isInsideChecklistText = node => {
+        const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+        return element?.closest?.('[data-checklist-text]') || null;
+      };
+      const getChecklistContext = node => {
+        const text = isInsideChecklistText(node);
+        const item = text?.closest('[data-checklist-item]');
+        const list = item?.closest('ul[data-list-type="checklist"]');
+        return text && item && list ? { text, item, list } : null;
+      };
+      const caretIsAtStart = (text, selection) => {
+        const prefix = document.createRange();
+        prefix.selectNodeContents(text);
+        prefix.setEnd(selection.anchorNode, selection.anchorOffset);
+        return prefix.toString().length === 0;
+      };
+      const endChecklist = ({ item, list }) => {
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        const text = item.querySelector('[data-checklist-text]');
+        if (!text?.textContent.trim()) item.remove();
+        if (list.querySelector('[data-checklist-item]')) list.after(paragraph);
+        else list.replaceWith(paragraph);
+        placeCaret(paragraph);
+      };
+      const exitCallout = () => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return false;
+        const node = selection.anchorNode;
+        const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+        const callout = element?.closest('.callout');
+        if (!callout) return false;
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        callout.after(paragraph);
+        placeCaret(paragraph);
+        return true;
+      };
+      const continueChecklist = event => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed) return false;
+        const context = getChecklistContext(selection.anchorNode);
+        if (!context) return false;
+        const { item, list } = context;
+        if (event.shiftKey) {
+          event.preventDefault();
+          endChecklist(context);
+          return true;
+        }
+        event.preventDefault();
+        const next = document.createElement('li');
+        next.dataset.checklistItem = 'true';
+        next.innerHTML = checklistContentMarkup();
+        copyLineIndent(item, next);
+        item.after(next);
+        placeCaret(next.querySelector('[data-checklist-text]'));
+        return true;
+      };
+      const editChecklistWithBackspace = event => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed) return false;
+        const context = getChecklistContext(selection.anchorNode);
+        if (!context || !caretIsAtStart(context.text, selection)) return false;
+        const { text, item, list } = context;
+        const previous = item.previousElementSibling?.matches('[data-checklist-item]') ? item.previousElementSibling : null;
+        const next = item.nextElementSibling?.matches('[data-checklist-item]') ? item.nextElementSibling : null;
+        event.preventDefault();
+        if (!text.textContent.trim()) {
+          if (previous) {
+            item.remove();
+            placeCaret(previous.querySelector('[data-checklist-text]'), true);
+          } else if (next) {
+            item.remove();
+            placeCaret(next.querySelector('[data-checklist-text]'));
+          } else {
+            endChecklist(context);
+          }
+          queueSave();
+          return true;
+        }
+        if (previous) {
+          const previousText = previous.querySelector('[data-checklist-text]');
+          previousText.append(...text.childNodes);
+          item.remove();
+          placeCaret(previousText, true);
+          queueSave();
+        }
+        return true;
+      };
+      const convertMarkdownChecklist = () => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode) || selection.anchorNode.nodeType !== Node.TEXT_NODE) return false;
+        const node = selection.anchorNode;
+        const prefix = node.textContent.slice(0, selection.anchorOffset);
+        if (!/^-\s*\[(?:\s|x|X)?\]\s$/u.test(prefix) || node.textContent !== prefix) return false;
+        const block = node.parentElement?.closest('p,div');
+        if (!block || block === editor || !editor.contains(block) || block.textContent !== prefix) return false;
+        const list = document.createElement('ul');
+        list.dataset.listType = 'checklist';
+        const item = document.createElement('li');
+        item.dataset.checklistItem = 'true';
+        item.innerHTML = checklistContentMarkup();
+        list.append(item);
+        block.replaceWith(list);
+        placeCaret(item.querySelector('[data-checklist-text]'));
+        queueSave();
+        return true;
+      };
+      const insertInlineMarkup = tag => {
+        const placeholder = tag === 'code' ? 'código' : 'realce';
+        document.execCommand('insertHTML', false, `<${tag}>${placeholder}</${tag}>`);
+        const inserted = window.getSelection()?.anchorNode;
+        const wrapper = (inserted?.nodeType === Node.ELEMENT_NODE ? inserted : inserted?.parentElement)?.closest(tag);
+        if (wrapper) {
+          const range = document.createRange();
+          range.selectNodeContents(wrapper);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      };
+      const inlineEffectTags = { bold: 'strong', italic: 'em', strikeThrough: 's', underline: 'u' };
+      const applyInlineCommand = command => {
+        if (!inlineEffectTags[command]) return;
+        document.execCommand(command);
+      };
+      const stopInlineEffectOnShiftSpace = () => {
+        const selection = window.getSelection();
+        if (!selection?.isCollapsed || !selection.rangeCount || !editor.contains(selection.anchorNode)) return false;
+        const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
+        const wrapper = anchorElement?.closest('strong,b,em,i,s,strike,del,u,mark,code');
+        const activeCommands = ['bold', 'italic', 'strikeThrough', 'underline'].filter(command => document.queryCommandState(command));
+        if ((!wrapper || !editor.contains(wrapper)) && !activeCommands.length) return false;
+        const range = selection.getRangeAt(0);
+        const space = document.createTextNode(' ');
+        if (wrapper && editor.contains(wrapper)) {
+          const trailingRange = document.createRange();
+          trailingRange.setStart(range.startContainer, range.startOffset);
+          trailingRange.setEnd(wrapper, wrapper.childNodes.length);
+          const trailing = trailingRange.extractContents();
+          if (trailing.hasChildNodes()) {
+            const continuation = wrapper.cloneNode(false);
+            continuation.append(trailing);
+            wrapper.after(space, continuation);
+          } else wrapper.after(space);
+          range.setStartBefore(space);
+        } else range.collapse(true);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        activeCommands.forEach(command => document.execCommand(command));
+        const insertRange = document.createRange();
+        if (wrapper && editor.contains(wrapper)) insertRange.setStart(space, 1);
+        else {
+          const currentRange = selection.getRangeAt(0);
+          insertRange.setStart(currentRange.startContainer, currentRange.startOffset);
+          insertRange.insertNode(space);
+          insertRange.setStart(space, 1);
+        }
+        insertRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(insertRange);
+        return true;
+      };
+      const adjustLineIndent = outdent => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !editor.contains(selection.anchorNode)) return false;
+        const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
+        const block = anchorElement?.closest('p,h1,h2,h3,li,blockquote');
+        if (!block || !editor.contains(block)) return false;
+        const current = Math.max(0, Math.min(8, Number(block.dataset.indent) || 0));
+        const next = Math.max(0, Math.min(8, current + (outdent ? -1 : 1)));
+        if (next === current) return true;
+        if (next) {
+          block.dataset.indent = String(next);
+          block.style.setProperty('--line-indent', `${next * 24}px`);
+        } else {
+          delete block.dataset.indent;
+          block.style.removeProperty('--line-indent');
+          if (!block.getAttribute('style')?.trim()) block.removeAttribute('style');
+        }
+        return true;
+      };
+      const moveTableCell = event => {
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const anchorElement = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const cell = anchorElement?.closest('th,td');
+        const table = cell?.closest('table[data-docs-table]');
+        if (!cell || !table) return false;
+        event.preventDefault();
+        const cells = [...table.querySelectorAll('th,td')];
+        const index = cells.indexOf(cell);
+        if (event.shiftKey) {
+          if (index > 0) placeCaret(cells[index - 1], true);
+          return true;
+        }
+        if (index < cells.length - 1) {
+          placeCaret(cells[index + 1]);
+          return true;
+        }
+        const body = table.tBodies[0] || table.createTBody();
+        const columnCount = table.rows[0]?.cells.length || 2;
+        const row = body.insertRow();
+        for (let column = 0; column < columnCount; column += 1) row.insertCell().innerHTML = '<br>';
+        placeCaret(row.cells[0]);
+        return true;
+      };
+      const exitImageCaptionToParagraph = () => {
+        const selection = window.getSelection();
+        const anchor = selection?.anchorNode;
+        const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+        const caption = element?.closest('figcaption');
+        const figure = caption?.closest('figure[data-docs-image]');
+        if (!caption || !figure || !editor.contains(figure)) return false;
+        let paragraph = figure.nextElementSibling;
+        if (!paragraph || paragraph.tagName !== 'P') {
+          paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+          figure.after(paragraph);
+        }
+        placeCaret(paragraph);
+        return true;
+      };
+      const exitTableToParagraph = () => {
+        const context = getCurrentTableCell();
+        if (!context) return false;
+        const { table } = context;
+        let paragraph = table.nextElementSibling;
+        if (!paragraph || paragraph.tagName !== 'P') {
+          paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+          table.after(paragraph);
+        }
+        placeCaret(paragraph);
+        return true;
+      };
+      const copyLineIndent = (source, target) => {
+        const level = Math.max(0, Math.min(8, Number(source?.dataset.indent) || 0));
+        if (!level) return;
+        target.dataset.indent = String(level);
+        target.style.setProperty('--line-indent', `${level * 24}px`);
+      };
+      const normalizeLink = value => {
+        const raw = value.trim();
+        if (!raw) return '';
+        const candidate = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`;
+        try {
+          const url = new URL(candidate, location.href);
+          return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.href : '';
+        } catch (_) { return ''; }
+      };
+      const markdownEscape = value => value.replace(/([\\`*_{}\[\]<>#+.!|])/g, '\\$1');
+      const inlineToMarkdown = node => {
+        if (node.nodeType === Node.TEXT_NODE) return markdownEscape(node.nodeValue || '');
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        const children = [...node.childNodes].map(inlineToMarkdown).join('');
+        switch (node.tagName.toLowerCase()) {
+          case 'strong': case 'b': return `**${children}**`;
+          case 'em': case 'i': return `*${children}*`;
+          case 's': case 'strike': case 'del': return `~~${children}~~`;
+          case 'u': return `<u>${children}</u>`;
+          case 'mark': return `==${children}==`;
+          case 'code': return `\`${(node.textContent || '').replace(/`/g, '\\`')}\``;
+          case 'a': {
+            const href = node.getAttribute('href') || '';
+            return `[${children}](${href.replace(/[()]/g, '\\$&')})`;
+          }
+          case 'br': return '  \n';
+          default: return children;
+        }
+      };
+      const markdownBlocks = parent => [...parent.children].map(node => {
+        const tag = node.tagName.toLowerCase();
+        const alignment = ['center', 'right', 'justify'].includes(node.style.textAlign) ? `<!-- heartspace-align:${node.style.textAlign} -->\n` : '';
+        if (node.matches('figure[data-docs-image]')) {
+          const image = node.querySelector('img');
+          if (!image?.getAttribute('src')) return '';
+          const alt = (image.alt || '').replace(/[\[\]]/g, '\\$&');
+          const caption = node.querySelector('figcaption')?.textContent.trim();
+          const style = node.dataset.imageStyle || 'standard';
+          const position = node.dataset.captionPosition || 'bottom';
+          const align = node.dataset.captionAlign || 'center';
+          const metadata = `<!-- heartspace-image style="${style}" caption-position="${position}" caption-align="${align}" -->\n`;
+          return `${metadata}![${alt}](${image.getAttribute('src')})${caption ? `\n\n*${caption.replace(/\*/g, '\\*')}*` : ''}`;
+        }
+        if (/^h[1-6]$/.test(tag)) return `${alignment}${'#'.repeat(Number(tag[1]))} ${[...node.childNodes].map(inlineToMarkdown).join('').trim()}`;
+        if (tag === 'p') return `${alignment}${[...node.childNodes].map(inlineToMarkdown).join('').trim()}`;
+        if (tag === 'hr') return '---';
+        if (tag === 'blockquote') return markdownBlocks(node).split('\n').map(line => `> ${line}`).join('\n');
+        if (tag === 'pre') {
+          const code = node.querySelector('code') || node;
+          const language = [...code.classList].find(name => name.startsWith('language-'))?.slice(9) || '';
+          const source = code.textContent.replace(/\n+$/, '');
+          const fence = '`'.repeat(Math.max(3, ...[...(source.matchAll(/`+/g))].map(match => match[0].length + 1)));
+          return `${fence}${language}\n${source}\n${fence}`;
+        }
+        if (node.matches('[data-mermaid-block]')) {
+          const source = node.querySelector('.mermaid-source code')?.textContent || '';
+          return `\`\`\`mermaid\n${source.replace(/\n+$/, '')}\n\`\`\``;
+        }
+        if (tag === 'ul' || tag === 'ol') {
+          const isTasks = node.dataset.listType === 'checklist';
+          return [...node.children].filter(item => item.tagName === 'LI').map((item, index) => {
+            const indent = '  '.repeat(Math.max(0, Math.min(8, Number(item.dataset.indent) || 0)));
+            const textNode = item.querySelector('[data-checklist-text]');
+            const text = textNode
+              ? [...textNode.childNodes].map(inlineToMarkdown).join('')
+              : [...item.childNodes].filter(child => !(child.nodeType === Node.ELEMENT_NODE && ['UL', 'OL'].includes(child.tagName))).map(inlineToMarkdown).join('');
+            if (isTasks) {
+              const checked = item.dataset.checked === 'true' || Boolean(item.querySelector('.checklist-box')?.checked);
+              return `${indent}- [${checked ? 'x' : ' '}] ${text.trim()}`;
+            }
+            return `${indent}${tag === 'ol' ? `${index + 1}.` : '-'} ${text.trim()}`;
+          }).join('\n');
+        }
+        if (tag === 'table') {
+          const rows = [...node.rows].map(row => [...row.cells].map(cell => [...cell.childNodes].map(inlineToMarkdown).join('').replace(/\|/g, '\\|').trim()));
+          if (!rows.length) return '';
+          const line = cells => `| ${cells.join(' | ')} |`;
+          const first = line(rows[0]);
+          const separator = line(rows[0].map(() => '---'));
+          return [first, separator, ...rows.slice(1).map(line)].join('\n');
+        }
+        if (node.matches('.callout')) {
+          const type = node.dataset.calloutType || 'note';
+          const fold = node.dataset.collapsed === 'true' ? '-' : (node.querySelector('.callout-toggle') ? '+' : '');
+          const customTitle = node.querySelector('.callout-title')?.textContent.trim() || '';
+          const heading = `> [!${type}]${fold}${customTitle ? ` ${markdownEscape(customTitle)}` : ''}`;
+          const body = markdownBlocks(node.querySelector('.callout-body') || node);
+          return [heading, ...body.split('\n').map(line => `> ${line}`)].join('\n');
+        }
+        return markdownBlocks(node);
+      }).filter(Boolean).join('\n\n');
+      const markdownInlineToHtml = value => {
+        const unescaped = value.replace(/\\([\\`*_{}\[\]<>#+.!|])/g, '$1');
+        let html = escapeHtml(unescaped);
+        html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\)/giu, (_, label, rawHref) => {
+          const href = normalizeLink(rawHref.replace(/&amp;/g, '&'));
+          return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>` : label;
+        });
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/__(.+?)__/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/_(.+?)_/g, '<em>$1</em>')
+          .replace(/~~(.+?)~~/g, '<s>$1</s>')
+          .replace(/==(.+?)==/g, '<mark>$1</mark>')
+          .replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/gi, '<u>$1</u>');
+        return html;
+      };
+      const markdownToFragment = lines => {
+        const fragment = document.createDocumentFragment();
+        let index = 0;
+        let pendingImageMetadata = null;
+        let pendingAlignment = '';
+        const applyPendingAlignment = element => {
+          if (!pendingAlignment) return;
+          element.style.textAlign = pendingAlignment;
+          pendingAlignment = '';
+        };
+        const isBlockStart = line => /^(#{1,6}\s|```|---\s*$|[-*+]\s|\d+\.\s|>\s?|\|.*\|$)/.test(line);
+        while (index < lines.length) {
+          const line = lines[index];
+          if (!line.trim()) { index += 1; continue; }
+          const fenceMatch = line.match(/^(`{3,}|~{3,})([\w-]*)\s*$/);
+          if (fenceMatch) {
+            const fence = fenceMatch[1];
+            const source = [];
+            index += 1;
+            while (index < lines.length && !lines[index].startsWith(fence)) source.push(lines[index++]);
+            if (index < lines.length) index += 1;
+            if (fenceMatch[2].toLowerCase() === 'mermaid') fragment.append(buildMermaidBlock(`docs-mermaid-import-${Date.now()}-${index}`, source.join('\n')));
+            else {
+              const pre = document.createElement('pre');
+              const code = document.createElement('code');
+              if (fenceMatch[2]) code.className = `language-${fenceMatch[2]}`;
+              code.textContent = source.join('\n');
+              pre.append(code); fragment.append(pre);
+            }
+            continue;
+          }
+          const calloutMatch = line.match(/^>\s*\[!([a-z][\w-]*)\]([+-]?)(?:\s+(.*))?$/i);
+          if (calloutMatch) {
+            const quoted = [line]; index += 1;
+            while (index < lines.length && /^>/.test(lines[index])) quoted.push(lines[index++]);
+            const callout = createCallout(calloutMatch[1], '', calloutMatch[2]);
+            if (calloutMatch[3]) callout.querySelector('.callout-title').innerHTML = markdownInlineToHtml(calloutMatch[3]);
+            const bodyLines = quoted.slice(1).map(item => item.replace(/^> ?/, ''));
+            const body = callout.querySelector('.callout-body');
+            body.replaceChildren(...markdownToFragment(bodyLines).childNodes);
+            if (!body.childNodes.length) body.append(document.createElement('p'));
+            fragment.append(callout); continue;
+          }
+          const imageMetadata = line.match(/^<!--\s*heartspace-image\s+style="(standard|banner|framed|rounded)"\s+caption-position="(top|bottom)"\s+caption-align="(left|center|right)"\s*-->$/);
+          if (imageMetadata) { pendingImageMetadata = imageMetadata; index += 1; continue; }
+          const alignmentMetadata = line.match(/^<!--\s*heartspace-align:(left|center|right|justify)\s*-->$/);
+          if (alignmentMetadata) { pendingAlignment = alignmentMetadata[1]; index += 1; continue; }
+          const imageMatch = line.match(/^!\[(.*?)\]\((data:image\/[^)]+)\)$/);
+          if (imageMatch) {
+            const figure = document.createElement('figure');
+            figure.dataset.docsImage = 'true';
+            const imageOptions = pendingImageMetadata;
+            if (imageOptions) {
+              if (imageOptions[1] !== 'standard') figure.dataset.imageStyle = imageOptions[1];
+              if (imageOptions[2] !== 'bottom') figure.dataset.captionPosition = imageOptions[2];
+              if (imageOptions[3] !== 'center') figure.dataset.captionAlign = imageOptions[3];
+            }
+            pendingImageMetadata = null;
+            const image = document.createElement('img'); image.alt = imageMatch[1]; image.src = imageMatch[2];
+            const caption = document.createElement('figcaption'); caption.contentEditable = 'true'; caption.dataset.placeholder = 'Adicionar legenda';
+            figure.append(image, caption); fragment.append(figure); index += 1;
+            if (!lines[index]?.trim() && /^\*.+\*$/.test(lines[index + 1] || '')) {
+              caption.innerHTML = markdownInlineToHtml(lines[index + 1].slice(1, -1));
+              index += 2;
+            }
+            continue;
+          }
+          const heading = line.match(/^(#{1,6})\s+(.+)$/);
+          if (heading) {
+            const element = document.createElement(`h${Math.min(6, heading[1].length)}`);
+            element.innerHTML = markdownInlineToHtml(heading[2]); applyPendingAlignment(element); fragment.append(element); index += 1; continue;
+          }
+          if (/^---\s*$/.test(line)) { fragment.append(document.createElement('hr')); index += 1; continue; }
+          if (/^\|.*\|$/.test(line) && index + 1 < lines.length && /^\|?\s*:?-{3,}/.test(lines[index + 1])) {
+            const parseRow = row => row.replace(/^\s*\|?\s*/, '').replace(/\s*\|?\s*$/, '').split(/(?<!\\)\|/).map(cell => cell.replace(/\\\|/g, '|').trim());
+            const table = document.createElement('table'); table.dataset.docsTable = 'true';
+            const header = parseRow(lines[index]); index += 2;
+            const thead = table.createTHead(); const headerRow = thead.insertRow();
+            header.forEach(value => { const cell = document.createElement('th'); cell.scope = 'col'; cell.innerHTML = markdownInlineToHtml(value); headerRow.append(cell); });
+            const tbody = table.createTBody();
+            while (index < lines.length && /^\|.*\|$/.test(lines[index])) {
+              const row = tbody.insertRow(); parseRow(lines[index++]).forEach(value => { const cell = row.insertCell(); cell.innerHTML = markdownInlineToHtml(value); });
+            }
+            fragment.append(table); continue;
+          }
+          const taskMatch = line.match(/^\s*[-*+]\s+\[([ xX])\]\s*(.*)$/);
+          if (taskMatch || /^\s*[-*+]\s+/.test(line)) {
+            const checklist = Boolean(taskMatch); const list = document.createElement('ul');
+            if (checklist) list.dataset.listType = 'checklist';
+            while (index < lines.length && /^\s*[-*+]\s+/.test(lines[index])) {
+              const raw = lines[index]; const match = raw.match(/^(\s*)[-*+]\s+(?:\[([ xX])\]\s*)?(.*)$/);
+              if (!match) continue;
+              if (checklist !== Boolean(match[2])) break;
+              index += 1;
+              const item = document.createElement('li');
+              const indent = Math.min(8, Math.floor(match[1].length / 2));
+              if (indent) { item.dataset.indent = String(indent); item.style.setProperty('--line-indent', `${indent * 24}px`); }
+              if (checklist) {
+                item.dataset.checklistItem = 'true'; item.dataset.checked = String(match[2].toLowerCase() === 'x');
+                item.innerHTML = checklistContentMarkup();
+                const box = item.querySelector('.checklist-box');
+                box.checked = match[2].toLowerCase() === 'x';
+                if (box.checked) box.setAttribute('checked', '');
+                item.querySelector('[data-checklist-text]').innerHTML = markdownInlineToHtml(match[3]);
+              } else item.innerHTML = markdownInlineToHtml(match[3]);
+              list.append(item);
+            }
+            fragment.append(list); continue;
+          }
+          if (/^\d+\.\s+/.test(line)) {
+            const list = document.createElement('ol');
+            while (index < lines.length && /^\d+\.\s+/.test(lines[index])) {
+              const item = document.createElement('li'); item.innerHTML = markdownInlineToHtml(lines[index++].replace(/^\d+\.\s+/, '')); list.append(item);
+            }
+            fragment.append(list); continue;
+          }
+          if (/^>\s?/.test(line)) {
+            const quote = document.createElement('blockquote'); const content = [];
+            while (index < lines.length && /^>\s?/.test(lines[index])) content.push(lines[index++].replace(/^>\s?/, ''));
+            quote.append(markdownToFragment(content)); fragment.append(quote); continue;
+          }
+          const paragraph = [];
+          while (index < lines.length && lines[index].trim() && (paragraph.length === 0 || !isBlockStart(lines[index]))) paragraph.push(lines[index++]);
+          const p = document.createElement('p'); p.innerHTML = markdownInlineToHtml(paragraph.join(' ')); applyPendingAlignment(p); fragment.append(p);
+        }
+        return fragment;
+      };
+      const exportMarkdown = async () => {
+        transferStatus.textContent = 'Preparando arquivo Markdown…';
+        let url = '';
+        let link = null;
+        try {
+          const documentTitle = title.textContent.trim() || 'Documento sem título';
+          const documentSubtitle = subtitle.value.trim();
+          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\n---\n\n`;
+          const exportRoot = editor.cloneNode(true);
+          for (const image of exportRoot.querySelectorAll('img[data-local-image]')) {
+            const imageBlob = await loadImage(image.dataset.localImage);
+            if (imageBlob) image.src = await blobToDataUrl(imageBlob);
+          }
+          const markdown = `${metadata}# ${inlineToMarkdown(document.createTextNode(documentTitle.replace(/\s+/g, ' ')))}\n\n${markdownBlocks(exportRoot)}`.trimEnd() + '\n';
+          const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+          url = URL.createObjectURL(blob);
+          link = document.createElement('a');
+          const filename = documentTitle.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '-').replace(/^-|-$/g, '') || 'documento';
+          link.href = url; link.download = `${filename}.md`; link.hidden = true;
+          document.body.append(link);
+          link.click();
+          transferStatus.textContent = `Download iniciado: ${filename}.md`;
+          setTimeout(() => { transferStatus.textContent = ''; }, 5000);
+        } catch (error) {
+          transferStatus.textContent = `Falha ao exportar: ${error?.message || 'não foi possível gerar o arquivo'}`;
+        } finally {
+          link?.remove();
+          if (url) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      };
+      const importMarkdownFile = async file => {
+        if (!file) return;
+        const hasContent = editor.innerText.trim() || title.textContent.trim();
+        if (hasContent && !window.confirm('Importar vai substituir o documento aberto. Continuar?')) return;
+        const markdown = (await file.text()).replace(/^\uFEFF/, '');
+        const lines = markdown.replace(/\r\n?/g, '\n').split('\n');
+        let importedTitle = '';
+        let importedSubtitle = '';
+        const firstMetadataLine = lines.findIndex(line => line.trim());
+        if (firstMetadataLine >= 0 && lines[firstMetadataLine].trim() === '---') {
+          const endMetadataLine = lines.findIndex((line, index) => index > firstMetadataLine && line.trim() === '---');
+          if (endMetadataLine > firstMetadataLine) {
+            const metadataLines = lines.slice(firstMetadataLine + 1, endMetadataLine);
+            const subtitleLine = metadataLines.find(line => /^subtitle:\s*/i.test(line));
+            if (subtitleLine) {
+              const rawSubtitle = subtitleLine.replace(/^subtitle:\s*/i, '');
+              try {
+                const parsedSubtitle = JSON.parse(rawSubtitle);
+                importedSubtitle = typeof parsedSubtitle === 'string' ? parsedSubtitle : '';
+              }
+              catch (_) { importedSubtitle = rawSubtitle.replace(/^['"]|['"]$/g, ''); }
+            }
+            lines.splice(firstMetadataLine, endMetadataLine - firstMetadataLine + 1);
+          }
+        }
+        const firstContentLine = lines.findIndex(line => line.trim());
+        const firstHeading = firstContentLine >= 0 && /^#\s+/.test(lines[firstContentLine]) ? firstContentLine : -1;
+        if (firstHeading >= 0) {
+          const headingText = lines.splice(firstHeading, 1)[0].replace(/^#\s+/, '').trim();
+          const temporary = document.createElement('div'); temporary.innerHTML = markdownInlineToHtml(headingText); importedTitle = temporary.textContent.trim();
+        }
+        title.textContent = importedTitle || file.name.replace(/\.(md|markdown)$/i, '') || 'Documento importado';
+        subtitle.value = importedSubtitle;
+        resizeSubtitle();
+        updateDocumentLabel();
+        editor.replaceChildren(markdownToFragment(lines));
+        if (!editor.childNodes.length) editor.append(document.createElement('p'));
+        await persistEmbeddedImages(editor);
+        queueSave();
+        transferStatus.textContent = 'Markdown importado e salvo neste dispositivo';
+        setTimeout(() => { transferStatus.textContent = ''; }, 4000);
+      };
+      document.querySelector('#export-markdown').addEventListener('click', exportMarkdown);
+      const markdownFile = document.querySelector('#markdown-file');
+      document.querySelector('#import-markdown').addEventListener('click', () => {
+        transferStatus.textContent = 'Escolha um arquivo .md para importar';
+        try {
+          if (typeof markdownFile.showPicker === 'function') markdownFile.showPicker();
+          else markdownFile.click();
+        } catch (_) { markdownFile.click(); }
+      });
+      markdownFile.addEventListener('change', async event => {
+        const file = event.currentTarget.files?.[0];
+        try { await importMarkdownFile(file); }
+        catch (error) { window.alert(`Não foi possível importar este arquivo: ${error?.message || 'formato inválido'}`); }
+        event.currentTarget.value = '';
+      });
+      const imageFile = document.querySelector('#image-file');
+      imageFile.addEventListener('change', async event => {
+        const file = event.currentTarget.files?.[0];
+        event.currentTarget.value = '';
+        if (!file) { pendingImageRange = null; return; }
+        if (!file.type.startsWith('image/')) {
+          transferStatus.textContent = 'Escolha um arquivo de imagem';
+          pendingImageRange = null;
+          return;
+        }
+        try {
+          const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+          await storeImage(id, file);
+          const figure = document.createElement('figure');
+          figure.dataset.docsImage = 'true';
+          const image = document.createElement('img');
+          image.dataset.localImage = id;
+          image.alt = file.name.replace(/\.[^.]+$/, '');
+          const imageUrl = URL.createObjectURL(file);
+          imageObjectUrls.add(imageUrl);
+          image.src = imageUrl;
+          const caption = document.createElement('figcaption');
+          caption.contentEditable = 'true';
+          caption.dataset.placeholder = 'Adicionar legenda';
+          figure.append(image, caption);
+          const after = document.createElement('p');
+          after.innerHTML = '<br>';
+          const range = pendingImageRange;
+          pendingImageRange = null;
+          const startNode = range?.startContainer;
+          const startElement = startNode?.nodeType === Node.ELEMENT_NODE ? startNode : startNode?.parentElement;
+          const currentBlock = startElement?.closest('p,h1,h2,h3');
+          if (currentBlock && editor.contains(currentBlock) && !currentBlock.textContent.trim()) currentBlock.replaceWith(figure, after);
+          else if (currentBlock && editor.contains(currentBlock)) currentBlock.after(figure, after);
+          else if (range && editor.contains(range.startContainer)) { range.insertNode(figure); figure.after(after); }
+          else editor.append(figure, after);
+          placeCaret(caption);
+          queueSave();
+          transferStatus.textContent = 'Imagem adicionada e salva neste dispositivo';
+          setTimeout(() => { transferStatus.textContent = ''; }, 4000);
+        } catch (error) {
+          pendingImageRange = null;
+          transferStatus.textContent = `Falha ao adicionar imagem: ${error?.message || 'não foi possível salvar o arquivo'}`;
+        }
+      });
+      const insertLink = () => {
+        const value = window.prompt('Endereço do link (URL)');
+        const href = value && normalizeLink(value);
+        if (!href) return;
+        document.execCommand('insertHTML', false, `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">Link</a>`);
+        const node = window.getSelection()?.anchorNode;
+        const anchor = (node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement)?.closest('a');
+        if (anchor) {
+          const range = document.createRange();
+          range.selectNodeContents(anchor);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        }
+      };
+      const convertMarkdownHeading = () => {
+        const selection = window.getSelection();
+        if (!selection?.isCollapsed || selection.anchorNode?.nodeType !== Node.TEXT_NODE || !editor.contains(selection.anchorNode)) return false;
+        const node = selection.anchorNode;
+        const before = node.textContent.slice(0, selection.anchorOffset);
+        const match = before.match(/^(#{1,3}) $/);
+        if (!match || node.textContent !== before) return false;
+        const block = node.parentElement?.closest('p,div');
+        if (!block || block === editor || block.textContent !== before) return false;
+        const heading = document.createElement(`h${match[1].length}`);
+        heading.innerHTML = '<br>';
+        block.replaceWith(heading);
+        placeCaret(heading);
+        return true;
+      };
+      const convertMarkdownInline = () => {
+        const selection = window.getSelection();
+        if (!selection?.isCollapsed || selection.anchorNode?.nodeType !== Node.TEXT_NODE || !editor.contains(selection.anchorNode)) return false;
+        const node = selection.anchorNode;
+        const offset = selection.anchorOffset;
+        const before = node.textContent.slice(0, offset);
+        const markdownLink = before.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\) $/iu);
+        const parent = node.parentElement;
+        if (markdownLink && !parent?.closest('a,code,pre,[data-checklist-text],.callout-title')) {
+          const href = normalizeLink(markdownLink[2]);
+          if (href) {
+            const start = offset - markdownLink[0].length;
+            const range = document.createRange();
+            range.setStart(node, start);
+            range.setEnd(node, offset - 1);
+            range.deleteContents();
+            const anchor = document.createElement('a');
+            anchor.href = href;
+            anchor.target = '_blank';
+            anchor.rel = 'noopener noreferrer';
+            anchor.textContent = markdownLink[1];
+            range.insertNode(anchor);
+            const space = document.createTextNode(' ');
+            anchor.after(space);
+            range.setStart(space, 1);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            return true;
+          }
+        }
+        const patterns = [
+          [/\*\*(.+?)\*\* $/u, 'strong'], [/__(.+?)__ $/u, 'strong'],
+          [/\*(.+?)\* $/u, 'em'], [/_(.+?)_ $/u, 'em'],
+          [/~~(.+?)~~ $/u, 's'], [/==(.+?)== $/u, 'mark'], [/`(.+?)` $/u, 'code']
+        ];
+        if (parent?.closest('a,code,pre,[data-checklist-text],.callout-title')) return false;
+        for (const [pattern, tag] of patterns) {
+          const match = before.match(pattern);
+          if (!match) continue;
+          const start = offset - match[0].length;
+          const range = document.createRange();
+          range.setStart(node, start);
+          range.setEnd(node, offset - 1);
+          range.deleteContents();
+          const wrapper = document.createElement(tag);
+          wrapper.textContent = match[1];
+          range.insertNode(wrapper);
+          const space = document.createTextNode(' ');
+          wrapper.after(space);
+          range.setStart(space, 1);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return true;
+        }
+        return false;
+      };
+      const resetInlineFormattingOnShiftEnter = () => {
+        const selection = window.getSelection();
+        if (!selection?.isCollapsed || !editor.contains(selection.anchorNode)) return false;
+        const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
+        const formatted = anchorElement?.closest('strong,b,em,i,s,strike,del,u,mark,code');
+        if (!formatted || !editor.contains(formatted) || anchorElement?.closest('pre,[data-checklist-text],.callout-title')) return false;
+        const block = anchorElement.closest('p,h1,h2,h3,blockquote');
+        if (!block || !editor.contains(block) || block.closest('li,.callout-body')) return false;
+
+        const trailingRange = document.createRange();
+        trailingRange.setStart(selection.anchorNode, selection.anchorOffset);
+        trailingRange.setEnd(block, block.childNodes.length);
+        const trailing = trailingRange.extractContents();
+        const nextParagraph = document.createElement('p');
+        nextParagraph.append(trailing);
+        nextParagraph.querySelectorAll('strong,b,em,i,s,strike,del,u,mark,code').forEach(wrapper => wrapper.replaceWith(...wrapper.childNodes));
+        if (!nextParagraph.hasChildNodes() || !nextParagraph.textContent.trim() && !nextParagraph.querySelector('img,hr,table')) nextParagraph.innerHTML = '<br>';
+        block.after(nextParagraph);
+        placeCaret(nextParagraph);
+        return true;
+      };
+      editor.addEventListener('change', event => {
+        const checkbox = event.target.closest?.('.checklist-box');
+        if (!checkbox) return;
+        const item = checkbox.closest('[data-checklist-item]');
+        item.dataset.checked = String(checkbox.checked);
+        if (checkbox.checked) checkbox.setAttribute('checked', '');
+        else checkbox.removeAttribute('checked');
+        queueSave();
+      });
+      editor.addEventListener('click', event => {
+        const toggle = event.target.closest?.('.callout-toggle');
+        if (!toggle) return;
+        event.preventDefault();
+        const callout = toggle.closest('.callout');
+        const body = callout?.querySelector('.callout-body');
+        if (!body) return;
+        body.hidden = !body.hidden;
+        callout.dataset.collapsed = String(body.hidden);
+        toggle.setAttribute('aria-expanded', String(!body.hidden));
+        toggle.setAttribute('aria-label', body.hidden ? 'Expandir callout' : 'Recolher callout');
+        queueSave();
+      });
+      editor.addEventListener('input', () => { dismissedSlash = false; if (convertMarkdownChecklist() || convertMarkdownHeading() || convertMarkdownInline()) { closeSlashMenu(); queueSave(); } else updateSlashMenu(); });
+      editor.addEventListener('keydown', event => {
+        const eventTarget = event.target?.nodeType === Node.ELEMENT_NODE ? event.target : event.target?.parentElement;
+        if (event.key === 'Tab' && moveTableCell(event)) { queueSave(); return; }
+        if (event.key === 'Tab' && adjustLineIndent(event.shiftKey)) { event.preventDefault(); queueSave(); return; }
+        if (event.key === ' ' && event.shiftKey && stopInlineEffectOnShiftSpace()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && event.shiftKey && exitImageCaptionToParagraph()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && event.shiftKey && exitTableToParagraph()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && event.shiftKey && !eventTarget?.closest('.callout-toggle,.checklist-box') && exitCallout()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && event.shiftKey && resetInlineFormattingOnShiftEnter()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && !event.shiftKey && !slashMenu.classList.contains('open') && convertMarkdownCallout()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && continueChecklist(event)) { queueSave(); return; }
+        if (event.key === 'Backspace' && slashFolderStack.length && slashMenu.classList.contains('open')) {
+          event.preventDefault();
+          slashFolderStack.pop();
+          selectedCommand = 0;
+          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+          placeSlashMenu();
+          return;
+        }
+        if (event.key === 'Backspace' && editChecklistWithBackspace(event)) return;
+        if (!slashMenu.classList.contains('open')) return;
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!filteredCommands.length) return;
+          const step = event.key === 'ArrowDown' ? 1 : -1;
+          selectedCommand = (selectedCommand + step + filteredCommands.length) % filteredCommands.length;
+          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+          slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'Enter' && filteredCommands.length) {
+          event.preventDefault();
+          applyCommand(selectedCommand);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          dismissedSlash = true;
+          closeSlashMenu();
+        }
+      });
+      editor.addEventListener('keyup', event => { if (event.key === 'Escape') dismissedSlash = true; });
+      document.addEventListener('selectionchange', () => {
+        if (document.activeElement === editor && !slashMenu.classList.contains('open')) updateSlashMenu();
+      });
+      document.querySelector('#outline-toggle').addEventListener('click', () => {
+        const headings = [...editor.querySelectorAll('h1,h2,h3')].map(node => node.innerText.trim()).filter(Boolean);
+        if (headings.length) window.alert(`Estrutura do documento:\n\n${headings.join('\n')}`);
+        else window.alert('Adicione títulos para criar a estrutura do documento.');
+      });
+      document.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); document.querySelector('#search').focus(); }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); clearTimeout(saveTimer); queueSave(); }
+      });
+    })();
+  </script>
+</body>
+</html>
