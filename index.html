@@ -832,7 +832,8 @@
         const button = document.querySelector('#auth-submit'); button.disabled = true; authStatus.textContent = 'Enviando link de acesso…';
         try {
           const redirectTo = location.origin + location.pathname + location.search;
-          await apiFetch('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email: document.querySelector('#auth-email').value.trim(), create_user: false, options: { emailRedirectTo: redirectTo } }) }, '');
+          const redirectQuery = new URLSearchParams({ redirect_to: redirectTo });
+          await apiFetch(`/auth/v1/otp?${redirectQuery}`, { method: 'POST', body: JSON.stringify({ email: document.querySelector('#auth-email').value.trim(), create_user: false }) }, '');
           authStatus.textContent = 'Confira seu e-mail e abra o link neste navegador para continuar.';
         } catch (error) { authStatus.textContent = error.message || 'Não foi possível enviar o link agora.'; }
         finally { button.disabled = false; }
