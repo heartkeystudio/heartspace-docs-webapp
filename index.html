@@ -307,6 +307,7 @@
         { label: 'Lista com marcadores', detail: 'Organize itens sem ordem', icon: '•', kind: 'list' },
         { label: 'Lista numerada', detail: 'Organize etapas em sequência', icon: '1.', kind: 'ordered' },
         { label: 'Lista de tarefas', detail: 'Checklist para acompanhar', icon: '☐', kind: 'tasks' },
+        { label: 'Excluir documento atual', detail: 'Remove este documento do projeto e da equipe', icon: '⌫', kind: 'delete-document' },
         { label: 'Imagem do dispositivo', detail: 'Insira uma imagem com descrição e legenda', icon: '▧', kind: 'image' },
         { label: 'Legenda acima da imagem', detail: 'Posicione a legenda antes da imagem', icon: '↑', kind: 'image-caption-position', value: 'top' },
         { label: 'Legenda abaixo da imagem', detail: 'Posicione a legenda depois da imagem', icon: '↓', kind: 'image-caption-position', value: 'bottom' },
@@ -372,7 +373,8 @@
         { label: 'Alinhamento', detail: 'Posição do texto no parágrafo', icon: '↔', labels: ['Alinhar à esquerda', 'Centralizar', 'Alinhar à direita', 'Justificar'] },
         { label: 'Blocos', detail: 'Citações, código e diagramas', icon: '▤', labels: ['Citação', 'Bloco de código', 'Divisor', 'Diagrama Mermaid'] },
         { label: 'Formatação', detail: 'Efeitos de texto e código inline', icon: 'Aa', labels: ['Tachado', 'Sublinhado', 'Código inline', 'Realce'] },
-        { label: 'Modelos', detail: 'Estruturas prontas para começar', icon: '✦', labels: ['Modelo: GDD', 'Modelo: Especificação', 'Modelo: Notas de reunião'] }
+        { label: 'Modelos', detail: 'Estruturas prontas para começar', icon: '✦', labels: ['Modelo: GDD', 'Modelo: Especificação', 'Modelo: Notas de reunião'] },
+        { label: 'Documento', detail: 'Gerencie o documento atual', icon: '▤', labels: ['Excluir documento atual'] }
       ];
       const frequentLabels = new Set(['Texto', 'Título 2', 'Lista com marcadores', 'Lista de tarefas', 'Imagem do dispositivo', 'Callouts', 'Negrito', 'Itálico', 'Link']);
       const alignmentFolder = {
@@ -394,7 +396,7 @@
       commands.splice(0, commands.length,
         ...allCommands.filter(command => frequentLabels.has(command.label)),
         alignmentFolder,
-        { label: 'Mais opções', detail: 'Títulos, tabelas, imagens, blocos e modelos', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
+        { label: 'Mais opções', detail: 'Títulos, tabelas, imagens, documentos e modelos', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
       );
       let saveTimer;
       let slashRange = null;
@@ -655,6 +657,46 @@
         title.textContent = record.title; subtitle.value = ''; editor.innerHTML = '<p><br></p>';
         resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
         (quick ? editor : title).focus(); queueSave();
+      };
+      const deleteActiveDocument = async () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record) return;
+        const isRemoteDocument = Boolean(record.remoteId);
+        if (isRemoteDocument && (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities }))) {
+          statusMessage('Sua permissão não permite excluir este documento.', 'pending');
+          return;
+        }
+        const confirmation = isRemoteDocument
+          ? `Excluir “${record.title}” do projeto e da equipe? Esta ação não pode ser desfeita.`
+          : `Excluir “${record.title}” deste dispositivo? Esta ação não pode ser desfeita.`;
+        if (!window.confirm(confirmation)) return;
+        clearTimeout(saveTimer);
+        try {
+          if (isRemoteDocument) {
+            const deleted = await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
+            if (!Array.isArray(deleted) || !deleted.some(row => row.id === record.remoteId)) {
+              throw new Error('O projeto não confirmou a exclusão. Verifique sua permissão ou se o documento está publicado.');
+            }
+          }
+          documents = documents.filter(item => item.id !== record.id);
+          dirtyDocumentIds.delete(record.id);
+          activeDocumentId = documents[0]?.id || '';
+          const next = documents.find(item => item.id === activeDocumentId);
+          if (next) {
+            title.textContent = next.title; subtitle.value = next.subtitle; editor.innerHTML = next.body;
+            hydrateImages(editor); resizeSubtitle(); updateCount();
+          } else {
+            title.textContent = 'Sem documentos'; subtitle.value = ''; editor.innerHTML = '<p><br></p>';
+            resizeSubtitle(); updateCount();
+          }
+          updateDocumentLabel();
+          saveProjectCache();
+          renderLibrary();
+          if (currentProjectId) await requestProjectDocsRefresh(false);
+          statusMessage('Documento excluído');
+        } catch (error) {
+          statusMessage(error.message || 'Não foi possível excluir o documento.', 'pending');
+        }
       };
       document.querySelector('#new-doc').addEventListener('click', () => createDocument(false));
       document.querySelector('#fast-doc').addEventListener('click', () => createDocument(true));
@@ -1383,6 +1425,7 @@
         else if (command.kind === 'list') document.execCommand('insertUnorderedList');
         else if (command.kind === 'ordered') document.execCommand('insertOrderedList');
         else if (command.kind === 'tasks') insertChecklist();
+        else if (command.kind === 'delete-document') { clearTimeout(saveTimer); void deleteActiveDocument(); return; }
         else if (command.kind === 'image') {
           const selection = window.getSelection();
           pendingImageRange = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
