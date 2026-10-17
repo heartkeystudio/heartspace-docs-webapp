@@ -403,7 +403,8 @@
       let slashTableCell = null;
       let slashImageFigure = null;
       let toolbarRange = null;
-      let pendingImageRange = null;
+      let pendingImageMarker = null;
+      let pendingImageDocumentId = '';
       const imageObjectUrls = new Set();
       const sharedImageUrls = new Map();
       const imageStorePromise = new Promise((resolve, reject) => {
@@ -483,7 +484,7 @@
       let documents = [];
       let activeDocumentId = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const renderDocumentActivity = record => {
         const label = document.querySelector('#document-activity');
         if (!record?.remoteId || !record.lastEditedAt) { label.textContent = ''; label.title = 'Documento ainda não sincronizado'; return; }
@@ -571,13 +572,14 @@
           delete block.dataset.mermaidView;
         });
         snapshot.querySelectorAll('img[data-local-image],img[data-remote-image]').forEach(image => image.removeAttribute('src'));
+        snapshot.querySelectorAll('[data-image-insertion-marker]').forEach(marker => marker.remove());
         return snapshot.innerHTML;
       };
       const queueSave = () => {
         saveState.innerHTML = `<span class="save-dot" style="background:#e8be77"></span>${currentProjectId ? 'Salvando…' : 'Salvando localmente…'}`;
         updateCount();
         const editedRecord = documents.find(item => item.id === activeDocumentId);
-        if (currentProjectId && editedRecord) { editedRecord.dirty = true; dirtyDocumentIds.add(editedRecord.id); }
+        if (currentProjectId && editedRecord) { editedRecord.dirty = true; editedRecord.editRevision += 1; dirtyDocumentIds.add(editedRecord.id); }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
           try {
@@ -850,7 +852,9 @@
             if (activity?.[0]) { active.lastEditor = activity[0].actor_name || active.lastEditor; active.lastEditedAt = activity[0].created_at || active.lastEditedAt; }
           } catch (_) { /* a edição continua disponível sem os metadados de atividade */ }
         }
-        if (active && (initial || !dirtyDocumentIds.has(active.id))) {
+        const imageInsertionPending = pendingImageMarker?.isConnected && pendingImageDocumentId === activeDocumentId;
+        const editorFocused = editor.contains(document.activeElement) || document.activeElement === title || document.activeElement === subtitle;
+        if (active && !dirtyDocumentIds.has(active.id) && !imageInsertionPending && !editorFocused) {
           title.textContent = active.title; subtitle.value = active.subtitle; editor.innerHTML = active.body;
           resizeSubtitle(); updateDocumentLabel(); updateCount(); hydrateImages(editor);
         }
@@ -902,6 +906,7 @@
         const syncKey = record.id;
         remoteSaveInProgress.add(syncKey);
         let retryAfterSave = false;
+        const capturedEditRevision = record.editRevision;
         const captured = { title: record.title || 'Sem título', subtitle: record.subtitle || '', body: record.body || '<p><br></p>', savedAt: record.savedAt };
         statusMessage('Sincronizando com o projeto…', 'pending');
         try {
@@ -928,12 +933,12 @@
             record.lastEditor = currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro'; record.lastEditedAt = result.updated_at || new Date().toISOString();
             if (record.title !== captured.title) record.title = captured.title;
             await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ title: captured.title }) }).then(rows => { if (rows?.[0]?.updated_at) record.remoteUpdatedAt = rows[0].updated_at; });
-            dirtyDocumentIds.delete(record.id); record.dirty = false; record.remoteConflict = false;
+            record.remoteConflict = false;
           }
-          const changedDuringSave = record.savedAt !== captured.savedAt;
+          const changedDuringSave = record.savedAt !== captured.savedAt || record.editRevision !== capturedEditRevision;
           if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); }
           if (changedDuringSave) { record.dirty = true; dirtyDocumentIds.add(record.id); retryAfterSave = true; }
-          else if (!documents.some(item => item.remoteConflict)) statusMessage('Sincronizado com o projeto');
+          else { dirtyDocumentIds.delete(record.id); record.dirty = false; if (!documents.some(item => item.remoteConflict)) statusMessage('Sincronizado com o projeto'); }
         } catch (error) {
           record.dirty = true; dirtyDocumentIds.add(record.id);
           if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); statusMessage(error.message || 'Falha ao sincronizar; rascunho local preservado', 'pending'); }
@@ -1428,7 +1433,19 @@
         else if (command.kind === 'delete-document') { clearTimeout(saveTimer); void deleteActiveDocument(); return; }
         else if (command.kind === 'image') {
           const selection = window.getSelection();
-          pendingImageRange = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+          if (selection?.rangeCount && editor.contains(selection.anchorNode)) {
+            const marker = document.createElement('span');
+            marker.dataset.imageInsertionMarker = 'true';
+            marker.contentEditable = 'false';
+            marker.setAttribute('aria-hidden', 'true');
+            marker.style.cssText = 'display:inline-block;width:0;height:0;overflow:hidden;';
+            selection.getRangeAt(0).insertNode(marker);
+            pendingImageMarker = marker;
+            pendingImageDocumentId = activeDocumentId;
+          } else {
+            pendingImageMarker = null;
+            pendingImageDocumentId = '';
+          }
           document.querySelector('#image-file').click();
         }
         else if (command.kind === 'image-caption-position' && slashImageFigure) slashImageFigure.dataset.captionPosition = command.value;
@@ -2222,19 +2239,47 @@
         event.currentTarget.value = '';
       });
       const imageFile = document.querySelector('#image-file');
+      const clearPendingImageInsertion = (restoreCaret = false) => {
+        const marker = pendingImageMarker;
+        if (marker?.isConnected) {
+          const range = document.createRange();
+          range.setStartBefore(marker);
+          range.collapse(true);
+          marker.remove();
+          if (restoreCaret) {
+            editor.focus();
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+        pendingImageMarker = null;
+        pendingImageDocumentId = '';
+      };
+      imageFile.addEventListener('cancel', () => clearPendingImageInsertion(true));
       imageFile.addEventListener('change', async event => {
         const file = event.currentTarget.files?.[0];
         event.currentTarget.value = '';
-        if (!file) { pendingImageRange = null; return; }
+        if (!file) { clearPendingImageInsertion(true); return; }
         if (!file.type.startsWith('image/')) {
           transferStatus.textContent = 'Escolha um arquivo de imagem';
-          pendingImageRange = null;
+          clearPendingImageInsertion(true);
+          return;
+        }
+        const marker = pendingImageMarker;
+        const targetDocumentId = pendingImageDocumentId;
+        if (!marker?.isConnected || !editor.contains(marker) || targetDocumentId !== activeDocumentId) {
+          clearPendingImageInsertion();
+          transferStatus.textContent = 'O ponto de inserção não está mais disponível. Posicione o cursor e tente novamente.';
           return;
         }
         try {
           const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
           await storeImage(id, file);
           const remotePath = await uploadSharedImage(file);
+          if (!marker.isConnected || !editor.contains(marker) || targetDocumentId !== activeDocumentId) {
+            throw new Error('O documento mudou durante o envio da imagem. Tente inserir novamente.');
+          }
           const figure = document.createElement('figure');
           figure.dataset.docsImage = 'true';
           const image = document.createElement('img');
@@ -2250,21 +2295,18 @@
           figure.append(image, caption);
           const after = document.createElement('p');
           after.innerHTML = '<br>';
-          const range = pendingImageRange;
-          pendingImageRange = null;
-          const startNode = range?.startContainer;
-          const startElement = startNode?.nodeType === Node.ELEMENT_NODE ? startNode : startNode?.parentElement;
-          const currentBlock = startElement?.closest('p,h1,h2,h3');
+          const currentBlock = marker.closest('p,h1,h2,h3');
           if (currentBlock && editor.contains(currentBlock) && !currentBlock.textContent.trim()) currentBlock.replaceWith(figure, after);
-          else if (currentBlock && editor.contains(currentBlock)) currentBlock.after(figure, after);
-          else if (range && editor.contains(range.startContainer)) { range.insertNode(figure); figure.after(after); }
-          else editor.append(figure, after);
+          else if (currentBlock && editor.contains(currentBlock)) { marker.remove(); currentBlock.after(figure, after); }
+          else { marker.replaceWith(figure); figure.after(after); }
+          pendingImageMarker = null;
+          pendingImageDocumentId = '';
           placeCaret(caption);
           queueSave();
           transferStatus.textContent = remotePath ? 'Imagem compartilhada com a equipe' : 'Imagem adicionada e salva neste dispositivo';
           setTimeout(() => { transferStatus.textContent = ''; }, 4000);
         } catch (error) {
-          pendingImageRange = null;
+          clearPendingImageInsertion(true);
           transferStatus.textContent = `Falha ao adicionar imagem: ${error?.message || 'não foi possível salvar o arquivo'}`;
         }
       });
