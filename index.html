@@ -482,6 +482,14 @@
       let activeDocumentId = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const renderDocumentActivity = record => {
+        const label = document.querySelector('#document-activity');
+        if (!record?.remoteId || !record.lastEditedAt) { label.textContent = ''; label.title = 'Documento ainda não sincronizado'; return; }
+        const editedAt = new Date(record.lastEditedAt);
+        const formatted = Number.isNaN(editedAt.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(editedAt);
+        label.textContent = `${record.lastEditor || 'Equipe'} · ${formatted}`;
+        label.title = `Última edição por ${record.lastEditor || 'Equipe'} em ${formatted}`;
+      };
       const renderConflictBanner = () => {
         const record = documents.find(item => item.id === activeDocumentId && item.remoteConflict);
         const banner = document.querySelector('#conflict-banner');
@@ -749,14 +757,6 @@
       const remoteToRecord = row => {
         const content = parseRemoteContent(row.content);
         return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
-      };
-      const renderDocumentActivity = record => {
-        const label = document.querySelector('#document-activity');
-        if (!record?.remoteId || !record.lastEditedAt) { label.textContent = ''; label.title = 'Documento ainda não sincronizado'; return; }
-        const editedAt = new Date(record.lastEditedAt);
-        const formatted = Number.isNaN(editedAt.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(editedAt);
-        label.textContent = `${record.lastEditor || 'Equipe'} · ${formatted}`;
-        label.title = `Última edição por ${record.lastEditor || 'Equipe'} em ${formatted}`;
       };
       const refreshDocumentPresence = async () => {
         const label = document.querySelector('#document-presence');
