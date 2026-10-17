@@ -269,6 +269,8 @@
       let projectCapabilities = {};
       let dirtyDocumentIds = new Set();
       let remotePollTimer = null;
+      let projectRefreshPromise = null;
+      let projectRefreshId = '';
       let remoteSaveInProgress = new Set();
       const requestedProjectId = new URLSearchParams(location.search).get('project_id') || '';
       const commands = [
@@ -674,8 +676,10 @@
       const saveProjectCache = () => { try { persistLibrary(); } catch (_) {} };
       const refreshProjectDocs = async (initial = false) => {
         if (!currentProjectId) return;
-        const query = new URLSearchParams({ select: 'id,project_id,title,content,author,created_at,updated_at', project_id: `eq.${currentProjectId}`, order: 'updated_at.desc' });
+        const targetProjectId = currentProjectId;
+        const query = new URLSearchParams({ select: 'id,project_id,title,content,author,created_at,updated_at', project_id: `eq.${targetProjectId}`, order: 'updated_at.desc' });
         const rows = await apiFetch(`/rest/v1/docs?${query}`);
+        if (targetProjectId !== currentProjectId) return;
         const oldByRemoteId = new Map(documents.filter(record => record.remoteId).map(record => [record.remoteId, record]));
         const next = rows.map(row => {
           const old = oldByRemoteId.get(row.id);
@@ -703,8 +707,22 @@
         document.querySelector('#sync-refresh').textContent = conflict ? 'Recarregar versão remota' : 'Atualizar';
         if (conflict) statusMessage('Outra pessoa atualizou este documento; seu rascunho foi preservado', 'pending');
       };
+      const requestProjectDocsRefresh = (initial = false) => {
+        if (!currentProjectId) return Promise.resolve();
+        const targetProjectId = currentProjectId;
+        if (projectRefreshPromise && projectRefreshId === targetProjectId) return projectRefreshPromise;
+        const request = refreshProjectDocs(initial);
+        projectRefreshPromise = request;
+        projectRefreshId = targetProjectId;
+        const clearRefresh = () => {
+          if (projectRefreshPromise === request) { projectRefreshPromise = null; projectRefreshId = ''; }
+        };
+        request.then(clearRefresh, clearRefresh);
+        return request;
+      };
       const loadCloudProject = async (projectId, knownProject = null) => {
         if (currentProjectId && currentProjectId !== projectId) flushSave();
+        clearInterval(remotePollTimer);
         const access = await getProjectAccess(projectId);
         if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
         currentProjectId = projectId; projectCapabilities = access.capabilities || {};
@@ -719,11 +737,10 @@
         } else { documents = []; activeDocumentId = ''; }
         projectPicker.hidden = false;
         updateEditorPermissions();
-        await refreshProjectDocs(true);
+        await requestProjectDocsRefresh(true);
         document.querySelector('#sync-refresh').hidden = false;
         statusMessage('Conectado ao projeto');
-        clearInterval(remotePollTimer);
-        remotePollTimer = setInterval(() => refreshProjectDocs(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
+        remotePollTimer = setInterval(() => requestProjectDocsRefresh(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
       };
       const syncRecord = async record => {
         const targetProjectId = record.projectId || currentProjectId;
@@ -764,6 +781,17 @@
           if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
         }
       };
+      const refreshVisibleProject = () => {
+        if (document.visibilityState !== 'visible' || !currentProjectId || !currentAccessToken) return Promise.resolve();
+        return requestProjectDocsRefresh(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending'));
+      };
+      document.addEventListener('visibilitychange', refreshVisibleProject);
+      window.addEventListener('focus', refreshVisibleProject);
+      window.addEventListener('online', () => {
+        refreshVisibleProject().then(() => {
+          for (const record of documents.filter(item => item.dirty && !item.remoteConflict)) syncRecord(record);
+        });
+      });
       const openCloudProjectPicker = async () => {
         const query = new URLSearchParams({ select: 'id,name,studio_id,status', order: 'created_at.desc' });
         let projects = [];
@@ -823,7 +851,7 @@
           dirtyDocumentIds.delete(conflict.id); conflict.dirty = false; conflict.remoteConflict = false;
           saveProjectCache();
         }
-        try { await refreshProjectDocs(false); for (const record of documents.filter(item => item.dirty)) syncRecord(record); }
+        try { await requestProjectDocsRefresh(false); for (const record of documents.filter(item => item.dirty && !item.remoteConflict)) syncRecord(record); }
         catch (error) { statusMessage(error.message || 'Não foi possível atualizar.', 'pending'); }
       });
       document.querySelector('#sign-out').addEventListener('click', async () => {
