@@ -66,7 +66,30 @@
     .crumb strong { color:#e9e3ed; font-weight:600; }
     .save-state { display:flex; align-items:center; gap:7px; color:#aaa5b0; font-size:12px; }
     .transfer-status { color:#c9a7db; font-size:11px; }
+    .document-activity { color:#918b97; font-size:10px; white-space:nowrap; }
+    .document-presence { max-width:180px; overflow:hidden; color:#c4b6cc; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
     .save-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px #8bd5ac66; }
+    .conflict-banner { position:sticky; top:0; z-index:3; display:flex; align-items:center; gap:12px; padding:11px 18px; border-bottom:1px solid #e8be7755; color:#f1e2c2; background:#382f20f2; }
+    .conflict-banner[hidden] { display:none; }
+    .conflict-copy { flex:1; min-width:180px; }
+    .conflict-copy strong { display:block; font-size:12px; }
+    .conflict-copy span { display:block; margin-top:2px; color:#d2c3a7; font-size:11px; }
+    .conflict-actions { display:flex; flex-wrap:wrap; gap:7px; }
+    .conflict-actions button { min-height:31px; padding:0 10px; border:1px solid #e8be7744; border-radius:7px; color:#f5ead5; background:#ffffff0b; font-size:11px; }
+    .conflict-actions button:hover { background:#ffffff18; }
+    .conflict-actions .conflict-primary { border-color:#d7a95666; background:#82652c66; }
+    .history-dialog { width:min(520px,calc(100vw - 32px)); max-height:min(680px,calc(100dvh - 32px)); padding:0; overflow:hidden; border:1px solid #ffffff1c; border-radius:14px; color:var(--text); background:#1b1a20; box-shadow:0 24px 90px #000b; }
+    .history-dialog::backdrop { background:#09080bbd; backdrop-filter:blur(5px); }
+    .history-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px; border-bottom:1px solid var(--line); }
+    .history-heading h2 { margin:0; font-size:16px; }
+    .history-heading button,.history-item button { min-height:31px; padding:0 10px; border:1px solid var(--line); border-radius:7px; color:#ded6e3; background:#ffffff08; }
+    .history-list { display:grid; gap:8px; max-height:min(560px,calc(100dvh - 130px)); padding:12px; overflow:auto; }
+    .history-item { display:flex; align-items:center; gap:10px; padding:10px 11px; border:1px solid var(--line); border-radius:9px; background:#ffffff04; }
+    .history-item-copy { flex:1; min-width:0; }
+    .history-item-copy strong,.history-item-copy span { display:block; }
+    .history-item-copy strong { font-size:12px; }
+    .history-item-copy span,.history-empty { color:var(--muted); font-size:11px; }
+    .history-empty { padding:14px; }
     .project-picker { width:190px; height:32px; padding:0 9px; border:1px solid var(--line); border-radius:7px; color:#e5dfea; background:#1b1a1f; }
     .auth-gate { position:fixed; z-index:30; inset:0; display:grid; place-items:center; padding:24px; background:#0e0d11ed; backdrop-filter:blur(14px); }
     .auth-gate[hidden] { display:none; }
@@ -194,7 +217,7 @@
     <aside class="sidebar" aria-label="Navegação do Docs">
       <div class="brand"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
       <div class="sidebar-actions"><button class="primary-button" type="button" id="new-doc"><span>＋</span>Novo documento</button><button class="secondary-button" type="button" id="fast-doc">Rápido</button></div>
-      <div class="sidebar-shortcuts"><button type="button" title="Histórico de versões">Versões</button><button type="button" title="Revisão do documento">Revisão</button></div>
+      <div class="sidebar-shortcuts"><button type="button" id="versions-button" title="Histórico de versões">Versões</button><button type="button" title="Revisão do documento">Revisão</button></div>
       <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar documentos  Ctrl K" aria-label="Buscar documentos"></label>
       <section class="nav-section">
         <div class="section-heading-row"><button class="section-heading" type="button" aria-expanded="true" aria-controls="document-list"><span class="chevron">⌄</span> Documentos</button><button class="add-button" id="add-doc" type="button" aria-label="Criar documento" title="Criar documento">＋</button></div>
@@ -210,7 +233,7 @@
     <main class="workspace">
       <header class="topbar">
         <div class="topbar-left"><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
-        <div class="topbar-right"><span class="save-state" id="save-state"><span class="save-dot"></span>Salvo neste dispositivo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><button class="top-button" type="button" id="sync-refresh" hidden>Atualizar</button><button class="top-button" type="button" id="import-markdown">Importar .md</button><button class="top-button" type="button" id="export-markdown">Exportar .md</button><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false">◉ <span>Modo foco</span></button><button class="top-button" type="button" id="sign-out" hidden>Sair</button></div>
+        <div class="topbar-right"><span class="save-state" id="save-state"><span class="save-dot"></span>Salvo neste dispositivo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><button class="top-button" type="button" id="sync-refresh" hidden>Atualizar</button><button class="top-button" type="button" id="import-markdown">Importar .md</button><button class="top-button" type="button" id="export-markdown">Exportar .md</button><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false">◉ <span>Modo foco</span></button><button class="top-button" type="button" id="sign-out" hidden>Sair</button></div>
       </header>
       <nav class="toolbar" aria-label="Ferramentas de edição">
         <button class="tool icon-only" type="button" id="undo" title="Desfazer">↶</button><button class="tool icon-only" type="button" id="redo" title="Refazer">↷</button><span class="tool-separator"></span>
@@ -221,6 +244,7 @@
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
+        <div class="conflict-banner" id="conflict-banner" role="alert" hidden><div class="conflict-copy"><strong>Outra pessoa salvou uma versão mais recente.</strong><span>Seu rascunho está protegido neste navegador. Escolha como continuar.</span></div><div class="conflict-actions"><button type="button" id="conflict-keep-copy" class="conflict-primary">Criar cópia na equipe</button><button type="button" id="conflict-load-remote">Usar versão da equipe</button></div></div>
         <div class="editor-wrap">
           <div class="editor-meta"><span>DOCUMENTO</span><span>Digite / para inserir · ↑ ↓ navegam · Enter abre/insere · Backspace volta</span></div>
           <article class="page">
@@ -239,6 +263,7 @@
       <div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span><button class="publish" type="button">Publicar no Heartspace</button></div>
     </main>
   </div>
+  <dialog class="history-dialog" id="history-dialog" aria-labelledby="history-title"><div class="history-heading"><h2 id="history-title">Histórico de versões</h2><button type="button" id="history-close">Fechar</button></div><div class="history-list" id="history-list" aria-live="polite"><div class="history-empty">Carregando versões…</div></div></dialog>
   <section class="auth-gate" id="auth-gate" hidden aria-labelledby="auth-title">
     <form class="auth-card" id="auth-form">
       <div class="brand" style="padding:0 0 16px"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
@@ -269,6 +294,7 @@
       let projectCapabilities = {};
       let dirtyDocumentIds = new Set();
       let remotePollTimer = null;
+      let presenceTimer = null;
       let projectRefreshPromise = null;
       let projectRefreshId = '';
       let remoteSaveInProgress = new Set();
@@ -377,6 +403,7 @@
       let toolbarRange = null;
       let pendingImageRange = null;
       const imageObjectUrls = new Set();
+      const sharedImageUrls = new Map();
       const imageStorePromise = new Promise((resolve, reject) => {
         if (!('indexedDB' in window)) { reject(new Error('Armazenamento local de imagens indisponível')); return; }
         const request = indexedDB.open('heartspace-docs-assets-v1', 1);
@@ -412,6 +439,18 @@
             image.src = url;
           } catch (_) { /* mantém o bloco editável se o arquivo local estiver indisponível */ }
         }
+        for (const image of root.querySelectorAll('img[data-remote-image]')) {
+          try {
+            const path = image.dataset.remoteImage;
+            let url = sharedImageUrls.get(path);
+            if (!url) {
+              const blob = await loadSharedImage(path);
+              if (!blob) continue;
+              url = URL.createObjectURL(blob); imageObjectUrls.add(url); sharedImageUrls.set(path, url);
+            }
+            image.src = url;
+          } catch (_) { /* imagem compartilhada pode estar temporariamente indisponível */ }
+        }
       };
       const blobToDataUrl = blob => new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -425,6 +464,10 @@
           const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
           await storeImage(id, blob);
           image.dataset.localImage = id;
+          if (currentProjectId && currentAccessToken) {
+            const remotePath = await uploadSharedImage(blob);
+            if (remotePath) image.dataset.remoteImage = remotePath;
+          }
           image.removeAttribute('src');
         }
         await hydrateImages(root);
@@ -438,7 +481,14 @@
       let documents = [];
       let activeDocumentId = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', dirty: Boolean(data.dirty), title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const renderConflictBanner = () => {
+        const record = documents.find(item => item.id === activeDocumentId && item.remoteConflict);
+        const banner = document.querySelector('#conflict-banner');
+        banner.hidden = !record;
+        document.querySelector('#conflict-keep-copy').disabled = !record?.remoteVersion;
+        document.querySelector('#conflict-load-remote').disabled = !record?.remoteVersion;
+      };
       const renderLibrary = () => {
         const query = document.querySelector('#search').value.trim().toLocaleLowerCase('pt-BR');
         const renderItem = (record, recent = false) => {
@@ -453,6 +503,8 @@
         };
         documentList.replaceChildren(...documents.map(record => renderItem(record)));
         recentList.replaceChildren(...[...documents].sort((a, b) => b.savedAt.localeCompare(a.savedAt)).slice(0, 5).map(record => renderItem(record, true)));
+        renderConflictBanner();
+        renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
       };
       const persistLibrary = () => localStorage.setItem(storageKey, JSON.stringify({ version: 2, activeDocumentId, documents }));
       try {
@@ -508,7 +560,7 @@
           if (status) { status.textContent = 'Fonte Mermaid editável'; status.dataset.error = 'false'; }
           delete block.dataset.mermaidView;
         });
-        snapshot.querySelectorAll('img[data-local-image]').forEach(image => image.removeAttribute('src'));
+        snapshot.querySelectorAll('img[data-local-image],img[data-remote-image]').forEach(image => image.removeAttribute('src'));
         return snapshot.innerHTML;
       };
       const queueSave = () => {
@@ -585,6 +637,7 @@
         const record = documents.find(item => item.id === id); if (!record) return;
         activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; editor.innerHTML = record.body;
         hydrateImages(editor); resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary();
+        refreshDocumentPresence();
         saveState.innerHTML = '<span class="save-dot"></span>Salvo neste dispositivo';
       };
       const createDocument = (quick = false) => {
@@ -635,6 +688,30 @@
         if (!response.ok) throw new Error(data?.message || data?.error || `Serviço indisponível (${response.status}).`);
         return data;
       };
+      const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
+      const uploadSharedImage = async file => {
+        if (!currentProjectId || !currentAccessToken) return '';
+        const extensionByType = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+        if (!extensionByType[file.type]) throw new Error('Para compartilhar, use uma imagem PNG, JPG, WebP ou GIF.');
+        if (file.size > 12 * 1024 * 1024) throw new Error('A imagem compartilhada deve ter até 12 MB.');
+        const path = `${currentProjectId}/${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}.${extensionByType[file.type]}`;
+        const response = await fetch(storageObjectUrl(path), { method: 'POST', headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}`, 'Content-Type': file.type, 'x-upsert': 'false' }, body: file });
+        if (!response.ok) {
+          let failure = null; try { failure = await response.json(); } catch (_) {}
+          throw new Error(failure?.message || 'Não foi possível enviar a imagem para o projeto.');
+        }
+        return path;
+      };
+      const loadSharedImage = async path => {
+        if (!currentAccessToken) return null;
+        let response = await fetch(storageObjectUrl(path), { headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}` } });
+        if (response.status === 401 && localStorage.getItem(authRefreshKey)) {
+          try { await obtainAccessToken(); } catch (_) {}
+          response = await fetch(storageObjectUrl(path), { headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}` } });
+        }
+        if (!response.ok) throw new Error('A imagem não pôde ser carregada.');
+        return response.blob();
+      };
       const saveAuthSession = session => {
         currentAccessToken = session.access_token || '';
         if (currentAccessToken) localStorage.setItem(authTokenKey, currentAccessToken);
@@ -671,7 +748,32 @@
       };
       const remoteToRecord = row => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+      };
+      const renderDocumentActivity = record => {
+        const label = document.querySelector('#document-activity');
+        if (!record?.remoteId || !record.lastEditedAt) { label.textContent = ''; label.title = 'Documento ainda não sincronizado'; return; }
+        const editedAt = new Date(record.lastEditedAt);
+        const formatted = Number.isNaN(editedAt.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(editedAt);
+        label.textContent = `${record.lastEditor || 'Equipe'} · ${formatted}`;
+        label.title = `Última edição por ${record.lastEditor || 'Equipe'} em ${formatted}`;
+      };
+      const refreshDocumentPresence = async () => {
+        const label = document.querySelector('#document-presence');
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record?.remoteId || !currentProjectId || !currentUser?.id || !currentAccessToken) { label.textContent = ''; return; }
+        try {
+          const now = new Date();
+          const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email || 'Membro';
+          await apiFetch('/rest/v1/doc_presence?on_conflict=doc_id,user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ doc_id: record.remoteId, user_id: currentUser.id, display_name: displayName, last_seen_at: now.toISOString() }) });
+          const cutoff = new Date(now.getTime() - 45000).toISOString();
+          const query = new URLSearchParams({ select: 'user_id,display_name,last_seen_at', doc_id: `eq.${record.remoteId}`, last_seen_at: `gt.${cutoff}`, order: 'last_seen_at.desc' });
+          const people = await apiFetch(`/rest/v1/doc_presence?${query}`);
+          const others = (Array.isArray(people) ? people : []).filter(person => person.user_id !== currentUser.id);
+          const names = others.map(person => person.display_name || 'Membro');
+          label.textContent = names.length ? `Com você: ${names.join(', ')}` : 'Só você neste documento';
+          label.title = names.length ? `Também neste documento: ${names.join(', ')}` : 'Você é a única pessoa ativa neste documento';
+        } catch (_) { label.textContent = ''; }
       };
       const saveProjectCache = () => { try { persistLibrary(); } catch (_) {} };
       const refreshProjectDocs = async (initial = false) => {
@@ -683,11 +785,12 @@
         const oldByRemoteId = new Map(documents.filter(record => record.remoteId).map(record => [record.remoteId, record]));
         const next = rows.map(row => {
           const old = oldByRemoteId.get(row.id);
+          const remoteVersion = remoteToRecord(row);
           if (old && (old.dirty || dirtyDocumentIds.has(old.id))) {
-            if (old.remoteUpdatedAt !== row.updated_at) old.remoteConflict = true;
+            if (old.remoteUpdatedAt !== row.updated_at) { old.remoteConflict = true; old.remoteVersion = remoteVersion; }
             return old;
           }
-          return remoteToRecord(row);
+          return remoteVersion;
         });
         const cachedLocal = documents.filter(record => !record.remoteId && record.projectId === currentProjectId);
         documents = [...next, ...cachedLocal];
@@ -698,13 +801,19 @@
           return;
         }
         const active = documents.find(record => record.id === activeDocumentId);
+        if (active?.remoteId) {
+          try {
+            const activityQuery = new URLSearchParams({ select: 'actor_name,created_at', doc_id: `eq.${active.remoteId}`, event_type: 'in.(document.saved,document.revision_restored)', order: 'created_at.desc', limit: '1' });
+            const activity = await apiFetch(`/rest/v1/doc_activity?${activityQuery}`);
+            if (activity?.[0]) { active.lastEditor = activity[0].actor_name || active.lastEditor; active.lastEditedAt = activity[0].created_at || active.lastEditedAt; }
+          } catch (_) { /* a edição continua disponível sem os metadados de atividade */ }
+        }
         if (active && (initial || !dirtyDocumentIds.has(active.id))) {
           title.textContent = active.title; subtitle.value = active.subtitle; editor.innerHTML = active.body;
           resizeSubtitle(); updateDocumentLabel(); updateCount(); hydrateImages(editor);
         }
         saveProjectCache(); renderLibrary();
         const conflict = documents.some(record => record.remoteConflict);
-        document.querySelector('#sync-refresh').textContent = conflict ? 'Recarregar versão remota' : 'Atualizar';
         if (conflict) statusMessage('Outra pessoa atualizou este documento; seu rascunho foi preservado', 'pending');
       };
       const requestProjectDocsRefresh = (initial = false) => {
@@ -723,6 +832,7 @@
       const loadCloudProject = async (projectId, knownProject = null) => {
         if (currentProjectId && currentProjectId !== projectId) flushSave();
         clearInterval(remotePollTimer);
+        clearInterval(presenceTimer);
         const access = await getProjectAccess(projectId);
         if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
         currentProjectId = projectId; projectCapabilities = access.capabilities || {};
@@ -741,10 +851,12 @@
         document.querySelector('#sync-refresh').hidden = false;
         statusMessage('Conectado ao projeto');
         remotePollTimer = setInterval(() => requestProjectDocsRefresh(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
+        refreshDocumentPresence();
+        presenceTimer = setInterval(refreshDocumentPresence, 12000);
       };
       const syncRecord = async record => {
         const targetProjectId = record.projectId || currentProjectId;
-        if (!targetProjectId || !currentAccessToken || remoteSaveInProgress.has(record.id) || !canEditProject({ capabilities: projectCapabilities })) return;
+        if (!targetProjectId || !currentAccessToken || record.remoteConflict || remoteSaveInProgress.has(record.id) || !canEditProject({ capabilities: projectCapabilities })) return;
         const syncKey = record.id;
         remoteSaveInProgress.add(syncKey);
         let retryAfterSave = false;
@@ -760,11 +872,18 @@
             record.remoteId = row.id; record.id = row.id; record.remoteUpdatedAt = row.updated_at || ''; record.projectId = targetProjectId;
             if (activeDocumentId === previousId) activeDocumentId = row.id;
             dirtyDocumentIds.delete(previousId); record.dirty = false;
+            refreshDocumentPresence();
           } else {
             const result = await apiFetch('/rest/v1/rpc/heartspace_save_doc_content', { method: 'POST', body: JSON.stringify({ p_doc_id: record.remoteId, p_content: content, p_expected_updated_at: record.remoteUpdatedAt || null, p_author_name: currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro' }) });
-            if (result?.conflict) { record.remoteConflict = true; throw new Error('Outra pessoa salvou uma versão mais recente. Seu rascunho local foi preservado.'); }
+            if (result?.conflict) {
+              const content = parseRemoteContent(result.remote_content);
+              record.remoteConflict = true;
+              record.remoteVersion = makeRecord({ id: record.remoteId, remoteId: record.remoteId, projectId: targetProjectId, remoteUpdatedAt: result.remote_updated_at || '', title: content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: result.remote_updated_at || new Date().toISOString() });
+              throw new Error('Outra pessoa salvou uma versão mais recente. Seu rascunho está preservado.');
+            }
             if (!result?.success) throw new Error(result?.reason === 'forbidden' ? 'Sua permissão de edição mudou.' : 'A gravação remota não foi concluída.');
             record.remoteUpdatedAt = result.updated_at || record.remoteUpdatedAt;
+            record.lastEditor = currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro'; record.lastEditedAt = result.updated_at || new Date().toISOString();
             if (record.title !== captured.title) record.title = captured.title;
             await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ title: captured.title }) }).then(rows => { if (rows?.[0]?.updated_at) record.remoteUpdatedAt = rows[0].updated_at; });
             dirtyDocumentIds.delete(record.id); record.dirty = false; record.remoteConflict = false;
@@ -775,7 +894,7 @@
           else if (!documents.some(item => item.remoteConflict)) statusMessage('Sincronizado com o projeto');
         } catch (error) {
           record.dirty = true; dirtyDocumentIds.add(record.id);
-          if (currentProjectId === targetProjectId) { saveProjectCache(); statusMessage(error.message || 'Falha ao sincronizar; rascunho local preservado', 'pending'); }
+          if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); statusMessage(error.message || 'Falha ao sincronizar; rascunho local preservado', 'pending'); }
         } finally {
           remoteSaveInProgress.delete(syncKey);
           if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
@@ -873,20 +992,89 @@
         catch (error) { projectPicker.value = previousProject; statusMessage(error.message, 'pending'); }
       });
       document.querySelector('#sync-refresh').addEventListener('click', async () => {
-        const conflict = documents.find(record => record.id === activeDocumentId && record.remoteConflict);
-        if (conflict) {
-          if (!confirm('Recarregar a versão do projeto? Seu rascunho local continuará guardado neste navegador.')) return;
-          documents.push(makeRecord({ ...conflict, id: makeId(), remoteId: '', remoteUpdatedAt: '', dirty: false, title: `${conflict.title} (rascunho local)` }));
-          dirtyDocumentIds.delete(conflict.id); conflict.dirty = false; conflict.remoteConflict = false;
-          saveProjectCache();
-        }
         try { await requestProjectDocsRefresh(false); for (const record of documents.filter(item => item.dirty && !item.remoteConflict)) syncRecord(record); }
         catch (error) { statusMessage(error.message || 'Não foi possível atualizar.', 'pending'); }
+      });
+      const historyDialog = document.querySelector('#history-dialog');
+      const historyList = document.querySelector('#history-list');
+      const formatHistoryDate = value => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+      };
+      const loadRevisionHistory = async () => {
+        historyDialog.showModal();
+        historyList.replaceChildren(Object.assign(document.createElement('div'), { className: 'history-empty', textContent: 'Carregando versões…' }));
+        const active = documents.find(record => record.id === activeDocumentId);
+        if (!active?.remoteId || !currentProjectId) { historyList.replaceChildren(Object.assign(document.createElement('div'), { className: 'history-empty', textContent: 'O histórico aparece depois que o documento é salvo no projeto.' })); return; }
+        try {
+          const query = new URLSearchParams({ select: 'id,revision_number,created_by_name,created_at', doc_id: `eq.${active.remoteId}`, order: 'revision_number.desc', limit: '30' });
+          const revisions = await apiFetch(`/rest/v1/doc_revisions?${query}`);
+          if (!Array.isArray(revisions) || !revisions.length) { historyList.replaceChildren(Object.assign(document.createElement('div'), { className: 'history-empty', textContent: 'Ainda não há revisões salvas para este documento.' })); return; }
+          const canRestore = canEditProject({ capabilities: projectCapabilities }) && !active.dirty && !active.remoteConflict;
+          historyList.replaceChildren(...revisions.map(revision => {
+            const row = document.createElement('article'); row.className = 'history-item';
+            const copy = document.createElement('div'); copy.className = 'history-item-copy';
+            const heading = document.createElement('strong'); heading.textContent = `Versão ${revision.revision_number}`;
+            const details = document.createElement('span'); details.textContent = `${revision.created_by_name || 'Membro'} · ${formatHistoryDate(revision.created_at)}`;
+            copy.append(heading, details); row.append(copy);
+            const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restaurar'; restore.disabled = !canRestore;
+            restore.title = canRestore ? 'Restaurar esta versão' : 'Salve ou resolva o rascunho atual antes de restaurar';
+            restore.addEventListener('click', () => restoreDocumentRevision(revision, restore)); row.append(restore);
+            return row;
+          }));
+        } catch (error) {
+          historyList.replaceChildren(Object.assign(document.createElement('div'), { className: 'history-empty', textContent: error.message || 'Não foi possível carregar o histórico.' }));
+        }
+      };
+      const restoreDocumentRevision = async (revision, button) => {
+        const active = documents.find(record => record.id === activeDocumentId);
+        if (!active?.remoteId || active.dirty || active.remoteConflict) return;
+        if (!window.confirm(`Restaurar a versão ${revision.revision_number}? O conteúdo atual continuará disponível no histórico.`)) return;
+        button.disabled = true;
+        try {
+          const result = await apiFetch('/rest/v1/rpc/heartspace_restore_doc_revision', { method: 'POST', body: JSON.stringify({ p_revision_id: revision.id, p_expected_updated_at: active.remoteUpdatedAt || null, p_author_name: currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro' }) });
+          if (result?.conflict) { statusMessage('O documento mudou enquanto o histórico estava aberto. Atualize e tente novamente.', 'pending'); await requestProjectDocsRefresh(false); await loadRevisionHistory(); return; }
+          if (!result?.success) throw new Error(result?.reason === 'forbidden' ? 'Sua permissão não permite restaurar versões.' : 'A versão não pôde ser restaurada.');
+          active.dirty = false; active.remoteConflict = false; active.remoteUpdatedAt = result.updated_at || active.remoteUpdatedAt; active.lastEditor = currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro'; active.lastEditedAt = result.updated_at || new Date().toISOString();
+          dirtyDocumentIds.delete(active.id);
+          await requestProjectDocsRefresh(false);
+          historyDialog.close(); statusMessage(`Versão ${revision.revision_number} restaurada`);
+        } catch (error) { statusMessage(error.message || 'Não foi possível restaurar a versão.', 'pending'); button.disabled = false; }
+      };
+      document.querySelector('#versions-button').addEventListener('click', loadRevisionHistory);
+      document.querySelector('#history-close').addEventListener('click', () => historyDialog.close());
+      document.querySelector('#conflict-keep-copy').addEventListener('click', () => {
+        const conflicted = documents.find(record => record.id === activeDocumentId && record.remoteConflict);
+        if (!conflicted?.remoteVersion) return;
+        const localCopy = makeRecord({ ...conflicted, id: makeId(), remoteId: '', remoteUpdatedAt: '', remoteConflict: false, remoteVersion: null, dirty: true, title: `${conflicted.title} (cópia)` });
+        const remoteVersion = makeRecord(conflicted.remoteVersion);
+        documents = documents.filter(record => record.id !== conflicted.id);
+        documents.unshift(localCopy, remoteVersion);
+        dirtyDocumentIds.delete(conflicted.id); dirtyDocumentIds.add(localCopy.id);
+        activeDocumentId = localCopy.id;
+        title.textContent = localCopy.title; subtitle.value = localCopy.subtitle; editor.innerHTML = localCopy.body;
+        resizeSubtitle(); hydrateImages(editor); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
+        statusMessage('Criando uma cópia do seu rascunho na equipe…', 'pending');
+        syncRecord(localCopy);
+      });
+      document.querySelector('#conflict-load-remote').addEventListener('click', () => {
+        const conflicted = documents.find(record => record.id === activeDocumentId && record.remoteConflict);
+        if (!conflicted?.remoteVersion) return;
+        const localDraft = makeRecord({ ...conflicted, id: makeId(), remoteId: '', remoteUpdatedAt: '', remoteConflict: false, remoteVersion: null, dirty: false, title: `${conflicted.title} (rascunho local)` });
+        const remoteVersion = makeRecord(conflicted.remoteVersion);
+        documents = documents.filter(record => record.id !== conflicted.id);
+        documents.unshift(remoteVersion, localDraft);
+        dirtyDocumentIds.delete(conflicted.id);
+        activeDocumentId = remoteVersion.id;
+        title.textContent = remoteVersion.title; subtitle.value = remoteVersion.subtitle; editor.innerHTML = remoteVersion.body;
+        resizeSubtitle(); hydrateImages(editor); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
+        statusMessage('Versão da equipe carregada; seu rascunho local foi preservado', '');
+        requestProjectDocsRefresh(false).then(refreshDocumentPresence).catch(() => {});
       });
       document.querySelector('#sign-out').addEventListener('click', async () => {
         try { await apiFetch('/auth/v1/logout', { method: 'POST' }); } catch (_) {}
         [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
-        currentAccessToken = ''; currentUser = null; clearInterval(remotePollTimer); authGate.hidden = false; document.querySelector('#sign-out').hidden = true;
+        currentAccessToken = ''; currentUser = null; clearInterval(remotePollTimer); clearInterval(presenceTimer); document.querySelector('#document-presence').textContent = ''; authGate.hidden = false; document.querySelector('#sign-out').hidden = true;
       });
       requestDashboardSession().finally(startOnlineDocs);
       const escapeHtml = value => value.replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
@@ -1912,6 +2100,10 @@
             const imageBlob = await loadImage(image.dataset.localImage);
             if (imageBlob) image.src = await blobToDataUrl(imageBlob);
           }
+          for (const image of exportRoot.querySelectorAll('img[data-remote-image]')) {
+            const imageBlob = await loadSharedImage(image.dataset.remoteImage);
+            if (imageBlob) image.src = await blobToDataUrl(imageBlob);
+          }
           const markdown = `${metadata}# ${inlineToMarkdown(document.createTextNode(documentTitle.replace(/\s+/g, ' ')))}\n\n${markdownBlocks(exportRoot)}`.trimEnd() + '\n';
           const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
           url = URL.createObjectURL(blob);
@@ -1999,10 +2191,12 @@
         try {
           const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
           await storeImage(id, file);
+          const remotePath = await uploadSharedImage(file);
           const figure = document.createElement('figure');
           figure.dataset.docsImage = 'true';
           const image = document.createElement('img');
           image.dataset.localImage = id;
+          if (remotePath) image.dataset.remoteImage = remotePath;
           image.alt = file.name.replace(/\.[^.]+$/, '');
           const imageUrl = URL.createObjectURL(file);
           imageObjectUrls.add(imageUrl);
@@ -2024,7 +2218,7 @@
           else editor.append(figure, after);
           placeCaret(caption);
           queueSave();
-          transferStatus.textContent = 'Imagem adicionada e salva neste dispositivo';
+          transferStatus.textContent = remotePath ? 'Imagem compartilhada com a equipe' : 'Imagem adicionada e salva neste dispositivo';
           setTimeout(() => { transferStatus.textContent = ''; }, 4000);
         } catch (error) {
           pendingImageRange = null;
