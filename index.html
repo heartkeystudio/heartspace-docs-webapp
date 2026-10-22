@@ -29,6 +29,13 @@
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
     .app { display: grid; grid-template-columns: 252px minmax(0,1fr); width:100%; height: 100vh; height:100dvh; overflow:hidden; }
     .sidebar { display: flex; min-height: 0; flex-direction: column; padding: 18px 14px 14px; border-right: 1px solid var(--line); background: var(--rail); }
+    body.focus-mode .sidebar { position:fixed; z-index:40; inset:0 auto 0 0; width:252px; min-height:100dvh; transform:translateX(-100%); transition:transform .16s ease; box-shadow:12px 0 34px #0008; }
+    body.focus-mode.zen-sidebar-open .sidebar,body.focus-mode .sidebar:focus-within,body.focus-mode.zen-sidebar-pinned .sidebar { transform:translateX(0); }
+    body.focus-mode::before { content:''; position:fixed; z-index:39; inset:0 auto 0 0; width:40px; background:linear-gradient(90deg,#c887ed0d,transparent); }
+    body.focus-mode:not(.zen-sidebar-open):not(.zen-sidebar-pinned)::after { content:'›'; position:fixed; z-index:39; top:50%; left:0; display:grid; place-items:center; width:26px; height:64px; transform:translateY(-50%); border:1px solid #c887ed45; border-left:0; border-radius:0 10px 10px 0; color:#d7a6ed; background:#1d1d22eF; box-shadow:0 0 18px #c887ed22; font-size:20px; pointer-events:none; }
+    @media(min-width:801px){body.focus-mode.zen-sidebar-dismissed .sidebar{transform:translateX(-100%)}}
+    .mobile-nav-toggle { display:none; }
+    .sidebar-backdrop { display:none; }
     .brand { display:flex; align-items:center; gap:11px; min-height:42px; padding:0 8px; color:#f4eff7; font-size:17px; font-weight:720; letter-spacing:.01em; white-space:nowrap; }
     .brand img { display:block; width:30px; height:32px; object-fit:contain; }
     .tool:hover { background:var(--panel-hover); }
@@ -186,11 +193,9 @@
     .toolbar-spacer { flex:1; }
     .focus-button { color:#d6cbdc; }
     .editor-area { position:relative; min-height:0; overflow:auto; overscroll-behavior:contain; background:var(--bg); }
-    .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:24px 24px 84px; }
-    .editor-meta { display:flex; align-items:center; justify-content:space-between; max-width:var(--editor-width); margin:0 auto 16px; color:#88838e; font-size:11px; }
+    .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:12px 24px 84px; }
     .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
     .editor-wrap.is-canvas { width:100%; max-width:none; padding:0 0 56px; }
-    .editor-wrap.is-canvas .editor-meta { max-width:none; }
     .page[data-layout="canvas"] { width:100%; min-height:calc(100dvh - 148px); padding:34px clamp(24px,5vw,72px) 48px; border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
     .page[data-layout="canvas"] .content { min-height:calc(100dvh - 340px); }
     .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:min(var(--book-page-height,1123px),calc(100cqi * var(--book-page-ratio))); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); width:min(100%,var(--book-page-width,794px)); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) min(var(--book-margin-x,76px),8vw) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 1px calc(100% - 1px),#ffffff20 calc(100% - 1px)),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
@@ -199,6 +204,8 @@
     .content .book-page-content:not(:first-child) { height:var(--book-sheet-height); padding:var(--book-margin-y,72px) 0; }
     .doc-title { margin:0 0 12px; color:#f3eff4; font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
     .doc-title[data-align="center"] { text-align:center; }
+    .doc-title[data-align="right"] { text-align:right; }
+    .doc-title[data-align="justify"] { text-align:justify; }
     .doc-subtitle { display:block; box-sizing:border-box; width:100%; min-height:1.5em; margin:0 0 36px; padding:0; border:0; border-radius:3px; outline:none; overflow:hidden; resize:none; background:transparent; color:#aaa4b0; font:inherit; font-size:15px; line-height:1.5; }
     .doc-subtitle:focus { box-shadow:0 1px 0 var(--accent); }
     .doc-subtitle::placeholder { color:#77717e; }
@@ -332,13 +339,25 @@
     .search-result small { color:#aaa3af; }
     .search-empty { padding:16px 12px; color:var(--quiet); }
     @media(max-width:1050px) { .app{grid-template-columns:220px minmax(0,1fr)} .page{padding:48px 54px 75px} .toolbar{gap:1px;padding:0 9px}.tool{padding:0 7px} }
-    @media(max-width:800px) { body{min-width:0}.app{grid-template-columns:58px minmax(0,1fr)} .sidebar{padding:13px 8px}.brand{justify-content:center;padding:0}.brand-name,.sidebar-shortcuts,.search,.nav-section{display:none}.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 12px}.toolbar{overflow:auto}.tool:not(.icon-only){font-size:0}.tool:not(.icon-only)::first-letter{font-size:14px}.editor-wrap{width:100%;padding:16px 12px 70px}.page{padding:42px 28px 60px}.doc-title{font-size:29px}.bottom-status{right:12px;bottom:12px}.word-count{display:none} }
-    @media(max-width:800px) { .page[data-layout="canvas"]{padding:24px 18px 44px}.zoom-control{left:8px;bottom:8px}.page-settings-popover{right:auto;left:0} }
+    @media(max-width:800px) {
+      body{min-width:0}.app{grid-template-columns:minmax(0,1fr)}.workspace{grid-template-rows:52px 48px minmax(0,1fr)}
+      .sidebar,body.focus-mode .sidebar{position:fixed;z-index:51;inset:0 auto 0 0;width:min(320px,88vw);min-height:100dvh;padding:14px 12px 12px;transform:translateX(-105%);transition:transform .18s ease;box-shadow:16px 0 42px #0009;}
+      body.focus-mode .sidebar:focus-within{transform:translateX(-105%)}
+      body.focus-mode.zen-sidebar-open .sidebar{transform:translateX(-105%)}
+      body.mobile-sidebar-open .sidebar,body.zen-sidebar-pinned .sidebar,body.focus-mode.mobile-sidebar-open .sidebar:focus-within{transform:translateX(0)}
+      body.focus-mode::before,body.focus-mode::after{display:none!important}.sidebar-backdrop{position:fixed;z-index:50;inset:0;display:block;visibility:hidden;opacity:0;background:#0009;transition:opacity .18s ease,visibility .18s ease}
+      body.mobile-sidebar-open .sidebar-backdrop,body.zen-sidebar-pinned .sidebar-backdrop{visibility:visible;opacity:1}
+      .brand{justify-content:flex-start;padding:0 8px}.brand-name{display:inline}.sidebar-shortcuts,.search,.nav-section{display:grid}.search{margin:12px 0 8px}.nav-section{margin:12px 0 8px}
+      .topbar{gap:8px;padding:0 10px}.topbar-left,.topbar-right{min-width:0;gap:7px}.topbar-left{flex:1;overflow:hidden}.topbar-left .crumb:not(:last-child){display:none}.topbar-left .crumb:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-nav-toggle{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid var(--line);border-radius:7px;color:#e6dce9;background:#ffffff08;font-size:18px}.save-state{max-width:34px;font-size:0}.save-dot{flex:0 0 7px}.document-presence,.document-activity,.transfer-status{display:none}.topbar-right{flex:0 0 auto}.actions-menu>summary{min-height:34px;padding:0 7px}.top-button{min-height:34px;padding:0 7px}
+      .toolbar{gap:3px;padding:0 8px;overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x}.toolbar::-webkit-scrollbar{display:none}.tool{min-width:38px;min-height:40px;padding:0 9px;flex:0 0 auto}.tool.icon-only{min-width:38px}.tool-separator{margin:0 2px}.toolbar-spacer{min-width:8px}.focus-button{display:none}
+      .editor-wrap{width:100%;padding:10px 8px 64px}.page{padding:34px 22px 62px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.page[data-layout="canvas"]{padding:22px 16px 44px}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
+    }
+    @media(max-width:480px){.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:100%;padding-inline:16px}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar" aria-label="Navegação do Docs">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação do Docs">
         <div class="brand"><img src="./assets/docs/heartspace-docs.svg" alt=""><span class="brand-name">HeartSpace Docs</span></div>
       <div class="sidebar-shortcuts"><button type="button" id="versions-button" title="Histórico de versões">Versões</button><button type="button" id="review-button" title="Revisão do documento">Revisão</button></div>
       <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar documentos  Ctrl K" aria-label="Buscar documentos"></label>
@@ -365,9 +384,10 @@
       <div class="document-context-menu" id="document-context-menu" role="menu" aria-label="Ações do documento" hidden><button type="button" id="context-trash-document" role="menuitem"><span aria-hidden="true">▱</span>Mover para a lixeira</button></div>
       <div class="sidebar-spacer"></div>
     </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
     <main class="workspace">
       <header class="topbar">
-        <div class="topbar-left"><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
+        <div class="topbar-left"><button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
         <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><button type="button" id="metadata-open">Metadados</button><button type="button" id="save-template">Salvar como template</button><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown"><img class="actions-menu-icon" src="./assets/docs/load_file_icon.svg" alt="">Importar .md</button><button type="button" id="export-markdown"><img class="actions-menu-icon" src="./assets/docs/save_file_icon.svg" alt="">Exportar .md</button><button type="button" class="publish-menu-item"><span aria-hidden="true">↗</span>Publicar no HeartSpace</button><button type="button" id="sign-out" hidden>Deslogar</button></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false"><span>Zen</span></button></div>
       </header>
       <nav class="toolbar" aria-label="Ferramentas de edição">
@@ -381,7 +401,6 @@
       <section class="editor-area" aria-label="Área do documento">
         <div class="conflict-banner" id="conflict-banner" role="alert" hidden><div class="conflict-copy"><strong>Outra pessoa salvou uma versão mais recente.</strong><span>Seu rascunho está protegido neste navegador. Escolha como continuar.</span></div><div class="conflict-actions"><button type="button" id="conflict-keep-copy" class="conflict-primary">Criar cópia na equipe</button><button type="button" id="conflict-load-remote">Usar versão da equipe</button></div></div>
         <div class="editor-wrap">
-          <div class="editor-meta"><span>DOCUMENTO</span><span>Digite / para inserir · ↑ ↓ navegam · Enter abre/insere · Backspace volta</span></div>
           <article class="page">
             <h1 class="doc-title" id="doc-title" contenteditable="true" spellcheck="false" data-align="left">Guia de produção</h1>
             <textarea class="doc-subtitle" id="doc-subtitle" rows="1" aria-label="Subtítulo do documento" placeholder="Adicione um subtítulo…">Um espaço para organizar ideias, decisões e o trabalho que vem pela frente.</textarea>
@@ -400,7 +419,7 @@
   </div>
   <dialog class="doc-kind-dialog" id="doc-kind-dialog" aria-labelledby="doc-kind-title"><form class="doc-kind-form" id="doc-kind-form"><h2 id="doc-kind-title">Novo documento</h2><p>Escolha como organizar o espaço de escrita.</p><label class="template-picker-label">Começar de um template<select id="doc-template"><option value="">Documento em branco</option><option value="builtin:gdd">Game Design Document</option><option value="builtin:spec">Especificação</option><option value="builtin:meeting">Notas de reunião</option></select></label><div class="doc-kind-options"><label class="doc-kind-option"><input type="radio" name="document-layout" value="book" checked><strong>Livro</strong><span>Páginas de leitura com separação entre folhas.</span></label><label class="doc-kind-option"><input type="radio" name="document-layout" value="canvas"><strong>Prancheta</strong><span>Uma área ampla e contínua para organizar conteúdo livremente.</span></label></div><div class="doc-kind-actions"><button type="button" id="doc-kind-cancel">Cancelar</button><button type="submit">Criar documento</button></div></form></dialog>
   <dialog class="history-dialog" id="history-dialog" aria-labelledby="history-title"><div class="history-heading"><h2 id="history-title">Histórico de versões</h2><button type="button" id="history-close">Fechar</button></div><div class="history-list" id="history-list" aria-live="polite"><div class="history-empty">Carregando versões…</div></div></dialog>
-  <dialog class="metadata-dialog" id="metadata-dialog" aria-labelledby="metadata-title"><form class="metadata-content" id="metadata-form"><div class="metadata-heading"><h2 id="metadata-title">Metadados</h2><button type="button" id="metadata-close">Fechar</button></div><label>Status do documento<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Digite vírgula ou Enter para criar uma etiqueta. Clique no texto para editá-lo.</span></label><label>Alinhamento do título principal<select id="metadata-title-align"><option value="left">À esquerda</option><option value="center">Centralizado</option></select></label><div class="metadata-actions"><button type="button" id="metadata-cancel">Cancelar</button><button class="metadata-save" type="submit">Salvar metadados</button></div></form></dialog>
+  <dialog class="metadata-dialog" id="metadata-dialog" aria-labelledby="metadata-title"><form class="metadata-content" id="metadata-form"><div class="metadata-heading"><h2 id="metadata-title">Metadados</h2><button type="button" id="metadata-close">Fechar</button></div><label>Status do documento<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Digite vírgula ou Enter para criar uma etiqueta. Clique no texto para editá-lo.</span></label><div class="metadata-actions"><button type="button" id="metadata-cancel">Cancelar</button><button class="metadata-save" type="submit">Salvar metadados</button></div></form></dialog>
   <dialog class="search-dialog" id="search-dialog" aria-label="Buscar no HeartSpace Docs"><div class="search-content"><div class="search-heading"><h2>Buscar</h2><button type="button" id="search-close">Esc</button></div><input id="global-search" type="search" placeholder="Buscar documentos, tags e conteúdo…" autocomplete="off" aria-label="Buscar documentos, tags e conteúdo"><div class="search-results" id="search-results" role="listbox"></div></div></dialog>
   <section class="auth-gate" id="auth-gate" hidden aria-labelledby="auth-title">
     <form class="auth-card" id="auth-form">
@@ -535,6 +554,7 @@
       let slashRange = null;
       let slashTableCell = null;
       let slashImageFigure = null;
+      let slashTarget = null;
       let toolbarRange = null;
       let pendingImageMarker = null;
       let pendingImageDocumentId = '';
@@ -620,7 +640,7 @@
       let activeDocumentId = '';
       let expandedSidebarTag = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], titleAlign: data.titleAlign === 'center' ? 'center' : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const templatesStorageKey = 'heartspace-docs-templates-v1';
       const readDocumentTemplates = () => { try { const saved=JSON.parse(localStorage.getItem(templatesStorageKey)||'[]'); return Array.isArray(saved) ? saved.filter(item=>item&&typeof item.id==='string'&&typeof item.body==='string') : []; } catch (_) { return []; } };
       const updateDocumentOrderIndices = () => documents.forEach((record, index) => { record.sortOrder = (index + 1) * 1024; });
@@ -716,6 +736,7 @@
         renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
       };
       let draggedDocumentId = '';
+      let lastPointerX = 0;
       let suppressDocumentClickUntil = 0;
       const documentContextMenu = document.querySelector('#document-context-menu');
       const contextTrashButton = document.querySelector('#context-trash-document');
@@ -781,12 +802,19 @@
         const item = event.target.closest?.('.tree-item[data-doc-id]');
         if (!item || !item.draggable) { event.preventDefault(); return; }
         draggedDocumentId = item.dataset.docId;
+        if (document.body.classList.contains('focus-mode')) {
+          if (mobileViewport.matches) {
+            document.body.classList.add('mobile-sidebar-open');
+            document.querySelector('#mobile-nav-toggle').setAttribute('aria-expanded', 'true');
+          } else document.body.classList.add('zen-sidebar-pinned', 'zen-sidebar-open');
+        }
         item.setAttribute('aria-grabbed', 'true');
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', draggedDocumentId);
       });
       documentList.addEventListener('dragover', event => {
         if (!draggedDocumentId) return;
+        lastPointerX = event.clientX;
         event.preventDefault(); event.dataTransfer.dropEffect = 'move';
         const item = event.target.closest?.('.tree-item[data-doc-id]');
         const indicator = documentDropIndicator();
@@ -802,6 +830,7 @@
       });
       documentList.addEventListener('drop', event => {
         if (!draggedDocumentId) return;
+        lastPointerX = event.clientX;
         event.preventDefault();
         const item = event.target.closest?.('.tree-item[data-doc-id]');
         let targetIndex = item ? documents.findIndex(record => record.id === item.dataset.docId) : documents.length;
@@ -820,9 +849,22 @@
           void persistDocumentOrder();
         }
         clearDocumentDrag();
+        if (!mobileViewport.matches) document.body.classList.remove('zen-sidebar-pinned');
         setTimeout(() => { suppressDocumentClickUntil = 0; }, 250);
       });
       documentList.addEventListener('dragend', clearDocumentDrag);
+      documentList.addEventListener('dragend', event => {
+        if (mobileViewport.matches) return;
+        if (Number.isFinite(event.clientX) && event.clientX > 0) lastPointerX = event.clientX;
+        document.body.classList.remove('zen-sidebar-pinned');
+        if (lastPointerX > 252) {
+          document.body.classList.remove('zen-sidebar-open');
+          document.body.classList.add('zen-sidebar-dismissed');
+        } else document.body.classList.remove('zen-sidebar-dismissed');
+      });
+      document.addEventListener('drag', event => {
+        if (draggedDocumentId && Number.isFinite(event.clientX)) lastPointerX = event.clientX;
+      });
       documentList.addEventListener('dragleave', event => {
         if (!documentList.contains(event.relatedTarget)) documentDropIndicator()?.setAttribute('hidden', '');
       });
@@ -846,7 +888,7 @@
         documentPage.style.setProperty('--book-page-ratio', String(height / width));
         documentPage.style.setProperty('--book-margin-x', `${marginX}px`);
         documentPage.style.setProperty('--book-margin-y', `${marginY}px`);
-        title.dataset.align = settings?.titleAlign === 'center' ? 'center' : 'left';
+        title.dataset.align = ['left','center','right','justify'].includes(settings?.titleAlign) ? settings.titleAlign : 'left';
         editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
         pageSettingsToggle.closest('.page-settings').hidden = documentPage.dataset.layout === 'canvas';
       };
@@ -1042,7 +1084,7 @@
         saveTimer = setTimeout(() => {
           try {
             const activeRecord = documents.find(item => item.id === activeDocumentId);
-            if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+            if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
             persistLibrary(); renderLibrary();
             if (currentProjectId && activeRecord) syncRecord(activeRecord);
             else setSaveStatus('Salvo neste dispositivo');
@@ -1081,7 +1123,7 @@
         queueSave();
       });
       editor.addEventListener('input', queueSave);
-      title.addEventListener('input', () => { updateDocumentLabel(); queueSave(); });
+      title.addEventListener('input', () => { updateDocumentLabel(); dismissedSlash = false; updateSlashMenu(); queueSave(); });
       subtitle.addEventListener('input', () => { resizeSubtitle(); queueSave(); });
       subtitle.addEventListener('blur', scheduleBookPagination);
       updateCount();
@@ -1093,13 +1135,16 @@
       document.querySelectorAll('[data-command]').forEach(button => {
         button.addEventListener('mousedown', event => event.preventDefault());
         button.addEventListener('click', () => {
-        if (toolbarRange && editor.contains(toolbarRange.commonAncestorContainer)) {
+        const alignmentCommand = button.dataset.command.startsWith('justify');
+        const currentSelection = window.getSelection();
+        const titleSelection = alignmentCommand && currentSelection?.rangeCount && title.contains(currentSelection.anchorNode);
+        if (titleSelection) applyTextAlignment(button.dataset.command);
+        else if (toolbarRange && editor.contains(toolbarRange.commonAncestorContainer)) {
           const selection = window.getSelection();
           selection.removeAllRanges();
           selection.addRange(toolbarRange);
         } else editor.focus();
-        const alignmentCommand = button.dataset.command.startsWith('justify');
-        if (!alignmentCommand || !applyTextAlignment(button.dataset.command)) {
+        if (!titleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
           document.execCommand(button.dataset.command, false, button.dataset.value || null);
         }
         toolbarRange = null;
@@ -1109,10 +1154,51 @@
       document.querySelector('#undo').addEventListener('click', () => { editor.focus(); document.execCommand('undo'); queueSave(); });
       document.querySelector('#redo').addEventListener('click', () => { editor.focus(); document.execCommand('redo'); queueSave(); });
       document.querySelector('#focus-toggle').addEventListener('click', event => {
-        const enabled = document.body.classList.toggle('focus-mode');
-        document.querySelector('.sidebar').style.display = enabled ? 'none' : '';
+        if (window.matchMedia('(max-width: 800px)').matches) return;
+        const enabled = !document.body.classList.contains('focus-mode');
+        document.body.classList.toggle('focus-mode', enabled);
         document.querySelector('.app').style.gridTemplateColumns = enabled ? 'minmax(0,1fr)' : '';
+        document.body.classList.remove('zen-sidebar-open', 'zen-sidebar-pinned', 'zen-sidebar-dismissed');
         event.currentTarget.setAttribute('aria-pressed', String(enabled));
+      });
+      const mobileViewport = window.matchMedia('(max-width: 800px)');
+      const syncResponsiveZen = () => {
+        const automaticZen = mobileViewport.matches;
+        document.body.classList.toggle('focus-mode', automaticZen);
+        document.querySelector('.app').style.gridTemplateColumns = automaticZen ? 'minmax(0,1fr)' : '';
+        document.querySelector('#focus-toggle').setAttribute('aria-pressed', String(automaticZen || document.body.classList.contains('focus-mode')));
+        if (!automaticZen) document.body.classList.remove('mobile-sidebar-open');
+        if (!automaticZen) document.querySelector('#mobile-nav-toggle').setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('zen-sidebar-open', 'zen-sidebar-pinned');
+      };
+      mobileViewport.addEventListener('change', syncResponsiveZen);
+      syncResponsiveZen();
+      const mobileNavToggle = document.querySelector('#mobile-nav-toggle');
+      const closeMobileSidebar = () => {
+        document.body.classList.remove('mobile-sidebar-open', 'zen-sidebar-open', 'zen-sidebar-pinned');
+        mobileNavToggle.setAttribute('aria-expanded', 'false');
+      };
+      mobileNavToggle.addEventListener('click', () => {
+        const open = !document.body.classList.contains('mobile-sidebar-open');
+        if (open) document.body.classList.add('mobile-sidebar-open');
+        else closeMobileSidebar();
+        mobileNavToggle.setAttribute('aria-expanded', String(open));
+      });
+      document.querySelector('#sidebar-backdrop').addEventListener('click', closeMobileSidebar);
+      document.addEventListener('pointermove', event => {
+        lastPointerX = event.clientX;
+        if (mobileViewport.matches || !document.body.classList.contains('focus-mode')) return;
+        if (event.clientX <= 40) { document.body.classList.remove('zen-sidebar-dismissed'); document.body.classList.add('zen-sidebar-open'); return; }
+        if (event.clientX > 252 && !document.body.classList.contains('zen-sidebar-pinned')) {
+          document.body.classList.remove('zen-sidebar-open');
+          document.body.classList.add('zen-sidebar-dismissed');
+        }
+      });
+      document.querySelector('.sidebar').addEventListener('pointerenter', () => {
+        if (!mobileViewport.matches && document.body.classList.contains('focus-mode')) {
+          document.body.classList.remove('zen-sidebar-dismissed');
+          document.body.classList.add('zen-sidebar-open');
+        }
       });
       document.querySelector('#insert-diagram').addEventListener('click', () => {
         editor.focus();
@@ -1127,7 +1213,6 @@
       const metadataTags = document.querySelector('#metadata-tags');
       const metadataTagEntry = document.querySelector('#metadata-tag-entry');
       const metadataTagChips = document.querySelector('#metadata-tag-chips');
-      const metadataTitleAlign = document.querySelector('#metadata-title-align');
       const normalizedTag = value => String(value || '').trim().replace(/^#+/, '').toLocaleLowerCase('pt-BR');
       const getMetadataTagValues = () => [...metadataTagChips.querySelectorAll('.tag-chip-text')].map(node => normalizedTag(node.textContent)).filter(Boolean);
       const addMetadataTagChip = value => {
@@ -1177,7 +1262,6 @@
         metadataTagChips.replaceChildren();
         record.tags.forEach(addMetadataTagChip);
         metadataTagEntry.value = '';
-        metadataTitleAlign.value = record.titleAlign;
         metadataDialog.showModal();
         metadataStatus.focus();
       });
@@ -1189,8 +1273,6 @@
         record.status = metadataStatus.value;
         commitMetadataTagEntry();
         record.tags = [...new Set([...getMetadataTagValues(), ...metadataTags.value.split(',').map(normalizedTag).filter(Boolean)])];
-        record.titleAlign = metadataTitleAlign.value === 'center' ? 'center' : 'left';
-        title.dataset.align = record.titleAlign;
         record.savedAt = new Date().toISOString();
         metadataDialog.close();
         renderLibrary();
@@ -1230,7 +1312,7 @@
         clearTimeout(saveTimer);
         try {
           const activeRecord = documents.find(item => item.id === activeDocumentId);
-          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
           persistLibrary();
           if (currentProjectId && activeRecord) syncRecord(activeRecord);
         } catch (_) { setSaveStatus('Não foi possível salvar neste navegador', 'pending'); }
@@ -1353,7 +1435,8 @@
       const docKindDialog = document.querySelector('#doc-kind-dialog');
       document.querySelector('#fast-doc').addEventListener('click', () => createDocument(true));
       document.querySelector('#add-notebook').addEventListener('click', () => createDocument(false, 'canvas', true));
-      document.querySelector('#add-doc').addEventListener('click', () => { renderTemplateChoices(); docKindDialog.showModal(); });
+      document.querySelector('#add-doc').addEventListener('click', () => { renderTemplateChoices(); if (document.body.classList.contains('focus-mode')) document.body.classList.add('zen-sidebar-pinned', 'zen-sidebar-open'); docKindDialog.showModal(); });
+      docKindDialog.addEventListener('close', () => { document.body.classList.remove('zen-sidebar-pinned'); if (mobileViewport.matches) closeMobileSidebar(); });
       document.querySelector('#doc-kind-cancel').addEventListener('click', () => docKindDialog.close());
       document.querySelector('#doc-kind-form').addEventListener('submit', event => {
         event.preventDefault();
@@ -1820,6 +1903,9 @@
         slashMenu.setAttribute('aria-hidden', 'true');
         editor.setAttribute('aria-expanded', 'false');
         editor.removeAttribute('aria-activedescendant');
+        title.setAttribute('aria-expanded', 'false');
+        title.removeAttribute('aria-activedescendant');
+        slashTarget = null;
         slashFolderStack = [];
         slashHeading.textContent = 'Inserir bloco';
       };
@@ -1839,10 +1925,10 @@
       };
       const renderSlashMenu = query => {
         const activeSlashFolder = slashFolderStack.at(-1);
-        const source = activeSlashFolder?.children || (slashImageFigure ? [imageOptionsFolder, ...commands] : commands);
+        const source = slashTarget === title ? alignmentFolder.children : activeSlashFolder?.children || (slashImageFigure ? [imageOptionsFolder, ...commands] : commands);
         filteredCommands = source.filter(command => matchesSlashCommand(command, query));
         const breadcrumb = slashFolderStack.map(folder => folder.label).join(' › ');
-        slashHeading.textContent = breadcrumb ? `${breadcrumb} · ↑↓ navegam · Enter abre/insere · Backspace volta` : 'Inserir bloco · Enter abre/insere';
+        slashHeading.textContent = slashTarget === title ? 'Alinhamento do título · Enter aplica' : breadcrumb ? `${breadcrumb} · ↑↓ navegam · Enter abre/insere · Backspace volta` : 'Inserir bloco · Enter abre/insere';
         selectedCommand = Math.min(selectedCommand, Math.max(0, filteredCommands.length - 1));
         slashOptions.replaceChildren();
         if (!filteredCommands.length) {
@@ -1867,11 +1953,13 @@
           option.addEventListener('click', () => applyCommand(index));
           slashOptions.append(option);
         });
-        editor.setAttribute('aria-activedescendant', `slash-option-${selectedCommand}`);
+        (slashTarget === title ? title : editor).setAttribute('aria-activedescendant', `slash-option-${selectedCommand}`);
       };
       const updateSlashMenu = () => {
         const selection = window.getSelection();
-        if (!selection || !selection.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) {
+        const inTitle = Boolean(selection?.anchorNode && title.contains(selection.anchorNode));
+        const inEditor = Boolean(selection?.anchorNode && editor.contains(selection.anchorNode));
+        if (!selection || !selection.rangeCount || !selection.isCollapsed || (!inTitle && !inEditor)) {
           closeSlashMenu();
           return;
         }
@@ -1880,10 +1968,11 @@
         const beforeCaret = node.textContent.slice(0, selection.anchorOffset);
         const match = beforeCaret.match(/(?:^|\s)\/([^\s/]*)$/u);
         if (!match || dismissedSlash) { closeSlashMenu(); return; }
+        slashTarget = inTitle ? title : editor;
         const slashIndex = beforeCaret.length - match[0].length + (match[0].startsWith(' ') ? 1 : 0);
         const anchorElement = node.parentElement;
-        slashTableCell = anchorElement?.closest('th,td') || null;
-        slashImageFigure = anchorElement?.closest('figcaption')?.closest('figure[data-docs-image]') || null;
+        slashTableCell = inTitle ? null : anchorElement?.closest('th,td') || null;
+        slashImageFigure = inTitle ? null : anchorElement?.closest('figcaption')?.closest('figure[data-docs-image]') || null;
         slashRange = document.createRange();
         slashRange.setStart(node, slashIndex);
         slashRange.setEnd(node, selection.anchorOffset);
@@ -1891,7 +1980,7 @@
         renderSlashMenu(match[1]);
         slashMenu.classList.add('open');
         slashMenu.setAttribute('aria-hidden', 'false');
-        editor.setAttribute('aria-expanded', 'true');
+        (slashTarget === title ? title : editor).setAttribute('aria-expanded', 'true');
         placeSlashMenu();
       };
       const insertAtCaret = html => {
@@ -2105,10 +2194,16 @@
         const selection = window.getSelection();
         const anchor = selection?.anchorNode;
         const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
-        const block = element?.closest('p,h1,h2,h3,blockquote,li,th,td');
-        if (!block || !editor.contains(block)) return false;
         const alignment = ({ justifyLeft: 'left', justifyCenter: 'center', justifyRight: 'right', justifyFull: 'justify' })[command];
         if (!alignment) return false;
+        if (title.contains(anchor)) {
+          title.dataset.align = alignment;
+          const record = documents.find(item => item.id === activeDocumentId);
+          if (record) record.titleAlign = alignment;
+          return true;
+        }
+        const block = element?.closest('p,h1,h2,h3,blockquote,li,th,td');
+        if (!block || !editor.contains(block)) return false;
         if (alignment === 'left') block.style.removeProperty('text-align');
         else block.style.textAlign = alignment;
         return true;
@@ -2123,6 +2218,7 @@
           placeSlashMenu();
           return;
         }
+        const commandTarget = slashTarget;
         const selection = window.getSelection();
         slashRange.deleteContents();
         slashRange.collapse(true);
@@ -2174,9 +2270,10 @@
         else if (command.kind === 'inline-markup') insertInlineMarkup(command.value);
         else if (command.kind === 'link') insertLink();
         else if (command.kind === 'template') insertAtCaret(templateHtml(command.value));
-        editor.focus();
+        (commandTarget === title ? title : editor).focus();
         slashTableCell = null;
         slashImageFigure = null;
+        slashTarget = null;
         queueSave();
       }
       let checklistSequence = 0;
@@ -2994,7 +3091,7 @@
               try {
                 if (match[1].toLowerCase() === 'status' && ['draft','production','final'].includes(match[2].trim())) importedStatus = match[2].trim();
                 if (match[1].toLowerCase() === 'tags') { const value = JSON.parse(match[2]); if (Array.isArray(value)) importedTags = [...new Set(value.filter(tag => typeof tag === 'string').map(tag => tag.trim().toLocaleLowerCase('pt-BR')).filter(Boolean))]; }
-                if (match[1].toLowerCase() === 'title_align' && match[2].trim() === 'center') importedTitleAlign = 'center';
+                if (match[1].toLowerCase() === 'title_align' && ['left','center','right','justify'].includes(match[2].trim())) importedTitleAlign = match[2].trim();
                 if (match[1].toLowerCase() === 'is_notebook') importedNotebook = JSON.parse(match[2]) === true;
               } catch (_) { /* metadado inválido é ignorado sem interromper a importação */ }
             }
@@ -3246,15 +3343,21 @@
         const element = target || (anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement);
         const callout = element?.closest('.callout-title')?.closest('.callout');
         if (!callout) return false;
-        const body = callout.querySelector('.callout-body');
-        if (!body) return false;
+        let body = callout.querySelector('.callout-body');
+        if (!body) {
+          body = document.createElement('div');
+          body.className = 'callout-body';
+          body.contentEditable = 'true';
+          callout.append(body);
+        }
         body.hidden = false;
         callout.dataset.collapsed = 'false';
         const toggle = callout.querySelector('.callout-toggle');
         if (toggle) { toggle.setAttribute('aria-expanded', 'true'); toggle.setAttribute('aria-label', 'Recolher callout'); }
+        if (!body.textContent.trim() && !body.querySelector('img,table,hr')) body.replaceChildren();
         const paragraph = document.createElement('p');
         paragraph.innerHTML = '<br>';
-        body.append(paragraph);
+        body.insertBefore(paragraph, body.firstChild);
         placeCaret(paragraph);
         return true;
       };
@@ -3309,6 +3412,24 @@
         }
         if (event.key === 'Backspace' && editChecklistWithBackspace(event)) return;
         if (!slashMenu.classList.contains('open')) return;
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!filteredCommands.length) return;
+          const step = event.key === 'ArrowDown' ? 1 : -1;
+          selectedCommand = (selectedCommand + step + filteredCommands.length) % filteredCommands.length;
+          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+          slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
+        } else if (event.key === 'Enter' && filteredCommands.length) {
+          event.preventDefault();
+          applyCommand(selectedCommand);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          dismissedSlash = true;
+          closeSlashMenu();
+        }
+      });
+      title.addEventListener('keydown', event => {
+        if (!slashMenu.classList.contains('open') || slashTarget !== title) return;
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
           event.preventDefault();
           if (!filteredCommands.length) return;
