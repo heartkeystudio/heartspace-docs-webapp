@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111114">
-  <title>Docs — Heartspace</title>
+  <title>HeartSpace Docs</title>
   <style>
     :root {
       color-scheme: dark;
@@ -29,42 +29,62 @@
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
     .app { display: grid; grid-template-columns: 252px minmax(0,1fr); width:100%; height: 100vh; height:100dvh; overflow:hidden; }
     .sidebar { display: flex; min-height: 0; flex-direction: column; padding: 18px 14px 14px; border-right: 1px solid var(--line); background: var(--rail); }
-    .brand { display:flex; align-items:center; gap:11px; height:42px; padding:0 8px; color:#f4eff7; font-size:19px; font-weight:750; letter-spacing:.12em; }
-    .brand-mark { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; color:white; background:linear-gradient(145deg,#b541dd,#7138b4); box-shadow:0 5px 18px #a333c63b; font-size:17px; letter-spacing:0; }
-    .sidebar-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; margin:20px 0 10px; }
-    .primary-button, .secondary-button, .square-button { min-height:38px; border:1px solid var(--line); border-radius:9px; background:#222126; transition:background .15s,border-color .15s; }
-    .primary-button { padding:0 12px; text-align:left; font-weight:650; }
-    .primary-button span { margin-right:7px; color:var(--purple); }
-    .secondary-button { padding:0 12px; color:#ded8e2; }
-    .primary-button:hover,.secondary-button:hover,.square-button:hover,.tool:hover { background:var(--panel-hover); }
+    .brand { display:flex; align-items:center; gap:11px; min-height:42px; padding:0 8px; color:#f4eff7; font-size:17px; font-weight:720; letter-spacing:.01em; white-space:nowrap; }
+    .brand img { display:block; width:30px; height:32px; object-fit:contain; }
+    .tool:hover { background:var(--panel-hover); }
     .sidebar-shortcuts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .sidebar-shortcuts button { overflow:hidden; min-height:35px; padding:0 10px; border-radius:8px; color:#c7c1ca; background:#222126; text-overflow:ellipsis; white-space:nowrap; }
     .search { position:relative; margin:14px 0 21px; }
     .search .search-icon { position:absolute; top:9px; left:11px; color:var(--quiet); }
     .search input { width:100%; height:37px; padding:0 11px 0 34px; border:1px solid var(--line); border-radius:8px; outline:none; background:#111115; }
     .search input:focus { border-color:#9762b2; }
-    .nav-section { margin-bottom:20px; }
-    .section-heading-row { display:flex; align-items:center; gap:4px; }
-    .section-heading { display:flex; align-items:center; gap:7px; flex:1; width:100%; padding:4px 3px 8px; color:#d8d3dc; background:none; text-align:left; font-weight:650; }
+    .nav-section { margin:22px 0 18px; }
+    .section-heading-row { display:flex; align-items:center; gap:4px; margin-bottom:7px; }
+    .section-heading { display:flex; align-items:center; gap:7px; flex:1; width:100%; min-height:28px; padding:4px 8px; color:#858d8c; background:none; text-align:left; font-size:10px; font-weight:780; letter-spacing:.1em; text-transform:uppercase; }
     .section-heading .chevron { color:var(--quiet); font-size:11px; }
     .add-button { width:28px; height:28px; margin-bottom:4px; border-radius:6px; color:#c9c1ce; background:transparent; font-size:18px; }
     .add-button:hover { background:#ffffff0b; color:#f4eff7; }
-    .tree { display:grid; gap:2px; }
-    .tree-item { display:flex; align-items:center; gap:9px; min-height:34px; padding:0 9px; border-radius:7px; color:#bdb7c1; background:transparent; text-align:left; }
-    .tree-item .doc-icon { color:#918998; font-size:14px; }
-    .tree-item.active { color:#f4eff7; background:var(--purple-soft); box-shadow:inset 2px 0 #bd79df; }
-    .tree-item.active .doc-icon { color:#d5a4ed; }
-    .tree-item:hover:not(.active) { background:#ffffff08; }
+    .quick-doc-button { display:grid; place-items:center; width:28px; height:28px; margin:0 0 4px; border-radius:6px; color:#c9c1ce; background:transparent; font-size:16px; }
+    .quick-doc-button:hover { background:#ffffff0b; color:#f4eff7; }
+    .tree { position:relative; display:grid; gap:4px; padding-bottom:8px; }
+    .tree[hidden] { display:none; }
+    .tree-entry { display:flex; min-width:0; }
+    .tree-entry .tree-item { width:100%; }
+    .document-context-menu { position:fixed; z-index:100; min-width:188px; padding:5px; border:1px solid #ffffff20; border-radius:8px; background:#202024; box-shadow:0 12px 32px #0009; }
+    .document-context-menu[hidden] { display:none; }
+    .document-context-menu button { display:flex; align-items:center; gap:9px; width:100%; min-height:34px; padding:0 9px; border-radius:5px; color:#e4dfe7; background:transparent; text-align:left; }
+    .document-context-menu button:hover,.document-context-menu button:focus-visible { color:#ffb5bd; background:#a8374725; }
+    .trash-list { display:grid; gap:4px; padding:2px 0 8px; }
+    .trash-list[hidden] { display:none; }
+    .trash-entry { display:grid; gap:5px; padding:8px; border:1px solid #ffffff0d; border-radius:7px; background:#ffffff04; }
+    .trash-entry-title { overflow:hidden; color:#b9b3be; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .trash-entry-date { color:#77727e; font-size:10px; }
+    .trash-entry-actions { display:flex; gap:5px; }
+    .trash-entry-actions button { min-height:27px; padding:0 7px; border:1px solid #ffffff12; border-radius:5px; color:#c9c2ce; background:#ffffff06; font-size:10px; }
+    .trash-entry-actions button:hover:not(:disabled) { color:#fff; background:#ffffff10; }
+    .trash-entry-actions button:disabled { opacity:.45; cursor:not-allowed; }
+    .trash-entry-actions .trash-delete-forever { color:#e59aa3; }
+    .tree-item { display:flex; align-items:center; gap:10px; min-width:0; min-height:40px; padding:4px 9px; border:1px solid transparent; border-radius:8px; color:#aaa7b0; background:transparent; text-align:left; font-size:13px; font-weight:560; white-space:nowrap; }
+    .tree-item .doc-icon { display:grid; place-items:center; width:18px; height:20px; flex:0 0 18px; }
+    .tree-item .doc-icon img { display:block; width:14px; height:16px; object-fit:contain; opacity:.72; }
+    .tree-item > span:nth-child(2) { overflow:hidden; text-overflow:ellipsis; }
+    .tree-item.active { border-color:#a536d3; color:#e9b8fa; background:linear-gradient(90deg,rgba(149,1,216,.2),rgba(149,1,216,.09)); }
+    .tree-item.active .doc-icon { color:#e2a4ff; }
+    .tree-item:hover:not(.active) { color:#fff; background:#1c2221; }
+    .tree-item[aria-grabbed="true"] { opacity:.42; }
+    .tree-item--document { cursor:grab; }
+    .tree-item--document:active { cursor:grabbing; }
+    .tree-item--document::after { content:''; display:block; width:14px; height:18px; flex:0 0 14px; margin-left:auto; background:url('./assets/docs/handler_icon.svg') center/contain no-repeat; opacity:0; }
+    .tree-item--document:hover::after,.tree-item--document:focus-visible::after { opacity:.72; }
+    .tree-drop-indicator { position:absolute; z-index:4; right:8px; left:8px; height:0; border-top:2px dashed #d66cff; pointer-events:none; filter:drop-shadow(0 0 4px #b337e8); }
     .tree-item small { margin-left:auto; color:var(--quiet); }
     .sidebar-spacer { flex:1; }
-    .sidebar-footer { display:flex; align-items:center; gap:9px; padding:12px 7px 2px; border-top:1px solid var(--line); color:#c8c2cc; }
-    .avatar { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; color:#eadcf2; background:#473551; font-size:12px; }
-    .workspace { display:grid; grid-template-rows:52px 48px minmax(0,1fr); min-width:0; min-height:0; overflow:hidden; }
-    .topbar { position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:0 22px; border-bottom:1px solid var(--line); background:#151518; }
+    .workspace { position:relative; display:grid; grid-template-rows:52px 48px minmax(0,1fr); min-width:0; min-height:0; overflow:hidden; }
+    .topbar { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:0 22px; border-bottom:1px solid var(--line); background:#151518; }
     .topbar-left,.topbar-right { display:flex; align-items:center; gap:13px; }
     .crumb { color:var(--muted); font-size:12px; }
     .crumb strong { color:#e9e3ed; font-weight:600; }
-    .save-state { display:flex; align-items:center; gap:7px; color:#aaa5b0; font-size:12px; }
+    .save-state { display:flex; align-items:center; gap:7px; max-width:130px; overflow:hidden; color:#aaa5b0; font-size:11px; text-overflow:ellipsis; white-space:nowrap; cursor:help; }
     .transfer-status { color:#c9a7db; font-size:11px; }
     .document-activity { color:#918b97; font-size:10px; white-space:nowrap; }
     .document-presence { max-width:180px; overflow:hidden; color:#c4b6cc; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
@@ -102,17 +122,63 @@
     .auth-status { min-height:22px; margin-top:12px!important; color:#c9a7db!important; font-size:13px; }
     .top-button { display:flex; align-items:center; gap:7px; min-height:31px; padding:0 10px; border:1px solid transparent; border-radius:7px; color:#c7c1cc; background:transparent; }
     .top-button:hover { border-color:var(--line); background:#ffffff08; }
-    .toolbar { position:relative; z-index:2; display:flex; align-items:center; gap:5px; padding:0 17px; border-bottom:1px solid var(--line); background:#202024; }
+    .actions-menu { position:relative; }
+    .actions-menu > summary { display:flex; align-items:center; gap:7px; min-height:32px; padding:0 10px; border:1px solid transparent; border-radius:7px; color:#c7c1cc; cursor:pointer; list-style:none; white-space:nowrap; }
+    .actions-menu > summary::-webkit-details-marker { display:none; }
+    .actions-menu > summary::after { content:'⌄'; color:#96909a; font-size:12px; }
+    .actions-menu[open] > summary,.actions-menu > summary:hover { border-color:var(--line); background:#ffffff08; }
+    .actions-menu-popover { position:absolute; top:calc(100% + 7px); right:0; z-index:20; display:grid; width:210px; padding:5px; border:1px solid #ffffff1b; border-radius:9px; background:#1c1c20; box-shadow:0 12px 32px #0008; }
+    .actions-menu-popover button { min-height:35px; padding:0 9px; border-radius:6px; color:#d8d3dc; background:transparent; text-align:left; white-space:nowrap; }
+    .actions-menu-popover button { display:flex; align-items:center; gap:9px; }
+    .actions-menu-icon { display:block; width:17px; height:17px; flex:0 0 17px; object-fit:contain; }
+    .toolbar .tool.icon-only img { display:block; width:17px; height:17px; object-fit:contain; }
+    .toolbar .tool.icon-only .undo-icon { transform:scaleX(-1); }
+    .actions-menu-popover button:hover { color:#fff; background:#ffffff0c; }
+    .actions-menu-popover .publish-menu-item { min-height:35px; padding:0 9px; border:0; border-radius:6px; color:#d8d3dc; background:transparent; box-shadow:none; font-weight:500; }
+    .actions-menu-popover .publish-menu-item:hover { color:#fff; background:#ffffff0c; }
+    .doc-kind-dialog { width:min(520px,calc(100vw - 32px)); padding:0; border:1px solid #ffffff1c; border-radius:14px; color:var(--text); background:#1b1a20; box-shadow:0 24px 90px #000b; }
+    .doc-kind-dialog::backdrop { background:#09080bbd; backdrop-filter:blur(5px); }
+    .doc-kind-form { padding:22px; }
+    .doc-kind-form h2 { margin:0 0 5px; font-size:18px; }
+    .doc-kind-form > p { margin:0 0 18px; color:var(--muted); font-size:13px; }
+    .doc-kind-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .doc-kind-option { position:relative; display:grid; gap:6px; min-height:120px; padding:14px; border:1px solid #ffffff1b; border-radius:9px; color:var(--text); background:#ffffff04; cursor:pointer; }
+    .doc-kind-option:has(input:checked) { border-color:#b84be7; background:#8b2cab22; }
+    .doc-kind-option input { position:absolute; top:14px; right:14px; accent-color:#ba4ae6; }
+    .doc-kind-option strong { font-size:14px; }
+    .doc-kind-option span { color:#aaa4b0; font-size:12px; }
+    .doc-kind-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+    .doc-kind-actions button { min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:7px; color:#ddd7e1; background:#ffffff08; }
+    .doc-kind-actions button[type="submit"] { border-color:#9d3bc0; color:#fff; background:#743e90; }
+    .page-settings { position:relative; }
+    .page-settings-popover { position:absolute; top:calc(100% + 8px); right:0; z-index:30; display:grid; gap:12px; width:260px; padding:15px; border:1px solid #ffffff1b; border-radius:10px; background:#1c1c20; box-shadow:0 14px 40px #0009; }
+    .page-settings-popover[hidden] { display:none; }
+    .page-settings-popover h2 { margin:0; font-size:14px; }
+    .page-settings-popover label { display:grid; gap:5px; color:#bdb7c2; font-size:11px; }
+    .page-settings-popover select { width:100%; height:34px; padding:0 8px; border:1px solid var(--line); border-radius:6px; color:#e6e0e9; background:#111115; }
+    .zoom-control { position:absolute; left:20px; bottom:16px; z-index:3; display:flex; align-items:center; gap:4px; padding:4px; border:1px solid var(--line); border-radius:8px; background:#1d1d22eF; backdrop-filter:blur(12px); }
+    .zoom-control button { display:grid; place-items:center; width:27px; height:27px; border-radius:5px; color:#d8d2dc; background:transparent; }
+    .zoom-control button:hover { background:#ffffff0c; }
+    .zoom-control select { width:66px; height:27px; border:0; color:#ded8e2; background:transparent; text-align:center; font-size:11px; }
+    .toolbar { position:relative; z-index:8; display:flex; align-items:center; gap:5px; padding:0 17px; border-bottom:1px solid var(--line); background:#202024; overflow:visible; }
     .tool { display:flex; align-items:center; justify-content:center; gap:7px; height:32px; padding:0 10px; border-radius:7px; color:#d5d0d9; background:transparent; }
     .tool.icon-only { width:34px; padding:0; font-size:16px; }
     .tool.active { color:#e8c6f7; background:#a346c325; }
     .tool-separator { width:1px; height:20px; margin:0 5px; background:var(--line); }
     .toolbar-spacer { flex:1; }
     .focus-button { color:#d6cbdc; }
-    .editor-area { position:relative; min-height:0; overflow:auto; overscroll-behavior:contain; background:radial-gradient(ellipse at 50% -30%,#242228 0,transparent 65%),#17171a; }
-    .editor-wrap { width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:24px 24px 84px; }
+    .editor-area { position:relative; min-height:0; overflow:auto; overscroll-behavior:contain; background:var(--bg); }
+    .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:24px 24px 84px; }
     .editor-meta { display:flex; align-items:center; justify-content:space-between; max-width:var(--editor-width); margin:0 auto 16px; color:#88838e; font-size:11px; }
-    .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; }
+    .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
+    .editor-wrap.is-canvas { width:100%; max-width:none; padding:0 0 56px; }
+    .editor-wrap.is-canvas .editor-meta { max-width:none; }
+    .page[data-layout="canvas"] { width:100%; min-height:calc(100dvh - 148px); padding:34px clamp(24px,5vw,72px) 48px; border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
+    .page[data-layout="canvas"] .content { min-height:calc(100dvh - 340px); }
+    .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:min(var(--book-page-height,1123px),calc(100cqi * var(--book-page-ratio))); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); width:min(100%,var(--book-page-width,794px)); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) min(var(--book-margin-x,76px),8vw) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 1px calc(100% - 1px),#ffffff20 calc(100% - 1px)),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
+    .page[data-layout="book"] .content.book-paginated { display:flex; flex-direction:column; gap:var(--book-sheet-gap); min-height:0; }
+    .content .book-page-content { box-sizing:border-box; flex:0 0 auto; min-height:0; overflow:hidden; outline:none; }
+    .content .book-page-content:not(:first-child) { height:var(--book-sheet-height); padding:var(--book-margin-y,72px) 0; }
     .doc-title { margin:0 0 12px; color:#f3eff4; font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
     .doc-subtitle { display:block; box-sizing:border-box; width:100%; min-height:1.5em; margin:0 0 36px; padding:0; border:0; border-radius:3px; outline:none; overflow:hidden; resize:none; background:transparent; color:#aaa4b0; font:inherit; font-size:15px; line-height:1.5; }
     .doc-subtitle:focus { box-shadow:0 1px 0 var(--accent); }
@@ -209,38 +275,42 @@
     .slash-folder-arrow { margin-left:auto; color:#bdb5c5; font-size:20px; line-height:1; }
     .slash-empty { padding:12px 10px; color:#aaa3af; }
     @media(max-width:1050px) { .app{grid-template-columns:220px minmax(0,1fr)} .page{padding:48px 54px 75px} .toolbar{gap:1px;padding:0 9px}.tool{padding:0 7px} }
-    @media(max-width:800px) { body{min-width:0}.app{grid-template-columns:58px minmax(0,1fr)} .sidebar{padding:13px 8px}.brand{justify-content:center;padding:0}.brand-name,.sidebar-actions,.sidebar-shortcuts,.search,.nav-section,.sidebar-footer{display:none}.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 12px}.toolbar{overflow:auto}.tool:not(.icon-only){font-size:0}.tool:not(.icon-only)::first-letter{font-size:14px}.editor-wrap{width:100%;padding:16px 12px 70px}.page{padding:42px 28px 60px}.doc-title{font-size:29px}.bottom-status{right:12px;bottom:12px}.word-count{display:none} }
+    @media(max-width:800px) { body{min-width:0}.app{grid-template-columns:58px minmax(0,1fr)} .sidebar{padding:13px 8px}.brand{justify-content:center;padding:0}.brand-name,.sidebar-shortcuts,.search,.nav-section{display:none}.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 12px}.toolbar{overflow:auto}.tool:not(.icon-only){font-size:0}.tool:not(.icon-only)::first-letter{font-size:14px}.editor-wrap{width:100%;padding:16px 12px 70px}.page{padding:42px 28px 60px}.doc-title{font-size:29px}.bottom-status{right:12px;bottom:12px}.word-count{display:none} }
+    @media(max-width:800px) { .page[data-layout="canvas"]{padding:24px 18px 44px}.zoom-control{left:8px;bottom:8px}.page-settings-popover{right:auto;left:0} }
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar" aria-label="Navegação do Docs">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
-      <div class="sidebar-actions"><button class="primary-button" type="button" id="new-doc"><span>＋</span>Novo documento</button><button class="secondary-button" type="button" id="fast-doc">Rápido</button></div>
-      <div class="sidebar-shortcuts"><button type="button" id="versions-button" title="Histórico de versões">Versões</button><button type="button" title="Revisão do documento">Revisão</button></div>
+        <div class="brand"><img src="./assets/docs/heartspace-docs.svg" alt=""><span class="brand-name">HeartSpace Docs</span></div>
+      <div class="sidebar-shortcuts"><button type="button" id="versions-button" title="Histórico de versões">Versões</button><button type="button" id="review-button" title="Revisão do documento">Revisão</button></div>
       <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar documentos  Ctrl K" aria-label="Buscar documentos"></label>
       <section class="nav-section">
-        <div class="section-heading-row"><button class="section-heading" type="button" aria-expanded="true" aria-controls="document-list"><span class="chevron">⌄</span> Documentos</button><button class="add-button" id="add-doc" type="button" aria-label="Criar documento" title="Criar documento">＋</button></div>
+        <div class="section-heading-row"><button class="section-heading" type="button" aria-expanded="true" aria-controls="document-list"><span class="chevron">⌄</span> Documentos</button><button class="add-button" id="add-doc" type="button" aria-label="Criar documento" title="Criar documento">＋</button><button class="quick-doc-button" id="fast-doc" type="button" aria-label="Anotação rápida" title="Anotação rápida">⚡</button></div>
         <nav class="tree" id="document-list" aria-label="Documentos"></nav>
       </section>
       <section class="nav-section">
         <button class="section-heading" type="button" aria-expanded="true" aria-controls="recent-list"><span class="chevron">⌄</span> Recentes</button>
         <nav class="tree" id="recent-list" aria-label="Documentos recentes"></nav>
       </section>
+      <section class="nav-section trash-section">
+        <button class="section-heading" id="trash-toggle" type="button" aria-expanded="false" aria-controls="trash-list"><span class="chevron">›</span> Lixeira <span id="trash-count"></span></button>
+        <div class="trash-list" id="trash-list" aria-label="Documentos na lixeira" hidden></div>
+      </section>
+      <div class="document-context-menu" id="document-context-menu" role="menu" aria-label="Ações do documento" hidden><button type="button" id="context-trash-document" role="menuitem"><span aria-hidden="true">▱</span>Mover para a lixeira</button></div>
       <div class="sidebar-spacer"></div>
-      <div class="sidebar-footer"><span class="avatar" aria-hidden="true">H</span><span>Workspace Heartspace</span></div>
     </aside>
     <main class="workspace">
       <header class="topbar">
         <div class="topbar-left"><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
-        <div class="topbar-right"><span class="save-state" id="save-state"><span class="save-dot"></span>Salvo neste dispositivo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><button class="top-button" type="button" id="sync-refresh" hidden>Atualizar</button><button class="top-button" type="button" id="import-markdown">Importar .md</button><button class="top-button" type="button" id="export-markdown">Exportar .md</button><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false">◉ <span>Modo foco</span></button><button class="top-button" type="button" id="sign-out" hidden>Sair</button></div>
+        <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown"><img class="actions-menu-icon" src="./assets/docs/load_file_icon.svg" alt="">Importar .md</button><button type="button" id="export-markdown"><img class="actions-menu-icon" src="./assets/docs/save_file_icon.svg" alt="">Exportar .md</button><button type="button" class="publish-menu-item"><span aria-hidden="true">↗</span>Publicar no HeartSpace</button><button type="button" id="sign-out" hidden>Deslogar</button></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button" type="button" id="focus-toggle" aria-pressed="false"><span>Zen</span></button></div>
       </header>
       <nav class="toolbar" aria-label="Ferramentas de edição">
-        <button class="tool icon-only" type="button" id="undo" title="Desfazer">↶</button><button class="tool icon-only" type="button" id="redo" title="Refazer">↷</button><span class="tool-separator"></span>
+        <button class="tool icon-only" type="button" id="undo" title="Desfazer" aria-label="Desfazer"><img class="undo-icon" src="./assets/docs/redo.svg" alt=""></button><button class="tool icon-only" type="button" id="redo" title="Refazer" aria-label="Refazer"><img class="redo-icon" src="./assets/docs/redo.svg" alt=""></button><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="bold"><b>B</b></button><button class="tool" type="button" data-command="italic"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
         <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="insertUnorderedList">Lista</button><button class="tool" type="button" data-command="insertOrderedList">Numerada</button><button class="tool" type="button" data-command="formatBlock" data-value="pre">Código</button><span class="tool-separator"></span>
-        <button class="tool" type="button" id="insert-diagram">＋ Diagrama</button><div class="toolbar-spacer"></div><button class="tool focus-button" type="button" id="outline-toggle">☷ <span>Estrutura</span></button>
+        <button class="tool" type="button" id="insert-diagram">＋ Diagrama</button><div class="toolbar-spacer"></div><div class="page-settings"><button class="tool" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover">⚙ Página</button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><label>Tamanho da folha<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></section></div><button class="tool focus-button" type="button" id="outline-toggle">☷ <span>Estrutura</span></button>
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
@@ -260,14 +330,15 @@
           </article>
         </div>
       </section>
-      <div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span><button class="publish" type="button">Publicar no Heartspace</button></div>
+      <div class="zoom-control" aria-label="Zoom da página"><button type="button" id="zoom-out" aria-label="Diminuir zoom" title="Diminuir zoom">−</button><select id="zoom-level" aria-label="Zoom da página"><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100%</option><option value="110">110%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button type="button" id="zoom-in" aria-label="Aumentar zoom" title="Aumentar zoom">＋</button></div><div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span></div>
     </main>
   </div>
+  <dialog class="doc-kind-dialog" id="doc-kind-dialog" aria-labelledby="doc-kind-title"><form class="doc-kind-form" id="doc-kind-form"><h2 id="doc-kind-title">Novo documento</h2><p>Escolha como organizar o espaço de escrita.</p><div class="doc-kind-options"><label class="doc-kind-option"><input type="radio" name="document-layout" value="book" checked><strong>Livro</strong><span>Páginas de leitura com separação entre folhas.</span></label><label class="doc-kind-option"><input type="radio" name="document-layout" value="canvas"><strong>Prancheta</strong><span>Uma área ampla e contínua para organizar conteúdo livremente.</span></label></div><div class="doc-kind-actions"><button type="button" id="doc-kind-cancel">Cancelar</button><button type="submit">Criar documento</button></div></form></dialog>
   <dialog class="history-dialog" id="history-dialog" aria-labelledby="history-title"><div class="history-heading"><h2 id="history-title">Histórico de versões</h2><button type="button" id="history-close">Fechar</button></div><div class="history-list" id="history-list" aria-live="polite"><div class="history-empty">Carregando versões…</div></div></dialog>
   <section class="auth-gate" id="auth-gate" hidden aria-labelledby="auth-title">
     <form class="auth-card" id="auth-form">
-      <div class="brand" style="padding:0 0 16px"><span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name">Docs</span></div>
-      <h1 id="auth-title">Entre para abrir o Docs</h1>
+      <div class="brand" style="padding:0 0 16px"><img src="./assets/docs/heartspace-docs.svg" alt=""><span class="brand-name">HeartSpace Docs</span></div>
+      <h1 id="auth-title">Entre para abrir o HeartSpace Docs</h1>
       <p>Acesse com sua conta Heartspace. O projeto e as permissões são conferidos antes de carregar os documentos.</p>
       <label for="auth-email">E-mail da conta</label><input id="auth-email" type="email" autocomplete="email" required placeholder="voce@equipe.com">
       <button type="submit" id="auth-submit">Enviar link de acesso</button>
@@ -281,6 +352,14 @@
       const editor = document.querySelector('#editor');
       const title = document.querySelector('#doc-title');
       const subtitle = document.querySelector('#doc-subtitle');
+      const documentPage = document.querySelector('.page');
+      const editorWrap = document.querySelector('.editor-wrap');
+      const pageSettingsToggle = document.querySelector('#page-settings-toggle');
+      const pageSettingsPopover = document.querySelector('#page-settings-popover');
+      const paperSizeControl = document.querySelector('#paper-size');
+      const paperOrientationControl = document.querySelector('#paper-orientation');
+      const pageMarginControl = document.querySelector('#page-margin');
+      const zoomLevelControl = document.querySelector('#zoom-level');
       const saveState = document.querySelector('#save-state');
       const transferStatus = document.querySelector('#transfer-status');
       const slashMenu = document.querySelector('#slash-menu');
@@ -297,6 +376,7 @@
       let presenceTimer = null;
       let projectRefreshPromise = null;
       let projectRefreshId = '';
+      let preventProjectAutoCreate = false;
       let remoteSaveInProgress = new Set();
       const requestedProjectId = new URLSearchParams(location.search).get('project_id') || '';
       const commands = [
@@ -307,7 +387,7 @@
         { label: 'Lista com marcadores', detail: 'Organize itens sem ordem', icon: '•', kind: 'list' },
         { label: 'Lista numerada', detail: 'Organize etapas em sequência', icon: '1.', kind: 'ordered' },
         { label: 'Lista de tarefas', detail: 'Checklist para acompanhar', icon: '☐', kind: 'tasks' },
-        { label: 'Excluir documento atual', detail: 'Remove este documento do projeto e da equipe', icon: '⌫', kind: 'delete-document' },
+        { label: 'Mover documento para a lixeira', detail: 'O documento pode ser restaurado depois', icon: '▱', kind: 'trash-document' },
         { label: 'Imagem do dispositivo', detail: 'Insira uma imagem com descrição e legenda', icon: '▧', kind: 'image' },
         { label: 'Legenda acima da imagem', detail: 'Posicione a legenda antes da imagem', icon: '↑', kind: 'image-caption-position', value: 'top' },
         { label: 'Legenda abaixo da imagem', detail: 'Posicione a legenda depois da imagem', icon: '↓', kind: 'image-caption-position', value: 'bottom' },
@@ -374,7 +454,7 @@
         { label: 'Blocos', detail: 'Citações, código e diagramas', icon: '▤', labels: ['Citação', 'Bloco de código', 'Divisor', 'Diagrama Mermaid'] },
         { label: 'Formatação', detail: 'Efeitos de texto e código inline', icon: 'Aa', labels: ['Tachado', 'Sublinhado', 'Código inline', 'Realce'] },
         { label: 'Modelos', detail: 'Estruturas prontas para começar', icon: '✦', labels: ['Modelo: GDD', 'Modelo: Especificação', 'Modelo: Notas de reunião'] },
-        { label: 'Documento', detail: 'Gerencie o documento atual', icon: '▤', labels: ['Excluir documento atual'] }
+        { label: 'Documento', detail: 'Gerencie o documento atual', icon: '▤', labels: ['Mover documento para a lixeira'] }
       ];
       const frequentLabels = new Set(['Texto', 'Título 2', 'Lista com marcadores', 'Lista de tarefas', 'Imagem do dispositivo', 'Callouts', 'Negrito', 'Itálico', 'Link']);
       const alignmentFolder = {
@@ -484,7 +564,8 @@
       let documents = [];
       let activeDocumentId = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const updateDocumentOrderIndices = () => documents.forEach((record, index) => { record.sortOrder = (index + 1) * 1024; });
       const renderDocumentActivity = record => {
         const label = document.querySelector('#document-activity');
         if (!record?.remoteId || !record.lastEditedAt) { label.textContent = ''; label.title = 'Documento ainda não sincronizado'; return; }
@@ -503,26 +584,293 @@
       const renderLibrary = () => {
         const query = document.querySelector('#search').value.trim().toLocaleLowerCase('pt-BR');
         const renderItem = (record, recent = false) => {
+          const entry = recent ? null : document.createElement('div');
           const button = document.createElement('button');
-          button.type = 'button'; button.className = `tree-item${record.id === activeDocumentId ? ' active' : ''}`; button.dataset.docId = record.id;
-          button.innerHTML = `<span class="doc-icon">${recent ? '◷' : '▤'}</span>`;
+          const canReorder = !recent && !(currentProjectId && !canEditProject({ capabilities: projectCapabilities }));
+          button.type = 'button'; button.className = `tree-item tree-item--${recent ? 'recent' : canReorder ? 'document' : 'locked'}${record.id === activeDocumentId ? ' active' : ''}`; button.dataset.docId = record.id;
+          button.draggable = canReorder;
+          if (!recent) button.setAttribute('aria-haspopup', 'menu');
+          button.innerHTML = '<span class="doc-icon"><img src="./assets/docs/documents.svg" alt=""></span>';
           const label = document.createElement('span'); label.textContent = record.title || 'Sem título'; button.append(label);
           if (recent) { const time = document.createElement('small'); time.textContent = record.remoteId ? 'online' : 'local'; button.append(time); }
-          button.hidden = Boolean(query && !`${record.title} ${record.subtitle}`.toLocaleLowerCase('pt-BR').includes(query));
           button.addEventListener('click', () => openDocument(record.id));
-          return button;
+          if (recent) {
+            button.hidden = Boolean(query && !`${record.title} ${record.subtitle}`.toLocaleLowerCase('pt-BR').includes(query));
+            return button;
+          }
+          entry.className = 'tree-entry';
+          entry.hidden = Boolean(query && !`${record.title} ${record.subtitle}`.toLocaleLowerCase('pt-BR').includes(query));
+          entry.append(button);
+          return entry;
         };
-        documentList.replaceChildren(...documents.map(record => renderItem(record)));
-        recentList.replaceChildren(...[...documents].sort((a, b) => b.savedAt.localeCompare(a.savedAt)).slice(0, 5).map(record => renderItem(record, true)));
+        const visibleDocuments = documents.filter(record => !record.trashedAt);
+        const trashedDocuments = documents.filter(record => record.trashedAt).sort((a, b) => b.trashedAt.localeCompare(a.trashedAt));
+        const indicator = document.createElement('div'); indicator.className = 'tree-drop-indicator'; indicator.hidden = true; indicator.setAttribute('aria-hidden', 'true');
+        documentList.replaceChildren(...visibleDocuments.map(record => renderItem(record)), indicator);
+        recentList.replaceChildren(...visibleDocuments.sort((a, b) => b.savedAt.localeCompare(a.savedAt)).slice(0, 5).map(record => renderItem(record, true)));
+        const trashToggle = document.querySelector('#trash-toggle');
+        const trashList = document.querySelector('#trash-list');
+        const trashCount = document.querySelector('#trash-count');
+        trashToggle.hidden = trashedDocuments.length === 0;
+        trashCount.textContent = trashedDocuments.length ? `(${trashedDocuments.length})` : '';
+        trashList.replaceChildren(...trashedDocuments.map(record => {
+          const entry = document.createElement('div'); entry.className = 'trash-entry';
+          const name = document.createElement('div'); name.className = 'trash-entry-title'; name.textContent = record.title || 'Sem título'; name.title = record.title || 'Sem título';
+          const date = document.createElement('div'); date.className = 'trash-entry-date'; date.textContent = `Movido ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(record.trashedAt))}`;
+          const actions = document.createElement('div'); actions.className = 'trash-entry-actions';
+          const canManageTrash = !currentProjectId || canEditProject({ capabilities: projectCapabilities });
+          const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Restaurar'; restore.disabled = !canManageTrash; restore.addEventListener('click', () => void restoreDocument(record.id));
+          const discard = document.createElement('button'); discard.type = 'button'; discard.className = 'trash-delete-forever'; discard.textContent = 'Apagar'; discard.title = 'Apagar definitivamente'; discard.disabled = !canManageTrash; discard.addEventListener('click', () => void permanentlyDeleteDocument(record.id));
+          actions.append(restore, discard); entry.append(name, date, actions); return entry;
+        }));
         renderConflictBanner();
         renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
       };
+      let draggedDocumentId = '';
+      let suppressDocumentClickUntil = 0;
+      const documentContextMenu = document.querySelector('#document-context-menu');
+      const contextTrashButton = document.querySelector('#context-trash-document');
+      let contextDocumentId = '';
+      let contextMenuOpenerId = '';
+      const closeDocumentContextMenu = (restoreFocus = false) => {
+        documentContextMenu.hidden = true;
+        if (restoreFocus) [...documentList.querySelectorAll('.tree-item[data-doc-id]')].find(item => item.dataset.docId === contextMenuOpenerId)?.focus();
+        contextDocumentId = '';
+      };
+      const openDocumentContextMenu = (id, x, y) => {
+        const record = documents.find(item => item.id === id);
+        if (!record || record.trashedAt || (currentProjectId && !canEditProject({ capabilities: projectCapabilities }))) return;
+        contextDocumentId = id;
+        contextMenuOpenerId = id;
+        documentContextMenu.hidden = false;
+        const left = Math.max(8, Math.min(x, window.innerWidth - documentContextMenu.offsetWidth - 8));
+        const top = Math.max(8, Math.min(y, window.innerHeight - documentContextMenu.offsetHeight - 8));
+        documentContextMenu.style.left = `${left}px`;
+        documentContextMenu.style.top = `${top}px`;
+        contextTrashButton.focus();
+      };
+      documentList.addEventListener('contextmenu', event => {
+        const item = event.target.closest?.('.tree-item[data-doc-id]');
+        if (!item) return;
+        event.preventDefault();
+        openDocumentContextMenu(item.dataset.docId, event.clientX, event.clientY);
+      });
+      documentList.addEventListener('keydown', event => {
+        if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
+        const item = event.target.closest?.('.tree-item[data-doc-id]');
+        if (!item) return;
+        event.preventDefault();
+        const bounds = item.getBoundingClientRect();
+        openDocumentContextMenu(item.dataset.docId, bounds.left + Math.min(24, bounds.width / 2), bounds.bottom);
+      });
+      contextTrashButton.addEventListener('click', () => {
+        const id = contextDocumentId;
+        closeDocumentContextMenu();
+        if (id) void moveDocumentToTrash(id);
+      });
+      document.addEventListener('pointerdown', event => {
+        if (!documentContextMenu.hidden && !documentContextMenu.contains(event.target)) closeDocumentContextMenu();
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !documentContextMenu.hidden) {
+          event.stopPropagation();
+          closeDocumentContextMenu(true);
+        }
+      }, true);
+      window.addEventListener('resize', () => closeDocumentContextMenu());
+      const documentDropIndicator = () => documentList.querySelector('.tree-drop-indicator');
+      const clearDocumentDrag = () => {
+        documentDropIndicator()?.setAttribute('hidden', '');
+        documentList.querySelectorAll('[aria-grabbed="true"]').forEach(item => item.removeAttribute('aria-grabbed'));
+        draggedDocumentId = '';
+      };
+      documentList.addEventListener('click', event => {
+        if (Date.now() >= suppressDocumentClickUntil) return;
+        event.preventDefault(); event.stopImmediatePropagation(); suppressDocumentClickUntil = 0;
+      }, true);
+      documentList.addEventListener('dragstart', event => {
+        const item = event.target.closest?.('.tree-item[data-doc-id]');
+        if (!item || !item.draggable) { event.preventDefault(); return; }
+        draggedDocumentId = item.dataset.docId;
+        item.setAttribute('aria-grabbed', 'true');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', draggedDocumentId);
+      });
+      documentList.addEventListener('dragover', event => {
+        if (!draggedDocumentId) return;
+        event.preventDefault(); event.dataTransfer.dropEffect = 'move';
+        const item = event.target.closest?.('.tree-item[data-doc-id]');
+        const indicator = documentDropIndicator();
+        if (!indicator) return;
+        const listRect = documentList.getBoundingClientRect();
+        let top = documentList.scrollHeight;
+        if (item) {
+          const itemRect = item.getBoundingClientRect();
+          top = itemRect.top - listRect.top + documentList.scrollTop + (event.clientY > itemRect.top + itemRect.height / 2 ? itemRect.height : 0);
+        }
+        indicator.style.top = `${top}px`;
+        indicator.removeAttribute('hidden');
+      });
+      documentList.addEventListener('drop', event => {
+        if (!draggedDocumentId) return;
+        event.preventDefault();
+        const item = event.target.closest?.('.tree-item[data-doc-id]');
+        let targetIndex = item ? documents.findIndex(record => record.id === item.dataset.docId) : documents.length;
+        if (item && item.dataset.docId !== draggedDocumentId) {
+          const rect = item.getBoundingClientRect();
+          if (event.clientY > rect.top + rect.height / 2) targetIndex += 1;
+        }
+        const sourceIndex = documents.findIndex(record => record.id === draggedDocumentId);
+        if (sourceIndex >= 0) {
+          const [moving] = documents.splice(sourceIndex, 1);
+          if (sourceIndex < targetIndex) targetIndex -= 1;
+          documents.splice(Math.max(0, Math.min(targetIndex, documents.length)), 0, moving);
+          updateDocumentOrderIndices();
+          suppressDocumentClickUntil = Date.now() + 250;
+          persistLibrary(); renderLibrary();
+          void persistDocumentOrder();
+        }
+        clearDocumentDrag();
+        setTimeout(() => { suppressDocumentClickUntil = 0; }, 250);
+      });
+      documentList.addEventListener('dragend', clearDocumentDrag);
+      documentList.addEventListener('dragleave', event => {
+        if (!documentList.contains(event.relatedTarget)) documentDropIndicator()?.setAttribute('hidden', '');
+      });
       const persistLibrary = () => localStorage.setItem(storageKey, JSON.stringify({ version: 2, activeDocumentId, documents }));
+      const paperSpecs = { a4: [794, 1123], letter: [816, 1056], a5: [559, 794] };
+      const marginSpecs = { narrow: [48, 48], normal: [76, 72], wide: [104, 96] };
+      const applyPageSettings = settings => {
+        const record = settings || {};
+        const size = ['a4', 'letter', 'a5'].includes(record.paperSize) ? record.paperSize : 'a4';
+        const orientation = record.pageOrientation === 'landscape' ? 'landscape' : 'portrait';
+        const margin = ['narrow', 'normal', 'wide'].includes(record.pageMargin) ? record.pageMargin : 'normal';
+        paperSizeControl.value = size;
+        paperOrientationControl.value = orientation;
+        pageMarginControl.value = margin;
+        const [baseWidth, baseHeight] = paperSpecs[size];
+        const width = orientation === 'landscape' ? baseHeight : baseWidth;
+        const height = orientation === 'landscape' ? baseWidth : baseHeight;
+        const [marginX, marginY] = marginSpecs[margin];
+        documentPage.style.setProperty('--book-page-width', `${width}px`);
+        documentPage.style.setProperty('--book-page-height', `${height}px`);
+        documentPage.style.setProperty('--book-page-ratio', String(height / width));
+        documentPage.style.setProperty('--book-margin-x', `${marginX}px`);
+        documentPage.style.setProperty('--book-margin-y', `${marginY}px`);
+        editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
+        pageSettingsToggle.closest('.page-settings').hidden = documentPage.dataset.layout === 'canvas';
+      };
+      const applyZoom = value => {
+        const numericZoom = Math.max(50, Math.min(200, Number(value) || 100));
+        zoomLevelControl.value = String(numericZoom);
+        editorWrap.style.zoom = `${numericZoom / 100}`;
+        try { localStorage.setItem('heartspace-docs-page-zoom', String(numericZoom)); } catch (_) { /* zoom continua ativo nesta sessão */ }
+        scheduleBookPagination?.();
+      };
+      let initialZoom = '100';
+      try { const savedZoom = localStorage.getItem('heartspace-docs-page-zoom'); if ([...zoomLevelControl.options].some(option => option.value === savedZoom)) initialZoom = savedZoom; } catch (_) { /* usa o zoom padrão */ }
+      zoomLevelControl.value = initialZoom;
+      editorWrap.style.zoom = String(Number(initialZoom) / 100);
+      const paginateBook = () => {
+        const existingPages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
+        if (documentPage.dataset.layout !== 'book') {
+          if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
+          editor.classList.remove('book-paginated');
+          return;
+        }
+        const selection = window.getSelection();
+        const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode) ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset } : null;
+        const blocks = [...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]);
+        if (!blocks.length) { const paragraph = document.createElement('p'); paragraph.innerHTML = '<br>'; blocks.push(paragraph); }
+        const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
+        const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
+        const height = paperOrientationControl.value === 'landscape' ? paper[0] : paper[1];
+        const zoom = Number(editorWrap.style.zoom) || 1;
+        const pageWidth = documentPage.getBoundingClientRect().width / zoom;
+        const sheetHeight = Math.min(height, pageWidth * (height / width));
+        const pageTop = (editor.getBoundingClientRect().top - documentPage.getBoundingClientRect().top) / zoom;
+        const firstPageHeight = Math.max(240, sheetHeight - pageTop);
+        editor.classList.add('book-paginated');
+        editor.replaceChildren();
+        const makePage = index => {
+          const page = document.createElement('div');
+          page.className = 'book-page-content';
+          page.contentEditable = 'true';
+          page.setAttribute('role', 'group');
+          page.setAttribute('aria-label', `Folha ${index + 1}`);
+          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+          editor.append(page);
+          return page;
+        };
+        let page = makePage(0);
+        for (const block of blocks) {
+          page.append(block);
+          if (page.scrollHeight > page.clientHeight + 1 && page.childElementCount > 1) {
+            page.lastElementChild.remove();
+            page = makePage(editor.children.length);
+            page.append(block);
+          }
+        }
+        if (savedSelection?.anchorNode.isConnected && savedSelection.focusNode?.isConnected) {
+          selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset);
+        }
+      };
+      const setEditorBody = (body, layout = documentPage.dataset.layout || 'book') => {
+        documentPage.dataset.layout = layout;
+        const activeRecord = documents.find(item => item.id === activeDocumentId);
+        applyPageSettings(activeRecord);
+        editor.innerHTML = body || '<p><br></p>';
+        paginateBook();
+        editor.querySelectorAll('ul[data-list-type="checklist"] > li').forEach(item => { item.dataset.checklistItem = 'true'; });
+      };
+      let paginationFrame = 0;
+      const scheduleBookPagination = () => {
+        if (documentPage.dataset.layout !== 'book') return;
+        cancelAnimationFrame(paginationFrame);
+        paginationFrame = requestAnimationFrame(paginateBook);
+      };
+      const commitPageSettings = () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record) return;
+        record.title = title.textContent.trim() || 'Sem título';
+        record.subtitle = subtitle.value;
+        record.body = serializeEditorBody();
+        record.paperSize = paperSizeControl.value;
+        record.pageOrientation = paperOrientationControl.value;
+        record.pageMargin = pageMarginControl.value;
+        record.savedAt = new Date().toISOString();
+        record.editRevision = (record.editRevision || 0) + 1;
+        if (record.remoteId || currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+        applyPageSettings(record);
+        paginateBook();
+        persistLibrary();
+        if (record.dirty) void syncRecord(record);
+      };
+      pageSettingsToggle.addEventListener('click', () => {
+        const open = pageSettingsPopover.hidden;
+        pageSettingsPopover.hidden = !open;
+        pageSettingsToggle.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('pointerdown', event => {
+        if (!event.target.closest('.page-settings')) { pageSettingsPopover.hidden = true; pageSettingsToggle.setAttribute('aria-expanded', 'false'); }
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !pageSettingsPopover.hidden) { pageSettingsPopover.hidden = true; pageSettingsToggle.setAttribute('aria-expanded', 'false'); pageSettingsToggle.focus(); }
+      });
+      [paperSizeControl, paperOrientationControl, pageMarginControl].forEach(control => control.addEventListener('change', commitPageSettings));
+      zoomLevelControl.addEventListener('change', () => applyZoom(zoomLevelControl.value));
+      const zoomValues = [...zoomLevelControl.options].map(option => Number(option.value));
+      document.querySelector('#zoom-out').addEventListener('click', () => applyZoom([...zoomValues].reverse().find(value => value < Number(zoomLevelControl.value)) || zoomValues[0]));
+      document.querySelector('#zoom-in').addEventListener('click', () => applyZoom(zoomValues.find(value => value > Number(zoomLevelControl.value)) || zoomValues.at(-1)));
+      editor.addEventListener('input', () => {
+        scheduleBookPagination();
+      });
+      window.addEventListener('resize', scheduleBookPagination);
       try {
         const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-        if (saved?.version === 2 && Array.isArray(saved.documents) && saved.documents.length) {
+        if (saved?.version === 2 && Array.isArray(saved.documents)) {
           documents = saved.documents.filter(item => item && typeof item.id === 'string' && typeof item.body === 'string').map(makeRecord);
-          activeDocumentId = documents.some(item => item.id === saved.activeDocumentId) ? saved.activeDocumentId : documents[0].id;
+          activeDocumentId = documents.some(item => item.id === saved.activeDocumentId && !item.trashedAt) ? saved.activeDocumentId : documents.find(item => !item.trashedAt)?.id || '';
         } else if (saved && typeof saved.title === 'string' && typeof saved.body === 'string') {
           documents = [makeRecord({ title: saved.title.replace(/<[^>]*>/g, '').trim() || 'Guia de produção', subtitle: saved.subtitle || '', body: saved.body, savedAt: saved.savedAt })];
           activeDocumentId = documents[0].id;
@@ -534,8 +882,12 @@
         if (activeRecord) {
           title.textContent = activeRecord.title;
           subtitle.value = activeRecord.subtitle;
-          editor.innerHTML = activeRecord.body;
+          setEditorBody(activeRecord.body, activeRecord.layout);
           hydrateImages(editor);
+        } else if (saved?.version === 2) {
+          title.textContent = 'Sem documentos';
+          subtitle.value = '';
+          setEditorBody('<p><br></p>', 'book');
         }
       } catch (_) { /* conteúdo de exemplo continua disponível */ }
       renderLibrary();
@@ -550,16 +902,18 @@
       const resizeSubtitle = () => {
         subtitle.style.height = 'auto';
         subtitle.style.height = `${subtitle.scrollHeight}px`;
+        scheduleBookPagination();
       };
       resizeSubtitle();
       updateDocumentLabel();
-      editor.querySelectorAll('ul[data-list-type="checklist"] > li').forEach(item => { item.dataset.checklistItem = 'true'; });
+      paginateBook();
       const updateCount = () => {
         const words = (editor.innerText.trim().match(/\S+/g) || []).length;
         document.querySelector('#word-count').textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'}`;
       };
       const serializeEditorBody = () => {
         const snapshot = editor.cloneNode(true);
+        snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
         snapshot.querySelectorAll('[data-mermaid-block]').forEach(block => {
           const source = block.querySelector('.mermaid-source');
           const preview = block.querySelector('.mermaid-preview');
@@ -575,8 +929,22 @@
         snapshot.querySelectorAll('[data-image-insertion-marker]').forEach(marker => marker.remove());
         return snapshot.innerHTML;
       };
+      const setSaveStatus = (message, state = '') => {
+        const value = message.toLocaleLowerCase('pt-BR');
+        const label = /falha|não foi possível|não foi compartilhada|erro/.test(value) ? 'Erro'
+          : /salvando|sincronizando|criando uma cópia/.test(value) ? 'Salvando'
+          : /sem conexão|offline/.test(value) ? 'Offline'
+          : /permissão|conflito|mudou enquanto/.test(value) ? 'Atenção'
+          : /local|neste dispositivo|neste navegador|protótipo/.test(value) ? 'Local'
+          : /conectado|sincronizado/.test(value) ? 'Online' : 'Salvo';
+        const dot = document.createElement('span'); dot.className = 'save-dot';
+        if (state || label === 'Erro' || label === 'Offline' || label === 'Atenção') dot.style.background = '#e8be77';
+        saveState.replaceChildren(dot, document.createTextNode(label));
+        saveState.title = message;
+        saveState.setAttribute('aria-label', message);
+      };
       const queueSave = () => {
-        saveState.innerHTML = `<span class="save-dot" style="background:#e8be77"></span>${currentProjectId ? 'Salvando…' : 'Salvando localmente…'}`;
+        setSaveStatus(currentProjectId ? 'Salvando no projeto…' : 'Salvando localmente…', 'pending');
         updateCount();
         const editedRecord = documents.find(item => item.id === activeDocumentId);
         if (currentProjectId && editedRecord) { editedRecord.dirty = true; editedRecord.editRevision += 1; dirtyDocumentIds.add(editedRecord.id); }
@@ -587,12 +955,41 @@
             if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
             persistLibrary(); renderLibrary();
             if (currentProjectId && activeRecord) syncRecord(activeRecord);
-            else saveState.innerHTML = '<span class="save-dot"></span>Salvo neste dispositivo';
+            else setSaveStatus('Salvo neste dispositivo');
           } catch (_) {
-            saveState.textContent = 'Não foi possível salvar neste navegador';
+            setSaveStatus('Não foi possível salvar neste navegador', 'pending');
           }
         }, 450);
       };
+      editor.addEventListener('keydown', event => {
+        if (event.key !== 'Backspace' || documentPage.dataset.layout !== 'book') return;
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return;
+        const anchor = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
+        const page = anchor?.closest('.book-page-content');
+        const previousPage = page?.previousElementSibling;
+        if (!page || !previousPage?.classList.contains('book-page-content')) return;
+        let block = anchor;
+        while (block?.parentElement && block.parentElement !== page) block = block.parentElement;
+        if (!block || block !== page.firstElementChild || !block.matches('p,h1,h2,h3,blockquote')) return;
+        const start = document.createRange(); start.selectNodeContents(block); start.collapse(true);
+        const caret = selection.getRangeAt(0).cloneRange(); caret.collapse(true);
+        if (caret.compareBoundaryPoints(Range.START_TO_START, start) !== 0) return;
+        const previousBlock = previousPage.lastElementChild;
+        if (!previousBlock) return;
+        event.preventDefault();
+        if (previousBlock.matches('p,h1,h2,h3,blockquote') && block.matches('p,h1,h2,h3,blockquote')) {
+          if (!previousBlock.textContent.trim() && previousBlock.querySelector('br')) previousBlock.replaceChildren();
+          while (block.firstChild) previousBlock.append(block.firstChild);
+          block.remove();
+          placeCaret(previousBlock, true);
+        } else {
+          previousPage.append(block);
+          placeCaret(block);
+        }
+        scheduleBookPagination();
+        queueSave();
+      });
       editor.addEventListener('input', queueSave);
       title.addEventListener('input', () => { updateDocumentLabel(); queueSave(); });
       subtitle.addEventListener('input', () => { resizeSubtitle(); queueSave(); });
@@ -641,68 +1038,125 @@
           if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
           persistLibrary();
           if (currentProjectId && activeRecord) syncRecord(activeRecord);
-        } catch (_) { saveState.textContent = 'Não foi possível salvar neste navegador'; }
+        } catch (_) { setSaveStatus('Não foi possível salvar neste navegador', 'pending'); }
       };
       const openDocument = id => {
         if (id === activeDocumentId) return;
         flushSave();
-        const record = documents.find(item => item.id === id); if (!record) return;
-        activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; editor.innerHTML = record.body;
+        const record = documents.find(item => item.id === id && !item.trashedAt); if (!record) return;
+        activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(record.body, record.layout);
         hydrateImages(editor); resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary();
         refreshDocumentPresence();
-        saveState.innerHTML = '<span class="save-dot"></span>Salvo neste dispositivo';
+        setSaveStatus('Salvo neste dispositivo');
       };
-      const createDocument = (quick = false) => {
+      const createDocument = (quick = false, layout = 'book') => {
         flushSave();
-        const record = makeRecord({ title: quick ? 'Anotação rápida' : 'Novo documento', projectId: currentProjectId });
+        const record = makeRecord({ title: quick ? 'Anotação rápida' : 'Novo documento', projectId: currentProjectId, layout });
         documents.unshift(record); activeDocumentId = record.id;
-        title.textContent = record.title; subtitle.value = ''; editor.innerHTML = '<p><br></p>';
+        updateDocumentOrderIndices();
+        title.textContent = record.title; subtitle.value = ''; setEditorBody('<p><br></p>', record.layout);
         resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
-        (quick ? editor : title).focus(); queueSave();
+        if (quick) placeCaret(editor.querySelector('.book-page-content p')); else title.focus();
+        queueSave();
       };
-      const deleteActiveDocument = async () => {
-        const record = documents.find(item => item.id === activeDocumentId);
-        if (!record) return;
-        const isRemoteDocument = Boolean(record.remoteId);
-        if (isRemoteDocument && (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities }))) {
-          statusMessage('Sua permissão não permite excluir este documento.', 'pending');
+      const moveDocumentToTrash = async (documentId = activeDocumentId) => {
+        const record = documents.find(item => item.id === documentId);
+        if (!record || record.trashedAt) return;
+        const wasActive = record.id === activeDocumentId;
+        if (currentProjectId && !canEditProject({ capabilities: projectCapabilities })) {
+          statusMessage('Sua permissão não permite mover este documento para a lixeira.', 'pending');
           return;
         }
-        const confirmation = isRemoteDocument
-          ? `Excluir “${record.title}” do projeto e da equipe? Esta ação não pode ser desfeita.`
-          : `Excluir “${record.title}” deste dispositivo? Esta ação não pode ser desfeita.`;
-        if (!window.confirm(confirmation)) return;
-        clearTimeout(saveTimer);
-        try {
-          if (isRemoteDocument) {
-            const deleted = await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
-            if (!Array.isArray(deleted) || !deleted.some(row => row.id === record.remoteId)) {
-              throw new Error('O projeto não confirmou a exclusão. Verifique sua permissão ou se o documento está publicado.');
-            }
+        if (remoteSaveInProgress.has(record.id)) {
+          statusMessage('Aguarde a sincronização atual terminar e tente novamente.', 'pending');
+          return;
+        }
+        if (wasActive) {
+          clearTimeout(saveTimer);
+          Object.assign(record, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() });
+        }
+        if (record.remoteId && record.dirty) {
+          await syncRecord(record);
+          if (record.dirty || record.remoteConflict) {
+            statusMessage('Não foi possível atualizar a versão da equipe. Resolva a sincronização antes de mover para a lixeira.', 'pending');
+            return;
           }
-          documents = documents.filter(item => item.id !== record.id);
-          dirtyDocumentIds.delete(record.id);
-          activeDocumentId = documents[0]?.id || '';
+        }
+        const oldId = record.id;
+        record.trashedAt = new Date().toISOString();
+        record.trashedBy = currentUser?.user_metadata?.full_name || currentUser?.email || '';
+        record.savedAt = record.trashedAt;
+        record.editRevision = (record.editRevision || 0) + 1;
+        if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+        if (wasActive) {
+          activeDocumentId = documents.find(item => item.id !== record.id && !item.trashedAt)?.id || '';
           const next = documents.find(item => item.id === activeDocumentId);
           if (next) {
-            title.textContent = next.title; subtitle.value = next.subtitle; editor.innerHTML = next.body;
+            title.textContent = next.title; subtitle.value = next.subtitle; setEditorBody(next.body, next.layout);
             hydrateImages(editor); resizeSubtitle(); updateCount();
           } else {
-            title.textContent = 'Sem documentos'; subtitle.value = ''; editor.innerHTML = '<p><br></p>';
+            title.textContent = 'Sem documentos'; subtitle.value = ''; setEditorBody('<p><br></p>', 'book');
             resizeSubtitle(); updateCount();
           }
           updateDocumentLabel();
-          saveProjectCache();
-          renderLibrary();
-          if (currentProjectId) await requestProjectDocsRefresh(false);
-          statusMessage('Documento excluído');
-        } catch (error) {
-          statusMessage(error.message || 'Não foi possível excluir o documento.', 'pending');
+          refreshDocumentPresence();
         }
+        saveProjectCache();
+        renderLibrary();
+        void persistDocumentOrder();
+        if (currentProjectId) {
+          await syncRecord(record);
+          if (record.dirty) statusMessage('Movido para a lixeira neste dispositivo; a sincronização ficará pendente.', 'pending');
+          else statusMessage('Documento movido para a lixeira');
+        } else statusMessage('Documento movido para a lixeira');
+        if (oldId !== record.id) renderLibrary();
       };
-      document.querySelector('#new-doc').addEventListener('click', () => createDocument(false));
+      const restoreDocument = async documentId => {
+        const record = documents.find(item => item.id === documentId && item.trashedAt);
+        if (!record) return;
+        if (currentProjectId && !canEditProject({ capabilities: projectCapabilities })) { statusMessage('Sua permissão não permite restaurar este documento.', 'pending'); return; }
+        if (remoteSaveInProgress.has(record.id)) { statusMessage('Aguarde a sincronização atual terminar e tente novamente.', 'pending'); return; }
+        record.trashedAt = ''; record.trashedBy = ''; record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1;
+        if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+        activeDocumentId = record.id;
+        title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(record.body, record.layout);
+        hydrateImages(editor); resizeSubtitle(); updateDocumentLabel(); updateCount();
+        saveProjectCache(); renderLibrary(); refreshDocumentPresence();
+        if (currentProjectId) {
+          await syncRecord(record);
+          if (record.dirty) statusMessage('Documento restaurado neste dispositivo; a sincronização ficará pendente.', 'pending');
+          else statusMessage('Documento restaurado');
+        } else statusMessage('Documento restaurado');
+      };
+      const permanentlyDeleteDocument = async documentId => {
+        const record = documents.find(item => item.id === documentId && item.trashedAt);
+        if (!record) return;
+        const isRemoteDocument = Boolean(record.remoteId);
+        if (isRemoteDocument && (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities }))) { statusMessage('Sua permissão não permite apagar este documento definitivamente.', 'pending'); return; }
+        if (!window.confirm(`Apagar “${record.title}” definitivamente? Esta ação não pode ser desfeita.`)) return;
+        try {
+          if (isRemoteDocument) {
+            const deleted = await apiFetch(`/rest/v1/docs?id=eq.${encodeURIComponent(record.remoteId)}`, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
+            if (!Array.isArray(deleted) || !deleted.some(row => row.id === record.remoteId)) throw new Error('O projeto não confirmou a exclusão definitiva.');
+          }
+          documents = documents.filter(item => item.id !== record.id);
+          dirtyDocumentIds.delete(record.id);
+          updateDocumentOrderIndices();
+          saveProjectCache(); renderLibrary(); void persistDocumentOrder();
+          if (currentProjectId) await requestProjectDocsRefresh(false);
+          statusMessage('Documento apagado definitivamente');
+        } catch (error) { statusMessage(error.message || 'Não foi possível apagar o documento definitivamente.', 'pending'); }
+      };
+      const docKindDialog = document.querySelector('#doc-kind-dialog');
       document.querySelector('#fast-doc').addEventListener('click', () => createDocument(true));
-      document.querySelector('#add-doc').addEventListener('click', () => createDocument(false));
+      document.querySelector('#add-doc').addEventListener('click', () => { docKindDialog.showModal(); });
+      document.querySelector('#doc-kind-cancel').addEventListener('click', () => docKindDialog.close());
+      document.querySelector('#doc-kind-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const layout = new FormData(event.currentTarget).get('document-layout') || 'book';
+        docKindDialog.close();
+        createDocument(false, layout);
+      });
       document.querySelectorAll('.section-heading').forEach(heading => heading.addEventListener('click', () => {
         const target = document.getElementById(heading.getAttribute('aria-controls'));
         const expanded = heading.getAttribute('aria-expanded') === 'true'; heading.setAttribute('aria-expanded', String(!expanded));
@@ -715,9 +1169,7 @@
       const authExpiresKey = 'heartspace-docs-expires-at';
       const projectPicker = document.querySelector('#project-picker');
       const statusMessage = (message, state = '') => {
-        const dot = document.createElement('span'); dot.className = 'save-dot';
-        if (state) dot.style.background = '#e8be77';
-        saveState.replaceChildren(dot, document.createTextNode(message));
+        setSaveStatus(message, state);
       };
       const apiFetch = async (path, options = {}, token = currentAccessToken) => {
         if (!docsConfig.supabaseUrl || !docsConfig.publishableKey) throw new Error('A conexão do Docs ainda não está configurada.');
@@ -790,7 +1242,6 @@
       const updateEditorPermissions = () => {
         const editable = !currentProjectId || canEditProject({ capabilities: projectCapabilities });
         title.contentEditable = String(editable); subtitle.disabled = !editable; editor.contentEditable = String(editable);
-        document.querySelector('#new-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#add-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
       };
@@ -800,7 +1251,21 @@
       };
       const remoteToRecord = row => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+      };
+      const persistDocumentOrder = async () => {
+        if (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities })) return;
+        const remoteRecords = documents.filter(record => record.remoteId && !record.trashedAt && record.projectId === currentProjectId);
+        if (!remoteRecords.length) return;
+        saveProjectCache();
+        const query = new URLSearchParams({ on_conflict: 'project_id,doc_id' });
+        const rows = remoteRecords.map(record => ({ project_id: currentProjectId, doc_id: record.remoteId, sort_order: record.sortOrder }));
+        try {
+          await apiFetch(`/rest/v1/doc_order?${query}`, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(rows) });
+          statusMessage('Ordem dos documentos salva para a equipe');
+        } catch (error) {
+          statusMessage(`A ordem ficou salva neste dispositivo, mas não foi compartilhada: ${error.message || 'aplique a atualização do Supabase'}`, 'pending');
+        }
       };
       const refreshDocumentPresence = async () => {
         const label = document.querySelector('#document-presence');
@@ -826,22 +1291,31 @@
         const query = new URLSearchParams({ select: 'id,project_id,title,content,author,created_at,updated_at', project_id: `eq.${targetProjectId}`, order: 'updated_at.desc' });
         const rows = await apiFetch(`/rest/v1/docs?${query}`);
         if (targetProjectId !== currentProjectId) return;
+        let orderById = new Map();
+        try {
+          const orderQuery = new URLSearchParams({ select: 'doc_id,sort_order', project_id: `eq.${targetProjectId}`, order: 'sort_order.asc' });
+          const orderRows = await apiFetch(`/rest/v1/doc_order?${orderQuery}`);
+          orderById = new Map(orderRows.map(row => [row.doc_id, Number(row.sort_order) || 0]));
+        } catch (_) { /* migration de ordenação ainda pode não estar instalada */ }
+        if (targetProjectId !== currentProjectId) return;
         const oldByRemoteId = new Map(documents.filter(record => record.remoteId).map(record => [record.remoteId, record]));
-        const next = rows.map(row => {
+        const next = rows.map((row, index) => {
           const old = oldByRemoteId.get(row.id);
           const remoteVersion = remoteToRecord(row);
+          remoteVersion.sortOrder = orderById.has(row.id) ? orderById.get(row.id) : old ? old.sortOrder : index * 1024;
           if (old && (old.dirty || dirtyDocumentIds.has(old.id))) {
             if (old.remoteUpdatedAt !== row.updated_at) { old.remoteConflict = true; old.remoteVersion = remoteVersion; }
+            old.sortOrder = remoteVersion.sortOrder;
             return old;
           }
           return remoteVersion;
         });
         const cachedLocal = documents.filter(record => !record.remoteId && record.projectId === currentProjectId);
-        documents = [...next, ...cachedLocal];
-        if (!documents.some(record => record.id === activeDocumentId)) activeDocumentId = documents[0]?.id || '';
+        documents = [...next, ...cachedLocal].sort((a, b) => a.sortOrder - b.sortOrder);
+        if (!documents.some(record => record.id === activeDocumentId && !record.trashedAt)) activeDocumentId = documents.find(record => !record.trashedAt)?.id || '';
         if (!activeDocumentId && initial) {
-          if (canEditProject({ capabilities: projectCapabilities })) createDocument(false);
-          else { title.textContent = 'Sem documentos'; subtitle.value = ''; editor.innerHTML = '<p><br></p>'; updateDocumentLabel(); updateCount(); statusMessage('Este projeto ainda não tem documentos'); }
+          if (canEditProject({ capabilities: projectCapabilities }) && !preventProjectAutoCreate && !documents.some(record => record.trashedAt)) createDocument(false);
+          else { title.textContent = 'Sem documentos'; subtitle.value = ''; setEditorBody('<p><br></p>', 'book'); updateDocumentLabel(); updateCount(); statusMessage('Este projeto ainda não tem documentos'); }
           return;
         }
         const active = documents.find(record => record.id === activeDocumentId);
@@ -855,7 +1329,7 @@
         const imageInsertionPending = pendingImageMarker?.isConnected && pendingImageDocumentId === activeDocumentId;
         const editorFocused = editor.contains(document.activeElement) || document.activeElement === title || document.activeElement === subtitle;
         if (active && !dirtyDocumentIds.has(active.id) && !imageInsertionPending && !editorFocused) {
-          title.textContent = active.title; subtitle.value = active.subtitle; editor.innerHTML = active.body;
+          title.textContent = active.title; subtitle.value = active.subtitle; setEditorBody(active.body, active.layout);
           resizeSubtitle(); updateDocumentLabel(); updateCount(); hydrateImages(editor);
         }
         saveProjectCache(); renderLibrary();
@@ -888,6 +1362,7 @@
         document.querySelector('.topbar-left .crumb').textContent = projectName || 'Projeto';
         storageKey = `heartspace-docs-project-${projectId}`;
         const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        preventProjectAutoCreate = cached?.version === 2 && Array.isArray(cached.documents) && (cached.documents.length === 0 || cached.documents.every(record => record.trashedAt));
         if (cached?.version === 2 && Array.isArray(cached.documents)) {
           documents = cached.documents.map(makeRecord); activeDocumentId = cached.activeDocumentId || '';
         } else { documents = []; activeDocumentId = ''; }
@@ -910,7 +1385,7 @@
         const captured = { title: record.title || 'Sem título', subtitle: record.subtitle || '', body: record.body || '<p><br></p>', savedAt: record.savedAt };
         statusMessage('Sincronizando com o projeto…', 'pending');
         try {
-          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body };
+          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
           if (!record.remoteId) {
             const inserted = await apiFetch('/rest/v1/docs', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ project_id: targetProjectId, type: 'page', status: 'draft', title: captured.title, author: currentUser?.email || 'Membro', content }) });
             const row = Array.isArray(inserted) ? inserted[0] : inserted;
@@ -919,13 +1394,14 @@
             record.remoteId = row.id; record.id = row.id; record.remoteUpdatedAt = row.updated_at || ''; record.projectId = targetProjectId;
             if (activeDocumentId === previousId) activeDocumentId = row.id;
             dirtyDocumentIds.delete(previousId); record.dirty = false;
+            void persistDocumentOrder();
             refreshDocumentPresence();
           } else {
             const result = await apiFetch('/rest/v1/rpc/heartspace_save_doc_content', { method: 'POST', body: JSON.stringify({ p_doc_id: record.remoteId, p_content: content, p_expected_updated_at: record.remoteUpdatedAt || null, p_author_name: currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro' }) });
             if (result?.conflict) {
               const content = parseRemoteContent(result.remote_content);
               record.remoteConflict = true;
-              record.remoteVersion = makeRecord({ id: record.remoteId, remoteId: record.remoteId, projectId: targetProjectId, remoteUpdatedAt: result.remote_updated_at || '', title: content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', savedAt: result.remote_updated_at || new Date().toISOString() });
+              record.remoteVersion = makeRecord({ id: record.remoteId, remoteId: record.remoteId, projectId: targetProjectId, remoteUpdatedAt: result.remote_updated_at || '', title: content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: result.remote_updated_at || new Date().toISOString() });
               throw new Error('Outra pessoa salvou uma versão mais recente. Seu rascunho está preservado.');
             }
             if (!result?.success) throw new Error(result?.reason === 'forbidden' ? 'Sua permissão de edição mudou.' : 'A gravação remota não foi concluída.');
@@ -944,6 +1420,7 @@
           if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); statusMessage(error.message || 'Falha ao sincronizar; rascunho local preservado', 'pending'); }
         } finally {
           remoteSaveInProgress.delete(syncKey);
+          if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); }
           if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
         }
       };
@@ -1042,6 +1519,9 @@
         try { await requestProjectDocsRefresh(false); for (const record of documents.filter(item => item.dirty && !item.remoteConflict)) syncRecord(record); }
         catch (error) { statusMessage(error.message || 'Não foi possível atualizar.', 'pending'); }
       });
+      document.querySelector('#actions-menu').addEventListener('click', event => {
+        if (event.target.closest('button')) event.currentTarget.open = false;
+      });
       const historyDialog = document.querySelector('#history-dialog');
       const historyList = document.querySelector('#history-list');
       const formatHistoryDate = value => {
@@ -1089,6 +1569,7 @@
         } catch (error) { statusMessage(error.message || 'Não foi possível restaurar a versão.', 'pending'); button.disabled = false; }
       };
       document.querySelector('#versions-button').addEventListener('click', loadRevisionHistory);
+      document.querySelector('#review-button').addEventListener('click', () => statusMessage('Revisão — em breve'));
       document.querySelector('#history-close').addEventListener('click', () => historyDialog.close());
       document.querySelector('#conflict-keep-copy').addEventListener('click', () => {
         const conflicted = documents.find(record => record.id === activeDocumentId && record.remoteConflict);
@@ -1097,9 +1578,10 @@
         const remoteVersion = makeRecord(conflicted.remoteVersion);
         documents = documents.filter(record => record.id !== conflicted.id);
         documents.unshift(localCopy, remoteVersion);
+        updateDocumentOrderIndices();
         dirtyDocumentIds.delete(conflicted.id); dirtyDocumentIds.add(localCopy.id);
         activeDocumentId = localCopy.id;
-        title.textContent = localCopy.title; subtitle.value = localCopy.subtitle; editor.innerHTML = localCopy.body;
+        title.textContent = localCopy.title; subtitle.value = localCopy.subtitle; setEditorBody(localCopy.body, localCopy.layout);
         resizeSubtitle(); hydrateImages(editor); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
         statusMessage('Criando uma cópia do seu rascunho na equipe…', 'pending');
         syncRecord(localCopy);
@@ -1111,9 +1593,10 @@
         const remoteVersion = makeRecord(conflicted.remoteVersion);
         documents = documents.filter(record => record.id !== conflicted.id);
         documents.unshift(remoteVersion, localDraft);
+        updateDocumentOrderIndices();
         dirtyDocumentIds.delete(conflicted.id);
         activeDocumentId = remoteVersion.id;
-        title.textContent = remoteVersion.title; subtitle.value = remoteVersion.subtitle; editor.innerHTML = remoteVersion.body;
+        title.textContent = remoteVersion.title; subtitle.value = remoteVersion.subtitle; setEditorBody(remoteVersion.body, remoteVersion.layout);
         resizeSubtitle(); hydrateImages(editor); updateDocumentLabel(); updateCount(); renderLibrary(); persistLibrary();
         statusMessage('Versão da equipe carregada; seu rascunho local foi preservado', '');
         requestProjectDocsRefresh(false).then(refreshDocumentPresence).catch(() => {});
@@ -1430,7 +1913,7 @@
         else if (command.kind === 'list') document.execCommand('insertUnorderedList');
         else if (command.kind === 'ordered') document.execCommand('insertOrderedList');
         else if (command.kind === 'tasks') insertChecklist();
-        else if (command.kind === 'delete-document') { clearTimeout(saveTimer); void deleteActiveDocument(); return; }
+        else if (command.kind === 'trash-document') { void moveDocumentToTrash(); return; }
         else if (command.kind === 'image') {
           const selection = window.getSelection();
           if (selection?.rangeCount && editor.contains(selection.anchorNode)) {
@@ -2156,6 +2639,7 @@
           const documentSubtitle = subtitle.value.trim();
           const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\n---\n\n`;
           const exportRoot = editor.cloneNode(true);
+          exportRoot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
           for (const image of exportRoot.querySelectorAll('img[data-local-image]')) {
             const imageBlob = await loadImage(image.dataset.localImage);
             if (imageBlob) image.src = await blobToDataUrl(imageBlob);
@@ -2218,6 +2702,7 @@
         updateDocumentLabel();
         editor.replaceChildren(markdownToFragment(lines));
         if (!editor.childNodes.length) editor.append(document.createElement('p'));
+        paginateBook();
         await persistEmbeddedImages(editor);
         queueSave();
         transferStatus.textContent = 'Markdown importado e salvo neste dispositivo';
@@ -2479,8 +2964,12 @@
         }
       });
       editor.addEventListener('keyup', event => { if (event.key === 'Escape') dismissedSlash = true; });
-      document.addEventListener('selectionchange', () => {
-        if (document.activeElement === editor && !slashMenu.classList.contains('open')) updateSlashMenu();
+      document.addEventListener('selectionchange', updateSlashMenu);
+      document.addEventListener('pointerdown', event => {
+        if (slashMenu.contains(event.target)) return;
+        if (editor.contains(event.target)) { dismissedSlash = false; return; }
+        dismissedSlash = false;
+        closeSlashMenu();
       });
       document.querySelector('#outline-toggle').addEventListener('click', () => {
         const headings = [...editor.querySelectorAll('h1,h2,h3')].map(node => node.innerText.trim()).filter(Boolean);
