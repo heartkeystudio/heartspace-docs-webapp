@@ -192,13 +192,13 @@
     .tool-separator { width:1px; height:20px; margin:0 5px; background:var(--line); }
     .toolbar-spacer { flex:1; }
     .focus-button { color:#d6cbdc; }
-    .editor-area { position:relative; min-height:0; overflow:auto; overscroll-behavior:contain; background:var(--bg); }
-    .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:12px 24px 84px; }
+    .editor-area { position:relative; min-height:0; overflow:auto; overflow-anchor:none; overscroll-behavior:contain; scroll-padding-block:24px 96px; background:var(--bg); }
+    .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:12px 24px 128px; }
     .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
     .editor-wrap.is-canvas { width:100%; max-width:none; padding:0 0 56px; }
     .page[data-layout="canvas"] { width:100%; min-height:calc(100dvh - 148px); padding:34px clamp(24px,5vw,72px) 48px; border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
     .page[data-layout="canvas"] .content { min-height:calc(100dvh - 340px); }
-    .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:min(var(--book-page-height,1123px),calc(100cqi * var(--book-page-ratio))); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); width:min(100%,var(--book-page-width,794px)); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) min(var(--book-margin-x,76px),8vw) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 1px calc(100% - 1px),#ffffff20 calc(100% - 1px)),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
+    .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:var(--book-page-height,1123px); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); box-sizing:border-box; width:var(--book-page-width,794px); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 0 calc(100% - 1px),#ffffff20 calc(100% - 1px) 100%),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
     .page[data-layout="book"] .content.book-paginated { display:flex; flex-direction:column; gap:var(--book-sheet-gap); min-height:0; }
     .content .book-page-content { box-sizing:border-box; width:100%; min-width:0; flex:0 0 auto; min-height:0; overflow:hidden; outline:none; overflow-wrap:anywhere; }
     .content .book-page-content:not(:first-child) { height:var(--book-sheet-height); padding:var(--book-margin-y,72px) 0; }
@@ -353,9 +353,9 @@
       .brand{justify-content:flex-start;padding:0 8px}.brand-name{display:inline}.sidebar-shortcuts,.search,.nav-section{display:grid}.search{margin:12px 0 8px}.nav-section{margin:12px 0 8px}
       .topbar{gap:8px;padding:0 10px}.topbar-left,.topbar-right{min-width:0;gap:7px}.topbar-left{flex:1;overflow:hidden}.topbar-left .crumb:not(:last-child){display:none}.topbar-left .crumb:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-nav-toggle{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid var(--line);border-radius:7px;color:#e6dce9;background:#ffffff08;font-size:18px}.save-state{max-width:34px;font-size:0}.save-dot{flex:0 0 7px}.document-presence,.document-activity,.transfer-status{display:none}.topbar-right{flex:0 0 auto}.actions-menu>summary{min-height:34px;padding:0 7px}.top-button{min-height:34px;padding:0 7px}
       .toolbar{gap:3px;padding:0 8px;overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x}.toolbar::-webkit-scrollbar{display:none}.tool{min-width:38px;min-height:40px;padding:0 9px;flex:0 0 auto}.tool.icon-only{min-width:38px}.tool-separator{margin:0 2px}.toolbar-spacer{min-width:8px}.focus-button{display:none}
-      .editor-area{scroll-padding-block:24px}.editor-wrap{width:100%;padding:10px 8px 64px}.page{padding:34px 22px 62px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.page[data-layout="book"]{min-height:0;background:var(--paper);background-image:none}.page[data-layout="canvas"]{min-height:calc(var(--mobile-visual-height,100svh) - 146px);padding:22px 16px 44px}.page[data-layout="canvas"] .content{min-height:calc(var(--mobile-visual-height,100svh) - 320px)}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
+      .editor-area{scroll-padding-block:24px 96px}.editor-wrap{width:100%;padding:10px 8px 128px}.page{padding:34px 22px 62px}.page[data-layout="book"]{width:var(--book-page-width,794px);padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0;transform-origin:top center}.page[data-layout="book"] .doc-title{font-size:34px}.page[data-layout="book"] .doc-subtitle{font-size:15px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.page[data-layout="canvas"]{min-height:calc(var(--mobile-visual-height,100svh) - 146px);padding:22px 16px 44px}.page[data-layout="canvas"] .content{min-height:calc(var(--mobile-visual-height,100svh) - 320px)}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
     }
-    @media(max-width:480px){.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:100%;padding-inline:16px}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}}
+    @media(max-width:480px){.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:var(--book-page-width,794px);padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -968,6 +968,119 @@
       try { const savedZoom = localStorage.getItem('heartspace-docs-page-zoom'); if ([...zoomLevelControl.options].some(option => option.value === savedZoom)) initialZoom = savedZoom; } catch (_) { /* usa o zoom padrão */ }
       zoomLevelControl.value = initialZoom;
       editorWrap.style.zoom = String(Number(initialZoom) / 100);
+      const keepCaretAboveZoom = activeSelection => {
+        const editorArea = document.querySelector('.editor-area');
+        if (!editorArea || !activeSelection?.rangeCount) return;
+        const adjust = () => {
+          if (!activeSelection.rangeCount) return;
+          const caretRect = activeSelection.getRangeAt(0).getBoundingClientRect();
+          const viewportRect = editorArea.getBoundingClientRect();
+          const zoomRect = document.querySelector('.zoom-control')?.getBoundingClientRect();
+          const zoomOverlapsViewport = zoomRect && zoomRect.bottom > viewportRect.top && zoomRect.top < viewportRect.bottom;
+          const safeBottom = zoomOverlapsViewport ? Math.min(viewportRect.bottom - 28, zoomRect.top - 32) : viewportRect.bottom - 28;
+          if (caretRect.bottom > safeBottom || caretRect.top < viewportRect.top + 28) {
+            const focusNode = activeSelection.focusNode;
+            const focusElement = focusNode?.nodeType === Node.ELEMENT_NODE ? focusNode : focusNode?.parentElement;
+            const caretBlock = focusElement?.closest('p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote,pre,.callout-title,[data-checklist-text]') || focusElement;
+            caretBlock?.scrollIntoView({ block: 'center', inline: 'nearest' });
+            const updatedRect = activeSelection.getRangeAt(0).getBoundingClientRect();
+            if (updatedRect.bottom > safeBottom) editorArea.scrollTop += updatedRect.bottom - safeBottom + 8;
+            else if (updatedRect.top < viewportRect.top + 28) editorArea.scrollTop -= viewportRect.top + 28 - updatedRect.top;
+          }
+        };
+        adjust();
+        requestAnimationFrame(adjust);
+      };
+      const paginateBookForMobile = () => {
+        const selection = window.getSelection();
+        const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode)
+          ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset }
+          : null;
+        const activeNode = savedSelection?.anchorNode.nodeType === Node.ELEMENT_NODE ? savedSelection.anchorNode : savedSelection?.anchorNode.parentElement;
+        const activePage = activeNode?.closest('.book-page-content');
+        let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
+        const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
+        const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
+        const height = paperOrientationControl.value === 'landscape' ? paper[0] : paper[1];
+        const zoom = Number(editorWrap.style.zoom) || 1;
+        const editorArea = document.querySelector('.editor-area');
+        const pageScale = Math.min(1, Math.max(.3, ((editorArea?.clientWidth || width) - 24) / width));
+        documentPage.style.zoom = String(pageScale);
+        const pageWidth = documentPage.getBoundingClientRect().width / (zoom * pageScale);
+        const sheetHeight = Math.min(height, pageWidth * (height / width));
+        const pageTop = (editor.getBoundingClientRect().top - documentPage.getBoundingClientRect().top) / (zoom * pageScale);
+        const firstPageHeight = Math.max(240, sheetHeight - pageTop);
+        const setPageHeight = () => pages.forEach((page, index) => { page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`; });
+        const makePage = index => {
+          const page = document.createElement('div');
+          page.className = 'book-page-content';
+          page.contentEditable = 'true';
+          page.setAttribute('role', 'group');
+          page.setAttribute('aria-label', `Folha ${index + 1}`);
+          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+          editor.append(page);
+          pages.push(page);
+          return page;
+        };
+        const restoreCaret = () => {
+          if (!savedSelection?.anchorNode.isConnected || !savedSelection.focusNode?.isConnected) return;
+          try {
+            selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset);
+          } catch (_) {
+            const offsetFor = (node, offset) => Math.min(offset, node.nodeType === Node.TEXT_NODE ? node.textContent.length : node.childNodes.length);
+            try {
+              const range = document.createRange();
+              range.setStart(savedSelection.anchorNode, offsetFor(savedSelection.anchorNode, savedSelection.anchorOffset));
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } catch (_) { /* o navegador pode substituir o nó durante o Enter */ }
+          }
+          keepCaretAboveZoom(selection);
+        };
+        editor.classList.add('book-paginated');
+        if (!pages.length) {
+          const blocks = [...editor.childNodes];
+          editor.replaceChildren();
+          pages = [];
+          let page = makePage(0);
+          for (const block of blocks.length ? blocks : [Object.assign(document.createElement('p'), { innerHTML: '<br>' })]) {
+            page.append(block);
+            if (page.scrollHeight > page.clientHeight + 1 && page.childElementCount > 1) {
+              block.remove();
+              page = makePage(pages.length);
+              page.append(block);
+            }
+          }
+          restoreCaret();
+          return;
+        }
+        setPageHeight();
+        for (let index = 0; index < pages.length; index += 1) {
+          const page = pages[index];
+          while (page.scrollHeight > page.clientHeight + 1 && page.childElementCount > 1) {
+            const overflowingBlock = page.lastElementChild;
+            const nextPage = pages[index + 1] || makePage(pages.length);
+            nextPage.prepend(overflowingBlock);
+          }
+          const nextPage = pages[index + 1];
+          while (nextPage?.firstElementChild && nextPage !== activePage) {
+            const nextBlock = nextPage.firstElementChild;
+            page.append(nextBlock);
+            if (page.scrollHeight > page.clientHeight + 1) {
+              nextPage.prepend(nextBlock);
+              break;
+            }
+          }
+          if (nextPage && !nextPage.childNodes.length) {
+            nextPage.remove();
+            pages.splice(index + 1, 1);
+            index -= 1;
+          }
+        }
+        while (pages.length > 1 && !pages.at(-1).childNodes.length) pages.pop().remove();
+        restoreCaret();
+      };
       const paginateBook = () => {
         const existingPages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         if (documentPage.dataset.layout !== 'book') {
@@ -976,14 +1089,15 @@
           return;
         }
         if (window.matchMedia('(max-width: 800px)').matches) {
-          if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
-          editor.classList.remove('book-paginated');
+          paginateBookForMobile();
           return;
         }
+        documentPage.style.zoom = '';
         const selection = window.getSelection();
         const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode) ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset } : null;
-        const blocks = [...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]);
-        if (!blocks.length) { const paragraph = document.createElement('p'); paragraph.innerHTML = '<br>'; blocks.push(paragraph); }
+        const activeNode = savedSelection?.anchorNode.nodeType === Node.ELEMENT_NODE ? savedSelection.anchorNode : savedSelection?.anchorNode.parentElement;
+        const activePage = activeNode?.closest('.book-page-content');
+        let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
         const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
         const height = paperOrientationControl.value === 'landscape' ? paper[0] : paper[1];
@@ -993,7 +1107,6 @@
         const pageTop = (editor.getBoundingClientRect().top - documentPage.getBoundingClientRect().top) / zoom;
         const firstPageHeight = Math.max(240, sheetHeight - pageTop);
         editor.classList.add('book-paginated');
-        editor.replaceChildren();
         const makePage = index => {
           const page = document.createElement('div');
           page.className = 'book-page-content';
@@ -1002,20 +1115,46 @@
           page.setAttribute('aria-label', `Folha ${index + 1}`);
           page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
           editor.append(page);
+          pages.push(page);
           return page;
         };
-        let page = makePage(0);
-        for (const block of blocks) {
-          page.append(block);
-          if (page.scrollHeight > page.clientHeight + 1 && page.childElementCount > 1) {
-            page.lastElementChild.remove();
-            page = makePage(editor.children.length);
-            page.append(block);
+        if (!pages.length) {
+          const blocks = [...editor.childNodes];
+          editor.replaceChildren();
+          const page = makePage(0);
+          for (const block of blocks.length ? blocks : [Object.assign(document.createElement('p'), { innerHTML: '<br>' })]) page.append(block);
+        }
+        pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
+        pages.forEach((page, index) => {
+          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+        });
+        for (let index = 0; index < pages.length; index += 1) {
+          const page = pages[index];
+          while (page.scrollHeight > page.clientHeight + 1 && page.childElementCount > 1) {
+            const overflowingBlock = page.lastElementChild;
+            const nextPage = pages[index + 1] || makePage(pages.length);
+            nextPage.prepend(overflowingBlock);
+          }
+          const nextPage = pages[index + 1];
+          while (nextPage?.firstElementChild && nextPage !== activePage) {
+            const nextBlock = nextPage.firstElementChild;
+            page.append(nextBlock);
+            if (page.scrollHeight > page.clientHeight + 1) {
+              nextPage.prepend(nextBlock);
+              break;
+            }
+          }
+          if (nextPage && !nextPage.childNodes.length) {
+            nextPage.remove();
+            pages.splice(index + 1, 1);
+            index -= 1;
           }
         }
+        while (pages.length > 1 && !pages.at(-1).childNodes.length) pages.pop().remove();
         if (savedSelection?.anchorNode.isConnected && savedSelection.focusNode?.isConnected) {
-          selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset);
+          try { selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset); } catch (_) { /* keep the browser's nearest caret if offsets shifted */ }
         }
+        keepCaretAboveZoom(selection);
       };
       const setEditorBody = (body, layout = documentPage.dataset.layout || 'book') => {
         documentPage.dataset.layout = layout;
@@ -1028,7 +1167,7 @@
       };
       let paginationFrame = 0;
       const scheduleBookPagination = () => {
-        if (documentPage.dataset.layout !== 'book' || window.matchMedia('(max-width: 800px)').matches) return;
+        if (documentPage.dataset.layout !== 'book') return;
         cancelAnimationFrame(paginationFrame);
         paginationFrame = requestAnimationFrame(paginateBook);
       };
@@ -1067,6 +1206,11 @@
       document.querySelector('#zoom-in').addEventListener('click', () => applyZoom(zoomValues.find(value => value > Number(zoomLevelControl.value)) || zoomValues.at(-1)));
       editor.addEventListener('input', () => {
         scheduleBookPagination();
+      });
+      editor.addEventListener('keyup', event => {
+        if (!['Enter', 'Return'].includes(event.key)) return;
+        setTimeout(() => keepCaretAboveZoom(window.getSelection()), 80);
+        setTimeout(() => keepCaretAboveZoom(window.getSelection()), 220);
       });
       window.addEventListener('resize', scheduleBookPagination);
       try {
