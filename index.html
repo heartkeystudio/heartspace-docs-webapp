@@ -82,8 +82,8 @@
     .tree-item[aria-grabbed="true"] { opacity:.42; }
     .tree-item--document { cursor:grab; }
     .tree-item--document:active { cursor:grabbing; }
-    .tree-item--document::after { content:''; display:block; width:14px; height:18px; flex:0 0 14px; margin-left:auto; background:url('./assets/docs/handler_icon.svg') center/contain no-repeat; opacity:0; }
-    .tree-item--document:hover::after,.tree-item--document:focus-visible::after { opacity:.72; }
+    .tree-item--document::after,.tree-item--locked::after { content:''; display:block; width:14px; height:18px; flex:0 0 14px; margin-left:auto; background:url('./assets/docs/handler_icon.svg') center/contain no-repeat; opacity:0; }
+    .tree-item--document:hover::after,.tree-item--document:focus-visible::after,.tree-item--locked:hover::after,.tree-item--locked:focus-visible::after { opacity:.72; }
     .tree-drop-indicator { position:absolute; z-index:4; right:8px; left:8px; height:0; border-top:2px dashed #d66cff; pointer-events:none; filter:drop-shadow(0 0 4px #b337e8); }
     .tree-item small { margin-left:auto; color:var(--quiet); }
     .tag-tree { display:grid; gap:3px; padding:0 0 8px; }
@@ -239,6 +239,9 @@
     .content code { padding:2px 6px; border:1px solid #ffffff10; border-radius:5px; color:#e2b6f4; background:#151519; font: .88em ui-monospace, SFMono-Regular, Menlo, monospace; }
     .content mark { padding:1px 4px; border-radius:4px; color:#fff3c1; background:#8c6a29a8; }
     .content a { color:#c997f3; text-decoration-color:#a862d3a8; text-underline-offset:3px; }
+    .content a.document-reference { display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:2px 8px; border:1px solid #b865d955; border-radius:6px; color:#e4b8f7; background:#9d4bb21c; text-decoration:none; vertical-align:baseline; cursor:pointer; }
+    .content a.document-reference::before { content:'▤'; color:#c887ed; font-size:.88em; }
+    .content.document-link-drop-active { outline:2px dashed #c887edaa; outline-offset:5px; border-radius:5px; }
     .content table { width:100%; margin:20px 0; border-collapse:collapse; table-layout:fixed; }
     .content th,.content td { min-width:90px; padding:9px 12px; border:1px solid #ffffff1c; text-align:left; vertical-align:top; }
     .content th { color:#f0eaf4; background:#ffffff08; font-weight:600; }
@@ -340,7 +343,7 @@
     .search-empty { padding:16px 12px; color:var(--quiet); }
     @media(max-width:1050px) { .app{grid-template-columns:220px minmax(0,1fr)} .page{padding:48px 54px 75px} .toolbar{gap:1px;padding:0 9px}.tool{padding:0 7px} }
     @media(max-width:800px) {
-      body{min-width:0}.app{grid-template-columns:minmax(0,1fr)}.workspace{grid-template-rows:52px 48px minmax(0,1fr)}
+      body{min-width:0;height:var(--mobile-visual-height,100svh)}.app{position:fixed;top:var(--mobile-visual-offset,0px);right:0;left:0;grid-template-columns:minmax(0,1fr);height:var(--mobile-visual-height,100svh)}.workspace{grid-template-rows:52px 48px minmax(0,1fr)}
       .sidebar,body.focus-mode .sidebar{position:fixed;z-index:51;inset:0 auto 0 0;width:min(320px,88vw);min-height:100dvh;padding:14px 12px 12px;transform:translateX(-105%);transition:transform .18s ease;box-shadow:16px 0 42px #0009;}
       body.focus-mode .sidebar:focus-within{transform:translateX(-105%)}
       body.focus-mode.zen-sidebar-open .sidebar{transform:translateX(-105%)}
@@ -350,7 +353,7 @@
       .brand{justify-content:flex-start;padding:0 8px}.brand-name{display:inline}.sidebar-shortcuts,.search,.nav-section{display:grid}.search{margin:12px 0 8px}.nav-section{margin:12px 0 8px}
       .topbar{gap:8px;padding:0 10px}.topbar-left,.topbar-right{min-width:0;gap:7px}.topbar-left{flex:1;overflow:hidden}.topbar-left .crumb:not(:last-child){display:none}.topbar-left .crumb:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-nav-toggle{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid var(--line);border-radius:7px;color:#e6dce9;background:#ffffff08;font-size:18px}.save-state{max-width:34px;font-size:0}.save-dot{flex:0 0 7px}.document-presence,.document-activity,.transfer-status{display:none}.topbar-right{flex:0 0 auto}.actions-menu>summary{min-height:34px;padding:0 7px}.top-button{min-height:34px;padding:0 7px}
       .toolbar{gap:3px;padding:0 8px;overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x}.toolbar::-webkit-scrollbar{display:none}.tool{min-width:38px;min-height:40px;padding:0 9px;flex:0 0 auto}.tool.icon-only{min-width:38px}.tool-separator{margin:0 2px}.toolbar-spacer{min-width:8px}.focus-button{display:none}
-      .editor-wrap{width:100%;padding:10px 8px 64px}.page{padding:34px 22px 62px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.page[data-layout="canvas"]{padding:22px 16px 44px}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
+      .editor-area{scroll-padding-block:24px}.editor-wrap{width:100%;padding:10px 8px 64px}.page{padding:34px 22px 62px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.page[data-layout="book"]{min-height:0;background:var(--paper);background-image:none}.page[data-layout="canvas"]{min-height:calc(var(--mobile-visual-height,100svh) - 146px);padding:22px 16px 44px}.page[data-layout="canvas"] .content{min-height:calc(var(--mobile-visual-height,100svh) - 320px)}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
     }
     @media(max-width:480px){.workspace{grid-template-rows:48px 46px minmax(0,1fr)}.topbar{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:100%;padding-inline:16px}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}}
   </style>
@@ -666,7 +669,9 @@
           const button = document.createElement('button');
           const canReorder = !recent && !record.isNotebook && !(currentProjectId && !canEditProject({ capabilities: projectCapabilities }));
           button.type = 'button'; button.className = `tree-item tree-item--${recent ? 'recent' : canReorder ? 'document' : 'locked'}${record.id === activeDocumentId ? ' active' : ''}`; button.dataset.docId = record.id;
-          button.draggable = canReorder;
+          button.draggable = !recent;
+          button.dataset.canReorder = String(canReorder);
+          if (!recent) button.title = canReorder ? 'Arraste para reorganizar ou mencionar no documento' : 'Arraste para mencionar no documento';
           if (!recent) button.setAttribute('aria-haspopup', 'menu');
           button.innerHTML = `<span class="doc-icon"><img src="./assets/docs/documents.svg" alt=""></span>`;
           const label = document.createElement('span'); label.textContent = record.title || 'Sem título'; button.append(label);
@@ -736,6 +741,7 @@
         renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
       };
       let draggedDocumentId = '';
+      let draggedDocumentCanReorder = false;
       let lastPointerX = 0;
       let suppressDocumentClickUntil = 0;
       const documentContextMenu = document.querySelector('#document-context-menu');
@@ -793,6 +799,7 @@
         documentDropIndicator()?.setAttribute('hidden', '');
         documentList.querySelectorAll('[aria-grabbed="true"]').forEach(item => item.removeAttribute('aria-grabbed'));
         draggedDocumentId = '';
+        draggedDocumentCanReorder = false;
       };
       documentList.addEventListener('click', event => {
         if (Date.now() >= suppressDocumentClickUntil) return;
@@ -802,6 +809,7 @@
         const item = event.target.closest?.('.tree-item[data-doc-id]');
         if (!item || !item.draggable) { event.preventDefault(); return; }
         draggedDocumentId = item.dataset.docId;
+        draggedDocumentCanReorder = item.dataset.canReorder === 'true';
         if (document.body.classList.contains('focus-mode')) {
           if (mobileViewport.matches) {
             document.body.classList.add('mobile-sidebar-open');
@@ -809,13 +817,17 @@
           } else document.body.classList.add('zen-sidebar-pinned', 'zen-sidebar-open');
         }
         item.setAttribute('aria-grabbed', 'true');
-        event.dataTransfer.effectAllowed = 'move';
+        const record = documents.find(entry => entry.id === draggedDocumentId);
+        const referenceId = record?.remoteId || record?.id || draggedDocumentId;
+        event.dataTransfer.effectAllowed = draggedDocumentCanReorder ? 'copyMove' : 'copy';
+        event.dataTransfer.setData('application/x-heartspace-document', referenceId);
         event.dataTransfer.setData('text/plain', draggedDocumentId);
       });
       documentList.addEventListener('dragover', event => {
         if (!draggedDocumentId) return;
         lastPointerX = event.clientX;
-        event.preventDefault(); event.dataTransfer.dropEffect = 'move';
+        event.preventDefault(); event.dataTransfer.dropEffect = draggedDocumentCanReorder ? 'move' : 'none';
+        if (!draggedDocumentCanReorder) { documentDropIndicator()?.setAttribute('hidden', ''); return; }
         const item = event.target.closest?.('.tree-item[data-doc-id]');
         const indicator = documentDropIndicator();
         if (!indicator) return;
@@ -838,7 +850,7 @@
           const rect = item.getBoundingClientRect();
           if (event.clientY > rect.top + rect.height / 2) targetIndex += 1;
         }
-        const sourceIndex = documents.findIndex(record => record.id === draggedDocumentId);
+        const sourceIndex = draggedDocumentCanReorder ? documents.findIndex(record => record.id === draggedDocumentId) : -1;
         if (sourceIndex >= 0) {
           const [moving] = documents.splice(sourceIndex, 1);
           if (sourceIndex < targetIndex) targetIndex -= 1;
@@ -851,6 +863,59 @@
         clearDocumentDrag();
         if (!mobileViewport.matches) document.body.classList.remove('zen-sidebar-pinned');
         setTimeout(() => { suppressDocumentClickUntil = 0; }, 250);
+      });
+      const documentReferenceMime = 'application/x-heartspace-document';
+      const isDocumentReferenceDrag = event => Boolean(event.dataTransfer && [...event.dataTransfer.types].includes(documentReferenceMime));
+      editor.addEventListener('dragenter', event => {
+        if (!isDocumentReferenceDrag(event)) return;
+        event.preventDefault();
+        editor.classList.add('document-link-drop-active');
+      });
+      editor.addEventListener('dragover', event => {
+        if (!isDocumentReferenceDrag(event)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+      });
+      editor.addEventListener('dragleave', event => {
+        if (!editor.contains(event.relatedTarget)) editor.classList.remove('document-link-drop-active');
+      });
+      editor.addEventListener('drop', event => {
+        editor.classList.remove('document-link-drop-active');
+        if (!isDocumentReferenceDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const referenceId = event.dataTransfer.getData(documentReferenceMime);
+        const record = documents.find(item => !item.trashedAt && (item.remoteId === referenceId || item.id === referenceId));
+        if (!record) { statusMessage('Não encontrei esse documento para criar a referência.', 'pending'); return; }
+        let range = document.caretRangeFromPoint?.(event.clientX, event.clientY) || null;
+        if (!range && document.caretPositionFromPoint) {
+          const position = document.caretPositionFromPoint(event.clientX, event.clientY);
+          if (position) { range = document.createRange(); range.setStart(position.offsetNode, position.offset); range.collapse(true); }
+        }
+        if (!range || !editor.contains(range.commonAncestorContainer)) {
+          range = document.createRange(); range.selectNodeContents(editor); range.collapse(false);
+        }
+        range.collapse(true);
+        const currentElement = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+        const nonEditable = currentElement?.closest('[contenteditable="false"]');
+        if (nonEditable && editor.contains(nonEditable)) { range.selectNode(nonEditable); range.collapse(false); }
+        const link = document.createElement('a');
+        link.className = 'document-reference';
+        link.dataset.docRef = record.remoteId || record.id;
+        link.href = `#heartspace-doc=${encodeURIComponent(link.dataset.docRef)}`;
+        link.contentEditable = 'false';
+        link.setAttribute('aria-label', `Abrir documento: ${record.title || 'Sem título'}`);
+        link.title = `Abrir ${record.title || 'Sem título'}`;
+        link.textContent = record.title || 'Sem título';
+        range.insertNode(link);
+        const trailingSpace = document.createTextNode(' ');
+        link.after(trailingSpace);
+        const caret = document.createRange(); caret.setStart(trailingSpace, 1); caret.collapse(true);
+        editor.focus();
+        const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(caret);
+        suppressDocumentClickUntil = Date.now() + 250;
+        setTimeout(() => { suppressDocumentClickUntil = 0; }, 250);
+        queueSave(); scheduleBookPagination();
       });
       documentList.addEventListener('dragend', clearDocumentDrag);
       documentList.addEventListener('dragend', event => {
@@ -910,6 +975,11 @@
           editor.classList.remove('book-paginated');
           return;
         }
+        if (window.matchMedia('(max-width: 800px)').matches) {
+          if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
+          editor.classList.remove('book-paginated');
+          return;
+        }
         const selection = window.getSelection();
         const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode) ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset } : null;
         const blocks = [...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]);
@@ -958,7 +1028,7 @@
       };
       let paginationFrame = 0;
       const scheduleBookPagination = () => {
-        if (documentPage.dataset.layout !== 'book') return;
+        if (documentPage.dataset.layout !== 'book' || window.matchMedia('(max-width: 800px)').matches) return;
         cancelAnimationFrame(paginationFrame);
         paginationFrame = requestAnimationFrame(paginateBook);
       };
@@ -1162,6 +1232,15 @@
         event.currentTarget.setAttribute('aria-pressed', String(enabled));
       });
       const mobileViewport = window.matchMedia('(max-width: 800px)');
+      const syncMobileVisualViewport = () => {
+        const viewport = window.visualViewport;
+        document.documentElement.style.setProperty('--mobile-visual-height', `${Math.round(viewport?.height || window.innerHeight)}px`);
+        document.documentElement.style.setProperty('--mobile-visual-offset', `${Math.round(viewport?.offsetTop || 0)}px`);
+      };
+      syncMobileVisualViewport();
+      window.visualViewport?.addEventListener('resize', syncMobileVisualViewport);
+      window.visualViewport?.addEventListener('scroll', syncMobileVisualViewport);
+      window.addEventListener('resize', syncMobileVisualViewport);
       const syncResponsiveZen = () => {
         const automaticZen = mobileViewport.matches;
         document.body.classList.toggle('focus-mode', automaticZen);
@@ -1172,6 +1251,7 @@
         document.body.classList.remove('zen-sidebar-open', 'zen-sidebar-pinned');
       };
       mobileViewport.addEventListener('change', syncResponsiveZen);
+      mobileViewport.addEventListener('change', () => { if (documentPage.dataset.layout === 'book') paginateBook(); });
       syncResponsiveZen();
       const mobileNavToggle = document.querySelector('#mobile-nav-toggle');
       const closeMobileSidebar = () => {
@@ -1326,6 +1406,15 @@
         refreshDocumentPresence();
         setSaveStatus('Salvo neste dispositivo');
       };
+      editor.addEventListener('click', event => {
+        const link = event.target.closest?.('a[data-doc-ref]');
+        if (!link || !editor.contains(link)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const record = documents.find(item => !item.trashedAt && (item.remoteId === link.dataset.docRef || item.id === link.dataset.docRef));
+        if (record) openDocument(record.id);
+        else statusMessage('O documento referenciado não está disponível nesta biblioteca.', 'pending');
+      });
       const createDocument = (quick = false, layout = 'book', isNotebook = false, templateKey = '') => {
         flushSave();
         const customTemplate = templateKey.startsWith('custom:') ? readDocumentTemplates().find(item => item.id === templateKey.slice(7)) : null;
@@ -2810,6 +2899,7 @@
           case 'mark': return `==${children}==`;
           case 'code': return `\`${(node.textContent || '').replace(/`/g, '\\`')}\``;
           case 'a': {
+            if (node.dataset.docRef) return `[[heartspace-doc:${encodeURIComponent(node.dataset.docRef)}|${encodeURIComponent(node.textContent || '')}]]`;
             const href = node.getAttribute('href') || '';
             return `[${children}](${href.replace(/[()]/g, '\\$&')})`;
           }
@@ -2882,6 +2972,12 @@
       const markdownInlineToHtml = value => {
         const unescaped = value.replace(/\\([\\`*_{}\[\]<>#+.!|])/g, '$1');
         let html = escapeHtml(unescaped);
+        html = html.replace(/\[\[heartspace-doc:([^|\]]+)\|([^\]]*)\]\]/g, (_, rawId, rawLabel) => {
+          let referenceId = rawId, label = rawLabel;
+          try { referenceId = decodeURIComponent(rawId); } catch (_) { /* mantém o identificador literal */ }
+          try { label = decodeURIComponent(rawLabel); } catch (_) { /* mantém o rótulo literal */ }
+          return `<a class="document-reference" data-doc-ref="${escapeHtml(referenceId)}" href="#heartspace-doc=${encodeURIComponent(referenceId)}" contenteditable="false" aria-label="Abrir documento: ${escapeHtml(label)}">${escapeHtml(label)}</a>`;
+        });
         html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\)/giu, (_, label, rawHref) => {
           const href = normalizeLink(rawHref.replace(/&amp;/g, '&'));
           return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>` : label;
