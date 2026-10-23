@@ -136,6 +136,13 @@
     .project-picker { width:190px; height:32px; padding:0 9px; border:1px solid var(--line); border-radius:7px; color:#e5dfea; background:#1b1a1f; }
     .auth-gate { position:fixed; z-index:30; inset:0; display:grid; place-items:center; padding:24px; background:#0e0d11ed; backdrop-filter:blur(14px); }
     .auth-gate[hidden] { display:none; }
+    .project-loading { position:fixed; z-index:100; inset:0; display:grid; place-items:center; padding:24px; color:var(--text); background:#111114f5; backdrop-filter:blur(12px); }
+    .project-loading[hidden] { display:none; }
+    .project-loading-card { display:grid; justify-items:center; gap:15px; width:min(100%,360px); padding:30px 24px; border:1px solid #ffffff13; border-radius:14px; background:#1b1a20; box-shadow:0 24px 90px #0008; text-align:center; }
+    .project-loading-spinner { width:34px; height:34px; border:3px solid #ffffff20; border-top-color:#c887ed; border-radius:50%; animation:project-loading-spin .8s linear infinite; }
+    .project-loading-title { font-size:16px; font-weight:650; }
+    .project-loading-detail { color:var(--muted); font-size:12px; }
+    @keyframes project-loading-spin { to { transform:rotate(360deg); } }
     .auth-card { width:min(100%,430px); padding:30px; border:1px solid #ffffff16; border-radius:16px; background:#1b1a20; box-shadow:0 24px 90px #0009; }
     .auth-card h1 { margin:0 0 7px; font-size:24px; }
     .auth-card p { margin:0 0 22px; color:var(--muted); }
@@ -435,12 +442,17 @@
       <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
     </form>
   </section>
+  <section class="project-loading" id="project-loading" hidden role="status" aria-live="polite" aria-busy="true">
+    <div class="project-loading-card"><span class="project-loading-spinner" aria-hidden="true"></span><strong class="project-loading-title">Carregando projeto</strong><span class="project-loading-detail">Buscando os documentos da equipe…</span></div>
+  </section>
   <script src="config.js"></script>
   <script>
     (() => {
       const editor = document.querySelector('#editor');
       const title = document.querySelector('#doc-title');
       const subtitle = document.querySelector('#doc-subtitle');
+      const projectLoading = document.querySelector('#project-loading');
+      const setProjectLoading = loading => { projectLoading.hidden = !loading; document.body.classList.toggle('project-is-loading', loading); };
       const documentPage = document.querySelector('.page');
       const editorWrap = document.querySelector('.editor-wrap');
       const pageSettingsToggle = document.querySelector('#page-settings-toggle');
@@ -554,6 +566,7 @@
         { label: 'Mais opções', detail: 'Títulos, tabelas, imagens, documentos e modelos', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
       );
       let saveTimer;
+      let alignmentToolbarTarget = '';
       let slashRange = null;
       let slashTableCell = null;
       let slashImageFigure = null;
@@ -643,7 +656,7 @@
       let activeDocumentId = '';
       let expandedSidebarTag = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const templatesStorageKey = 'heartspace-docs-templates-v1';
       const readDocumentTemplates = () => { try { const saved=JSON.parse(localStorage.getItem(templatesStorageKey)||'[]'); return Array.isArray(saved) ? saved.filter(item=>item&&typeof item.id==='string'&&typeof item.body==='string') : []; } catch (_) { return []; } };
       const updateDocumentOrderIndices = () => documents.forEach((record, index) => { record.sortOrder = (index + 1) * 1024; });
@@ -954,6 +967,7 @@
         documentPage.style.setProperty('--book-margin-x', `${marginX}px`);
         documentPage.style.setProperty('--book-margin-y', `${marginY}px`);
         title.dataset.align = ['left','center','right','justify'].includes(settings?.titleAlign) ? settings.titleAlign : 'left';
+        subtitle.style.textAlign = ['left','center','right','justify'].includes(settings?.subtitleAlign) ? settings.subtitleAlign : 'left';
         editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
         pageSettingsToggle.closest('.page-settings').hidden = documentPage.dataset.layout === 'canvas';
       };
@@ -1298,7 +1312,7 @@
         saveTimer = setTimeout(() => {
           try {
             const activeRecord = documents.find(item => item.id === activeDocumentId);
-            if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+            if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
             persistLibrary(); renderLibrary();
             if (currentProjectId && activeRecord) syncRecord(activeRecord);
             else setSaveStatus('Salvo neste dispositivo');
@@ -1339,6 +1353,10 @@
       editor.addEventListener('input', queueSave);
       title.addEventListener('input', () => { updateDocumentLabel(); dismissedSlash = false; updateSlashMenu(); queueSave(); });
       subtitle.addEventListener('input', () => { resizeSubtitle(); queueSave(); });
+      subtitle.addEventListener('focus', () => { alignmentToolbarTarget = 'subtitle'; });
+      title.addEventListener('focus', () => { alignmentToolbarTarget = 'title'; });
+      editor.addEventListener('focus', () => { alignmentToolbarTarget = 'editor'; });
+      document.addEventListener('focusin', event => { if (!event.target.closest?.('.toolbar') && ![title, subtitle, editor].includes(event.target)) alignmentToolbarTarget = ''; });
       subtitle.addEventListener('blur', scheduleBookPagination);
       updateCount();
       document.addEventListener('selectionchange', () => {
@@ -1351,14 +1369,16 @@
         button.addEventListener('click', () => {
         const alignmentCommand = button.dataset.command.startsWith('justify');
         const currentSelection = window.getSelection();
-        const titleSelection = alignmentCommand && currentSelection?.rangeCount && title.contains(currentSelection.anchorNode);
-        if (titleSelection) applyTextAlignment(button.dataset.command);
+        const subtitleSelection = alignmentCommand && (document.activeElement === subtitle || (button.contains(document.activeElement) && alignmentToolbarTarget === 'subtitle'));
+        const titleSelection = alignmentCommand && !subtitleSelection && (document.activeElement === title || alignmentToolbarTarget === 'title' || (currentSelection?.rangeCount && title.contains(currentSelection.anchorNode)));
+        if (subtitleSelection) applyTextAlignment(button.dataset.command);
+        else if (titleSelection) applyTextAlignment(button.dataset.command);
         else if (toolbarRange && editor.contains(toolbarRange.commonAncestorContainer)) {
           const selection = window.getSelection();
           selection.removeAllRanges();
           selection.addRange(toolbarRange);
         } else editor.focus();
-        if (!titleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
+        if (!titleSelection && !subtitleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
           document.execCommand(button.dataset.command, false, button.dataset.value || null);
         }
         toolbarRange = null;
@@ -1536,7 +1556,7 @@
         clearTimeout(saveTimer);
         try {
           const activeRecord = documents.find(item => item.id === activeDocumentId);
-          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
           persistLibrary();
           if (currentProjectId && activeRecord) syncRecord(activeRecord);
         } catch (_) { setSaveStatus('Não foi possível salvar neste navegador', 'pending'); }
@@ -1569,7 +1589,7 @@
         const templateHeading = !customTemplate && builtinKey ? templateFragment.querySelector('h1') : null;
         const templateName = customTemplate?.title || templateHeading?.textContent.trim() || '';
         templateHeading?.remove();
-        const record = makeRecord({ title: templateName || (isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, titleAlign: customTemplate?.titleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin });
+        const record = makeRecord({ title: templateName || (isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, titleAlign: customTemplate?.titleAlign, subtitleAlign: customTemplate?.subtitleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin });
         documents.unshift(record); activeDocumentId = record.id;
         updateDocumentOrderIndices();
         title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(templateContent ? templateFragment.innerHTML : '<p><br></p>', record.layout);
@@ -1774,7 +1794,7 @@
       };
       const remoteToRecord = row => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, titleAlign: content.title_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
       };
       const persistDocumentOrder = async () => {
         if (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities })) return;
@@ -1812,14 +1832,16 @@
         if (!currentProjectId) return;
         const targetProjectId = currentProjectId;
         const query = new URLSearchParams({ select: 'id,project_id,title,content,author,created_at,updated_at', project_id: `eq.${targetProjectId}`, order: 'updated_at.desc' });
-        const rows = await apiFetch(`/rest/v1/docs?${query}`);
+        const orderQuery = new URLSearchParams({ select: 'doc_id,sort_order', project_id: `eq.${targetProjectId}`, order: 'sort_order.asc' });
+        const [rowsResult, orderResult] = await Promise.allSettled([
+          apiFetch(`/rest/v1/docs?${query}`),
+          apiFetch(`/rest/v1/doc_order?${orderQuery}`)
+        ]);
+        if (rowsResult.status === 'rejected') throw rowsResult.reason;
+        const rows = rowsResult.value;
         if (targetProjectId !== currentProjectId) return;
         let orderById = new Map();
-        try {
-          const orderQuery = new URLSearchParams({ select: 'doc_id,sort_order', project_id: `eq.${targetProjectId}`, order: 'sort_order.asc' });
-          const orderRows = await apiFetch(`/rest/v1/doc_order?${orderQuery}`);
-          orderById = new Map(orderRows.map(row => [row.doc_id, Number(row.sort_order) || 0]));
-        } catch (_) { /* migration de ordenação ainda pode não estar instalada */ }
+        if (orderResult.status === 'fulfilled' && Array.isArray(orderResult.value)) orderById = new Map(orderResult.value.map(row => [row.doc_id, Number(row.sort_order) || 0]));
         if (targetProjectId !== currentProjectId) return;
         const oldByRemoteId = new Map(documents.filter(record => record.remoteId).map(record => [record.remoteId, record]));
         const next = rows.map((row, index) => {
@@ -1842,13 +1864,6 @@
           return;
         }
         const active = documents.find(record => record.id === activeDocumentId);
-        if (active?.remoteId) {
-          try {
-            const activityQuery = new URLSearchParams({ select: 'actor_name,created_at', doc_id: `eq.${active.remoteId}`, event_type: 'in.(document.saved,document.revision_restored)', order: 'created_at.desc', limit: '1' });
-            const activity = await apiFetch(`/rest/v1/doc_activity?${activityQuery}`);
-            if (activity?.[0]) { active.lastEditor = activity[0].actor_name || active.lastEditor; active.lastEditedAt = activity[0].created_at || active.lastEditedAt; }
-          } catch (_) { /* a edição continua disponível sem os metadados de atividade */ }
-        }
         const imageInsertionPending = pendingImageMarker?.isConnected && pendingImageDocumentId === activeDocumentId;
         const editorFocused = editor.contains(document.activeElement) || document.activeElement === title || document.activeElement === subtitle;
         if (active && !dirtyDocumentIds.has(active.id) && !imageInsertionPending && !editorFocused) {
@@ -1858,6 +1873,14 @@
         saveProjectCache(); renderLibrary();
         const conflict = documents.some(record => record.remoteConflict);
         if (conflict) statusMessage('Outra pessoa atualizou este documento; seu rascunho foi preservado', 'pending');
+        if (active?.remoteId) {
+          const activeId = active.id;
+          const activityQuery = new URLSearchParams({ select: 'actor_name,created_at', doc_id: `eq.${active.remoteId}`, event_type: 'in.(document.saved,document.revision_restored)', order: 'created_at.desc', limit: '1' });
+          void apiFetch(`/rest/v1/doc_activity?${activityQuery}`).then(activity => {
+            const current = documents.find(record => record.id === activeId);
+            if (current && activity?.[0]) { current.lastEditor = activity[0].actor_name || current.lastEditor; current.lastEditedAt = activity[0].created_at || current.lastEditedAt; if (activeDocumentId === activeId) renderDocumentActivity(current); }
+          }).catch(() => {}); /* atividade não bloqueia a abertura do documento */
+        }
       };
       const requestProjectDocsRefresh = (initial = false) => {
         if (!currentProjectId) return Promise.resolve();
@@ -1873,30 +1896,41 @@
         return request;
       };
       const loadCloudProject = async (projectId, knownProject = null) => {
-        if (currentProjectId && currentProjectId !== projectId) flushSave();
-        clearInterval(remotePollTimer);
-        clearInterval(presenceTimer);
-        const access = await getProjectAccess(projectId);
-        if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
-        currentProjectId = projectId; projectCapabilities = access.capabilities || {};
-        sessionStorage.setItem('heartspace-docs-active-project', projectId);
-        const project = knownProject || await apiFetch(`/rest/v1/projects?select=id,name&id=eq.${encodeURIComponent(projectId)}&limit=1`);
-        const projectName = Array.isArray(project) ? project[0]?.name : project?.name;
-        document.querySelector('.topbar-left .crumb').textContent = projectName || 'Projeto';
-        storageKey = `heartspace-docs-project-${projectId}`;
-        const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
-        preventProjectAutoCreate = cached?.version === 2 && Array.isArray(cached.documents) && (cached.documents.length === 0 || cached.documents.every(record => record.trashedAt));
-        if (cached?.version === 2 && Array.isArray(cached.documents)) {
-          documents = cached.documents.map(makeRecord); activeDocumentId = cached.activeDocumentId || '';
-        } else { documents = []; activeDocumentId = ''; }
-        projectPicker.hidden = false;
-        updateEditorPermissions();
-        await requestProjectDocsRefresh(true);
-        document.querySelector('#sync-refresh').hidden = false;
-        statusMessage('Conectado ao projeto');
-        remotePollTimer = setInterval(() => requestProjectDocsRefresh(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
-        refreshDocumentPresence();
-        presenceTimer = setInterval(refreshDocumentPresence, 12000);
+        setProjectLoading(true);
+        try {
+          if (currentProjectId && currentProjectId !== projectId) flushSave();
+          clearInterval(remotePollTimer);
+          clearInterval(presenceTimer);
+          const access = await getProjectAccess(projectId);
+          if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
+          currentProjectId = projectId; projectCapabilities = access.capabilities || {};
+          sessionStorage.setItem('heartspace-docs-active-project', projectId);
+          const project = knownProject || await apiFetch(`/rest/v1/projects?select=id,name&id=eq.${encodeURIComponent(projectId)}&limit=1`);
+          const projectName = Array.isArray(project) ? project[0]?.name : project?.name;
+          document.querySelector('.topbar-left .crumb').textContent = projectName || 'Projeto';
+          storageKey = `heartspace-docs-project-${projectId}`;
+          const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
+          preventProjectAutoCreate = cached?.version === 2 && Array.isArray(cached.documents) && (cached.documents.length === 0 || cached.documents.every(record => record.trashedAt));
+          if (cached?.version === 2 && Array.isArray(cached.documents)) {
+            documents = cached.documents.map(makeRecord); activeDocumentId = cached.activeDocumentId || '';
+          } else { documents = []; activeDocumentId = ''; }
+          projectPicker.hidden = false;
+          updateEditorPermissions();
+          if (!documents.some(record => record.id === activeDocumentId && !record.trashedAt)) activeDocumentId = documents.find(record => !record.trashedAt)?.id || '';
+          const cachedActive = documents.find(record => record.id === activeDocumentId);
+          if (cachedActive) {
+            title.textContent = cachedActive.title; subtitle.value = cachedActive.subtitle; setEditorBody(cachedActive.body, cachedActive.layout);
+            resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary(); hydrateImages(editor);
+            setSaveStatus('Atualizando projeto…', 'pending');
+            setProjectLoading(false);
+          }
+          await requestProjectDocsRefresh(true);
+          document.querySelector('#sync-refresh').hidden = false;
+          statusMessage('Conectado ao projeto');
+          remotePollTimer = setInterval(() => requestProjectDocsRefresh(false).catch(() => statusMessage('Sem conexão com o projeto', 'pending')), 7000);
+          refreshDocumentPresence();
+          presenceTimer = setInterval(refreshDocumentPresence, 12000);
+        } finally { setProjectLoading(false); }
       };
       const syncRecord = async record => {
         const targetProjectId = record.projectId || currentProjectId;
@@ -1908,7 +1942,7 @@
         const captured = { title: record.title || 'Sem título', subtitle: record.subtitle || '', body: record.body || '<p><br></p>', savedAt: record.savedAt };
         statusMessage('Sincronizando com o projeto…', 'pending');
         try {
-          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, title_align: record.titleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
           if (!record.remoteId) {
             const inserted = await apiFetch('/rest/v1/docs', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ project_id: targetProjectId, type: 'page', status: 'draft', title: captured.title, author: currentUser?.email || 'Membro', content }) });
             const row = Array.isArray(inserted) ? inserted[0] : inserted;
@@ -1924,7 +1958,7 @@
             if (result?.conflict) {
               const content = parseRemoteContent(result.remote_content);
               record.remoteConflict = true;
-              record.remoteVersion = makeRecord({ id: record.remoteId, remoteId: record.remoteId, projectId: targetProjectId, remoteUpdatedAt: result.remote_updated_at || '', title: content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, titleAlign: content.title_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: result.remote_updated_at || new Date().toISOString() });
+              record.remoteVersion = makeRecord({ id: record.remoteId, remoteId: record.remoteId, projectId: targetProjectId, remoteUpdatedAt: result.remote_updated_at || '', title: content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? content.body : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: result.remote_updated_at || new Date().toISOString() });
               throw new Error('Outra pessoa salvou uma versão mais recente. Seu rascunho está preservado.');
             }
             if (!result?.success) throw new Error(result?.reason === 'forbidden' ? 'Sua permissão de edição mudou.' : 'A gravação remota não foi concluída.');
@@ -1962,10 +1996,10 @@
         const query = new URLSearchParams({ select: 'id,name,studio_id,status', order: 'created_at.desc' });
         let projects = [];
         try { projects = await apiFetch(`/rest/v1/projects?${query}`); } catch (_) { /* link de abertura pode fornecer só um id */ }
-        const permitted = [];
-        for (const project of Array.isArray(projects) ? projects : []) {
-          try { const access = await getProjectAccess(project.id); if (canOpenProject(access)) permitted.push(project); } catch (_) {}
-        }
+        const permittedResults = await Promise.all((Array.isArray(projects) ? projects : []).map(async project => {
+          try { const access = await getProjectAccess(project.id); return canOpenProject(access) ? project : null; } catch (_) { return null; }
+        }));
+        const permitted = permittedResults.filter(Boolean);
         const preferred = requestedProjectId || sessionStorage.getItem('heartspace-docs-active-project') || '';
         if (preferred) {
           const candidate = permitted.find(project => project.id === preferred) || { id: preferred, name: 'Projeto selecionado' };
@@ -1981,17 +2015,20 @@
         projectPicker.value = currentProjectId;
       };
       const startOnlineDocs = async () => {
-        try { currentAccessToken = await obtainAccessToken(); }
-        catch (error) { authStatus.textContent = error.message || 'Não foi possível renovar a sessão.'; }
-        if (!currentAccessToken) { authGate.hidden = false; return; }
-        try { currentUser = await apiFetch('/auth/v1/user'); }
-        catch (error) {
-          [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
-          currentAccessToken = ''; authGate.hidden = false; authStatus.textContent = 'Sua sessão expirou. Entre novamente para continuar.'; return;
-        }
-        authGate.hidden = true; document.querySelector('#sign-out').hidden = false;
-        try { await openCloudProjectPicker(); updateEditorPermissions(); }
-        catch (error) { statusMessage(error.message || 'Não foi possível abrir o projeto.', 'pending'); }
+        setProjectLoading(true);
+        try {
+          try { currentAccessToken = await obtainAccessToken(); }
+          catch (error) { authStatus.textContent = error.message || 'Não foi possível renovar a sessão.'; }
+          if (!currentAccessToken) { authGate.hidden = false; return; }
+          try { currentUser = await apiFetch('/auth/v1/user'); }
+          catch (error) {
+            [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
+            currentAccessToken = ''; authGate.hidden = false; authStatus.textContent = 'Sua sessão expirou. Entre novamente para continuar.'; return;
+          }
+          authGate.hidden = true; document.querySelector('#sign-out').hidden = false;
+          try { await openCloudProjectPicker(); updateEditorPermissions(); }
+          catch (error) { statusMessage(error.message || 'Não foi possível abrir o projeto.', 'pending'); }
+        } finally { setProjectLoading(false); }
       };
       const requestDashboardSession = () => new Promise(resolve => {
         const source = new URLSearchParams(location.search).get('source');
@@ -2406,7 +2443,7 @@
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
         const templates = readDocumentTemplates();
-        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, titleAlign: record.titleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, body: serializeEditorBody() });
+        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, body: serializeEditorBody() });
         try { localStorage.setItem(templatesStorageKey, JSON.stringify(templates)); statusMessage(`Template “${name.trim()}” salvo neste dispositivo`); }
         catch (_) { statusMessage('Não foi possível salvar este template neste dispositivo', 'pending'); }
       });
@@ -2429,6 +2466,12 @@
         const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
         const alignment = ({ justifyLeft: 'left', justifyCenter: 'center', justifyRight: 'right', justifyFull: 'justify' })[command];
         if (!alignment) return false;
+        if (document.activeElement === subtitle || (document.activeElement.closest?.('.toolbar') && alignmentToolbarTarget === 'subtitle')) {
+          subtitle.style.textAlign = alignment;
+          const record = documents.find(item => item.id === activeDocumentId);
+          if (record) record.subtitleAlign = alignment;
+          return true;
+        }
         if (title.contains(anchor)) {
           title.dataset.align = alignment;
           const record = documents.find(item => item.id === activeDocumentId);
@@ -3271,7 +3314,7 @@
           const documentTitle = title.textContent.trim() || 'Documento sem título';
           const documentSubtitle = subtitle.value.trim();
           const activeRecord = documents.find(record => record.id === activeDocumentId) || { status:'draft', tags:[], titleAlign:'left', isNotebook:false };
-          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\ntitle_align: ${activeRecord.titleAlign}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
+          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\ntitle_align: ${activeRecord.titleAlign}\nsubtitle_align: ${activeRecord.subtitleAlign || 'left'}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
           const exportRoot = editor.cloneNode(true);
           exportRoot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
           for (const image of exportRoot.querySelectorAll('img[data-local-image]')) {
@@ -3310,6 +3353,7 @@
         let importedStatus = 'draft';
         let importedTags = [];
         let importedTitleAlign = 'left';
+        let importedSubtitleAlign = 'left';
         let importedNotebook = false;
         const firstMetadataLine = lines.findIndex(line => line.trim());
         if (firstMetadataLine >= 0 && lines[firstMetadataLine].trim() === '---') {
@@ -3326,12 +3370,13 @@
               catch (_) { importedSubtitle = rawSubtitle.replace(/^['"]|['"]$/g, ''); }
             }
             for (const line of metadataLines) {
-              const match = line.match(/^(status|tags|title_align|is_notebook):\s*(.*)$/i);
+              const match = line.match(/^(status|tags|title_align|subtitle_align|is_notebook):\s*(.*)$/i);
               if (!match) continue;
               try {
                 if (match[1].toLowerCase() === 'status' && ['draft','production','final'].includes(match[2].trim())) importedStatus = match[2].trim();
                 if (match[1].toLowerCase() === 'tags') { const value = JSON.parse(match[2]); if (Array.isArray(value)) importedTags = [...new Set(value.filter(tag => typeof tag === 'string').map(tag => tag.trim().toLocaleLowerCase('pt-BR')).filter(Boolean))]; }
                 if (match[1].toLowerCase() === 'title_align' && ['left','center','right','justify'].includes(match[2].trim())) importedTitleAlign = match[2].trim();
+                if (match[1].toLowerCase() === 'subtitle_align' && ['left','center','right','justify'].includes(match[2].trim())) importedSubtitleAlign = match[2].trim();
                 if (match[1].toLowerCase() === 'is_notebook') importedNotebook = JSON.parse(match[2]) === true;
               } catch (_) { /* metadado inválido é ignorado sem interromper a importação */ }
             }
@@ -3347,8 +3392,9 @@
         title.textContent = importedTitle || file.name.replace(/\.(md|markdown)$/i, '') || 'Documento importado';
         subtitle.value = importedSubtitle;
         const activeRecord = documents.find(record => record.id === activeDocumentId);
-        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.titleAlign = importedTitleAlign; activeRecord.isNotebook = importedNotebook; }
+        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.titleAlign = importedTitleAlign; activeRecord.subtitleAlign = importedSubtitleAlign; activeRecord.isNotebook = importedNotebook; }
         title.dataset.align = importedTitleAlign;
+        subtitle.style.textAlign = importedSubtitleAlign;
         resizeSubtitle();
         updateDocumentLabel();
         editor.replaceChildren(markdownToFragment(lines));
