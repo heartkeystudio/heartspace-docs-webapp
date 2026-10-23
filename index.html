@@ -508,8 +508,8 @@
         { label: 'Adicionar coluna à direita', detail: 'Ctrl + Alt + →', icon: '⇥', kind: 'table-column', value: 'right' },
         { label: 'Adicionar linha acima', detail: 'Ctrl + Alt + ↑', icon: '↑', kind: 'table-row', value: 'above' },
         { label: 'Adicionar linha abaixo', detail: 'Ctrl + Alt + ↓', icon: '↓', kind: 'table-row', value: 'below' },
-        { label: 'Excluir linha atual', detail: 'Remove esta linha e seu conteúdo', icon: '−▤', kind: 'table-delete-row' },
-        { label: 'Excluir coluna atual', detail: 'Remove esta coluna e seu conteúdo', icon: '−▥', kind: 'table-delete-column' },
+        { label: 'Excluir linha atual', detail: 'Ctrl + Alt + Shift + ↑/↓', icon: '−▤', kind: 'table-delete-row' },
+        { label: 'Excluir coluna atual', detail: 'Ctrl + Alt + Shift + ←/→', icon: '−▥', kind: 'table-delete-column' },
         { label: 'Excluir tabela', detail: 'Remove a tabela inteira do documento', icon: '×▦', kind: 'table-delete' },
         { label: 'Citação', detail: 'Destaque uma referência', icon: '“', kind: 'block', value: 'blockquote' },
         { label: 'Bloco de código', detail: 'Trecho monoespaçado', icon: '</>', kind: 'block', value: 'pre' },
@@ -556,11 +556,11 @@
         children: ['Adicionar linha acima', 'Adicionar linha abaixo', 'Adicionar coluna à esquerda', 'Adicionar coluna à direita'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
       };
       const tableRemoveFolder = {
-        label: 'Remover parte da tabela', detail: 'Excluir linha, coluna ou tabela', icon: '−', kind: 'folder', id: 'table-remove',
+        label: 'Remover parte da tabela', detail: 'Ctrl + Alt + Shift + setas remove linha ou coluna', icon: '−', kind: 'folder', id: 'table-remove',
         children: ['Excluir linha atual', 'Excluir coluna atual', 'Excluir tabela'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
       };
       const tableActionsFolder = {
-        label: 'Editar esta tabela', detail: 'Tab avança célula e cria linha ao final; Ctrl + Alt + setas altera', icon: '▦', kind: 'folder', id: 'table-actions',
+        label: 'Editar esta tabela', detail: 'Tab avança célula; Ctrl + Alt + setas adiciona; com Shift remove', icon: '▦', kind: 'folder', id: 'table-actions',
         children: [tableInsertFolder, tableRemoveFolder]
       };
       const moreOptions = commandGroups.map(group => ({
@@ -3720,6 +3720,12 @@
         const selectionElement = selectionAnchor?.nodeType === Node.ELEMENT_NODE ? selectionAnchor : selectionAnchor?.parentElement;
         const caretTable = selectionElement?.closest('th,td')?.closest('table[data-docs-table]');
         if (event.key === 'Tab' && moveTableCell(event)) { queueSave(); return; }
+        if ((event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && event.key.startsWith('Arrow') && caretTable && editor.contains(caretTable)) {
+          event.preventDefault();
+          if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') deleteTableColumn();
+          if (event.key === 'ArrowUp' || event.key === 'ArrowDown') deleteTableRow();
+          queueSave(); return;
+        }
         if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.startsWith('Arrow') && caretTable && editor.contains(caretTable)) {
           event.preventDefault();
           if (event.key === 'ArrowLeft') addTableColumn('left');
