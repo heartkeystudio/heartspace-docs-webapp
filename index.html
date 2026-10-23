@@ -3716,8 +3716,11 @@
       editor.addEventListener('input', () => { updateOrderedListMarkers(); dismissedSlash = false; if (convertMarkdownChecklist() || convertMarkdownHeading() || convertMarkdownInline()) { closeSlashMenu(); queueSave(); } else updateSlashMenu(); });
       editor.addEventListener('keydown', event => {
         const eventTarget = event.target?.nodeType === Node.ELEMENT_NODE ? event.target : event.target?.parentElement;
+        const selectionAnchor = window.getSelection()?.anchorNode;
+        const selectionElement = selectionAnchor?.nodeType === Node.ELEMENT_NODE ? selectionAnchor : selectionAnchor?.parentElement;
+        const caretTable = selectionElement?.closest('th,td')?.closest('table[data-docs-table]');
         if (event.key === 'Tab' && moveTableCell(event)) { queueSave(); return; }
-        if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.startsWith('Arrow') && eventTarget?.closest('th,td')?.closest('table[data-docs-table]')) {
+        if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.startsWith('Arrow') && caretTable && editor.contains(caretTable)) {
           event.preventDefault();
           if (event.key === 'ArrowLeft') addTableColumn('left');
           if (event.key === 'ArrowRight') addTableColumn('right');
