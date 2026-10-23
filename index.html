@@ -504,10 +504,10 @@
         { label: 'Alinhar à direita', detail: 'Alinhe o parágrafo à margem direita', icon: '⇥', kind: 'align', value: 'justifyRight' },
         { label: 'Justificar', detail: 'Alinhe o texto às duas margens', icon: '☷', kind: 'align', value: 'justifyFull' },
         { label: 'Tabela', detail: 'Comece simples e acrescente colunas quando precisar', icon: '▦', kind: 'table' },
-        { label: 'Adicionar coluna à esquerda', detail: 'Na tabela da célula atual', icon: '⇤', kind: 'table-column', value: 'left' },
-        { label: 'Adicionar coluna à direita', detail: 'Na tabela da célula atual', icon: '⇥', kind: 'table-column', value: 'right' },
-        { label: 'Adicionar linha acima', detail: 'Na tabela da célula atual', icon: '↑', kind: 'table-row', value: 'above' },
-        { label: 'Adicionar linha abaixo', detail: 'Na tabela da célula atual', icon: '↓', kind: 'table-row', value: 'below' },
+        { label: 'Adicionar coluna à esquerda', detail: 'Ctrl + Alt + ←', icon: '⇤', kind: 'table-column', value: 'left' },
+        { label: 'Adicionar coluna à direita', detail: 'Ctrl + Alt + →', icon: '⇥', kind: 'table-column', value: 'right' },
+        { label: 'Adicionar linha acima', detail: 'Ctrl + Alt + ↑', icon: '↑', kind: 'table-row', value: 'above' },
+        { label: 'Adicionar linha abaixo', detail: 'Ctrl + Alt + ↓', icon: '↓', kind: 'table-row', value: 'below' },
         { label: 'Excluir linha atual', detail: 'Remove esta linha e seu conteúdo', icon: '−▤', kind: 'table-delete-row' },
         { label: 'Excluir coluna atual', detail: 'Remove esta coluna e seu conteúdo', icon: '−▥', kind: 'table-delete-column' },
         { label: 'Excluir tabela', detail: 'Remove a tabela inteira do documento', icon: '×▦', kind: 'table-delete' },
@@ -535,8 +535,7 @@
       const commandGroups = [
         { label: 'Títulos', detail: 'Outros níveis de título', icon: 'H1', labels: ['Título 1', 'Título 3'] },
         { label: 'Listas', detail: 'Lista numerada', icon: '☷', labels: ['Lista numerada'] },
-        { label: 'Tabelas', detail: 'Linhas, colunas e estrutura da tabela', icon: '▦', labels: ['Tabela', 'Adicionar linha acima', 'Adicionar linha abaixo', 'Adicionar coluna à esquerda', 'Adicionar coluna à direita', 'Excluir linha atual', 'Excluir coluna atual', 'Excluir tabela'] },
-        { label: 'Imagens', detail: 'Estilo da imagem e posição da legenda', icon: '▧', labels: ['Imagem do dispositivo', 'Legenda acima da imagem', 'Legenda abaixo da imagem', 'Legenda alinhada à esquerda', 'Legenda centralizada', 'Legenda alinhada à direita', 'Estilo de imagem: padrão', 'Estilo de imagem: banner', 'Estilo de imagem: moldura', 'Estilo de imagem: arredondada'] },
+        { label: 'Tabelas', detail: 'Criar uma tabela', icon: '▦', labels: ['Tabela'] },
         { label: 'Alinhamento', detail: 'Posição do texto no parágrafo', icon: '↔', labels: ['Alinhar à esquerda', 'Centralizar', 'Alinhar à direita', 'Justificar'] },
         { label: 'Blocos', detail: 'Citações, código e diagramas', icon: '▤', labels: ['Citação', 'Bloco de código', 'Divisor', 'Diagrama Mermaid'] },
         { label: 'Formatação', detail: 'Efeitos de texto e código inline', icon: 'Aa', labels: ['Tachado', 'Sublinhado', 'Código inline', 'Realce'] },
@@ -552,6 +551,18 @@
         label: 'Opções desta imagem', detail: 'Legenda, alinhamento e estilo', icon: '▧', kind: 'folder', id: 'image-options',
         children: ['Legenda acima da imagem', 'Legenda abaixo da imagem', 'Legenda alinhada à esquerda', 'Legenda centralizada', 'Legenda alinhada à direita', 'Estilo de imagem: padrão', 'Estilo de imagem: banner', 'Estilo de imagem: moldura', 'Estilo de imagem: arredondada'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
       };
+      const tableInsertFolder = {
+        label: 'Inserir linha ou coluna', detail: 'Atalhos: Ctrl + Alt + setas', icon: '＋', kind: 'folder', id: 'table-insert',
+        children: ['Adicionar linha acima', 'Adicionar linha abaixo', 'Adicionar coluna à esquerda', 'Adicionar coluna à direita'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
+      };
+      const tableRemoveFolder = {
+        label: 'Remover parte da tabela', detail: 'Excluir linha, coluna ou tabela', icon: '−', kind: 'folder', id: 'table-remove',
+        children: ['Excluir linha atual', 'Excluir coluna atual', 'Excluir tabela'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
+      };
+      const tableActionsFolder = {
+        label: 'Editar esta tabela', detail: 'Tab avança célula e cria linha ao final; Ctrl + Alt + setas altera', icon: '▦', kind: 'folder', id: 'table-actions',
+        children: [tableInsertFolder, tableRemoveFolder]
+      };
       const moreOptions = commandGroups.map(group => ({
         label: group.label,
         detail: group.detail,
@@ -563,7 +574,7 @@
       commands.splice(0, commands.length,
         ...allCommands.filter(command => frequentLabels.has(command.label)),
         alignmentFolder,
-        { label: 'Mais opções', detail: 'Títulos, tabelas, imagens, documentos e modelos', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
+        { label: 'Mais opções', detail: 'Títulos, tabelas, alinhamento, blocos, modelos e mais', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
       );
       let saveTimer;
       let alignmentToolbarTarget = '';
@@ -2195,10 +2206,16 @@
       };
       const renderSlashMenu = query => {
         const activeSlashFolder = slashFolderStack.at(-1);
-        const source = slashTarget === title ? alignmentFolder.children : activeSlashFolder?.children || (slashImageFigure ? [imageOptionsFolder, ...commands] : commands);
+        let source;
+        if (slashTarget === title) source = alignmentFolder.children;
+        else if (activeSlashFolder) source = activeSlashFolder.children;
+        else if (slashImageFigure) source = [imageOptionsFolder, ...allCommands.filter(command => ['inline', 'inline-markup', 'link'].includes(command.kind))];
+        else if (slashTableCell) source = [tableActionsFolder, ...commands.filter(command => !['Mais opções', 'Imagem do dispositivo', 'Callouts'].includes(command.label))];
+        else source = commands;
         filteredCommands = source.filter(command => matchesSlashCommand(command, query));
         const breadcrumb = slashFolderStack.map(folder => folder.label).join(' › ');
-        slashHeading.textContent = slashTarget === title ? 'Alinhamento do título · Enter aplica' : breadcrumb ? `${breadcrumb} · ↑↓ navegam · Enter abre/insere · Backspace volta` : 'Inserir bloco · Enter abre/insere';
+        const navigationHint = '↑↓ navegar · → entrar · ← voltar · Enter selecionar · Esc/Backspace fechar';
+        slashHeading.textContent = slashTarget === title ? `Alinhamento do título · ${navigationHint}` : breadcrumb ? `${breadcrumb} · ${navigationHint}` : `Inserir bloco · ${navigationHint}`;
         selectedCommand = Math.min(selectedCommand, Math.max(0, filteredCommands.length - 1));
         slashOptions.replaceChildren();
         if (!filteredCommands.length) {
@@ -2224,6 +2241,26 @@
           slashOptions.append(option);
         });
         (slashTarget === title ? title : editor).setAttribute('aria-activedescendant', `slash-option-${selectedCommand}`);
+      };
+      const enterSlashFolder = (folder = filteredCommands[selectedCommand]) => {
+        if (folder?.kind !== 'folder') return false;
+        slashFolderStack.push(folder);
+        selectedCommand = 0;
+        renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+        placeSlashMenu();
+        return true;
+      };
+      const leaveSlashFolder = () => {
+        if (!slashFolderStack.length) return false;
+        slashFolderStack.pop();
+        selectedCommand = 0;
+        renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+        placeSlashMenu();
+        return true;
+      };
+      const cancelSlashMenu = () => {
+        dismissedSlash = true;
+        closeSlashMenu();
       };
       const updateSlashMenu = () => {
         const selection = window.getSelection();
@@ -2487,13 +2524,7 @@
       function applyCommand(index) {
         const command = filteredCommands[index];
         if (!command || !slashRange) return;
-        if (command.kind === 'folder') {
-          slashFolderStack.push(command);
-          selectedCommand = 0;
-          renderSlashMenu(slashRange.toString().replace(/^\//, ''));
-          placeSlashMenu();
-          return;
-        }
+        if (command.kind === 'folder') { enterSlashFolder(command); return; }
         const commandTarget = slashTarget;
         const selection = window.getSelection();
         slashRange.deleteContents();
@@ -2552,6 +2583,31 @@
         slashTarget = null;
         queueSave();
       }
+      const handleSlashMenuKeydown = event => {
+        if (!slashMenu.classList.contains('open')) return false;
+        if (event.key === 'Escape' || event.key === 'Backspace') {
+          event.preventDefault();
+          cancelSlashMenu();
+          return true;
+        }
+        if (event.key === 'ArrowLeft' && leaveSlashFolder()) { event.preventDefault(); return true; }
+        if (event.key === 'ArrowRight' && enterSlashFolder()) { event.preventDefault(); return true; }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!filteredCommands.length) return true;
+          const step = event.key === 'ArrowDown' ? 1 : -1;
+          selectedCommand = (selectedCommand + step + filteredCommands.length) % filteredCommands.length;
+          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
+          slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
+          return true;
+        }
+        if (event.key === 'Enter' && filteredCommands.length) {
+          event.preventDefault();
+          applyCommand(selectedCommand);
+          return true;
+        }
+        return false;
+      };
       let checklistSequence = 0;
       const checklistContentMarkup = () => '<input class="checklist-box" type="checkbox" contenteditable="false" aria-label="Marcar tarefa"><span class="checklist-text" data-checklist-text="true" data-placeholder="Nome da tarefa" contenteditable="true"></span>';
       const checklistItemMarkup = () => `<li data-checklist-item="true">${checklistContentMarkup()}</li>`;
@@ -3688,49 +3744,12 @@
         if (event.key === 'Enter' && event.shiftKey && resetInlineFormattingOnShiftEnter()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && !event.shiftKey && !slashMenu.classList.contains('open') && convertMarkdownCallout()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && continueChecklist(event)) { queueSave(); return; }
-        if (event.key === 'Backspace' && slashFolderStack.length && slashMenu.classList.contains('open')) {
-          event.preventDefault();
-          slashFolderStack.pop();
-          selectedCommand = 0;
-          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
-          placeSlashMenu();
-          return;
-        }
+        if (slashMenu.classList.contains('open') && handleSlashMenuKeydown(event)) return;
         if (event.key === 'Backspace' && editChecklistWithBackspace(event)) return;
-        if (!slashMenu.classList.contains('open')) return;
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-          event.preventDefault();
-          if (!filteredCommands.length) return;
-          const step = event.key === 'ArrowDown' ? 1 : -1;
-          selectedCommand = (selectedCommand + step + filteredCommands.length) % filteredCommands.length;
-          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
-          slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
-        } else if (event.key === 'Enter' && filteredCommands.length) {
-          event.preventDefault();
-          applyCommand(selectedCommand);
-        } else if (event.key === 'Escape') {
-          event.preventDefault();
-          dismissedSlash = true;
-          closeSlashMenu();
-        }
       });
       title.addEventListener('keydown', event => {
         if (!slashMenu.classList.contains('open') || slashTarget !== title) return;
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-          event.preventDefault();
-          if (!filteredCommands.length) return;
-          const step = event.key === 'ArrowDown' ? 1 : -1;
-          selectedCommand = (selectedCommand + step + filteredCommands.length) % filteredCommands.length;
-          renderSlashMenu((slashRange?.toString() || '').replace(/^\//, ''));
-          slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
-        } else if (event.key === 'Enter' && filteredCommands.length) {
-          event.preventDefault();
-          applyCommand(selectedCommand);
-        } else if (event.key === 'Escape') {
-          event.preventDefault();
-          dismissedSlash = true;
-          closeSlashMenu();
-        }
+        handleSlashMenuKeydown(event);
       });
       editor.addEventListener('keyup', event => { if (event.key === 'Escape') dismissedSlash = true; });
       document.addEventListener('selectionchange', updateSlashMenu);
