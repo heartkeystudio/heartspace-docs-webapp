@@ -2,10 +2,16 @@
 
 O site continua hospedado no GitHub Pages. Como esse host não oferece cabeçalhos
 por rota, a entrada desktop depende de duas regras na zona `heartspace.tools`.
-As duas devem usar a mesma expressão:
+As duas devem usar as mesmas condições, combinadas com **AND** no construtor
+visual:
+
+- **Hostname** — **equals** — `docs.heartspace.tools`
+- **URI Path** — **starts with** — `/desktop/`
+
+O equivalente no editor de expressão é:
 
 ```text
-(http.host eq "docs.heartspace.tools" and (http.request.uri.path eq "/desktop" or http.request.uri.path eq "/desktop/" or http.request.uri.path eq "/desktop/index.html"))
+(http.host eq "docs.heartspace.tools" and starts_with(http.request.uri.path, "/desktop/"))
 ```
 
 O registro DNS de `docs.heartspace.tools` precisa estar com proxy Cloudflare
