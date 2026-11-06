@@ -445,6 +445,7 @@
   <section class="project-loading" id="project-loading" hidden role="status" aria-live="polite" aria-busy="true">
     <div class="project-loading-card"><span class="project-loading-spinner" aria-hidden="true"></span><strong class="project-loading-title">Carregando projeto</strong><span class="project-loading-detail">Buscando os documentos da equipe…</span></div>
   </section>
+  <script src="desktop/adapter.js"></script>
   <script src="config.js"></script>
   <script>
     (() => {
@@ -466,12 +467,16 @@
       const slashMenu = document.querySelector('#slash-menu');
       const slashOptions = document.querySelector('#slash-options');
       const slashHeading = slashMenu.querySelector('.slash-menu-heading');
-      let storageKey = 'heartspace-docs-web-prototype-v1';
+      const desktopAdapter = window.HeartspaceDocsDesktopAdapter;
+      const desktopMode = desktopAdapter?.requested === true;
+      let desktopContext = null;
+      let storageKey = desktopMode ? '' : 'heartspace-docs-web-prototype-v1';
       const docsConfig = window.HEARTSPACE_DOCS_CONFIG || {};
       let currentUser = null;
       let currentAccessToken = '';
       let currentProjectId = '';
       let projectCapabilities = {};
+      let desktopBlocked = false;
       let dirtyDocumentIds = new Set();
       let remotePollTimer = null;
       let presenceTimer = null;
@@ -479,7 +484,7 @@
       let projectRefreshId = '';
       let preventProjectAutoCreate = false;
       let remoteSaveInProgress = new Set();
-      const requestedProjectId = new URLSearchParams(location.search).get('project_id') || '';
+      const requestedProjectId = desktopMode ? '' : new URLSearchParams(location.search).get('project_id') || '';
       const commands = [
         { label: 'Texto', detail: 'Parágrafo normal', icon: '¶', kind: 'block', value: 'p' },
         { label: 'Título 1', detail: 'Título principal', icon: 'H1', kind: 'block', value: 'h1' },
@@ -595,11 +600,14 @@
         request.onerror = () => reject(request.error || new Error('Não foi possível abrir o armazenamento de imagens'));
       });
       imageStorePromise.catch(() => {});
+      const scopedImageKey = id => desktopMode && desktopContext
+        ? `${desktopContext.account.id}:docs:${desktopContext.project.id}:${id}`
+        : id;
       const storeImage = async (id, blob) => {
         const db = await imageStorePromise;
         await new Promise((resolve, reject) => {
           const transaction = db.transaction('images', 'readwrite');
-          transaction.objectStore('images').put(blob, id);
+          transaction.objectStore('images').put(blob, scopedImageKey(id));
           transaction.oncomplete = resolve;
           transaction.onerror = () => reject(transaction.error || new Error('Falha ao salvar imagem'));
         });
@@ -607,7 +615,7 @@
       const loadImage = async id => {
         const db = await imageStorePromise;
         return new Promise((resolve, reject) => {
-          const request = db.transaction('images', 'readonly').objectStore('images').get(id);
+          const request = db.transaction('images', 'readonly').objectStore('images').get(scopedImageKey(id));
           request.onsuccess = () => resolve(request.result || null);
           request.onerror = () => reject(request.error || new Error('Falha ao carregar imagem'));
         });
@@ -668,8 +676,8 @@
       let expandedSidebarTag = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? 'landscape' : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
-      const templatesStorageKey = 'heartspace-docs-templates-v1';
-      const readDocumentTemplates = () => { try { const saved=JSON.parse(localStorage.getItem(templatesStorageKey)||'[]'); return Array.isArray(saved) ? saved.filter(item=>item&&typeof item.id==='string'&&typeof item.body==='string') : []; } catch (_) { return []; } };
+      let templatesStorageKey = desktopMode ? '' : 'heartspace-docs-templates-v1';
+      const readDocumentTemplates = () => { if (!templatesStorageKey) return []; try { const saved=JSON.parse(localStorage.getItem(templatesStorageKey)||'[]'); return Array.isArray(saved) ? saved.filter(item=>item&&typeof item.id==='string'&&typeof item.body==='string') : []; } catch (_) { return []; } };
       const updateDocumentOrderIndices = () => documents.forEach((record, index) => { record.sortOrder = (index + 1) * 1024; });
       const renderDocumentActivity = record => {
         const label = document.querySelector('#document-activity');
@@ -957,7 +965,10 @@
       documentList.addEventListener('dragleave', event => {
         if (!documentList.contains(event.relatedTarget)) documentDropIndicator()?.setAttribute('hidden', '');
       });
-      const persistLibrary = () => localStorage.setItem(storageKey, JSON.stringify({ version: 2, activeDocumentId, documents }));
+      const persistLibrary = () => {
+        if (!storageKey) return;
+        localStorage.setItem(storageKey, JSON.stringify({ version: 2, activeDocumentId, documents }));
+      };
       const paperSpecs = { a4: [794, 1123], letter: [816, 1056], a5: [559, 794] };
       const marginSpecs = { narrow: [48, 48], normal: [76, 72], wide: [104, 96] };
       const applyPageSettings = settings => {
@@ -1239,16 +1250,22 @@
       });
       window.addEventListener('resize', scheduleBookPagination);
       try {
-        const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        const saved = desktopMode ? null : JSON.parse(localStorage.getItem(storageKey) || 'null');
         if (saved?.version === 2 && Array.isArray(saved.documents)) {
           documents = saved.documents.filter(item => item && typeof item.id === 'string' && typeof item.body === 'string').map(makeRecord);
           activeDocumentId = documents.some(item => item.id === saved.activeDocumentId && !item.trashedAt) ? saved.activeDocumentId : documents.find(item => !item.trashedAt)?.id || '';
         } else if (saved && typeof saved.title === 'string' && typeof saved.body === 'string') {
           documents = [makeRecord({ title: saved.title.replace(/<[^>]*>/g, '').trim() || 'Guia de produção', subtitle: saved.subtitle || '', body: saved.body, savedAt: saved.savedAt })];
           activeDocumentId = documents[0].id;
-        } else {
+        } else if (!desktopMode) {
           documents = [makeRecord({ title: title.textContent, subtitle: subtitle.value, body: editor.innerHTML })];
           activeDocumentId = documents[0].id;
+        } else {
+          documents = [];
+          activeDocumentId = '';
+          title.textContent = 'Carregando projeto';
+          subtitle.value = '';
+          setEditorBody('<p><br></p>', 'book');
         }
         const activeRecord = documents.find(item => item.id === activeDocumentId);
         if (activeRecord) {
@@ -1314,11 +1331,20 @@
         saveState.title = message;
         saveState.setAttribute('aria-label', message);
       };
+      const reportDesktopDocumentState = () => {
+        if (!desktopMode || !desktopContext) return;
+        const pendingRecords = documents.filter(record => record.dirty || record.remoteConflict).length;
+        desktopAdapter.reportDocumentState({
+          dirty: pendingRecords > 0,
+          pending_writes: Math.min(1024, pendingRecords + remoteSaveInProgress.size),
+        });
+      };
       const queueSave = () => {
         setSaveStatus(currentProjectId ? 'Salvando no projeto…' : 'Salvando localmente…', 'pending');
         updateCount();
         const editedRecord = documents.find(item => item.id === activeDocumentId);
         if (currentProjectId && editedRecord) { editedRecord.dirty = true; editedRecord.editRevision += 1; dirtyDocumentIds.add(editedRecord.id); }
+        reportDesktopDocumentState();
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
           try {
@@ -1327,6 +1353,7 @@
             persistLibrary(); renderLibrary();
             if (currentProjectId && activeRecord) syncRecord(activeRecord);
             else setSaveStatus('Salvo neste dispositivo');
+            reportDesktopDocumentState();
           } catch (_) {
             setSaveStatus('Não foi possível salvar neste navegador', 'pending');
           }
@@ -1570,6 +1597,7 @@
           if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
           persistLibrary();
           if (currentProjectId && activeRecord) syncRecord(activeRecord);
+          reportDesktopDocumentState();
         } catch (_) { setSaveStatus('Não foi possível salvar neste navegador', 'pending'); }
       };
       const openDocument = id => {
@@ -1726,23 +1754,35 @@
       };
       const apiFetch = async (path, options = {}, token = currentAccessToken) => {
         if (!docsConfig.supabaseUrl || !docsConfig.publishableKey) throw new Error('A conexão do Docs ainda não está configurada.');
-        const headers = new Headers(options.headers || {});
-        headers.set('apikey', docsConfig.publishableKey);
-        if (token) headers.set('Authorization', `Bearer ${token}`);
-        if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-        let response = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}${path}`, { ...options, headers });
-        if (response.status === 401 && !path.startsWith('/auth/v1/token') && localStorage.getItem(authRefreshKey)) {
+        const { desktopSafeRetry = false, ...requestOptions } = options;
+        const makeRequest = requestToken => {
+          const headers = new Headers(requestOptions.headers || {});
+          headers.set('apikey', docsConfig.publishableKey);
+          if (requestToken) headers.set('Authorization', `Bearer ${requestToken}`);
+          if (requestOptions.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+          return fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}${path}`, {
+            ...requestOptions,
+            headers,
+            ...(desktopMode ? { cache: 'no-store', signal: requestOptions.signal || desktopAdapter.requestSignal } : {}),
+          });
+        };
+        let response = await makeRequest(token);
+        const method = String(requestOptions.method || 'GET').toUpperCase();
+        const retryableDesktopRead = method === 'GET' || method === 'HEAD' || desktopSafeRetry === true;
+        if (response.status === 401 && desktopMode && retryableDesktopRead) {
+          const session = await desktopAdapter.refreshSession();
+          currentAccessToken = session.access_token;
+          response = await makeRequest(currentAccessToken);
+        } else if (response.status === 401 && !desktopMode && !path.startsWith('/auth/v1/token') && localStorage.getItem(authRefreshKey)) {
           const refresh = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: { apikey: docsConfig.publishableKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: localStorage.getItem(authRefreshKey) }) });
           if (refresh.ok) {
             saveAuthSession(await refresh.json());
-            const retryHeaders = new Headers(options.headers || {}); retryHeaders.set('apikey', docsConfig.publishableKey); retryHeaders.set('Authorization', `Bearer ${currentAccessToken}`);
-            if (options.body && !retryHeaders.has('Content-Type')) retryHeaders.set('Content-Type', 'application/json');
-            response = await fetch(`${docsConfig.supabaseUrl.replace(/\/$/, '')}${path}`, { ...options, headers: retryHeaders });
+            response = await makeRequest(currentAccessToken);
           }
         }
         const raw = await response.text();
         let data = null; try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
-        if (!response.ok) throw new Error(data?.message || data?.error || `Serviço indisponível (${response.status}).`);
+        if (!response.ok) throw new Error(data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : '') || `Serviço indisponível (${response.status}).`);
         return data;
       };
       const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
@@ -1752,7 +1792,7 @@
         if (!extensionByType[file.type]) throw new Error('Para compartilhar, use uma imagem PNG, JPG, WebP ou GIF.');
         if (file.size > 12 * 1024 * 1024) throw new Error('A imagem compartilhada deve ter até 12 MB.');
         const path = `${currentProjectId}/${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}.${extensionByType[file.type]}`;
-        const response = await fetch(storageObjectUrl(path), { method: 'POST', headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}`, 'Content-Type': file.type, 'x-upsert': 'false' }, body: file });
+        const response = await fetch(storageObjectUrl(path), { method: 'POST', headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}`, 'Content-Type': file.type, 'x-upsert': 'false' }, body: file, ...(desktopMode ? { cache: 'no-store', signal: desktopAdapter.requestSignal } : {}) });
         if (!response.ok) {
           let failure = null; try { failure = await response.json(); } catch (_) {}
           throw new Error(failure?.message || 'Não foi possível enviar a imagem para o projeto.');
@@ -1761,21 +1801,32 @@
       };
       const loadSharedImage = async path => {
         if (!currentAccessToken) return null;
-        let response = await fetch(storageObjectUrl(path), { headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}` } });
-        if (response.status === 401 && localStorage.getItem(authRefreshKey)) {
-          try { await obtainAccessToken(); } catch (_) {}
-          response = await fetch(storageObjectUrl(path), { headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}` } });
+        const load = () => fetch(storageObjectUrl(path), { headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}` }, ...(desktopMode ? { cache: 'no-store', signal: desktopAdapter.requestSignal } : {}) });
+        let response = await load();
+        if (response.status === 401 && (desktopMode || localStorage.getItem(authRefreshKey))) {
+          try {
+            currentAccessToken = desktopMode
+              ? (await desktopAdapter.refreshSession()).access_token
+              : await obtainAccessToken();
+          } catch (_) {}
+          response = await load();
         }
         if (!response.ok) throw new Error('A imagem não pôde ser carregada.');
         return response.blob();
       };
       const saveAuthSession = session => {
         currentAccessToken = session.access_token || '';
+        if (desktopMode) return;
         if (currentAccessToken) localStorage.setItem(authTokenKey, currentAccessToken);
         if (session.refresh_token) localStorage.setItem(authRefreshKey, session.refresh_token);
         if (session.expires_at) localStorage.setItem(authExpiresKey, String(session.expires_at));
       };
       const obtainAccessToken = async () => {
+        if (desktopMode) {
+          const session = desktopAdapter.access || await desktopAdapter.refreshSession();
+          currentAccessToken = session.access_token;
+          return currentAccessToken;
+        }
         const callback = new URLSearchParams(location.hash.slice(1));
         if (callback.get('access_token')) {
           saveAuthSession({ access_token: callback.get('access_token'), refresh_token: callback.get('refresh_token'), expires_at: callback.get('expires_at') });
@@ -1789,11 +1840,11 @@
         const session = await apiFetch('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) }, '');
         saveAuthSession(session); return currentAccessToken;
       };
-      const getProjectAccess = async projectId => apiFetch('/rest/v1/rpc/heartspace_project_access', { method: 'POST', body: JSON.stringify({ target_project_id: projectId }) });
+      const getProjectAccess = async projectId => apiFetch('/rest/v1/rpc/heartspace_project_access', { method: 'POST', body: JSON.stringify({ target_project_id: projectId }), desktopSafeRetry: true });
       const canOpenProject = access => Boolean(access?.capabilities?.docs_view);
       const canEditProject = access => Boolean(access?.capabilities?.docs_edit);
       const updateEditorPermissions = () => {
-        const editable = !currentProjectId || canEditProject({ capabilities: projectCapabilities });
+        const editable = !desktopBlocked && (!currentProjectId || canEditProject({ capabilities: projectCapabilities }));
         title.contentEditable = String(editable); subtitle.disabled = !editable; editor.contentEditable = String(editable);
         document.querySelector('#add-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
@@ -1915,17 +1966,19 @@
           const access = await getProjectAccess(projectId);
           if (!canOpenProject(access)) throw new Error('Sua conta não tem acesso ao Docs neste projeto.');
           currentProjectId = projectId; projectCapabilities = access.capabilities || {};
-          sessionStorage.setItem('heartspace-docs-active-project', projectId);
+          if (!desktopMode) sessionStorage.setItem('heartspace-docs-active-project', projectId);
           const project = knownProject || await apiFetch(`/rest/v1/projects?select=id,name&id=eq.${encodeURIComponent(projectId)}&limit=1`);
           const projectName = Array.isArray(project) ? project[0]?.name : project?.name;
           document.querySelector('.topbar-left .crumb').textContent = projectName || 'Projeto';
-          storageKey = `heartspace-docs-project-${projectId}`;
+          storageKey = desktopMode
+            ? `heartspace-docs-desktop-v1:${desktopContext.account.id}:docs:${projectId}`
+            : `heartspace-docs-project-${projectId}`;
           const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
           preventProjectAutoCreate = cached?.version === 2 && Array.isArray(cached.documents) && (cached.documents.length === 0 || cached.documents.every(record => record.trashedAt));
           if (cached?.version === 2 && Array.isArray(cached.documents)) {
             documents = cached.documents.map(makeRecord); activeDocumentId = cached.activeDocumentId || '';
           } else { documents = []; activeDocumentId = ''; }
-          projectPicker.hidden = false;
+          projectPicker.hidden = desktopMode;
           updateEditorPermissions();
           if (!documents.some(record => record.id === activeDocumentId && !record.trashedAt)) activeDocumentId = documents.find(record => !record.trashedAt)?.id || '';
           const cachedActive = documents.find(record => record.id === activeDocumentId);
@@ -1989,6 +2042,7 @@
         } finally {
           remoteSaveInProgress.delete(syncKey);
           if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); }
+          reportDesktopDocumentState();
           if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
         }
       };
@@ -2040,6 +2094,77 @@
           try { await openCloudProjectPicker(); updateEditorPermissions(); }
           catch (error) { statusMessage(error.message || 'Não foi possível abrir o projeto.', 'pending'); }
         } finally { setProjectLoading(false); }
+      };
+      const capabilitiesFromDesktopPermissions = permissions => ({
+        docs_view: permissions.includes('read'),
+        docs_edit: permissions.includes('edit'),
+        docs_comment: permissions.includes('comment'),
+        manage_publications: permissions.includes('publish'),
+      });
+      const showDesktopRecovery = message => {
+        desktopBlocked = true;
+        currentAccessToken = '';
+        clearInterval(remotePollTimer);
+        clearInterval(presenceTimer);
+        projectCapabilities = {};
+        updateEditorPermissions();
+        authGate.hidden = true;
+        const heading = projectLoading.querySelector('.project-loading-title');
+        const detail = projectLoading.querySelector('.project-loading-detail');
+        if (heading) heading.textContent = 'Abra pelo HeartSpace';
+        if (detail) detail.textContent = message || 'Feche esta janela e abra o Docs novamente pelo HeartSpace.';
+        projectLoading.querySelector('.project-loading-spinner')?.setAttribute('hidden', '');
+        setProjectLoading(true);
+      };
+      const handleDesktopEvent = async (event, nextContext) => {
+        if (event.type === 'access_changed') {
+          desktopContext = nextContext;
+          projectCapabilities = capabilitiesFromDesktopPermissions(nextContext.permissions);
+          updateEditorPermissions();
+          if (!nextContext.permissions.includes('read')) showDesktopRecovery('Seu acesso ao Docs neste projeto foi encerrado.');
+          return;
+        }
+        if (event.type === 'session_ended' || event.type === 'access_revoked') {
+          showDesktopRecovery(event.type === 'access_revoked'
+            ? 'Seu acesso ao Docs neste projeto foi removido.'
+            : 'A sessão do HeartSpace foi encerrada.');
+          return;
+        }
+        if (event.type !== 'session_changed') return;
+        try {
+          const session = await desktopAdapter.refreshSession();
+          currentAccessToken = session.access_token;
+          await requestProjectDocsRefresh(false);
+          refreshDocumentPresence();
+        } catch (error) {
+          statusMessage(error.message || 'A sessão do HeartSpace está temporariamente indisponível.', 'pending');
+        }
+      };
+      const startDesktopDocs = async () => {
+        setProjectLoading(true);
+        authGate.hidden = true;
+        projectPicker.hidden = true;
+        document.querySelector('#sign-out').hidden = true;
+        document.querySelector('#export-markdown').disabled = true;
+        document.querySelector('#export-markdown').title = 'A exportação estará disponível em uma versão futura do app desktop.';
+        document.querySelector('.publish-menu-item').disabled = true;
+        document.querySelector('.publish-menu-item').title = 'A publicação será integrada ao app desktop em uma etapa futura.';
+        try {
+          const started = await desktopAdapter.start(handleDesktopEvent);
+          desktopBlocked = false;
+          desktopContext = started.context;
+          currentAccessToken = started.access.access_token;
+          currentUser = { id: desktopContext.account.id, email: desktopContext.account.email, user_metadata: {} };
+          projectCapabilities = capabilitiesFromDesktopPermissions(desktopContext.permissions);
+          templatesStorageKey = `heartspace-docs-desktop-templates-v1:${desktopContext.account.id}:docs:${desktopContext.project.id}`;
+          await loadCloudProject(desktopContext.project.id, desktopContext.project);
+          updateEditorPermissions();
+          reportDesktopDocumentState();
+        } catch (error) {
+          showDesktopRecovery(error.message || 'Feche esta janela e abra o Docs novamente pelo HeartSpace.');
+          return;
+        }
+        setProjectLoading(false);
       };
       const requestDashboardSession = () => new Promise(resolve => {
         const source = new URLSearchParams(location.search).get('source');
@@ -2177,7 +2302,9 @@
         [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
         currentAccessToken = ''; currentUser = null; clearInterval(remotePollTimer); clearInterval(presenceTimer); document.querySelector('#document-presence').textContent = ''; authGate.hidden = false; document.querySelector('#sign-out').hidden = true;
       });
-      requestDashboardSession().finally(startOnlineDocs);
+      if (desktopMode) startDesktopDocs();
+      else requestDashboardSession().finally(startOnlineDocs);
+      window.addEventListener('pagehide', () => { if (desktopMode) desktopAdapter.destroy(); }, { once: true });
       const escapeHtml = value => value.replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
       const closeSlashMenu = () => {
         slashMenu.classList.remove('open');
@@ -2481,7 +2608,7 @@
         if (!record) return;
         const templates = readDocumentTemplates();
         templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, body: serializeEditorBody() });
-        try { localStorage.setItem(templatesStorageKey, JSON.stringify(templates)); statusMessage(`Template “${name.trim()}” salvo neste dispositivo`); }
+        try { if (!templatesStorageKey) throw new Error('Contexto local indisponível'); localStorage.setItem(templatesStorageKey, JSON.stringify(templates)); statusMessage(`Template “${name.trim()}” salvo neste dispositivo`); }
         catch (_) { statusMessage('Não foi possível salvar este template neste dispositivo', 'pending'); }
       });
       const formatCurrentBlock = tagName => {
