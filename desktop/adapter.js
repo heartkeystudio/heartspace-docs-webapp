@@ -27,6 +27,15 @@
   const isRecord = value => Boolean(value && typeof value === 'object' && !Array.isArray(value));
   const isUuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
   const validPermissions = new Set(['read', 'edit', 'comment', 'publish']);
+  const waitForBridge = async () => {
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      const candidate = window.heartspaceDesktop;
+      if (candidate) return candidate;
+      await new Promise(resolve => window.setTimeout(resolve, 25));
+    }
+    return null;
+  };
 
   const validateContext = value => {
     if (!isRecord(value)
@@ -110,7 +119,7 @@
     if (!requested || !expectedQuery || window.top !== window) {
       throw fail('INVALID_REQUEST', 'Abra o Docs pelo HeartSpace.');
     }
-    bridge = window.heartspaceDesktop;
+    bridge = await waitForBridge();
     if (!bridge || bridge.protocolVersion !== 1
       || typeof bridge.ready !== 'function'
       || typeof bridge.getSession !== 'function'
