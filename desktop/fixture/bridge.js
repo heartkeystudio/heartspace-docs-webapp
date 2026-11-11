@@ -50,12 +50,16 @@
       status: 'draft',
       created_at: timestamp,
       updated_at: timestamp,
-    }], order: [] };
+    }], order: [], narrativeRegistry: { project_id: IDS.project, characters: [], variables: [], updated_at: timestamp } };
   };
   const loadStore = () => {
     try {
       const value = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-      if (value && Array.isArray(value.documents) && Array.isArray(value.order)) return value;
+      if (value && Array.isArray(value.documents) && Array.isArray(value.order)) {
+        if (!value.narrativeRegistry) value.narrativeRegistry = { project_id: IDS.project, characters: [], variables: [], updated_at: now() };
+        if (!Array.isArray(value.narrativeRegistry.variables)) value.narrativeRegistry.variables = [];
+        return value;
+      }
     } catch (_) {}
     return makeInitialStore();
   };
@@ -188,6 +192,14 @@
       if (!permissions.includes('edit')) return json({ message: 'Fixture em somente leitura.' }, 403);
       const value = await bodyJson(request);
       store.order = Array.isArray(value) ? value : [value]; persistStore();
+      return new Response(null, { status: 204 });
+    }
+    if (path === '/rest/v1/project_narrative_registry' && method === 'GET') return json(store.narrativeRegistry ? [store.narrativeRegistry] : []);
+    if (path === '/rest/v1/project_narrative_registry' && method === 'POST') {
+      if (!permissions.includes('edit')) return json({ message: 'Fixture em somente leitura.' }, 403);
+      const value = await bodyJson(request);
+      store.narrativeRegistry = { ...value, updated_at: value.updated_at || now() };
+      persistStore();
       return new Response(null, { status: 204 });
     }
     if (path === '/rest/v1/doc_presence' && method === 'GET') return json([]);
