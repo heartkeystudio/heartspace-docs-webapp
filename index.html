@@ -5265,6 +5265,10 @@
       const authTokenKey = 'heartspace-docs-access-token';
       const authRefreshKey = 'heartspace-docs-refresh-token';
       const authExpiresKey = 'heartspace-docs-expires-at';
+      const clearStoredAuthSession = () => {
+        [authTokenKey, authRefreshKey, authExpiresKey].forEach(key => localStorage.removeItem(key));
+        currentAccessToken = '';
+      };
       const projectPicker = document.querySelector('#project-picker');
       const statusMessage = (message, state = '') => {
         setSaveStatus(message, state);
@@ -5295,11 +5299,16 @@
           if (refresh.ok) {
             saveAuthSession(await refresh.json());
             response = await makeRequest(currentAccessToken);
-          }
+          } else if (refresh.status === 400 || refresh.status === 401) clearStoredAuthSession();
         }
         const raw = await response.text();
         let data = null; try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
-        if (!response.ok) throw new Error(data?.error?.message || data?.message || data?.msg || data?.error_description || (typeof data?.error === 'string' ? data.error : '') || `Serviço indisponível (${response.status}).`);
+        if (!response.ok) {
+          const error = new Error(data?.error?.message || data?.message || data?.msg || data?.error_description || (typeof data?.error === 'string' ? data.error : '') || `Serviço indisponível (${response.status}).`);
+          error.status = response.status;
+          error.code = data?.code || data?.error_code || '';
+          throw error;
+        }
         return data;
       };
       const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
@@ -5354,8 +5363,17 @@
         if (token && (!expiresAt || expiresAt > Date.now() / 1000 + 60)) return token;
         const refreshToken = localStorage.getItem(authRefreshKey);
         if (!refreshToken) return '';
-        const session = await apiFetch('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) }, '');
-        saveAuthSession(session); return currentAccessToken;
+        try {
+          const session = await apiFetch('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) }, '');
+          saveAuthSession(session); return currentAccessToken;
+        } catch (error) {
+          if (error.status === 400 || error.status === 401 || /refresh token/i.test(error.message || '')) {
+            clearStoredAuthSession();
+            authStatus.textContent = 'Sua sessão anterior expirou. Solicite um novo link para continuar.';
+            return '';
+          }
+          throw error;
+        }
       };
       const getProjectAccess = async projectId => apiFetch('/rest/v1/rpc/heartspace_project_access', { method: 'POST', body: JSON.stringify({ target_project_id: projectId }), desktopSafeRetry: true });
       const canOpenProject = access => Boolean(access?.capabilities?.docs_view);
