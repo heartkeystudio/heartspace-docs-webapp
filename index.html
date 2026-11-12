@@ -270,12 +270,13 @@
     .document-view-controls { display:flex; align-items:center; gap:5px; flex:0 0 auto; }
     .document-view-select { height:32px; padding:0 25px 0 9px; border:1px solid var(--line); border-radius:7px; color:#d8d2dc; background:#1b1b20; font:inherit; font-size:12px; cursor:pointer; }
     .document-view-select:hover,.document-view-select:focus { border-color:#a765c4; }
+    .block-margin-select { width:116px; flex:0 0 116px; }
     .focus-button { color:#d6cbdc; }
     .editor-area { position:relative; min-height:0; overflow:auto; overflow-anchor:none; overscroll-behavior:contain; scroll-padding-block:24px 96px; background:var(--bg); }
     .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:12px 24px 128px; }
     .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
     .editor-wrap.is-canvas { width:100%; max-width:none; min-height:0; padding:0; }
-    .page[data-layout="canvas"] { width:100%; min-height:0; padding:34px clamp(24px,5vw,72px); border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
+    .page[data-layout="canvas"] { width:100%; min-height:0; padding:var(--canvas-margin-y,72px) var(--canvas-margin-x,76px); border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
     .page[data-layout="canvas"] .content { min-height:1.5em; }
     .document-outline { position:fixed; z-index:18; top:calc(var(--topbar-height) + 58px); right:18px; display:grid; width:220px; max-height:calc(100dvh - var(--topbar-height) - 92px); overflow:hidden; border:1px solid #ffffff18; border-radius:10px; background:#1b1b20f2; box-shadow:0 14px 38px #0008; backdrop-filter:blur(14px); }
     .document-outline[hidden] { display:none; }
@@ -308,6 +309,9 @@
     .content { min-width:0; min-height:400px; outline:none; color:#ddd8e1; font-size:16px; line-height:1.5; overflow-wrap:anywhere; white-space:normal; }
     .content p { margin:0 0 8px; }
     .content [data-indent] { margin-inline-start:var(--line-indent,0px); }
+    .content [data-block-margin="narrow"] { margin-inline:24px; }
+    .content [data-block-margin="medium"] { margin-inline:48px; }
+    .content [data-block-margin="wide"] { margin-inline:72px; }
     .content h2 { margin:34px 0 12px; color:#f0ebf3; font-size:23px; line-height:1.35; letter-spacing:-.025em; }
     .content h1 { margin:26px 0 12px; font-size:30px; line-height:1.25; }
     .content h3 { margin:24px 0 10px; color:#eee8f1; font-size:20px; line-height:1.35; }
@@ -778,6 +782,7 @@
     @media(max-width:480px){:root{--topbar-height:48px}.workspace,body.focus-mode .workspace{grid-template-rows:46px minmax(0,1fr)}.topbar>.brand{padding:0 9px}.topbar>.brand .brand-wordmark{display:none}.topbar-content{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:var(--book-page-width,794px);padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}.narrative-settings{grid-template-columns:1fr}.narrative-summary{white-space:normal}.narrative-actions{align-items:stretch;flex-direction:column-reverse}.narrative-actions button{width:100%}.narrative-choice-option-decoration{max-width:260px}.narrative-choice-arrow{display:none}.narrative-character-create,.narrative-character-row,.narrative-variable-create,.narrative-variable-row,.narrative-rules-row,.localization-toolbar{grid-template-columns:1fr}.narrative-character-row small,.narrative-variable-row small{white-space:normal}.document-view-select{min-width:88px;height:38px}.narrative-test-layout{grid-template-columns:1fr}.narrative-test-sidebar{grid-template-columns:1fr 1fr;grid-template-rows:170px}.narrative-test-stage{min-height:190px;padding:18px}.narrative-tabs{overflow-x:auto}.narrative-tabs button{min-width:90px}}
     @media(max-width:480px){.localization-toolbar>*{grid-column:1/-1!important}.localization-settings-popover{position:fixed;top:110px;right:10px;grid-template-columns:1fr;width:calc(100vw - 20px);max-height:calc(100svh - 130px);overflow:auto}.localization-review-tools{grid-template-columns:1fr}.localization-project-heading,.localization-glossary-heading{align-items:stretch;flex-direction:column}.localization-project-actions{display:grid;grid-template-columns:1fr 1fr}.localization-project-row{grid-template-columns:minmax(0,1fr) auto}.localization-project-meter{display:none}.localization-glossary-form,.localization-glossary-row{grid-template-columns:1fr}}
     @media(max-width:480px){.narrative-sequence-picker{grid-template-columns:1fr 1fr}.narrative-sequence-picker label{grid-column:1/-1}}
+    @media(max-width:800px){.page[data-layout="canvas"]{padding:clamp(22px,var(--canvas-margin-y,72px),72px) clamp(16px,var(--canvas-margin-x,76px),72px)}}
   </style>
 </head>
 <body>
@@ -839,9 +844,9 @@
       <nav class="toolbar" aria-label="Ferramentas de edição">
         <button class="tool icon-only" type="button" id="undo" title="Desfazer" aria-label="Desfazer"><img class="undo-icon" src="./assets/docs/redo.svg" alt=""></button><button class="tool icon-only" type="button" id="redo" title="Refazer" aria-label="Refazer"><img class="redo-icon" src="./assets/docs/redo.svg" alt=""></button><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="bold"><b>B</b></button><button class="tool" type="button" data-command="italic"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
-        <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><span class="tool-separator"></span>
+        <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><select class="document-view-select block-margin-select" id="block-margin" aria-label="Margem do trecho" title="Aplicar margem ao trecho selecionado"><option value="none">Sem margem</option><option value="narrow">Margem estreita</option><option value="medium">Margem média</option><option value="wide">Margem larga</option></select><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="insertUnorderedList">Lista</button><button class="tool" type="button" data-command="insertOrderedList">Numerada</button><button class="tool" type="button" data-command="formatBlock" data-value="pre">Código</button><span class="tool-separator"></span>
-        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3>Folha</h3><label>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
+        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
@@ -959,6 +964,7 @@
       const documentLayoutControl = document.querySelector('#document-layout');
       const zoomLevelControl = document.querySelector('#zoom-level');
       const documentViewModeControl = document.querySelector('#document-view-mode');
+      const blockMarginControl = document.querySelector('#block-margin');
       const narrativeProfileControl = document.querySelector('#narrative-profile');
       const saveState = document.querySelector('#save-state');
       const transferStatus = document.querySelector('#transfer-status');
@@ -1660,6 +1666,11 @@
       };
       const paperSpecs = { a4: [794, 1123], letter: [816, 1056], a5: [559, 794] };
       const marginSpecs = { narrow: [48, 48], normal: [76, 72], wide: [104, 96] };
+      const updateLayoutSettingsVisibility = layout => {
+        const canvas = layout === 'canvas';
+        document.querySelectorAll('[data-book-setting]').forEach(control => { control.hidden = canvas; });
+        document.querySelector('#page-spacing-title').textContent = canvas ? 'Prancheta' : 'Folha';
+      };
       const applyPageSettings = settings => {
         const record = settings || {};
         const size = ['a4', 'letter', 'a5'].includes(record.paperSize) ? record.paperSize : 'a4';
@@ -1678,10 +1689,12 @@
         documentPage.style.setProperty('--book-page-ratio', String(height / width));
         documentPage.style.setProperty('--book-margin-x', `${marginX}px`);
         documentPage.style.setProperty('--book-margin-y', `${marginY}px`);
+        documentPage.style.setProperty('--canvas-margin-x', `${marginX}px`);
+        documentPage.style.setProperty('--canvas-margin-y', `${marginY}px`);
         title.dataset.align = ['left','center','right','justify'].includes(settings?.titleAlign) ? settings.titleAlign : 'left';
         subtitle.style.textAlign = ['left','center','right','justify'].includes(settings?.subtitleAlign) ? settings.subtitleAlign : 'left';
         editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
-        document.querySelector('#paper-settings-group').hidden = documentPage.dataset.layout === 'canvas';
+        updateLayoutSettingsVisibility(documentPage.dataset.layout);
       };
       const applyZoom = value => {
         const numericZoom = Math.max(50, Math.min(200, Number(value) || 100));
@@ -2122,7 +2135,7 @@
       });
       [paperSizeControl, paperOrientationControl, pageMarginControl].forEach(control => control.addEventListener('change', commitPageSettings));
       documentLayoutControl.addEventListener('change', () => {
-        document.querySelector('#paper-settings-group').hidden = documentLayoutControl.value === 'canvas';
+        updateLayoutSettingsVisibility(documentLayoutControl.value);
       });
       zoomLevelControl.addEventListener('change', () => applyZoom(zoomLevelControl.value));
       const zoomValues = [...zoomLevelControl.options].map(option => Number(option.value));
@@ -2336,10 +2349,46 @@
       document.addEventListener('focusin', event => { if (!event.target.closest?.('.toolbar') && ![title, subtitle, editor].includes(event.target)) alignmentToolbarTarget = ''; });
       subtitle.addEventListener('blur', scheduleBookPagination);
       updateCount();
+      const textBlockForMargin = node => {
+        const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+        return element?.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre') || null;
+      };
+      const marginTargetsForRange = range => {
+        if (!range || !editor.contains(range.commonAncestorContainer)) return [];
+        if (range.collapsed) {
+          const block = textBlockForMargin(range.startContainer);
+          return block && editor.contains(block) ? [block] : [];
+        }
+        const candidates = [...editor.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre')]
+          .filter(block => { try { return range.intersectsNode(block); } catch (_) { return false; } });
+        return candidates.filter(block => !candidates.some(other => other !== block && block.contains(other)));
+      };
+      const applyBlockMargin = (value, range) => {
+        const normalized = ['narrow','medium','wide'].includes(value) ? value : '';
+        const targets = marginTargetsForRange(range);
+        targets.forEach(block => {
+          if (normalized) block.dataset.blockMargin = normalized;
+          else delete block.dataset.blockMargin;
+        });
+        return targets.length > 0;
+      };
       document.addEventListener('selectionchange', () => {
         const selection = window.getSelection();
         const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
-        if (range && editor.contains(range.commonAncestorContainer)) toolbarRange = range.cloneRange();
+        if (range && editor.contains(range.commonAncestorContainer)) {
+          toolbarRange = range.cloneRange();
+          blockMarginControl.value = textBlockForMargin(range.startContainer)?.dataset.blockMargin || 'none';
+        }
+      });
+      blockMarginControl.addEventListener('change', () => {
+        const range = toolbarRange?.cloneRange();
+        if (!range || !applyBlockMargin(blockMarginControl.value, range)) return;
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        toolbarRange = range.cloneRange();
+        editor.focus({ preventScroll:true });
+        queueSave();
       });
       document.querySelectorAll('[data-command]').forEach(button => {
         button.addEventListener('mousedown', event => event.preventDefault());
@@ -2483,7 +2532,7 @@
         document.querySelector('#known-tags').replaceChildren(...knownTags.map(tag => { const option=document.createElement('option'); option.value=tag; return option; }));
         metadataStatus.value = record.status;
         documentLayoutControl.value = record.layout === 'canvas' ? 'canvas' : 'book';
-        document.querySelector('#paper-settings-group').hidden = documentLayoutControl.value === 'canvas';
+        updateLayoutSettingsVisibility(documentLayoutControl.value);
         narrativeProfileControl.value = record.narrativeProfile === 'script' ? 'script' : 'prose';
         metadataTagChips.replaceChildren();
         record.tags.forEach(addMetadataTagChip);
