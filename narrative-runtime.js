@@ -67,9 +67,14 @@
       };
       const snapshot = () => ({ eventId:state.eventId, index:state.index, variables:{ ...state.variables } });
       const restore = saved => {
-        if (!sequences.has(saved?.eventId) || !Number.isInteger(saved.index) || saved.index < 0) return false;
+        const sequence = sequences.get(saved?.eventId);
+        if (!sequence || !Number.isInteger(saved.index) || saved.index < 0 || saved.index > sequence.nodes.length) return false;
+        if (!saved.variables || typeof saved.variables !== 'object' || Array.isArray(saved.variables)) return false;
+        const defaults = initialVariables(story.variable_registry);
+        if (Object.keys(saved.variables).length !== Object.keys(defaults).length) return false;
+        if (Object.keys(defaults).some(id => !own(saved.variables,id) || typeof saved.variables[id] !== typeof defaults[id] || (typeof defaults[id] === 'number' && !Number.isFinite(saved.variables[id])))) return false;
         state.eventId = saved.eventId; state.index = saved.index;
-        state.variables = { ...saved.variables };
+        state.variables = Object.fromEntries(Object.keys(defaults).map(id => [id,saved.variables[id]]));
         return true;
       };
       const advance = () => {

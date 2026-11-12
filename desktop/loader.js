@@ -17,7 +17,9 @@
       .replace('src="desktop/adapter.js"', `src="${fixtureMode ? '../' : './'}adapter.js"`)
       .replace('src="config.js"', `src="${rootPrefix}config.js"`)
       .replace('src="narrative-runtime.js"', `src="${rootPrefix}narrative-runtime.js"`)
-      .replace('src="narrative-html.js"', `src="${rootPrefix}narrative-html.js"`);
+      .replace('src="narrative-media.js"', `src="${rootPrefix}narrative-media.js"`)
+      .replace('src="narrative-html.js"', `src="${rootPrefix}narrative-html.js"`)
+      .replace('src="narrative-package.js"', `src="${rootPrefix}narrative-package.js"`);
     const parsed = new DOMParser().parseFromString(html, 'text/html');
     const scripts = [...parsed.querySelectorAll('script')].map(original => {
       const attributes = [...original.attributes].map(attribute => [attribute.name, attribute.value]);

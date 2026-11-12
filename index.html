@@ -619,6 +619,16 @@
     .narrative-presentation-preview[data-model="card"] .narrative-presentation-card { width:min(260px,100%); border-left-width:1px; border-top:3px solid var(--preview-accent); text-align:center; }
     .narrative-presentation-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#8f8995; font-size:10px; }
     .narrative-presentation-actions button { min-height:34px; padding:0 11px; border:1px solid #0c8ce955; border-radius:7px; color:#cce9fc; background:#0c8ce916; }
+    .narrative-presentation-preview { position:relative; isolation:isolate; }
+    .narrative-presentation-card,.narrative-player-box { position:relative; z-index:2; }
+    .narrative-artwork,.narrative-character-artwork { grid-column:1/-1; min-width:0; padding:10px; border:1px solid #ffffff16; border-radius:8px; color:#aaa4b0; font-size:11px; }
+    .narrative-artwork summary,.narrative-character-artwork summary { cursor:pointer; color:#c9c2cf; }
+    .narrative-artwork-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); gap:10px; margin-top:12px; }
+    .narrative-artwork-fields label { display:grid; min-width:0; gap:6px; }
+    .narrative-artwork-fields button { min-height:32px; padding:6px 10px; border:1px solid #ffffff20; border-radius:6px; color:#d3dce4; background:#ffffff08; }
+    .narrative-artwork-fields input,.narrative-artwork-fields select { width:100%; min-width:0; }
+    .narrative-artwork-fields small { display:block; grid-column:1/-1; color:#918b97; line-height:1.6; overflow-wrap:anywhere; }
+    .narrative-character-artwork img { max-width:100%; width:90px; height:110px; object-fit:contain; justify-self:start; }
     .narrative-characters { display:grid; grid-template-rows:auto minmax(150px,1fr) auto; gap:10px; min-height:200px; max-height:460px; padding:12px; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#111115; }
     .narrative-character-create { display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1fr) auto; gap:7px; }
     .narrative-character-create input,.narrative-character-row input { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
@@ -741,6 +751,10 @@
     .story-export-issues li[data-severity="warning"] { color:#d5bd90; }
     .story-export-form { max-height:calc(100dvh - 48px); overflow:auto; }
     .story-export-form button:disabled { opacity:.4; cursor:not-allowed; }
+    .story-embed-help { padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:12px; }
+    .story-embed-help summary { cursor:pointer; color:#b8c9d6; }
+    .story-embed-help p { color:#aaa2b0; font-size:11px; line-height:1.6; }
+    .story-embed-help textarea { display:block; width:100%; min-height:110px; padding:9px; resize:vertical; border:1px solid var(--line); border-radius:6px; color:#cfeaff; background:#111115; font:11px/1.5 ui-monospace,monospace; }
     .narrative-rules-group > label { display:flex; align-items:center; gap:8px; color:#bbb4c0; font-size:12px; }
     #narrative-version-label { width:100%; min-width:0; padding:9px; border:1px solid var(--line); border-radius:6px; color:var(--text); background:#19181d; }
     .narrative-rules-group h3 { margin:0; color:#bbb4c0; font-size:12px; }
@@ -1058,16 +1072,23 @@
     <label>Nome da história<input id="story-export-name" type="text" maxlength="120" required></label>
     <label>Sequência inicial<select id="story-export-start" required></select></label>
     <label>Idioma<select id="story-export-locale"><option value="">Textos originais</option></select></label>
+    <label>Formato<select id="story-export-format"><option value="html">HTML único (mídias incluídas)</option><option value="zip">Pacote ZIP (HTML e pasta de mídias)</option></select></label>
     <p class="narrative-rules-help">O HTML abre direto no navegador e inclui os caminhos conectados, mesmo em outros documentos. O design de cada sequência segue a configuração da aba Cena.</p>
     <p class="story-export-summary" id="story-export-summary" role="status"></p><ul class="story-export-issues" id="story-export-issues" hidden></ul>
+    <details class="story-embed-help"><summary>Como incorporar em outro site</summary><p>Hospede o HTML e use o código abaixo. Ajuste o endereço em src para o local do arquivo. O tamanho pode ser alterado para combinar com a página.</p><textarea id="story-embed-code" rows="4" readonly aria-label="Código para incorporar a história"></textarea><p>O progresso fica no navegador de quem joga. Algumas plataformas bloqueiam o armazenamento dentro de incorporações; nesses casos, a partida continua funcionando na aba atual.</p></details>
     <div class="narrative-rules-actions"><button type="button" id="narrative-export">Baixar JSON do documento</button><button type="submit" id="story-export-download">Baixar HTML</button></div>
   </form></dialog>
   <script src="desktop/adapter.js"></script>
   <script src="config.js"></script>
   <script src="narrative-runtime.js"></script>
+  <script src="narrative-media.js"></script>
   <script src="narrative-html.js"></script>
+  <script src="narrative-package.js"></script>
   <script>
     (() => {
+      const narrativeMediaStyles = document.createElement('style');
+      narrativeMediaStyles.textContent = HeartspaceNarrativeMedia.styles;
+      document.head.append(narrativeMediaStyles);
       const editor = document.querySelector('#editor');
       const title = document.querySelector('#doc-title');
       const subtitle = document.querySelector('#doc-subtitle');
@@ -1343,20 +1364,7 @@
         const requestedActive = normalizeLocaleCode(input.activeLocale || input.active_locale);
         return { sourceLocale, locales, activeLocale:locales.includes(requestedActive) ? requestedActive : locales[0] || '', translations };
       };
-      const normalizeNarrativePresentation = value => {
-        const input = value && typeof value === 'object' ? value : {};
-        const color = (candidate, fallback) => /^#[0-9a-f]{6}$/iu.test(String(candidate || '')) ? String(candidate).toLocaleLowerCase('en-US') : fallback;
-        const speed = [0, 12, 24, 42].includes(Number(input.speed)) ? Number(input.speed) : 24;
-        return {
-          model:['panel','subtitle','card'].includes(input.model) ? input.model : 'panel',
-          position:['top','center','bottom'].includes(input.position) ? input.position : 'bottom',
-          accent:color(input.accent, '#0c8ce9'),
-          surface:color(input.surface, '#10161d'),
-          text:color(input.text, '#edf3f7'),
-          scene:color(input.scene, '#111923'),
-          speed
-        };
-      };
+      const normalizeNarrativePresentation = HeartspaceNarrativeMedia.presentation;
       const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const normalizeFolder = folder => ({ id: String(folder?.id || `folder-${crypto.randomUUID?.() || Date.now()}`), name: String(folder?.name || 'Nova pasta').trim() || 'Nova pasta', expanded: folder?.expanded !== false });
       const mergeFoldersFromDocuments = () => {
@@ -2939,6 +2947,18 @@
       const narrativePresentationSurface = document.querySelector('#narrative-presentation-surface');
       const narrativePresentationText = document.querySelector('#narrative-presentation-text');
       const narrativePresentationPreview = document.querySelector('#narrative-presentation-preview');
+      document.querySelector('#narrative-presentation-form').insertAdjacentHTML('beforeend', `
+        <details class="narrative-artwork"><summary>Artes e ambiente</summary><div class="narrative-artwork-fields">
+          <label>Fundo<button type="button" id="narrative-background-upload">Adicionar imagem</button><input type="file" id="narrative-background-file" accept="image/png,image/jpeg,image/webp" hidden></label><button type="button" id="narrative-background-remove">Remover fundo</button><small id="narrative-background-name">Sem imagem de fundo</small>
+          <label>Encaixe do fundo<select id="narrative-background-fit"><option value="cover">Preencher a cena</option><option value="contain">Mostrar imagem inteira</option></select></label><label>Foco do fundo<select id="narrative-background-focus"><option value="top">Em cima</option><option value="center">Centro</option><option value="bottom">Embaixo</option></select></label><label>Escurecer o fundo<input id="narrative-background-dim" type="range" min="0" max="0.8" step="0.05" value="0.3"></label>
+          <label>Posição do retrato<select id="narrative-portrait-position"><option value="auto">Usar posição do personagem</option><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label><label>Tamanho do retrato<select id="narrative-portrait-size"><option value="35">Pequeno</option><option value="50">Médio</option><option value="65">Grande</option><option value="80">Muito grande</option></select></label>
+          <label>Transição<select id="narrative-scene-transition"><option value="none">Sem animação</option><option value="fade">Aparecer suavemente</option><option value="slide">Entrada com deslocamento</option></select></label><label>Duração<select id="narrative-scene-transition-ms"><option value="200">Rápida</option><option value="400">Normal</option><option value="700">Lenta</option></select></label>
+          <label>Música ou ambiente<button type="button" id="narrative-music-upload">Adicionar áudio</button><input type="file" id="narrative-music-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4,.mp3,.ogg,.wav,.webm,.m4a" hidden></label><button type="button" id="narrative-music-remove">Remover áudio</button><small id="narrative-music-name">Sem áudio</small>
+          <label>Personagem da amostra<select id="narrative-scene-sample-character"><option value="">Sem personagem</option></select></label><small>Os retratos são adicionados na aba Personagens. PNG, JPEG e WebP: até 4 MB. Áudio: até 8 MB. O áudio toca apenas ao testar ou jogar.</small><small id="narrative-artwork-status" role="status"></small>
+        </div></details>`);
+      const narrativeArtworkControls = Object.fromEntries(Object.entries({background_fit:'background-fit',background_focus:'background-focus',background_dim:'background-dim',portrait_position:'portrait-position',portrait_size:'portrait-size',transition:'scene-transition',transition_ms:'scene-transition-ms'}).map(([key,id]) => [key,document.querySelector(`#narrative-${id}`)]));
+      const narrativeSampleCharacter = document.querySelector('#narrative-scene-sample-character');
+      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
       const narrativeLocalizationTab = document.querySelector('#narrative-localization-tab');
       const narrativeLocalizationView = document.querySelector('#narrative-localization');
       const localizationSourceLocale = document.querySelector('#localization-source-locale');
@@ -2981,6 +3001,11 @@
       const narrativeSummary = document.querySelector('#narrative-summary');
       const narrativeTestDialog = document.querySelector('#narrative-test-dialog');
       const narrativeTestStage = document.querySelector('#narrative-test-stage');
+      const narrativeTestMedia = HeartspaceNarrativeMedia.createScene(narrativeTestStage,{
+        reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        onAudioIssue:message => statusMessage(message,'pending'),
+        onImageIssue:message => statusMessage(message,'pending')
+      });
       const narrativeTestStatus = document.querySelector('#narrative-test-status');
       const narrativeTestVariables = document.querySelector('#narrative-test-variables');
       const narrativeTestHistory = document.querySelector('#narrative-test-history');
@@ -4194,7 +4219,7 @@
       const normalizedCharacterRecord = character => {
         const name = String(character?.name || '').trim();
         const id = normalizeCharacterId(character?.id || (name ? `character.${narrativeSlug(name)}` : ''));
-        return name && id ? { id, name } : null;
+        return name && id ? { id, name, portrait:HeartspaceNarrativeMedia.normalize(character?.portrait,'image'), portrait_position:HeartspaceNarrativeMedia.position(character?.portrait_position) } : null;
       };
       const normalizeCharacterRegistry = characters => {
         const byId = new Map();
@@ -4250,7 +4275,7 @@
       };
       const narrativeRegistryCacheKey = () => `${storageKey || 'heartspace-docs-local'}:narrative-registry`;
       const cacheNarrativeRegistry = () => {
-        try { localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 2, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary })); } catch (_) {}
+        try { localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 2, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary })); return true; } catch (_) { return false; }
       };
       const readCachedNarrativeRegistry = () => {
         try {
@@ -4710,6 +4735,38 @@
             renderNarrativeCharacters();
           });
           row.append(name, id, count, remove);
+          const artwork = document.createElement('details'); artwork.className = 'narrative-character-artwork';
+          const summary = document.createElement('summary'); summary.textContent = character.portrait ? 'Retrato e posição' : 'Adicionar retrato';
+          const fields = document.createElement('div'); fields.className = 'narrative-artwork-fields';
+          const thumbnail = document.createElement('img'); thumbnail.alt = `Retrato de ${character.name}`;
+          const portraitSource = HeartspaceNarrativeMedia.source(character.portrait,'image');
+          thumbnail.hidden = !portraitSource; if (portraitSource) thumbnail.src = portraitSource;
+          const upload = document.createElement('button'); upload.type = 'button'; upload.textContent = 'Escolher imagem'; upload.disabled = !editable;
+          const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/png,image/jpeg,image/webp'; file.hidden = true; file.disabled = !editable;
+          const clear = document.createElement('button'); clear.type = 'button'; clear.textContent = 'Remover retrato'; clear.disabled = !editable || !character.portrait;
+          const positionLabel = document.createElement('label'); positionLabel.textContent = 'Posição padrão';
+          const position = document.createElement('select'); position.disabled = !editable;
+          [['left','Esquerda'],['center','Centro'],['right','Direita']].forEach(([value,label]) => position.add(new Option(label,value)));
+          position.value = HeartspaceNarrativeMedia.position(character.portrait_position); positionLabel.append(position);
+          const mediaStatus = document.createElement('small'); mediaStatus.textContent = character.portrait?.name || 'PNG, JPEG ou WebP, até 4 MB.'; mediaStatus.setAttribute('role','status');
+          upload.addEventListener('click',() => file.click());
+          position.addEventListener('change',() => { character.portrait_position = position.value; cacheNarrativeRegistry(); });
+          clear.addEventListener('click',() => { character.portrait = null; cacheNarrativeRegistry(); renderNarrativeCharacters(); });
+          file.addEventListener('change',async () => {
+            const selectedFile = file.files?.[0], contextKey = narrativeRegistryCacheKey();
+            if (!selectedFile) return;
+            upload.disabled = true; mediaStatus.textContent = 'Adicionando retrato…';
+            try {
+              const portrait = await HeartspaceNarrativeMedia.readFile(selectedFile,'image');
+              const current = characterById(character.id);
+              if (contextKey !== narrativeRegistryCacheKey() || !current || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) throw new Error('O projeto mudou durante o envio. Adicione o retrato novamente.');
+              current.portrait = portrait;
+              const cached = cacheNarrativeRegistry(); renderNarrativeCharacters();
+              if (!cached) statusMessage('O retrato excedeu o espaço local. Salve os personagens no projeto ou use uma imagem menor.','pending');
+            } catch (error) { mediaStatus.textContent = error.message || 'Não foi possível adicionar o retrato.'; }
+            finally { upload.disabled = !editable; file.value = ''; }
+          });
+          fields.append(thumbnail,upload,file,clear,positionLabel,mediaStatus); artwork.append(summary,fields); row.append(artwork);
           narrativeCharacterList.append(row);
         });
         narrativeCharacterStatus.textContent = currentProjectId
@@ -4847,6 +4904,9 @@
       };
       const applyNarrativePresentationPreview = presentation => {
         const value = normalizeNarrativePresentation(presentation);
+        const sample = characterById(narrativeSampleCharacter.value);
+        narrativeSampleScene.update(value,sample);
+        narrativePresentationPreview.querySelector('.narrative-presentation-card strong').textContent = sample?.name || 'Personagem';
         narrativePresentationPreview.dataset.model = value.model;
         narrativePresentationPreview.dataset.position = value.position;
         narrativePresentationPreview.style.setProperty('--preview-accent', value.accent);
@@ -4855,6 +4915,8 @@
         narrativePresentationPreview.style.setProperty('--preview-scene', value.scene);
       };
       const narrativePresentationFromControls = () => normalizeNarrativePresentation({
+        ...activeNarrativeSequence()?.presentation,
+        ...Object.fromEntries(Object.entries(narrativeArtworkControls).map(([key,control]) => [key,control.value])),
         model:narrativePresentationModel.value,
         position:narrativePresentationPosition.value,
         speed:Number(narrativePresentationSpeed.value),
@@ -4873,6 +4935,14 @@
         narrativePresentationAccent.value = value.accent;
         narrativePresentationSurface.value = value.surface;
         narrativePresentationText.value = value.text;
+        Object.entries(narrativeArtworkControls).forEach(([key,control]) => { control.value = String(value[key]); });
+        document.querySelector('#narrative-background-name').textContent = value.background?.name || 'Sem imagem de fundo';
+        document.querySelector('#narrative-music-name').textContent = value.music?.name || 'Sem áudio';
+        const previousSample = narrativeSampleCharacter.value;
+        narrativeSampleCharacter.replaceChildren(new Option('Sem personagem',''), ...narrativeCharacters.map(character => new Option(character.name,character.id)));
+        narrativeSampleCharacter.value = narrativeCharacters.some(character => character.id === previousSample) ? previousSample : narrativeCharacters.find(character => character.portrait)?.id || '';
+        const editable = !currentProjectId || canEditProject({capabilities:projectCapabilities});
+        document.querySelectorAll('#narrative-presentation-form input,#narrative-presentation-form select,#narrative-presentation-form button').forEach(control => { control.disabled = !editable && control !== narrativeSampleCharacter; });
         applyNarrativePresentationPreview(value);
       };
       const setNarrativePanelView = view => {
@@ -4933,8 +5003,10 @@
         typing.onComplete?.();
         return true;
       };
-      const applyNarrativeTestPresentation = presentation => {
+      const applyNarrativeTestPresentation = (presentation,character = null) => {
         const value = normalizeNarrativePresentation(presentation);
+        narrativeTestMedia.update(value,character);
+        narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden);
         if (narrativeTestState) narrativeTestState.presentation = value;
         narrativeTestStage.dataset.model = value.model;
         narrativeTestStage.dataset.position = value.position;
@@ -5075,9 +5147,8 @@
       };
       const renderNarrativeTest = () => {
         stopNarrativeTestPlayback();
-        narrativeTestStage.replaceChildren();
+        [...narrativeTestStage.children].filter(child => child !== narrativeTestMedia.layer).forEach(child => child.remove());
         if (!narrativeTestState) return;
-        applyNarrativeTestPresentation();
         narrativeTestState.activeChoiceIndex = 0;
         queueMicrotask(() => { if (narrativeTestDialog.open && !narrativeTestStage.contains(document.activeElement)) narrativeTestStage.focus({ preventScroll:true }); });
         renderNarrativeTestInspectors();
@@ -5100,8 +5171,8 @@
           narrativeTestNext.disabled = true;
           return;
         }
-        applyNarrativeTestPresentation(entry.sequence?.presentation);
         const node = entry.nodes[narrativeTestState.index];
+        applyNarrativeTestPresentation(entry.sequence?.presentation,node?.type === 'dialogue' ? characterById(node.character_id) : null);
         const validationErrors = narrativeTestState.validation.filter(issue => issue.severity === 'error').length;
         narrativeTestStatus.textContent = `${entry.id} · ${Math.min(narrativeTestState.index + 1, entry.nodes.length)}/${entry.nodes.length} · ${Object.keys(narrativeTestState.variables).length} variáveis${validationErrors ? ` · ${validationErrors} erros de validação` : ''}`;
         if (!node) {
@@ -5357,7 +5428,9 @@
       narrativeCharactersTab.addEventListener('click', () => setNarrativePanelView('characters'));
       narrativeVariablesTab.addEventListener('click', () => setNarrativePanelView('variables'));
       narrativeValidationTab.addEventListener('click', () => setNarrativePanelView('validation'));
-      document.querySelector('#narrative-presentation-form').addEventListener('input', () => {
+      document.querySelector('#narrative-presentation-form').addEventListener('input', event => {
+        if (event.target === narrativeSampleCharacter) { applyNarrativePresentationPreview(activeNarrativeSequence()?.presentation); return; }
+        if (event.target.type === 'file' || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
         const sequence = activeNarrativeSequence();
         if (!sequence) return;
         sequence.presentation = narrativePresentationFromControls();
@@ -5366,7 +5439,29 @@
       });
       document.querySelector('#narrative-presentation-test').addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
-        if (record) startNarrativeTest(ensureNarrativeEventId(record));
+        if (record) startNarrativeTest(activeNarrativeSequence(record,editor,true)?.id || ensureNarrativeEventId(record));
+      });
+      ['background','music'].forEach(field => {
+        const fileInput = document.querySelector(`#narrative-${field}-file`);
+        document.querySelector(`#narrative-${field}-upload`).addEventListener('click',() => fileInput.click());
+        document.querySelector(`#narrative-${field}-remove`).addEventListener('click',() => {
+          const sequence = activeNarrativeSequence();
+          if (!sequence || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
+          sequence.presentation = normalizeNarrativePresentation({...sequence.presentation,[field]:null}); renderNarrativePresentation(); queueSave();
+        });
+        fileInput.addEventListener('change',async () => {
+          const file = fileInput.files?.[0], sequenceId = activeNarrativeSequence()?.id, documentId = activeDocumentId;
+          if (!file || !sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
+          const status = document.querySelector('#narrative-artwork-status'); status.textContent = 'Adicionando arquivo…';
+          try {
+            const asset = await HeartspaceNarrativeMedia.readFile(file,field === 'music' ? 'audio' : 'image');
+            const sequence = activeNarrativeSequence();
+            if (documentId !== activeDocumentId || sequence?.id !== sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) throw new Error('A sequência mudou durante o envio. Adicione o arquivo novamente.');
+            sequence.presentation = normalizeNarrativePresentation({...sequence.presentation,[field]:asset});
+            renderNarrativePresentation(); queueSave(); status.textContent = 'Arquivo adicionado à cena.';
+          } catch (error) { status.textContent = error.message || 'Não foi possível adicionar o arquivo.'; }
+          finally { fileInput.value = ''; }
+        });
       });
       localizationSourceLocale.addEventListener('change', () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -5683,9 +5778,10 @@
         const record = documents.find(item => item.id === activeDocumentId);
         if (record) startNarrativeTest(activeNarrativeSequence(record,editor,true)?.id || ensureNarrativeEventId(record));
       });
-      const closeNarrativeTest = () => { stopNarrativeTestPlayback(); narrativeTestDialog.close(); };
+      const closeNarrativeTest = () => { stopNarrativeTestPlayback(); narrativeTestMedia.setActive(false); narrativeTestDialog.close(); };
       document.querySelector('#narrative-test-close').addEventListener('click', closeNarrativeTest);
-      narrativeTestDialog.addEventListener('close', stopNarrativeTestPlayback);
+      narrativeTestDialog.addEventListener('close', () => { stopNarrativeTestPlayback(); narrativeTestMedia.setActive(false); });
+      document.addEventListener('visibilitychange',() => narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden));
       narrativeTestDialog.addEventListener('cancel', event => { event.preventDefault(); closeNarrativeTest(); });
       document.querySelector('#narrative-test-restart').addEventListener('click', () => {
         if (!narrativeTestState) return;
@@ -5791,10 +5887,11 @@
         const source = registry.byId.get(startId)?.record;
         const story = {
           format:'heartspace-html-story-v1', version:1,
+          storage_id:HeartspaceNarrativeHtml.fingerprint(JSON.stringify([source?.remoteId || source?.id || '',startId])),
           title:gameTitle.trim() || source?.title || 'História interativa',
           locale:locale || (source ? localizationDataFor(source).sourceLocale : 'pt-BR'),
           start_event_id:startId, sequences,
-          character_registry:narrativeCharacters.filter(character => characterIds.has(character.id)).map(character => ({ id:character.id, name:character.name })),
+          character_registry:narrativeCharacters.filter(character => characterIds.has(character.id)).map(character => ({ id:character.id, name:character.name, portrait:HeartspaceNarrativeMedia.normalize(character.portrait,'image'), portrait_position:HeartspaceNarrativeMedia.position(character.portrait_position) })),
           variable_registry:narrativeVariables.filter(variable => variableIds.has(variable.id)).map(variable => ({ id:variable.id, type:variable.type, default:coerceNarrativeValue(variable.default,variable.type) }))
         };
         return { story, issues };
@@ -5811,7 +5908,14 @@
           row.textContent = `${issue.title}${issue.detail ? ` ${issue.detail}` : ''}`; list.append(row);
         });
         document.querySelector('#story-export-download').disabled = errors.length > 0;
+        document.querySelector('#story-export-download').textContent = document.querySelector('#story-export-format').value === 'zip' ? 'Baixar ZIP' : 'Baixar HTML';
+        updateStoryEmbedCode();
         return result;
+      };
+      const updateStoryEmbedCode = () => {
+        const name = document.querySelector('#story-export-name').value.trim() || 'História interativa';
+        const filename = document.querySelector('#story-export-format').value === 'zip' ? 'index.html' : `${narrativeSlug(name) || 'heartspace-historia'}.html`;
+        document.querySelector('#story-embed-code').value = `<iframe src="./${filename}?embed=1" title="${escapeHtml(name)}" width="100%" height="720" loading="lazy" style="border:0"></iframe>`;
       };
       document.querySelector('#story-export-open').addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -5831,18 +5935,24 @@
       document.querySelector('#story-export-close').addEventListener('click', () => storyExportDialog.close());
       storyExportStart.addEventListener('change',reviewStandaloneNarrativeStory);
       storyExportLocale.addEventListener('change',reviewStandaloneNarrativeStory);
+      document.querySelector('#story-export-format').addEventListener('change',reviewStandaloneNarrativeStory);
+      document.querySelector('#story-export-name').addEventListener('input',updateStoryEmbedCode);
       document.querySelector('#story-export-form').addEventListener('submit', event => {
         event.preventDefault();
         const { story, issues } = reviewStandaloneNarrativeStory();
         if (issues.some(issue => issue.severity === 'error')) return;
-        const html = HeartspaceNarrativeHtml.buildHtml(story);
-        const url = URL.createObjectURL(new Blob([html], { type:'text/html;charset=utf-8' }));
-        const link = document.createElement('a'); link.href = url;
-        link.download = `${narrativeSlug(story.title) || 'heartspace-historia'}.html`;
-        link.hidden = true; document.body.append(link); link.click(); link.remove();
-        setTimeout(() => URL.revokeObjectURL(url),1000);
-        storyExportDialog.close();
-        statusMessage('História HTML exportada');
+        const isZip = document.querySelector('#story-export-format').value === 'zip';
+        try {
+          const data = isZip ? HeartspaceNarrativePackage.buildPackage(story).bytes : HeartspaceNarrativeHtml.buildHtml(story);
+          const url = URL.createObjectURL(new Blob([data], { type:isZip ? 'application/zip' : 'text/html;charset=utf-8' }));
+          const link = document.createElement('a'); link.href = url;
+          link.download = `${narrativeSlug(story.title) || 'heartspace-historia'}.${isZip ? 'zip' : 'html'}`;
+          link.hidden = true; document.body.append(link); link.click(); link.remove();
+          setTimeout(() => URL.revokeObjectURL(url),1000); storyExportDialog.close();
+          statusMessage(isZip ? 'Pacote exportado. Extraia todos os arquivos antes de abrir index.html.' : 'História HTML exportada');
+        } catch (error) {
+          document.querySelector('#story-export-summary').textContent = error.message || 'Não foi possível montar o arquivo.';
+        }
       });
       document.querySelector('#narrative-export').addEventListener('click', () => {
         const payload = buildNarrativePayload();
