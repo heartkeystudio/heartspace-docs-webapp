@@ -1094,6 +1094,8 @@
         { label: 'Mais opções', detail: 'Títulos, tabelas, alinhamento, blocos, modelos e mais', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
       );
       let saveTimer;
+      let revisionTimer;
+      const revisionIdleDelay = 60000;
       let alignmentToolbarTarget = '';
       let slashRange = null;
       let slashTableCell = null;
@@ -2312,11 +2314,20 @@
           pending_writes: Math.min(1024, pendingRecords + remoteSaveInProgress.size),
         });
       };
+      const scheduleRevisionSync = record => {
+        clearTimeout(revisionTimer);
+        if (!currentProjectId || !record) return;
+        revisionTimer = setTimeout(() => {
+          revisionTimer = null;
+          if (record.dirty && !record.remoteConflict) syncRecord(record);
+        }, revisionIdleDelay);
+      };
       const queueSave = () => {
-        setSaveStatus(currentProjectId ? 'Salvando no projeto…' : 'Salvando localmente…', 'pending');
+        setSaveStatus(currentProjectId ? 'Salvando rascunho…' : 'Salvando localmente…', 'pending');
         updateCount();
         const editedRecord = documents.find(item => item.id === activeDocumentId);
         if (currentProjectId && editedRecord) { editedRecord.dirty = true; editedRecord.editRevision += 1; dirtyDocumentIds.add(editedRecord.id); }
+        scheduleRevisionSync(editedRecord);
         reportDesktopDocumentState();
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
@@ -2324,7 +2335,7 @@
             const activeRecord = documents.find(item => item.id === activeDocumentId);
             if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
             persistLibrary(); renderLibrary();
-            if (currentProjectId && activeRecord) syncRecord(activeRecord);
+            if (currentProjectId && activeRecord) setSaveStatus('Rascunho salvo; nova versão após a pausa');
             else setSaveStatus('Salvo neste dispositivo');
             reportDesktopDocumentState();
           } catch (_) {
@@ -5090,11 +5101,23 @@
       searchDialog.addEventListener('click',event=>{ if(event.target===searchDialog) searchDialog.close(); });
       const flushSave = () => {
         clearTimeout(saveTimer);
+        clearTimeout(revisionTimer);
+        revisionTimer = null;
         try {
           const activeRecord = documents.find(item => item.id === activeDocumentId);
-          if (activeRecord) { Object.assign(activeRecord, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left', savedAt: new Date().toISOString() }); dirtyDocumentIds.add(activeRecord.id); }
+          if (activeRecord) {
+            const next = { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), titleAlign: ['left','center','right','justify'].includes(title.dataset.align) ? title.dataset.align : 'left', subtitleAlign: ['left','center','right','justify'].includes(subtitle.style.textAlign) ? subtitle.style.textAlign : 'left' };
+            const changed = activeRecord.dirty || Object.entries(next).some(([key, value]) => activeRecord[key] !== value);
+            Object.assign(activeRecord, next);
+            if (changed) {
+              activeRecord.savedAt = new Date().toISOString();
+              activeRecord.dirty = Boolean(currentProjectId);
+              activeRecord.editRevision += 1;
+              dirtyDocumentIds.add(activeRecord.id);
+            }
+          }
           persistLibrary();
-          if (currentProjectId && activeRecord) syncRecord(activeRecord);
+          if (currentProjectId && activeRecord && (activeRecord.dirty || !activeRecord.remoteId)) syncRecord(activeRecord);
           reportDesktopDocumentState();
         } catch (_) { setSaveStatus('Não foi possível salvar neste navegador', 'pending'); }
       };
@@ -5668,7 +5691,7 @@
           remoteSaveInProgress.delete(syncKey);
           if (currentProjectId === targetProjectId) { saveProjectCache(); renderLibrary(); }
           reportDesktopDocumentState();
-          if (retryAfterSave && !record.remoteConflict) setTimeout(() => syncRecord(record), 300);
+          if (retryAfterSave && !record.remoteConflict) scheduleRevisionSync(record);
         }
       };
       const refreshVisibleProject = () => {
@@ -8331,7 +8354,7 @@
       });
       document.addEventListener('keydown', event => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); openGlobalSearch(); }
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); clearTimeout(saveTimer); queueSave(); }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); flushSave(); }
       });
     })();
   </script>
