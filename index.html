@@ -302,10 +302,11 @@
     body:has(.page[data-layout="book"]) .document-outline-item { min-height:27px; padding-top:4px; padding-bottom:4px; color:#8f8995; }
     body:has(.page[data-layout="book"]) .document-outline-item:hover,body:has(.page[data-layout="book"]) .document-outline-item:focus-visible { color:#dcecf7; background:#0c8ce912; }
     @media(min-width:1101px) { body.narrative-panel-open .document-outline{right:calc(var(--narrative-panel-width,420px) + 18px)}body.narrative-panel-collapsed .document-outline{right:52px} }
-    .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:var(--book-page-height,1123px); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); box-sizing:border-box; width:var(--book-page-width,794px); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 0 calc(100% - 1px),#ffffff20 calc(100% - 1px) 100%),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
+    .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:var(--book-page-height,1123px); --book-authoring-extra:0px; --book-sheet-display-height:calc(var(--book-sheet-height) + var(--book-authoring-extra)); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-display-height) + var(--book-sheet-gap)); box-sizing:border-box; width:var(--book-page-width,794px); min-height:var(--book-sheet-display-height); padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-display-height) - 1px),#ffffff20 calc(var(--book-sheet-display-height) - 1px) var(--book-sheet-display-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 0 calc(100% - 1px),#ffffff20 calc(100% - 1px) 100%),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-display-height),var(--bg) var(--book-sheet-display-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
     .page[data-layout="book"] .content.book-paginated { display:flex; flex-direction:column; gap:var(--book-sheet-gap); min-height:0; }
     .content .book-page-content { box-sizing:border-box; width:100%; min-width:0; flex:0 0 auto; min-height:0; overflow:hidden; outline:none; overflow-wrap:anywhere; }
-    .content .book-page-content:not(:first-child) { height:var(--book-sheet-height); padding:var(--book-margin-y,72px) 0; }
+    .content .book-page-content:not(:first-child) { height:var(--book-sheet-display-height); padding:var(--book-margin-y,72px) 0; }
+    .page[data-layout="book"] .content .book-page-content { overflow:visible; }
     .doc-title { margin:0 0 12px; color:#f3eff4; font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
     .doc-title[data-align="center"] { text-align:center; }
     .doc-title[data-align="right"] { text-align:right; }
@@ -429,13 +430,20 @@
     .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-marker:hover,.narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-marker:focus-visible,.narrative-block[data-narrative-type="pause"][data-reading-empty="true"][data-inspector-open="true"] > .narrative-marker { min-width:auto; max-width:none; padding:0 10px; transform:translate(-50%,-50%); }
     .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-meta { top:calc(50% + 15px); right:auto; left:50%; transform:translate(-50%,-3px); }
     .narrative-block[data-narrative-type="pause"][data-reading-empty="true"][data-inspector-open="true"] > .narrative-meta { transform:translate(-50%,0); }
+    .page[data-layout="book"] .narrative-block:not(.narrative-inline):not([data-narrative-type="pause"]) > .narrative-marker { top:-2px; right:calc(0px - var(--book-margin-x,76px) - 18px); left:auto; min-width:12px; max-width:12px; opacity:.82; transform:none; }
+    .page[data-layout="book"] .narrative-block:not(.narrative-inline):not([data-narrative-type="pause"]) > .narrative-marker:hover,.page[data-layout="book"] .narrative-block:not(.narrative-inline):not([data-narrative-type="pause"]) > .narrative-marker:focus-visible,.page[data-layout="book"] .narrative-block:not(.narrative-inline):not([data-narrative-type="pause"])[data-inspector-open="true"] > .narrative-marker { min-width:64px; max-width:92px; padding:0 9px; transform:none; }
+    .page[data-layout="book"] .narrative-block:not(.narrative-inline):not([data-narrative-type="pause"]) > .narrative-meta { right:calc(0px - var(--book-margin-x,76px) - 18px); left:auto; }
     .sequence-rail-layer { position:absolute; z-index:5; inset:0; overflow:visible; pointer-events:none; }
-    .sequence-rail { --sequence-color:#0c8ce9; position:absolute; width:2px; min-height:18px; border-radius:999px; background:color-mix(in srgb,var(--sequence-color) 58%,transparent); box-shadow:0 0 0 1px color-mix(in srgb,var(--sequence-color) 10%,transparent); opacity:.72; }
+    .sequence-rail { --sequence-color:#0c8ce9; position:absolute; width:2px; min-height:18px; padding:0; border:0; border-radius:999px; color:inherit; background:color-mix(in srgb,var(--sequence-color) 58%,transparent); box-shadow:0 0 0 1px color-mix(in srgb,var(--sequence-color) 10%,transparent); opacity:.72; pointer-events:auto; cursor:pointer; }
     .sequence-rail::before,.sequence-rail::after { position:absolute; left:50%; width:6px; height:6px; border:1px solid color-mix(in srgb,var(--sequence-color) 72%,white); border-radius:50%; background:var(--paper); content:''; transform:translate(-50%,-50%); }
     .sequence-rail::after { top:100%; }
     .sequence-rail-label { position:absolute; top:8px; left:7px; display:block; max-width:14px; max-height:calc(100% - 16px); overflow:hidden; color:color-mix(in srgb,var(--sequence-color) 62%,white); font-size:8px; font-weight:720; letter-spacing:.08em; line-height:1; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; writing-mode:vertical-rl; }
     .sequence-rail[data-active="true"] { background:var(--sequence-color); box-shadow:0 0 12px color-mix(in srgb,var(--sequence-color) 32%,transparent); opacity:.94; }
+    .sequence-rail:hover,.sequence-rail:focus-visible { width:4px; background:var(--sequence-color); box-shadow:0 0 14px color-mix(in srgb,var(--sequence-color) 42%,transparent); opacity:1; outline:none; }
+    .sequence-rail:hover .sequence-rail-label,.sequence-rail:focus-visible .sequence-rail-label { color:color-mix(in srgb,var(--sequence-color) 42%,white); }
     .sequence-rail[data-compact="true"] .sequence-rail-label { display:none; }
+    .sequence-rail[data-placement="canvas-margin"] { box-shadow:0 0 0 1px color-mix(in srgb,var(--sequence-color) 18%,transparent),0 0 10px #0004; }
+    .sequence-rail[data-tight-margin="true"] .sequence-rail-label { display:none; }
     .narrative-kind { color:var(--narrative-accent); font-size:9px; font-weight:720; letter-spacing:.09em; text-transform:uppercase; }
     .narrative-delete { min-height:22px; margin-left:auto; padding:0 7px; border:1px solid #ffffff12; border-radius:5px; color:#a59da8; background:transparent; font-size:10px; }
     .narrative-delete:hover,.narrative-delete:focus-visible { border-color:#d76d6d55; color:#efaaaa; background:#d76d6d10; }
@@ -463,6 +471,9 @@
     .narrative-choice-remove { width:22px; height:22px; border-radius:5px; }
     .narrative-choice-remove:hover { color:#e2dbe6; background:#ffffff0c; }
     .narrative-choice-rules { min-height:22px; padding:0 6px; border:1px solid #ffffff12; border-radius:5px; color:#a9cdb6; background:#72b98c12; font-size:10px; }
+    .narrative-choice-canonical { min-height:22px; padding:0 7px; border:1px solid #ffffff12; border-radius:5px; color:#8e8793; background:transparent; font-size:10px; }
+    .narrative-choice-canonical:hover,.narrative-choice-canonical:focus-visible { color:#d9e9df; background:#72b98c12; }
+    .narrative-choice-option[data-canonical="true"] .narrative-choice-canonical { border-color:#72b98c55; color:#b8dfc5; background:#72b98c1b; }
     .narrative-choice-add { position:absolute; z-index:6; top:100%; right:20px; margin:2px 0 0; padding:2px 5px; border-radius:5px; background:#1b1a20e8; font-size:11px; opacity:0; pointer-events:none; }
     .narrative-block[data-narrative-type="choice"]:hover > .narrative-choice-add,.narrative-block[data-narrative-type="choice"]:focus-within > .narrative-choice-add { opacity:1; pointer-events:auto; }
     .narrative-choice-add:hover { color:#cfe5d7; }
@@ -485,6 +496,12 @@
     .measuring-reading .narrative-block[data-narrative-type="pause"]::before,body.reading-mode .narrative-block[data-narrative-type="pause"]::before { display:none; }
     body.reading-mode .authoring-decoration { display:none!important; }
     body.reading-mode .page[data-narrative-profile="prose"] .narrative-block[data-narrative-type="dialogue"]:not(.narrative-inline) > .narrative-text:not(:empty)::before { content:'— '; }
+    body.reading-mode .narrative-block[data-canonical-visible="false"] { display:none!important; }
+    body.reading-mode .narrative-block[data-narrative-type="choice"] > .narrative-choice-prompt,body.reading-mode .narrative-block[data-narrative-type="choice"] > .narrative-choice-options { display:inline; }
+    body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option { display:none; padding:0; }
+    body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option[data-canonical="true"] { display:inline; }
+    body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option[data-canonical="true"]::before { position:static; content:' — '; }
+    body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-text { display:inline; color:#ddd8e1; }
     body.reading-mode .narrative-inline { padding:0; background:transparent; }
     body.reading-mode .toolbar > button,body.reading-mode .toolbar > .tool-separator,body.reading-mode .toolbar > .page-settings { display:none; }
     body.reading-mode .doc-title,body.reading-mode .doc-subtitle,body.reading-mode .content { cursor:default; }
@@ -495,6 +512,9 @@
     .narrative-dialog { position:relative; z-index:20; grid-column:3; grid-row:2; min-width:0; min-height:0; overflow:hidden; border:0; border-left:1px solid #ffffff18; color:var(--text); background:#1b1a20; box-shadow:-12px 0 34px #0005; container-name:production-panel; container-type:inline-size; }
     .narrative-dialog[hidden] { display:none!important; }
     body.focus-mode .narrative-dialog { grid-column:2; }
+    .narrative-panel-launcher { position:absolute; z-index:24; top:calc(50% + 24px); right:22px; display:grid; place-items:center; width:32px; height:66px; padding:0; transform:translateY(-50%); border:1px solid #0c8ce94d; border-radius:10px 0 0 10px; color:#acd9f7; background:#1d1d22f2; box-shadow:0 0 18px #0c8ce922; font-size:20px; transition:background .14s ease,border-color .14s ease,box-shadow .14s ease; }
+    .narrative-panel-launcher:hover,.narrative-panel-launcher:focus-visible { border-color:#0c8ce98a; background:#0c8ce92b; box-shadow:0 0 22px #0c8ce938; }
+    body.narrative-panel-open .narrative-panel-launcher { display:none; }
     .narrative-resizer { position:absolute; z-index:4; inset:0 auto 0 0; width:7px; transform:translateX(-3px); cursor:col-resize; touch-action:none; }
     .narrative-resizer::after { content:''; position:absolute; top:50%; left:3px; width:2px; height:44px; transform:translateY(-50%); border-radius:999px; background:#ffffff20; transition:background .14s ease,height .14s ease; }
     .narrative-resizer:hover::after,.narrative-resizer:focus-visible::after,.narrative-dialog[data-resizing="true"] .narrative-resizer::after { height:72px; background:var(--accent); }
@@ -928,6 +948,7 @@
         </div>
         <aside class="document-outline" id="document-outline" aria-label="Estrutura do documento" hidden><header class="document-outline-header"><strong>Estrutura</strong><button class="document-outline-close" id="outline-close" type="button" aria-label="Ocultar estrutura">×</button></header><nav class="document-outline-list" id="outline-list" aria-label="Atalhos para os títulos do documento"></nav></aside>
       </section>
+      <button class="narrative-panel-launcher" id="narrative-panel-launcher" type="button" aria-label="Abrir central de produção" aria-controls="narrative-dialog" aria-expanded="false" title="Abrir central de produção">‹</button>
       <div class="zoom-control" aria-label="Zoom da página"><button class="icon-tooltip" type="button" id="zoom-out" aria-label="Diminuir zoom" data-tooltip="Diminuir zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_out.svg" alt=""></button><select id="zoom-level" aria-label="Zoom da página" title="Zoom da página"><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100%</option><option value="110">110%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button class="icon-tooltip" type="button" id="zoom-in" aria-label="Aumentar zoom" data-tooltip="Aumentar zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_in.svg" alt=""></button></div><div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span></div>
     </main>
     <aside class="narrative-dialog" id="narrative-dialog" aria-labelledby="narrative-title" contenteditable="false" spellcheck="false" hidden>
@@ -1836,10 +1857,14 @@
         const layer = document.createElement('div');
         layer.className = 'sequence-rail-layer authoring-decoration';
         layer.contentEditable = 'false';
-        layer.setAttribute('aria-hidden', 'true');
+        layer.setAttribute('role', 'group');
+        layer.setAttribute('aria-label', 'Sequências do documento');
         const pageRect = documentPage.getBoundingClientRect();
         const measuredScale = documentPage.offsetWidth ? pageRect.width / documentPage.offsetWidth : 1;
         const scale = Number.isFinite(measuredScale) && measuredScale > 0 ? measuredScale : 1;
+        const canvasLayout = documentPage.dataset.layout === 'canvas';
+        const canvasMarginRight = canvasLayout ? Math.max(0, parseFloat(getComputedStyle(documentPage).paddingRight) || 0) : 0;
+        const canvasRailInset = Math.min(14, Math.max(6, canvasMarginRight / 3));
         const segments = [];
         blocks.forEach(block => {
           const sequenceId = block.dataset.narrativeSequenceId || record.narrativeSequences?.[0]?.id || '';
@@ -1854,16 +1879,34 @@
           const lastRect = segment.blocks.at(-1).getBoundingClientRect();
           const top = (firstRect.top - pageRect.top) / scale;
           const height = Math.max(18, (lastRect.bottom - firstRect.top) / scale);
-          const contentRight = Math.max(...segment.blocks.map(block => block.getBoundingClientRect().right));
-          const left = Math.min(documentPage.offsetWidth - 24, ((contentRight - pageRect.left) / scale) + 22);
-          const rail = document.createElement('span');
+          const left = canvasLayout
+            ? documentPage.offsetWidth - canvasMarginRight + canvasRailInset
+            : documentPage.offsetWidth + 36;
+          const rail = document.createElement('button');
+          rail.type = 'button';
           rail.className = 'sequence-rail';
           rail.style.cssText = `top:${top}px;left:${left}px;height:${height}px;--sequence-color:${narrativeSequenceRailColor(segment.sequenceId)}`;
           rail.dataset.active = String(segment.sequenceId === record.activeNarrativeSequenceId);
           rail.dataset.compact = String(height < 54);
+          rail.dataset.placement = canvasLayout ? 'canvas-margin' : 'outside-book';
+          rail.dataset.tightMargin = String(canvasLayout && canvasMarginRight < 42);
           const label = document.createElement('span');
           label.className = 'sequence-rail-label';
           label.textContent = titles.get(segment.sequenceId) || segment.sequenceId.split('.').at(-1)?.replace(/[_-]+/g, ' ') || 'Sequência';
+          rail.title = `Abrir sequência: ${label.textContent}`;
+          rail.setAttribute('aria-label', `Abrir sequência ${label.textContent} na central de produção`);
+          rail.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            record.activeNarrativeSequenceId = segment.sequenceId;
+            persistLibrary();
+            queueSave();
+            setNarrativePanelView('sequence');
+            renderNarrativePanel();
+            setNarrativePanelCollapsed(false);
+            setNarrativePanelOpen(true);
+            scheduleNarrativeSequenceRails();
+          });
           rail.append(label);
           layer.append(rail);
         });
@@ -1877,6 +1920,22 @@
       editor.addEventListener('input', scheduleNarrativeSequenceRails);
       new MutationObserver(scheduleNarrativeSequenceRails).observe(editor, { childList:true, subtree:true, attributes:true, attributeFilter:['data-narrative-sequence-id'] });
       if ('ResizeObserver' in window) new ResizeObserver(scheduleNarrativeSequenceRails).observe(documentPage);
+      const refreshCanonicalChoiceOptions = block => {
+        const options = [...(block?.querySelectorAll?.('.narrative-choice-option') || [])];
+        if (!options.length) return;
+        const canonical = options.find(option => option.dataset.canonical === 'true') || options[0];
+        options.forEach(option => {
+          if (option === canonical) option.dataset.canonical = 'true';
+          else delete option.dataset.canonical;
+          const button = option.querySelector('[data-choice-canonical]');
+          const selected = option === canonical;
+          if (button) {
+            button.textContent = selected ? 'Canônica' : 'Definir canônica';
+            button.setAttribute('aria-pressed', String(selected));
+            button.title = selected ? 'Esta opção conduz a leitura do livro' : 'Usar esta opção no caminho canônico do livro';
+          }
+        });
+      };
       const refreshNarrativeReadingLabel = block => {
         if (!block) return;
         if (block.classList.contains('narrative-inline')) {
@@ -1982,9 +2041,19 @@
               decoration.querySelector('.narrative-choice-remove')?.before(rules);
               if (!rules.isConnected) decoration.append(rules);
             }
+            let canonical = decoration.querySelector('[data-choice-canonical]');
+            if (!canonical) {
+              canonical = document.createElement('button');
+              canonical.type = 'button';
+              canonical.className = 'narrative-choice-canonical';
+              canonical.contentEditable = 'false';
+              canonical.dataset.choiceCanonical = 'true';
+              rules.before(canonical);
+            }
             const ruleCount = Number(Boolean(option.dataset.condition)) + Number(Boolean(option.dataset.effect));
             rules.textContent = ruleCount ? `Regras · ${ruleCount}` : 'Regras';
           });
+          if (type === 'choice') refreshCanonicalChoiceOptions(block);
           refreshNarrativeReadingLabel(block);
         });
         blocks.forEach(block => {
@@ -2016,6 +2085,7 @@
         documentViewMode = mode === 'reading' ? 'reading' : 'writing';
         documentViewModeControl.value = documentViewMode;
         document.body.classList.toggle('reading-mode', documentViewMode === 'reading');
+        applyCanonicalReadingPath();
         applyDocumentEditingState();
         if (documentViewMode === 'reading') {
           if (editor.contains(document.activeElement) || document.activeElement === title || document.activeElement === subtitle) document.activeElement.blur();
@@ -2039,6 +2109,21 @@
         const overflowing = page.scrollHeight > page.clientHeight + 1;
         page.classList.remove('measuring-reading');
         return overflowing;
+      };
+      const bookAuthoringExtraForPage = page => [...page.querySelectorAll('.narrative-block[data-reading-empty="true"]')].reduce((total, block) => {
+        const style = getComputedStyle(block);
+        return total + block.offsetHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+      }, 0);
+      const applyBookAuthoringExpansion = pages => {
+        const extra = documentViewMode === 'writing' && pages.length
+          ? Math.ceil(Math.max(0, ...pages.map(bookAuthoringExtraForPage)))
+          : 0;
+        documentPage.style.setProperty('--book-authoring-extra', `${extra}px`);
+        pages.forEach(page => {
+          const logicalHeight = Number(page.dataset.bookLogicalHeight) || parseFloat(page.style.height) || page.offsetHeight;
+          page.dataset.bookLogicalHeight = String(logicalHeight);
+          page.style.height = `${logicalHeight + extra}px`;
+        });
       };
       const keepNarrativeControlsInsidePages = (pages, makePage) => {
         if (documentViewMode !== 'writing') return;
@@ -2110,14 +2195,20 @@
         const sheetHeight = Math.min(height, pageWidth * (height / width));
         const pageTop = (editor.getBoundingClientRect().top - documentPage.getBoundingClientRect().top) / (zoom * pageScale);
         const firstPageHeight = Math.max(240, sheetHeight - pageTop);
-        const setPageHeight = () => pages.forEach((page, index) => { page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`; });
+        const setPageHeight = () => pages.forEach((page, index) => {
+          const logicalHeight = index === 0 ? firstPageHeight : sheetHeight;
+          page.dataset.bookLogicalHeight = String(logicalHeight);
+          page.style.height = `${logicalHeight}px`;
+        });
         const makePage = index => {
           const page = document.createElement('div');
           page.className = 'book-page-content';
           page.contentEditable = String(documentViewMode === 'writing');
           page.setAttribute('role', 'group');
           page.setAttribute('aria-label', `Folha ${index + 1}`);
-          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+          const logicalHeight = index === 0 ? firstPageHeight : sheetHeight;
+          page.dataset.bookLogicalHeight = String(logicalHeight);
+          page.style.height = `${logicalHeight}px`;
           editor.append(page);
           pages.push(page);
           return page;
@@ -2142,7 +2233,9 @@
         editor.classList.add('book-paginated');
         pages = rebuildBookPageFlow(pages, makePage);
         setPageHeight();
+        applyBookAuthoringExpansion(pages);
         keepNarrativeControlsInsidePages(pages, makePage);
+        applyBookAuthoringExpansion(pages);
         restoreCaret();
       };
       const paginateBook = () => {
@@ -2150,6 +2243,7 @@
         if (documentPage.dataset.layout !== 'book') {
           if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
           editor.classList.remove('book-paginated');
+          documentPage.style.setProperty('--book-authoring-extra', '0px');
           return;
         }
         if (window.matchMedia('(max-width: 800px)').matches) {
@@ -2176,16 +2270,22 @@
           page.contentEditable = String(documentViewMode === 'writing');
           page.setAttribute('role', 'group');
           page.setAttribute('aria-label', `Folha ${index + 1}`);
-          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+          const logicalHeight = index === 0 ? firstPageHeight : sheetHeight;
+          page.dataset.bookLogicalHeight = String(logicalHeight);
+          page.style.height = `${logicalHeight}px`;
           editor.append(page);
           pages.push(page);
           return page;
         };
         pages = rebuildBookPageFlow(pages, makePage);
         pages.forEach((page, index) => {
-          page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
+          const logicalHeight = index === 0 ? firstPageHeight : sheetHeight;
+          page.dataset.bookLogicalHeight = String(logicalHeight);
+          page.style.height = `${logicalHeight}px`;
         });
+        applyBookAuthoringExpansion(pages);
         keepNarrativeControlsInsidePages(pages, makePage);
+        applyBookAuthoringExpansion(pages);
         if (savedSelection?.anchorNode.isConnected && savedSelection.focusNode?.isConnected) {
           try { selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset); } catch (_) { /* keep the browser's nearest caret if offsets shifted */ }
         }
@@ -2696,6 +2796,7 @@
       const narrativeSequenceDelete = document.querySelector('#narrative-sequence-delete');
       const narrativeSequence = document.querySelector('#narrative-sequence');
       const narrativeOpenButton = document.querySelector('#narrative-open');
+      const narrativePanelLauncher = document.querySelector('#narrative-panel-launcher');
       const narrativeMap = document.querySelector('#narrative-map');
       const narrativeSequenceTab = document.querySelector('#narrative-sequence-tab');
       const narrativeMapTab = document.querySelector('#narrative-map-tab');
@@ -2784,6 +2885,7 @@
         const open = !narrativeDialog.hidden;
         document.body.classList.toggle('narrative-panel-open', open);
         narrativeOpenButton.setAttribute('aria-expanded', String(open));
+        narrativePanelLauncher.setAttribute('aria-expanded', String(open));
         narrativeDialog.setAttribute('aria-hidden', String(!open));
         if (!open) setNarrativePanelCollapsed(false);
         cancelAnimationFrame(narrativeLayoutFrame);
@@ -2956,6 +3058,7 @@
               localization_id: option.dataset.localizationId || '',
               text: option.querySelector('.narrative-choice-text')?.textContent.trim() || '',
               target_event: option.querySelector('.narrative-choice-target')?.textContent.trim() || '',
+              canonical: option.dataset.canonical === 'true',
               ...(condition ? { condition } : {}),
               ...(effect ? { effects: [effect] } : {})
             };
@@ -2967,6 +3070,40 @@
         const record = documents.find(item => item.id === activeDocumentId);
         const sequence = activeNarrativeSequence(record, editor, true);
         return collectNarrativeNodesFromRoot(editor, true, sequence?.id || '');
+      };
+      const applyCanonicalReadingPath = () => {
+        const blocks = [...editor.querySelectorAll('.narrative-block')];
+        if (documentViewMode !== 'reading') {
+          blocks.forEach(block => delete block.dataset.canonicalVisible);
+          return;
+        }
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record) return;
+        editor.querySelectorAll('.narrative-block[data-narrative-type="choice"]').forEach(refreshCanonicalChoiceOptions);
+        const sequences = ensureNarrativeSequences(record, editor, false);
+        const knownIds = new Set(sequences.map(sequence => sequence.id));
+        const startId = knownIds.has(record.narrativeEventId) ? record.narrativeEventId : sequences[0]?.id || '';
+        if (!startId) {
+          blocks.forEach(block => { block.dataset.canonicalVisible = 'true'; });
+          return;
+        }
+        const nodes = collectNarrativeNodesFromRoot(editor, false, startId).map(item => item.node);
+        const reachable = new Set();
+        const pending = [startId];
+        while (pending.length) {
+          const sequenceId = pending.shift();
+          if (!sequenceId || reachable.has(sequenceId)) continue;
+          reachable.add(sequenceId);
+          nodes.filter(node => node.sequence_id === sequenceId && node.type === 'choice').forEach(node => {
+            const canonical = node.options?.find(option => option.canonical) || node.options?.[0];
+            const targetId = canonical?.target_event || '';
+            if (targetId && knownIds.has(targetId) && !reachable.has(targetId)) pending.push(targetId);
+          });
+        }
+        blocks.forEach(block => {
+          const sequenceId = block.dataset.narrativeSequenceId || startId;
+          block.dataset.canonicalVisible = String(reachable.has(sequenceId));
+        });
       };
       const localizationLocaleCatalog = [
         ['pt-BR','Português (Brasil)'], ['en-US','English (US)'], ['en-GB','English (UK)'], ['es-ES','Español'], ['es-MX','Español (México)'],
@@ -4951,7 +5088,7 @@
         if (!narrativeLocalizationView.hidden) renderNarrativeLocalization();
         if (!narrativeValidationView.hidden) renderNarrativeValidation();
       };
-      narrativeOpenButton.addEventListener('click', () => {
+      const openNarrativePanel = () => {
         document.querySelector('#actions-menu').open = false;
         if (!outlinePanel.hidden) setDocumentOutlineOpen(false);
         void loadNarrativeRegistry();
@@ -4960,9 +5097,11 @@
         setNarrativePanelCollapsed(false);
         setNarrativePanelOpen(true);
         narrativeSequenceSelect.focus();
-      });
+      };
+      narrativeOpenButton.addEventListener('click', openNarrativePanel);
+      narrativePanelLauncher.addEventListener('click', openNarrativePanel);
       document.querySelector('#narrative-close').addEventListener('click', () => setNarrativePanelOpen(false));
-      narrativeCollapse.addEventListener('click', () => setNarrativePanelCollapsed(!document.body.classList.contains('narrative-panel-collapsed')));
+      narrativeCollapse.addEventListener('click', () => setNarrativePanelOpen(false));
       const resizeNarrativePanel = clientX => {
         const minimum = 300;
         const maximum = Math.max(minimum, Math.min(680, window.innerWidth - 420));
@@ -6865,6 +7004,7 @@
         option.className = 'narrative-choice-option';
         option.dataset.choiceOptionId = data.id || makeChoiceOptionId();
         option.dataset.localizationId = data.localizationId || data.localization_id || newLocalizationId();
+        if (data.canonical === true || data.isCanonical === true) option.dataset.canonical = 'true';
         if (data.condition) option.dataset.condition = JSON.stringify(data.condition);
         const initialEffect = Array.isArray(data.effects) ? data.effects[0] : data.effect;
         if (initialEffect) option.dataset.effect = JSON.stringify(initialEffect);
@@ -6903,10 +7043,17 @@
         rules.dataset.choiceRules = 'true';
         rules.title = 'Editar condição e efeito (Alt + Enter)';
         rules.textContent = 'Regras';
+        const canonical = document.createElement('button');
+        canonical.type = 'button';
+        canonical.className = 'narrative-choice-canonical';
+        canonical.contentEditable = 'false';
+        canonical.dataset.choiceCanonical = 'true';
+        canonical.setAttribute('aria-pressed', String(option.dataset.canonical === 'true'));
+        canonical.textContent = option.dataset.canonical === 'true' ? 'Canônica' : 'Definir canônica';
         const decoration = document.createElement('span');
         decoration.className = 'narrative-choice-option-decoration authoring-decoration';
         decoration.contentEditable = 'false';
-        decoration.append(arrow, target, rules, remove);
+        decoration.append(arrow, target, canonical, rules, remove);
         option.append(text, decoration);
         refreshChoiceRulesButton(option);
         return option;
@@ -7082,13 +7229,13 @@
         normalizeNarrativeMarkup(block);
         return block;
       };
-      const createInlineNarrative = (type, textContent) => {
+      const createInlineNarrative = (type, textContent, sequenceId = '') => {
         const narrativeType = type === 'narration' ? 'narration' : 'dialogue';
         const block = document.createElement('span');
         block.className = 'narrative-block narrative-inline';
         block.dataset.narrativeType = narrativeType;
         block.dataset.narrativeId = makeNarrativeId();
-        block.dataset.narrativeSequenceId = activeNarrativeSequence()?.id || '';
+        block.dataset.narrativeSequenceId = sequenceId || activeNarrativeSequence()?.id || '';
         block.dataset.localizationId = newLocalizationId();
         block.contentEditable = 'false';
         const meta = document.createElement('span');
@@ -7123,6 +7270,17 @@
         normalizeNarrativeMarkup(block);
         return block;
       };
+      const narrativeImmediatelyBeforeElement = element => {
+        if (!element) return null;
+        let previous = element.previousElementSibling;
+        if (!previous && element.parentElement?.matches('.book-page-content')) previous = element.parentElement.previousElementSibling?.lastElementChild || null;
+        return previous?.matches?.('.narrative-block') ? previous : null;
+      };
+      const narrativeSequenceForInsertion = adjacentNarrative => {
+        const active = activeNarrativeSequence();
+        if (active && !editor.querySelector(`.narrative-block[data-narrative-sequence-id="${CSS.escape(active.id)}"]`)) return active.id;
+        return adjacentNarrative?.dataset.narrativeSequenceId || active?.id || '';
+      };
       const insertNarrativeBlock = type => {
         const editorArea = document.querySelector('.editor-area');
         const scrollPosition = editorArea ? { top:editorArea.scrollTop, left:editorArea.scrollLeft } : null;
@@ -7148,7 +7306,8 @@
         const startTextBlock = startElement?.closest('p,li,blockquote,h1,h2,h3,h4,h5,h6');
         const endTextBlock = endElement?.closest('p,li,blockquote,h1,h2,h3,h4,h5,h6');
         if (selectedText && ['dialogue','narration'].includes(type) && startTextBlock && startTextBlock === endTextBlock && editor.contains(startTextBlock) && !startElement.closest('.narrative-block')) {
-          const inline = createInlineNarrative(type, selectedText);
+          const inlineSequenceId = narrativeSequenceForInsertion(narrativeImmediatelyBeforeElement(startTextBlock));
+          const inline = createInlineNarrative(type, selectedText, inlineSequenceId);
           activeRange.deleteContents();
           activeRange.insertNode(inline);
           startTextBlock.normalize();
@@ -7165,7 +7324,9 @@
         const currentNarrative = anchorElement?.closest('.narrative-block');
         const currentBlock = anchorElement?.closest('p,h1,h2,h3,blockquote,pre');
         const sourceText = currentNarrative ? '' : currentBlock?.innerText.replace(/\n+$/g, '') || '';
-        const block = createNarrativeBlock(type, { text: sourceText, name: type === 'signal' ? sourceText : '', prompt: type === 'choice' ? sourceText : '' });
+        const adjacentNarrative = currentNarrative || narrativeImmediatelyBeforeElement(currentBlock);
+        const sequenceId = narrativeSequenceForInsertion(adjacentNarrative);
+        const block = createNarrativeBlock(type, { text: sourceText, name: type === 'signal' ? sourceText : '', prompt: type === 'choice' ? sourceText : '', sequenceId });
         if (currentNarrative?.classList.contains('narrative-inline')) (currentNarrative.closest('p,li,blockquote,h1,h2,h3,h4,h5,h6') || currentNarrative).after(block);
         else if (currentNarrative && editor.contains(currentNarrative)) currentNarrative.after(block);
         else if (currentBlock && editor.contains(currentBlock)) currentBlock.replaceWith(block);
@@ -7360,8 +7521,10 @@
           const fieldsEmpty = !option.querySelector('.narrative-choice-text').textContent.trim() && !option.querySelector('.narrative-choice-target').textContent.trim();
           if (fieldsEmpty && option.parentElement.childElementCount > 1) {
             event.preventDefault();
+            const choiceBlock = option.closest('.narrative-block[data-narrative-type="choice"]');
             const focusTarget = option.previousElementSibling?.querySelector('.narrative-choice-target') || option.nextElementSibling?.querySelector('.narrative-choice-text') || block.querySelector('.narrative-choice-prompt');
             option.remove();
+            refreshCanonicalChoiceOptions(choiceBlock);
             placeCaret(focusTarget, true);
             return true;
           }
@@ -7477,6 +7640,23 @@
           openNarrativeRules(rules.closest('.narrative-choice-option'));
           return;
         }
+        const canonical = event.target.closest?.('[data-choice-canonical]');
+        if (canonical) {
+          event.preventDefault();
+          event.stopPropagation();
+          const option = canonical.closest('.narrative-choice-option');
+          const block = option?.closest('.narrative-block[data-narrative-type="choice"]');
+          if (!option || !block) return;
+          block.querySelectorAll('.narrative-choice-option').forEach(item => {
+            if (item === option) item.dataset.canonical = 'true';
+            else delete item.dataset.canonical;
+          });
+          refreshCanonicalChoiceOptions(block);
+          scheduleBookPagination();
+          if (isNarrativePanelOpen()) renderNarrativePanel();
+          queueSave();
+          return;
+        }
         const add = event.target.closest?.('[data-add-choice-option]');
         if (add) {
           event.preventDefault();
@@ -7493,8 +7673,10 @@
         const option = remove.closest('.narrative-choice-option');
         const options = option?.parentElement;
         if (!option || !options || options.childElementCount <= 1) return;
+        const choiceBlock = option.closest('.narrative-block[data-narrative-type="choice"]');
         const focusTarget = option.previousElementSibling?.querySelector('.narrative-choice-target') || option.nextElementSibling?.querySelector('.narrative-choice-text');
         option.remove();
+        refreshCanonicalChoiceOptions(choiceBlock);
         placeCaret(focusTarget, true);
         queueSave();
       });
@@ -8676,7 +8858,8 @@
         const pageRect = documentPage.getBoundingClientRect();
         const areaRect = editorArea?.getBoundingClientRect();
         if (!areaRect || !pageRect.width) return;
-        const left = pageRect.right + 20;
+        const hasNarrativeRails = documentViewMode === 'writing' && Boolean(editor.querySelector('.narrative-block:not(.narrative-inline)'));
+        const left = pageRect.right + (hasNarrativeRails ? 76 : 20);
         const availableWidth = Math.max(112, areaRect.right - left - 14);
         const top = areaRect.top + 20;
         outlinePanel.style.setProperty('--outline-book-left', `${Math.round(left)}px`);
