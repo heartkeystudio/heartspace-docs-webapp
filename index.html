@@ -7220,34 +7220,15 @@
         placeCaret(next.querySelector('[data-checklist-text]'));
         return true;
       };
-      const exitListOnShiftEnter = () => {
+      const insertListLineBreak = () => {
         const selection = window.getSelection();
-        if (!selection?.isCollapsed || !editor.contains(selection.anchorNode)) return false;
+        if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return false;
         const anchor = selection.anchorNode;
         const element = anchor.nodeType === Node.ELEMENT_NODE ? anchor : anchor.parentElement;
         const item = element?.closest('li');
         const list = item?.parentElement;
         if (!item || !list || !['UL','OL'].includes(list.tagName) || list.dataset.listType === 'checklist') return false;
-        const trailingRange = document.createRange();
-        trailingRange.setStart(anchor, selection.anchorOffset);
-        trailingRange.setEnd(item, item.childNodes.length);
-        const trailing = trailingRange.extractContents();
-        const paragraph = document.createElement('p');
-        paragraph.append(trailing);
-        if (!paragraph.textContent.trim() && !paragraph.querySelector('img,figure,table,hr')) paragraph.innerHTML = '<br>';
-        const continuation = list.cloneNode(false);
-        continuation.removeAttribute('id');
-        if (list.tagName === 'OL') continuation.start = (Number(list.getAttribute('start')) || 1) + [...list.children].filter(child => child.tagName === 'LI').indexOf(item) + 1;
-        while (item.nextElementSibling) continuation.append(item.nextElementSibling);
-        const parent = list.parentNode;
-        const afterList = list.nextSibling;
-        if (!item.textContent.trim() && !item.querySelector('img,figure,table,hr,ul,ol')) item.remove();
-        const hasPrefix = [...list.children].some(child => child.tagName === 'LI');
-        if (!hasPrefix) list.remove();
-        parent.insertBefore(paragraph, hasPrefix ? list.nextSibling : afterList);
-        if (continuation.children.length) paragraph.after(continuation);
-        placeCaret(paragraph);
-        updateOrderedListMarkers();
+        document.execCommand('insertLineBreak');
         return true;
       };
       const editChecklistWithBackspace = event => {
@@ -8163,8 +8144,8 @@
         if (event.key === ' ' && event.shiftKey && stopInlineEffectOnShiftSpace()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && event.shiftKey && exitImageCaptionToParagraph()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && event.shiftKey && exitTableToParagraph()) { event.preventDefault(); queueSave(); return; }
+        if (event.key === 'Enter' && event.shiftKey && insertListLineBreak()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && event.shiftKey && !eventTarget?.closest('.callout-toggle,.checklist-box') && exitCallout()) { event.preventDefault(); queueSave(); return; }
-        if (event.key === 'Enter' && event.shiftKey && exitListOnShiftEnter()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && event.shiftKey && resetInlineFormattingOnShiftEnter()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && !event.shiftKey && !slashMenu.classList.contains('open') && convertMarkdownCallout()) { event.preventDefault(); queueSave(); return; }
         if (event.key === 'Enter' && continueChecklist(event)) { queueSave(); return; }
