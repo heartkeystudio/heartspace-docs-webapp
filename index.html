@@ -1707,12 +1707,22 @@
       try { const savedZoom = localStorage.getItem('heartspace-docs-page-zoom'); if ([...zoomLevelControl.options].some(option => option.value === savedZoom)) initialZoom = savedZoom; } catch (_) { /* usa o zoom padrão */ }
       zoomLevelControl.value = initialZoom;
       editorWrap.style.zoom = String(Number(initialZoom) / 100);
+      const caretVisualRect = activeSelection => {
+        if (!activeSelection?.rangeCount || !editor.contains(activeSelection.anchorNode)) return null;
+        const rangeRect = activeSelection.getRangeAt(0).getBoundingClientRect();
+        if (Number.isFinite(rangeRect.top) && (rangeRect.height > 0 || rangeRect.width > 0)) return rangeRect;
+        const focusNode = activeSelection.focusNode || activeSelection.anchorNode;
+        const focusElement = focusNode?.nodeType === Node.ELEMENT_NODE ? focusNode : focusNode?.parentElement;
+        const block = focusElement?.closest('p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote,pre,.callout-title,[data-checklist-text],.narrative-field');
+        return block?.getBoundingClientRect() || null;
+      };
       const keepCaretAboveZoom = activeSelection => {
         const editorArea = document.querySelector('.editor-area');
         if (!editorArea || !activeSelection?.rangeCount) return;
         const adjust = () => {
           if (!activeSelection.rangeCount) return;
-          const caretRect = activeSelection.getRangeAt(0).getBoundingClientRect();
+          const caretRect = caretVisualRect(activeSelection);
+          if (!caretRect) return;
           const viewportRect = editorArea.getBoundingClientRect();
           const zoomRect = document.querySelector('.zoom-control')?.getBoundingClientRect();
           const zoomOverlapsViewport = zoomRect && zoomRect.bottom > viewportRect.top && zoomRect.top < viewportRect.bottom;
@@ -1913,19 +1923,12 @@
         if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return null;
         const editorArea = document.querySelector('.editor-area');
         if (!editorArea) return null;
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        const element = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
-        const fallback = element?.closest('p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote,pre,[data-checklist-text]')?.getBoundingClientRect();
-        const top = rect.top || fallback?.top;
+        const top = caretVisualRect(selection)?.top;
         return Number.isFinite(top) ? { editorArea, top } : null;
       };
       const restoreCaretScrollAnchor = (anchor, selection) => {
         if (!anchor || !selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
-        const rect = selection.getRangeAt(0).getBoundingClientRect();
-        const element = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
-        const fallback = element?.closest('p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote,pre,[data-checklist-text]')?.getBoundingClientRect();
-        const top = rect.top || fallback?.top;
+        const top = caretVisualRect(selection)?.top;
         if (Number.isFinite(top)) anchor.editorArea.scrollTop += top - anchor.top;
       };
       const paginateBookForMobile = () => {
