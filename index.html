@@ -351,6 +351,9 @@
     .mermaid-preview { max-width:100%; padding:20px; overflow:auto; background:#17171b; }
     .mermaid-preview[hidden],.mermaid-source[hidden],.mermaid-status[hidden] { display:none; }
     .mermaid-preview svg { display:block; max-width:100%; height:auto; margin:auto; }
+    .mermaid-preview .nodeLabel small { display:inline-block; margin-bottom:5px; color:#0c8ce9; font-size:10px; font-weight:700; letter-spacing:.12em; line-height:1.2; text-transform:uppercase; }
+    .mermaid-preview .nodeLabel strong { display:inline-block; margin-bottom:5px; color:#eef4f8; font-size:14px; line-height:1.25; }
+    .mermaid-preview .nodeLabel small + br + strong + br + span { color:#aeb9c2; font-size:12px; line-height:1.4; }
     .mermaid-status { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
     .mermaid-status[data-error="true"] { position:static; width:auto; height:auto; padding:8px 12px; overflow:visible; clip-path:none; color:#f09ba0; white-space:normal; }
     @media(hover:none){.mermaid-action{opacity:.82;pointer-events:auto;transform:none}}
@@ -6022,7 +6025,7 @@
       const insertMermaidBlock = () => {
         mermaidBlockSequence += 1;
         const id = `docs-mermaid-${Date.now()}-${mermaidBlockSequence}`;
-        const figure = buildMermaidBlock(id, 'flowchart TD\n  ideia[Ideia] --> proximo[Próximo passo]');
+        const figure = buildMermaidBlock(id, 'flowchart LR\n  inicio["COMEÇO\n\n### Escolha um projeto\n\nEntre no espaço de trabalho que reúne o contexto da produção."] --> proximo["PRÓXIMO\n\n### Abra uma ferramenta\n\nContinue o trabalho no mesmo contexto."]');
         const after = document.createElement('p');
         after.innerHTML = '<br>';
         const selection = window.getSelection();
@@ -6042,6 +6045,15 @@
         }
         placeCaret(figure.querySelector('.mermaid-source code'));
       };
+      const mermaidStructuredLabels = definition => definition.replace(
+        /(\b[A-Za-z_][\w-]*\s*\[\s*")([\s\S]*?)("\s*\])/gu,
+        (match, opening, label, closing) => {
+          const structured = label.match(/^\s*([^\n]+?)\s*\n\s*\n\s*###\s+([^\n]+?)\s*\n\s*\n([\s\S]+?)\s*$/u);
+          if (!structured) return match;
+          const safe = value => escapeHtml(value.trim()).replace(/\n+/gu, '<br/>');
+          return `${opening}<small>${safe(structured[1])}</small><br/><strong>${safe(structured[2])}</strong><br/><span>${safe(structured[3])}</span>${closing}`;
+        }
+      );
       const loadMermaid = () => {
         if (!mermaidLibraryPromise) {
           mermaidLibraryPromise = new Promise((resolve, reject) => {
@@ -6080,7 +6092,7 @@
         try {
           const mermaid = await loadMermaid();
           mermaidRenderSequence += 1;
-          const result = await mermaid.render(`heartspace-mermaid-${mermaidRenderSequence}`, definition);
+          const result = await mermaid.render(`heartspace-mermaid-${mermaidRenderSequence}`, mermaidStructuredLabels(definition));
           preview.innerHTML = result.svg;
           source.hidden = true;
           preview.hidden = false;
@@ -8090,6 +8102,12 @@
         const selectionAnchor = window.getSelection()?.anchorNode;
         const selectionElement = selectionAnchor?.nodeType === Node.ELEMENT_NODE ? selectionAnchor : selectionAnchor?.parentElement;
         const caretTable = selectionElement?.closest('th,td')?.closest('table[data-docs-table]');
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLocaleLowerCase('pt-BR') === 'b') {
+          event.preventDefault();
+          applyInlineCommand('bold');
+          queueSave();
+          return;
+        }
         if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase('pt-BR') === 'z') {
           const handled = event.shiftKey ? redoNarrativeMutation() : undoNarrativeMutation();
           if (handled) { event.preventDefault(); return; }
