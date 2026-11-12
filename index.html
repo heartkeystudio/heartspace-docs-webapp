@@ -841,7 +841,7 @@
         <button class="tool" type="button" data-command="bold"><b>B</b></button><button class="tool" type="button" data-command="italic"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
         <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="insertUnorderedList">Lista</button><button class="tool" type="button" data-command="insertOrderedList">Numerada</button><button class="tool" type="button" data-command="formatBlock" data-value="pre">Código</button><span class="tool-separator"></span>
-        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3>Folha</h3><label>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
+        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3>Folha</h3><label>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
@@ -956,6 +956,7 @@
       const paperSizeControl = document.querySelector('#paper-size');
       const paperOrientationControl = document.querySelector('#paper-orientation');
       const pageMarginControl = document.querySelector('#page-margin');
+      const documentLayoutControl = document.querySelector('#document-layout');
       const zoomLevelControl = document.querySelector('#zoom-level');
       const documentViewModeControl = document.querySelector('#document-view-mode');
       const narrativeProfileControl = document.querySelector('#narrative-profile');
@@ -1667,6 +1668,7 @@
         paperSizeControl.value = size;
         paperOrientationControl.value = orientation;
         pageMarginControl.value = margin;
+        documentLayoutControl.value = record.layout === 'canvas' ? 'canvas' : 'book';
         const [baseWidth, baseHeight] = paperSpecs[size];
         const width = orientation === 'landscape' ? baseHeight : baseWidth;
         const height = orientation === 'landscape' ? baseWidth : baseHeight;
@@ -2119,6 +2121,9 @@
         if (event.key === 'Escape' && !pageSettingsPopover.hidden) { pageSettingsPopover.hidden = true; pageSettingsToggle.setAttribute('aria-expanded', 'false'); pageSettingsToggle.focus(); }
       });
       [paperSizeControl, paperOrientationControl, pageMarginControl].forEach(control => control.addEventListener('change', commitPageSettings));
+      documentLayoutControl.addEventListener('change', () => {
+        document.querySelector('#paper-settings-group').hidden = documentLayoutControl.value === 'canvas';
+      });
       zoomLevelControl.addEventListener('change', () => applyZoom(zoomLevelControl.value));
       const zoomValues = [...zoomLevelControl.options].map(option => Number(option.value));
       document.querySelector('#zoom-out').addEventListener('click', () => applyZoom([...zoomValues].reverse().find(value => value < Number(zoomLevelControl.value)) || zoomValues[0]));
@@ -2477,6 +2482,8 @@
         const knownTags = [...new Set(documents.flatMap(item => item.tags))].sort();
         document.querySelector('#known-tags').replaceChildren(...knownTags.map(tag => { const option=document.createElement('option'); option.value=tag; return option; }));
         metadataStatus.value = record.status;
+        documentLayoutControl.value = record.layout === 'canvas' ? 'canvas' : 'book';
+        document.querySelector('#paper-settings-group').hidden = documentLayoutControl.value === 'canvas';
         narrativeProfileControl.value = record.narrativeProfile === 'script' ? 'script' : 'prose';
         metadataTagChips.replaceChildren();
         record.tags.forEach(addMetadataTagChip);
@@ -2486,12 +2493,18 @@
         event.preventDefault();
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
+        const nextLayout = documentLayoutControl.value === 'canvas' ? 'canvas' : 'book';
+        const layoutChanged = record.layout !== nextLayout;
+        if (layoutChanged) record.body = serializeEditorBody();
+        record.layout = nextLayout;
         record.status = metadataStatus.value;
         record.narrativeProfile = narrativeProfileControl.value === 'script' ? 'script' : 'prose';
         applyNarrativeProfile(record.narrativeProfile);
         commitMetadataTagEntry();
         record.tags = [...new Set([...getMetadataTagValues(), ...metadataTags.value.split(',').map(normalizedTag).filter(Boolean)])];
         record.savedAt = new Date().toISOString();
+        if (layoutChanged) setEditorBody(record.body, record.layout);
+        else applyPageSettings(record);
         renderLibrary();
         persistLibrary();
         queueSave();
