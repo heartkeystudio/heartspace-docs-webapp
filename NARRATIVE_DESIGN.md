@@ -129,5 +129,5 @@ Decisão registrada para uma fatia futura:
 5. Adicionar variáveis tipadas, condições e efeitos às escolhas. **Implementado:** o registro do projeto aceita valores booleanos, numéricos e textuais; cada opção pode ter uma condição e um efeito configurados visualmente, exportados no JSON e executados pelo teste narrativo.
 6. Criar simulador com histórico, inspeção de variáveis e validação. **Implementado:** o teste registra cada avanço e escolha, permite retornar a estados anteriores, mostra os valores atuais e valida IDs, destinos, localizações, personagens, variáveis, tipos e eventos não alcançáveis.
 7. Revisar estética e estrutura da autoria narrativa.
-8. Implementar variações condicionais de leitura conforme a decisão acima.
+8. Implementar variações condicionais de leitura conforme a decisão acima. **Primeiro recorte implementado:** o bloco Variação de trecho possui versões com IDs estáveis, abas de autoria, versão ativa na leitura, localização por versão, simulação, validação e exportação. Condições automáticas por variável permanecem para a próxima evolução.
 9. Criar o primeiro adaptador de engine para Godot, mantendo o JSON genérico como contrato central. Esta integração fica por último nesta sequência.

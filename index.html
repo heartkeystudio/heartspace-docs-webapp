@@ -368,9 +368,12 @@
     .mermaid-preview { max-width:100%; padding:20px; overflow:auto; background:#17171b; }
     .mermaid-preview[hidden],.mermaid-source[hidden],.mermaid-status[hidden] { display:none; }
     .mermaid-preview svg { display:block; max-width:100%; height:auto; margin:auto; }
-    .mermaid-preview .nodeLabel small { display:inline-block; margin-bottom:5px; color:#0c8ce9; font-size:10px; font-weight:700; letter-spacing:.12em; line-height:1.2; text-transform:uppercase; }
-    .mermaid-preview .nodeLabel strong { display:inline-block; margin-bottom:5px; color:#eef4f8; font-size:14px; line-height:1.25; }
-    .mermaid-preview .nodeLabel small + br + strong + br + span { color:#aeb9c2; font-size:12px; line-height:1.4; }
+    .mermaid-preview foreignObject { overflow:visible; }
+    .mermaid-preview .nodeLabel { overflow:visible; white-space:normal; }
+    .mermaid-preview .docs-mermaid-label { box-sizing:border-box; width:210px; max-width:210px; overflow-wrap:anywhere; white-space:normal; text-align:left; }
+    .mermaid-preview .nodeLabel small { display:block; margin-bottom:5px; color:#0c8ce9; font:700 10px/1.2 "Segoe UI",Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    .mermaid-preview .nodeLabel strong { display:block; margin-bottom:5px; color:#eef4f8; font:600 14px/1.25 "Segoe UI",Arial,sans-serif; white-space:normal; }
+    .mermaid-preview .docs-mermaid-label > span { display:block; color:#aeb9c2; font:400 12px/1.4 "Segoe UI",Arial,sans-serif; white-space:normal; }
     .mermaid-status { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
     .mermaid-status[data-error="true"] { position:static; width:auto; height:auto; padding:8px 12px; overflow:visible; clip-path:none; color:#f09ba0; white-space:normal; }
     @media(hover:none){.mermaid-action{opacity:.82;pointer-events:auto;transform:none}}
@@ -416,6 +419,7 @@
     .narrative-block[data-narrative-type="pause"] { --narrative-accent:#d09b55; }
     .narrative-block[data-narrative-type="signal"] { --narrative-accent:#5ba9b7; }
     .narrative-block[data-narrative-type="choice"] { --narrative-accent:#72b98c; }
+    .narrative-block[data-narrative-type="variation"] { --narrative-accent:#a787d8; }
     .narrative-block[data-reading-empty="true"] { min-height:26px; margin:2px 0 6px; overflow:visible; }
     .narrative-reading { min-width:0; }
     .narrative-marker { position:absolute; z-index:7; top:-2px; right:0; display:flex; align-items:center; width:auto; min-width:6px; max-width:6px; height:24px; padding:0; overflow:hidden; border:1px solid color-mix(in srgb,var(--narrative-accent) 48%,transparent); border-radius:999px; color:transparent; background:#1d1c22f2; box-shadow:0 4px 14px #0007; font-size:0; font-weight:720; letter-spacing:.06em; line-height:1; text-transform:uppercase; opacity:.55; transform:translateX(2px); transition:min-width .14s ease,max-width .14s ease,padding .14s ease,color .14s ease,font-size .14s ease,opacity .12s ease,transform .12s ease; }
@@ -477,6 +481,16 @@
     .narrative-choice-add { position:absolute; z-index:6; top:100%; right:20px; margin:2px 0 0; padding:2px 5px; border-radius:5px; background:#1b1a20e8; font-size:11px; opacity:0; pointer-events:none; }
     .narrative-block[data-narrative-type="choice"]:hover > .narrative-choice-add,.narrative-block[data-narrative-type="choice"]:focus-within > .narrative-choice-add { opacity:1; pointer-events:auto; }
     .narrative-choice-add:hover { color:#cfe5d7; }
+    .narrative-variation-tabs { display:flex; align-items:center; gap:4px; margin:0 0 7px; padding:3px; overflow-x:auto; border:1px solid #ffffff10; border-radius:7px; background:#17161b; scrollbar-width:thin; }
+    .narrative-variation-tab,.narrative-variation-add,.narrative-variation-remove { min-height:25px; flex:0 0 auto; padding:0 8px; border-radius:5px; color:#9c95a3; background:transparent; font-size:10px; white-space:nowrap; }
+    .narrative-variation-tab[aria-selected="true"] { color:#eadff4; background:#a787d82b; }
+    .narrative-variation-add:hover,.narrative-variation-tab:hover { color:#f3ebf8; background:#ffffff0b; }
+    .narrative-variation-remove { margin-left:auto; color:#b28f9a; }
+    .narrative-variation-remove:hover:not(:disabled) { color:#efb1bc; background:#d76d6d14; }
+    .narrative-variation-remove:disabled { opacity:.35; cursor:not-allowed; }
+    .narrative-variation-version { display:none; min-height:24px; color:#ddd8e1; line-height:1.5; outline:none; white-space:pre-wrap; }
+    .narrative-variation-version[data-active="true"] { display:block; }
+    .narrative-variation-version[data-placeholder]:empty::before { color:#77717d; content:attr(data-placeholder); pointer-events:none; }
     .narrative-field:focus { border-bottom-color:var(--narrative-accent); box-shadow:none; }
     .narrative-field[data-placeholder]:empty::before,.narrative-text[data-placeholder]:empty::before { color:#77717d; content:attr(data-placeholder); pointer-events:none; }
     .narrative-text { min-height:24px; color:#e6e0e9; line-height:1.5; outline:none; white-space:pre-wrap; }
@@ -956,7 +970,7 @@
     <section class="narrative-panel">
         <div class="narrative-heading"><h2 id="narrative-title">Central de produção</h2><div><button type="button" id="narrative-collapse" aria-label="Minimizar central de produção">Minimizar</button><button type="button" id="narrative-close" hidden>Fechar</button></div></div>
         <div class="narrative-settings" id="narrative-settings"><div class="narrative-sequence-picker"><label>Sequência ativa<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add">Nova sequência</button><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir</button></div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span></div>
-        <div class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><span>Adicionar</span><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div>
+        <div class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><span>Adicionar</span><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="variation">Variação</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div>
         <div class="narrative-tabs" role="tablist" aria-label="Visualização narrativa">
           <button type="button" id="narrative-sequence-tab" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
           <button type="button" id="narrative-map-tab" role="tab" aria-selected="false" aria-controls="narrative-map">Mapa</button>
@@ -1116,7 +1130,8 @@
           { label: 'Narração', detail: 'Descrição, ação ou voz narrativa', icon: '¶', kind: 'narrative', value: 'narration' },
           { label: 'Pausa', detail: 'Aguarde antes de continuar a sequência', icon: 'Ⅱ', kind: 'narrative', value: 'pause' },
           { label: 'Sinal do jogo', detail: 'Dispare um evento para a engine', icon: '⌁', kind: 'narrative', value: 'signal' },
-          { label: 'Escolha', detail: 'Ofereça caminhos para outros eventos', icon: '⑂', kind: 'narrative', value: 'choice' }
+          { label: 'Escolha', detail: 'Ofereça caminhos para outros eventos', icon: '⑂', kind: 'narrative', value: 'choice' },
+          { label: 'Variação de trecho', detail: 'Mantenha versões alternativas no mesmo ponto', icon: '≋', kind: 'narrative', value: 'variation' }
         ] },
         { label: 'Callouts', detail: '3 estilos essenciais; personalize o título', icon: '▰', kind: 'folder', id: 'callouts', children: [
           { label: 'Informação', detail: 'Contexto ou nota útil', icon: 'ⓘ', iconAsset: 'info', kind: 'callout', value: 'callout_info' },
@@ -1840,8 +1855,8 @@
       const newNarrativeId = () => `narr-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const newLocalizationId = () => `line.${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const makeChoiceOptionId = () => `option-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-      const narrativeTypeLabel = type => type === 'dialogue' ? 'Diálogo' : type === 'narration' ? 'Narração' : type === 'pause' ? 'Pausa' : type === 'choice' ? 'Escolha' : 'Sinal do jogo';
-      const narrativeTypeSymbol = type => type === 'dialogue' ? '“' : type === 'narration' ? '¶' : type === 'pause' ? 'Ⅱ' : type === 'choice' ? '⑂' : '⌁';
+      const narrativeTypeLabel = type => type === 'dialogue' ? 'Diálogo' : type === 'narration' ? 'Narração' : type === 'pause' ? 'Pausa' : type === 'choice' ? 'Escolha' : type === 'variation' ? 'Variação' : 'Sinal do jogo';
+      const narrativeTypeSymbol = type => type === 'dialogue' ? '“' : type === 'narration' ? '¶' : type === 'pause' ? 'Ⅱ' : type === 'choice' ? '⑂' : type === 'variation' ? '≋' : '⌁';
       const narrativeSequenceRailColors = ['#0c8ce9','#5ba9b7','#72b98c','#d09b55','#a787d8','#d87586'];
       const narrativeSequenceRailColor = id => {
         const hash = [...String(id || '')].reduce((total, character) => ((total * 31) + character.codePointAt(0)) | 0, 0);
@@ -1936,6 +1951,78 @@
           }
         });
       };
+      const newVariationVersionId = () => `variant-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+      const createNarrativeVariationVersion = (data = {}) => {
+        const version = document.createElement('div');
+        version.className = 'narrative-variation-version narrative-reading';
+        version.contentEditable = 'true';
+        version.dataset.variationVersionId = data.id || newVariationVersionId();
+        version.dataset.localizationId = data.localizationId || newLocalizationId();
+        version.dataset.label = data.label || '';
+        version.dataset.placeholder = 'Escreva esta versão do trecho…';
+        version.setAttribute('role', 'textbox');
+        version.setAttribute('aria-label', data.label || 'Versão alternativa do trecho');
+        version.textContent = data.text || '';
+        if (data.active) version.dataset.active = 'true';
+        return version;
+      };
+      const refreshNarrativeVariation = block => {
+        if (!block?.matches?.('.narrative-block[data-narrative-type="variation"]')) return;
+        let versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+        if (!versions.length) {
+          const version = createNarrativeVariationVersion({ active:true });
+          block.append(version);
+          versions = [version];
+        }
+        versions.forEach((version, index) => {
+          if (!version.dataset.variationVersionId) version.dataset.variationVersionId = newVariationVersionId();
+          if (!version.dataset.localizationId) version.dataset.localizationId = newLocalizationId();
+          if (!version.dataset.label) version.dataset.label = `Versão ${index + 1}`;
+          version.classList.add('narrative-reading');
+          version.contentEditable = 'true';
+          version.setAttribute('aria-label', version.dataset.label);
+        });
+        const active = versions.find(version => version.dataset.active === 'true') || versions[0];
+        versions.forEach(version => {
+          if (version === active) version.dataset.active = 'true';
+          else delete version.dataset.active;
+        });
+        let tabs = block.querySelector(':scope > .narrative-variation-tabs');
+        if (!tabs) {
+          tabs = document.createElement('div');
+          tabs.className = 'narrative-variation-tabs authoring-decoration';
+          tabs.contentEditable = 'false';
+          tabs.setAttribute('role', 'tablist');
+          const meta = block.querySelector(':scope > .narrative-meta');
+          if (meta) meta.after(tabs);
+          else block.prepend(tabs);
+        }
+        tabs.replaceChildren();
+        versions.forEach(version => {
+          const tab = document.createElement('button');
+          tab.type = 'button';
+          tab.className = 'narrative-variation-tab';
+          tab.dataset.variationTab = version.dataset.variationVersionId;
+          tab.setAttribute('role', 'tab');
+          tab.setAttribute('aria-selected', String(version === active));
+          tab.textContent = version.dataset.label;
+          tabs.append(tab);
+        });
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'narrative-variation-add';
+        add.dataset.addVariation = 'true';
+        add.textContent = '+ versão';
+        add.setAttribute('aria-label', 'Adicionar versão deste trecho');
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'narrative-variation-remove';
+        remove.dataset.removeVariation = 'true';
+        remove.textContent = 'Remover';
+        remove.disabled = versions.length <= 1;
+        remove.setAttribute('aria-label', `Remover ${active.dataset.label}`);
+        tabs.append(add, remove);
+      };
       const refreshNarrativeReadingLabel = block => {
         if (!block) return;
         if (block.classList.contains('narrative-inline')) {
@@ -1967,7 +2054,7 @@
           ...(root?.querySelectorAll?.('.narrative-block') || [])
         ];
         blocks.forEach(block => {
-          const type = ['dialogue', 'narration', 'pause', 'signal', 'choice'].includes(block.dataset.narrativeType) ? block.dataset.narrativeType : 'dialogue';
+          const type = ['dialogue', 'narration', 'pause', 'signal', 'choice', 'variation'].includes(block.dataset.narrativeType) ? block.dataset.narrativeType : 'dialogue';
           block.dataset.narrativeType = type;
           if (!block.dataset.narrativeId) block.dataset.narrativeId = newNarrativeId();
           const localizable = type === 'dialogue' || type === 'narration' || type === 'choice';
@@ -2017,6 +2104,7 @@
           block.querySelector('.narrative-text')?.classList.add('narrative-reading');
           block.querySelector('.narrative-choice-prompt')?.classList.add('narrative-reading');
           block.querySelector('.narrative-choice-options')?.classList.add('narrative-reading');
+          block.querySelectorAll(':scope > .narrative-variation-version').forEach(version => version.classList.add('narrative-reading'));
           block.querySelector(':scope > .narrative-choice-add')?.classList.add('authoring-decoration');
           block.querySelectorAll('.narrative-choice-option').forEach(option => {
             if (!option.dataset.choiceOptionId) option.dataset.choiceOptionId = makeChoiceOptionId();
@@ -2054,6 +2142,7 @@
             rules.textContent = ruleCount ? `Regras · ${ruleCount}` : 'Regras';
           });
           if (type === 'choice') refreshCanonicalChoiceOptions(block);
+          if (type === 'variation') refreshNarrativeVariation(block);
           refreshNarrativeReadingLabel(block);
         });
         blocks.forEach(block => {
@@ -2445,6 +2534,7 @@
         snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
         snapshot.querySelectorAll('[data-page-break="true"]').forEach(pageBreak => pageBreak.remove());
         snapshot.querySelectorAll('.authoring-decoration,.narrative-block[data-reading-empty="true"]').forEach(element => element.remove());
+        snapshot.querySelectorAll('.narrative-variation-version:not([data-active="true"])').forEach(version => version.remove());
         if (documentPage.dataset.narrativeProfile === 'prose') snapshot.querySelectorAll('.narrative-reading-label').forEach(label => label.remove());
         return snapshot.textContent || '';
       };
@@ -3024,7 +3114,7 @@
       const collectNarrativeNodesFromRoot = (root, assignIds = false, defaultSequenceId = '') => [...root.querySelectorAll('.narrative-block')].map((block, index) => {
         if (assignIds && !block.dataset.narrativeId) block.dataset.narrativeId = makeNarrativeId();
         if (assignIds && !block.dataset.narrativeSequenceId && defaultSequenceId) block.dataset.narrativeSequenceId = defaultSequenceId;
-        const type = ['dialogue', 'narration', 'pause', 'signal', 'choice'].includes(block.dataset.narrativeType) ? block.dataset.narrativeType : 'dialogue';
+        const type = ['dialogue', 'narration', 'pause', 'signal', 'choice', 'variation'].includes(block.dataset.narrativeType) ? block.dataset.narrativeType : 'dialogue';
         const node = {
           id: block.dataset.narrativeId || `node_${index + 1}`,
           type,
@@ -3063,6 +3153,19 @@
               ...(effect ? { effects: [effect] } : {})
             };
           });
+        }
+        if (type === 'variation') {
+          const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+          const active = versions.find(version => version.dataset.active === 'true') || versions[0];
+          node.active_version_id = active?.dataset.variationVersionId || '';
+          node.versions = versions.map((version, versionIndex) => ({
+            id:version.dataset.variationVersionId || `variant_${versionIndex + 1}`,
+            localization_id:version.dataset.localizationId || '',
+            label:version.dataset.label || `Versão ${versionIndex + 1}`,
+            text:version.innerText.trim(),
+            active:version === active
+          }));
+          node.text = active?.innerText.trim() || '';
         }
         return { block, index, node };
       });
@@ -3145,6 +3248,17 @@
                 if (optionElement) optionElement.dataset.localizationId = option.localization_id;
               }
               entries.push({ block, target:optionElement?.querySelector('.narrative-choice-text'), label:`Opção ${index + 1}`, kind:'narrative', node:{ localization_id:option.localization_id, text:option.text || '', sequence_id:node.sequence_id } });
+            });
+          }
+          if (node.type === 'variation') {
+            const versionElements = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+            (node.versions || []).forEach((version, index) => {
+              const versionElement = versionElements[index];
+              if (!version.localization_id) {
+                version.localization_id = newLocalizationId();
+                if (versionElement) versionElement.dataset.localizationId = version.localization_id;
+              }
+              entries.push({ block, target:versionElement, label:`Variação · ${version.label || index + 1}`, kind:'narrative', node:{ localization_id:version.localization_id, text:version.text || '', sequence_id:node.sequence_id } });
             });
           }
         });
@@ -3250,6 +3364,17 @@
                 if (optionElement) optionElement.dataset.localizationId = option.localization_id;
               }
               entries.push({ id:option.localization_id, text:option.text || '', label:`Opção ${index + 1}`, kind:'narrative', context, target:optionElement || block });
+            });
+          }
+          if (node.type === 'variation') {
+            const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+            (node.versions || []).forEach((version, index) => {
+              const versionElement = versions[index];
+              if (!version.localization_id) {
+                version.localization_id = newLocalizationId();
+                if (versionElement) versionElement.dataset.localizationId = version.localization_id;
+              }
+              entries.push({ id:version.localization_id, text:version.text || '', label:`Variação · ${version.label || index + 1}`, kind:'narrative', context, target:versionElement || block });
             });
           }
         });
@@ -4265,6 +4390,17 @@
               if (!node.character_id) add('warning', `Diálogo sem personagem registrado`, `${entry.id}, bloco ${nodeIndex + 1}. Vincule a fala a um personagem do projeto.`, entry.id);
               else if (!characterById(node.character_id)) add('error', `Personagem ausente: ${node.character_id}`, `${entry.id}, bloco ${nodeIndex + 1} referencia um personagem que não está no registro.`, entry.id);
             }
+            if (node.type === 'variation') {
+              if ((node.versions || []).length < 2) add('warning', 'Variação com uma única versão', `${entry.id}, bloco ${nodeIndex + 1}. Adicione outra versão ou transforme o trecho em texto comum.`, entry.id);
+              (node.versions || []).forEach((version, versionIndex) => {
+                const location = `${entry.id}, variação ${versionIndex + 1}`;
+                if (!version.text) add('warning', 'Versão alternativa vazia', `${location}. Preencha o trecho antes de publicar.`, entry.id);
+                if (!version.localization_id) return;
+                const owner = localizationOwners.get(version.localization_id);
+                if (owner) add('error', `Localização duplicada: ${version.localization_id}`, `Usada em ${owner} e ${location}.`, entry.id);
+                else localizationOwners.set(version.localization_id, location);
+              });
+            }
             if (node.type !== 'choice') return;
             (node.options || []).forEach((option, optionIndex) => {
               const location = `${entry.id}, escolha ${optionIndex + 1}`;
@@ -4858,7 +4994,7 @@
           return;
         }
         stopNarrativeTestPlayback();
-        const labels = { dialogue:'Diálogo', narration:'Narração', pause:'Pausa', signal:'Sinal', choice:'Escolha' };
+        const labels = { dialogue:'Diálogo', narration:'Narração', pause:'Pausa', signal:'Sinal', choice:'Escolha', variation:'Variação' };
         captureNarrativeTestSnapshot(`${labels[node?.type] || 'Etapa'} · ${entry?.id || narrativeTestState.eventId}`);
         narrativeTestState.index += 1;
         renderNarrativeTest();
@@ -4911,6 +5047,10 @@
         } else if (node.type === 'narration') {
           const { box, copy } = createNarrativePlayerBox('Narração', true);
           typeNarrativeTestText(copy, node.text || 'Narração vazia', () => narrativeTestHint(box));
+        } else if (node.type === 'variation') {
+          const active = node.versions?.find(version => version.id === node.active_version_id) || node.versions?.find(version => version.active) || node.versions?.[0];
+          const { box, copy } = createNarrativePlayerBox(active?.label || 'Variação', true);
+          typeNarrativeTestText(copy, active?.text || 'Versão ativa vazia', () => narrativeTestHint(box));
         } else if (node.type === 'pause') {
           const duration = Math.max(0, Math.min(60000, Number(node.duration_ms) || 0));
           const { box, copy } = createNarrativePlayerBox('Pausa');
@@ -5000,8 +5140,9 @@
         const dialogueCount = entries.filter(item => item.node.type === 'dialogue').length;
         const narrationCount = entries.filter(item => item.node.type === 'narration').length;
         const choiceCount = entries.filter(item => item.node.type === 'choice').length;
-        const actionCount = entries.length - dialogueCount - narrationCount - choiceCount;
-        narrativeSummary.textContent = `${entries.length} ${entries.length === 1 ? 'bloco' : 'blocos'} nesta sequência · ${allEntries.length} no documento · ${dialogueCount} ${dialogueCount === 1 ? 'fala' : 'falas'} · ${choiceCount} ${choiceCount === 1 ? 'escolha' : 'escolhas'} · ${actionCount} ${actionCount === 1 ? 'ação' : 'ações'}`;
+        const variationCount = entries.filter(item => item.node.type === 'variation').length;
+        const actionCount = entries.length - dialogueCount - narrationCount - choiceCount - variationCount;
+        narrativeSummary.textContent = `${entries.length} ${entries.length === 1 ? 'bloco' : 'blocos'} nesta sequência · ${allEntries.length} no documento · ${dialogueCount} ${dialogueCount === 1 ? 'fala' : 'falas'} · ${choiceCount} ${choiceCount === 1 ? 'escolha' : 'escolhas'} · ${variationCount} ${variationCount === 1 ? 'variação' : 'variações'} · ${actionCount} ${actionCount === 1 ? 'ação' : 'ações'}`;
         narrativeSequence.replaceChildren();
         if (!entries.length) {
           const empty = document.createElement('div');
@@ -5030,18 +5171,20 @@
             : node.type === 'narration' ? 'Narração'
             : node.type === 'pause' ? `Pausa · ${node.duration_ms} ms`
             : node.type === 'choice' ? `Escolha · ${node.options.length} ${node.options.length === 1 ? 'opção' : 'opções'}`
+            : node.type === 'variation' ? `Variação · ${node.versions.length} ${node.versions.length === 1 ? 'versão' : 'versões'}`
             : node.name ? `Sinal · ${node.name}` : 'Sinal do jogo';
           const preview = document.createElement('small');
           preview.textContent = node.type === 'pause' ? 'A sequência aguarda antes de continuar'
             : node.type === 'signal' ? (node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload))
             : node.type === 'choice' ? node.prompt || 'Pergunta ainda não definida'
+            : node.type === 'variation' ? node.text || 'Versão ativa vazia'
             : `${node.text || 'Bloco vazio'}${node.localization_id ? ` · ${node.localization_id}` : ''}`;
           copy.append(heading, preview);
           button.append(indexLabel, copy);
           button.addEventListener('click', () => {
             if (narrativeDragMoved) return;
             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            placeCaret(block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt'), true);
+            placeCaret(block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]'), true);
           });
           button.addEventListener('dragstart', event => {
             if (block.classList.contains('narrative-inline')) { event.preventDefault(); return; }
@@ -6620,7 +6763,7 @@
           const structured = label.match(/^\s*([^\n]+?)\s*\n\s*\n\s*###\s+([^\n]+?)\s*\n\s*\n([\s\S]+?)\s*$/u);
           if (!structured) return match;
           const safe = value => escapeHtml(value.trim()).replace(/\n+/gu, '<br/>');
-          return `${opening}<small>${safe(structured[1])}</small><br/><strong>${safe(structured[2])}</strong><br/><span>${safe(structured[3])}</span>${closing}`;
+          return `${opening}<div class="docs-mermaid-label"><small>${safe(structured[1])}</small><strong>${safe(structured[2])}</strong><span>${safe(structured[3])}</span></div>${closing}`;
         }
       );
       const loadMermaid = () => {
@@ -6637,7 +6780,30 @@
             script.onerror = () => reject(new Error('Não foi possível carregar a biblioteca Mermaid local'));
             document.head.append(script);
           }).then(mermaid => {
-            mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'dark' });
+            mermaid.initialize({
+              startOnLoad: false,
+              securityLevel: 'strict',
+              theme: 'dark',
+              fontFamily: '"Segoe UI", Arial, sans-serif',
+              flowchart: {
+                htmlLabels: true,
+                wrappingWidth: 210,
+                nodeSpacing: 48,
+                rankSpacing: 56
+              },
+              themeVariables: {
+                fontFamily: '"Segoe UI", Arial, sans-serif',
+                fontSize: '14px'
+              },
+              themeCSS: `
+                foreignObject { overflow: visible; }
+                .nodeLabel { overflow: visible; white-space: normal; }
+                .docs-mermaid-label { box-sizing: border-box; width: 210px; max-width: 210px; overflow-wrap: anywhere; white-space: normal; text-align: left; }
+                .docs-mermaid-label small { display: block; margin-bottom: 5px; color: #0c8ce9; font: 700 10px/1.2 "Segoe UI", Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+                .docs-mermaid-label strong { display: block; margin-bottom: 5px; color: #eef4f8; font: 600 14px/1.25 "Segoe UI", Arial, sans-serif; white-space: normal; }
+                .docs-mermaid-label span { display: block; color: #aeb9c2; font: 400 12px/1.4 "Segoe UI", Arial, sans-serif; white-space: normal; }
+              `
+            });
             return mermaid;
           }).catch(error => {
             mermaidLibraryPromise = null;
@@ -6660,6 +6826,7 @@
         status.textContent = 'Gerando prévia…';
         try {
           const mermaid = await loadMermaid();
+          if (document.fonts?.ready) await document.fonts.ready;
           mermaidRenderSequence += 1;
           const result = await mermaid.render(`heartspace-mermaid-${mermaidRenderSequence}`, mermaidStructuredLabels(definition));
           preview.innerHTML = result.svg;
@@ -7088,7 +7255,7 @@
           const neighbor = next || previous;
           if (neighbor) {
             const destination = neighbor.matches('.narrative-block')
-              ? neighbor.querySelector('.narrative-text,.narrative-choice-prompt,.narrative-choice-text,.narrative-duration,.narrative-signal')
+              ? neighbor.querySelector('.narrative-text,.narrative-choice-prompt,.narrative-choice-text,.narrative-duration,.narrative-signal,.narrative-variation-version[data-active="true"]')
               : neighbor;
             placeCaret(destination || neighbor, !next);
           } else {
@@ -7129,7 +7296,7 @@
         return true;
       };
       const createNarrativeBlock = (type, data = {}) => {
-        const narrativeType = ['dialogue', 'narration', 'pause', 'signal', 'choice'].includes(type) ? type : 'dialogue';
+        const narrativeType = ['dialogue', 'narration', 'pause', 'signal', 'choice', 'variation'].includes(type) ? type : 'dialogue';
         const block = document.createElement('section');
         block.className = 'narrative-block';
         block.dataset.narrativeType = narrativeType;
@@ -7216,6 +7383,11 @@
           add.dataset.addChoiceOption = 'true';
           add.textContent = '+ adicionar opção';
           block.append(meta, prompt, options, add);
+        } else if (narrativeType === 'variation') {
+          const versions = Array.isArray(data.versions) && data.versions.length
+            ? data.versions
+            : [{ label:'Principal', text:data.text || '', active:true }, { label:'Alternativa', text:'' }];
+          block.append(meta, ...versions.map((version, index) => createNarrativeVariationVersion({ ...version, active:version.active === true || (!versions.some(item => item.active) && index === 0) })));
         } else if (narrativeType === 'dialogue' || narrativeType === 'narration') {
           const text = document.createElement('div');
           text.className = 'narrative-text narrative-reading';
@@ -7333,7 +7505,7 @@
         else if (selection?.rangeCount && editor.contains(selection.anchorNode)) selection.getRangeAt(0).insertNode(block);
         else editor.append(block);
         normalizeNarrativeMarkup(editor);
-        const target = type === 'dialogue' && !sourceText ? block.querySelector('.narrative-character') : block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt');
+        const target = type === 'dialogue' && !sourceText ? block.querySelector('.narrative-character') : block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]');
         if (target?.closest('.narrative-meta')) {
           block.dataset.inspectorOpen = 'true';
           block.querySelector('.narrative-marker')?.setAttribute('aria-expanded', 'true');
@@ -7385,7 +7557,7 @@
         const sibling = direction === 'before' ? block.previousElementSibling : block.nextElementSibling;
         if (sibling) {
           const destination = sibling.matches('.narrative-block')
-            ? sibling.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt')
+            ? sibling.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]')
             : sibling;
           placeCaret(destination || sibling, direction === 'before');
           return true;
@@ -7437,7 +7609,7 @@
         const character = target.closest('.narrative-character');
         const expression = target.closest('.narrative-expression');
         const localization = target.closest('.narrative-localization-id');
-        const text = target.closest('.narrative-text');
+        const text = target.closest('.narrative-text,.narrative-variation-version');
         const duration = target.closest('.narrative-duration');
         const signal = target.closest('.narrative-signal');
         const payload = target.closest('.narrative-payload');
@@ -7638,6 +7810,65 @@
           event.preventDefault();
           event.stopPropagation();
           openNarrativeRules(rules.closest('.narrative-choice-option'));
+          return;
+        }
+        const variationTab = event.target.closest?.('[data-variation-tab]');
+        if (variationTab) {
+          event.preventDefault();
+          event.stopPropagation();
+          const block = variationTab.closest('.narrative-block[data-narrative-type="variation"]');
+          const version = block?.querySelector(`:scope > .narrative-variation-version[data-variation-version-id="${CSS.escape(variationTab.dataset.variationTab)}"]`);
+          if (!block || !version) return;
+          const mutation = rememberNarrativeMutation();
+          block.querySelectorAll(':scope > .narrative-variation-version').forEach(item => {
+            if (item === version) item.dataset.active = 'true';
+            else delete item.dataset.active;
+          });
+          refreshNarrativeVariation(block);
+          commitNarrativeMutation(mutation);
+          placeCaret(version, true);
+          scheduleBookPagination();
+          if (isNarrativePanelOpen()) renderNarrativePanel();
+          queueSave();
+          return;
+        }
+        const addVariation = event.target.closest?.('[data-add-variation]');
+        if (addVariation) {
+          event.preventDefault();
+          event.stopPropagation();
+          const block = addVariation.closest('.narrative-block[data-narrative-type="variation"]');
+          if (!block) return;
+          const mutation = rememberNarrativeMutation();
+          const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+          versions.forEach(version => delete version.dataset.active);
+          const version = createNarrativeVariationVersion({ label:`Versão ${versions.length + 1}`, active:true });
+          block.append(version);
+          refreshNarrativeVariation(block);
+          commitNarrativeMutation(mutation);
+          placeCaret(version);
+          scheduleBookPagination();
+          if (isNarrativePanelOpen()) renderNarrativePanel();
+          queueSave();
+          return;
+        }
+        const removeVariation = event.target.closest?.('[data-remove-variation]');
+        if (removeVariation) {
+          event.preventDefault();
+          event.stopPropagation();
+          const block = removeVariation.closest('.narrative-block[data-narrative-type="variation"]');
+          const versions = [...(block?.querySelectorAll(':scope > .narrative-variation-version') || [])];
+          if (!block || versions.length <= 1) return;
+          const mutation = rememberNarrativeMutation();
+          const active = versions.find(version => version.dataset.active === 'true') || versions[0];
+          const next = active.nextElementSibling?.matches('.narrative-variation-version') ? active.nextElementSibling : active.previousElementSibling;
+          active.remove();
+          if (next?.matches('.narrative-variation-version')) next.dataset.active = 'true';
+          refreshNarrativeVariation(block);
+          commitNarrativeMutation(mutation);
+          placeCaret(block.querySelector(':scope > .narrative-variation-version[data-active="true"]'), true);
+          scheduleBookPagination();
+          if (isNarrativePanelOpen()) renderNarrativePanel();
+          queueSave();
           return;
         }
         const canonical = event.target.closest?.('[data-choice-canonical]');
@@ -8145,7 +8376,7 @@
         }
         if (node.matches('.narrative-block')) {
           const id = node.dataset.narrativeId || '';
-          const type = ['dialogue', 'narration', 'pause', 'signal', 'choice'].includes(node.dataset.narrativeType) ? node.dataset.narrativeType : 'dialogue';
+          const type = ['dialogue', 'narration', 'pause', 'signal', 'choice', 'variation'].includes(node.dataset.narrativeType) ? node.dataset.narrativeType : 'dialogue';
           const text = node.querySelector('.narrative-text')?.innerText.trim() || '';
           const metadata = `<!-- heartspace-narrative id="${id}" type="${type}" -->`;
           if (type === 'narration') return `${metadata}\n*${markdownEscape(text)}*`;
@@ -8166,6 +8397,11 @@
               return `- ${markdownEscape(label)} → \`${target.replace(/`/g, '\\`')}\``;
             });
             return `${metadata}\n**${markdownEscape(prompt)}**\n${options.join('\n')}`;
+          }
+          if (type === 'variation') {
+            const versions = [...node.querySelectorAll(':scope > .narrative-variation-version')];
+            const active = versions.find(version => version.dataset.active === 'true') || versions[0];
+            return `${metadata}\n${markdownEscape(active?.innerText.trim() || '')}`;
           }
           const character = node.querySelector('.narrative-character')?.textContent.trim() || 'Personagem';
           const expression = node.querySelector('.narrative-expression')?.textContent.trim() || '';
@@ -8747,7 +8983,7 @@
           const adjacentNarrative = directionIsBefore ? narrativeImmediatelyBeforeCaret() : narrativeImmediatelyAfterCaret();
           if (adjacentNarrative) {
             event.preventDefault();
-            const destination = adjacentNarrative.querySelector('.narrative-text,.narrative-choice-text,.narrative-duration,.narrative-signal');
+            const destination = adjacentNarrative.querySelector('.narrative-text,.narrative-choice-text,.narrative-duration,.narrative-signal,.narrative-variation-version[data-active="true"]');
             placeCaret(destination || adjacentNarrative, directionIsBefore);
             return;
           }
@@ -8756,7 +8992,7 @@
           const previousNarrative = narrativeImmediatelyBeforeCaret();
           if (previousNarrative) {
             event.preventDefault();
-            const destination = previousNarrative.querySelector('.narrative-text,.narrative-choice-text,.narrative-duration,.narrative-signal');
+            const destination = previousNarrative.querySelector('.narrative-text,.narrative-choice-text,.narrative-duration,.narrative-signal,.narrative-variation-version[data-active="true"]');
             placeCaret(destination || previousNarrative, true);
             return;
           }
