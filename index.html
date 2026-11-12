@@ -5719,13 +5719,13 @@
           finished = true;
           clearTimeout(timeout);
           window.removeEventListener('message', receiveSession);
-          try { window.opener = null; } catch (_) {}
           resolve(received);
         };
         const receiveSession = event => {
           if (event.origin !== dashboardOrigin || event.source !== window.opener || event.data?.type !== 'heartspace-docs-session') return;
           if (!event.data.accessToken) { finish(false); return; }
-          saveAuthSession({ access_token: event.data.accessToken, refresh_token: event.data.refreshToken, expires_at: event.data.expiresAt });
+          clearStoredAuthSession();
+          saveAuthSession({ access_token: event.data.accessToken, expires_at: event.data.expiresAt });
           finish(true);
         };
         window.addEventListener('message', receiveSession);
