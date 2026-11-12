@@ -40,9 +40,11 @@
     body.focus-mode.narrative-panel-open .app { grid-template-columns:minmax(420px,1fr) var(--narrative-panel-width,420px); }
     body.focus-mode .workspace { grid-column:1; }
     body.focus-mode .sidebar { position:fixed; z-index:40; inset:var(--topbar-height) auto 0 0; width:252px; min-height:0; transform:translateX(-100%); transition:transform .16s ease; box-shadow:12px 0 34px #0008; }
-    body.focus-mode.zen-sidebar-open .sidebar,body.focus-mode .sidebar:focus-within,body.focus-mode.zen-sidebar-pinned .sidebar { transform:translateX(0); }
-    body.focus-mode::before { content:''; position:fixed; z-index:39; inset:var(--topbar-height) auto 0 0; width:12px; background:linear-gradient(90deg,#0c8ce90d,transparent); pointer-events:none; }
-    body.focus-mode:not(.zen-sidebar-open):not(.zen-sidebar-pinned)::after { content:'›'; position:fixed; z-index:39; top:50%; left:0; display:grid; place-items:center; width:26px; height:64px; transform:translateY(-50%); border:1px solid #0c8ce945; border-left:0; border-radius:0 10px 10px 0; color:#76bff4; background:#1d1d22eF; box-shadow:0 0 18px #0c8ce922; font-size:20px; pointer-events:none; }
+    body.focus-mode.zen-sidebar-open .sidebar,body.focus-mode.zen-sidebar-pinned .sidebar { transform:translateX(0); }
+    .zen-sidebar-toggle { display:none; }
+    body.focus-mode .zen-sidebar-toggle { position:fixed; z-index:42; top:50%; left:0; display:grid; place-items:center; width:30px; height:66px; padding:0; transform:translateY(-50%); border:1px solid #0c8ce945; border-left:0; border-radius:0 10px 10px 0; color:#76bff4; background:#1d1d22ef; box-shadow:0 0 18px #0c8ce922; font-size:20px; transition:left .16s ease,background .14s ease; }
+    body.focus-mode.zen-sidebar-open .zen-sidebar-toggle,body.focus-mode.zen-sidebar-pinned .zen-sidebar-toggle { left:252px; }
+    body.focus-mode .zen-sidebar-toggle:hover,body.focus-mode .zen-sidebar-toggle:focus-visible { background:#0c8ce92b; }
     @media(min-width:801px){body.focus-mode.zen-sidebar-dismissed .sidebar{transform:translateX(-100%)}}
     .mobile-nav-toggle { display:none; }
     .sidebar-backdrop { display:none; }
@@ -291,7 +293,7 @@
     .document-outline-empty { margin:0; padding:14px 11px; color:#77717e; font-size:11px; line-height:1.45; }
     .outline-jump-target { animation:outline-jump-highlight 1.2s ease; }
     @keyframes outline-jump-highlight { 0%,30% { background-color:#0c8ce92b; box-shadow:0 0 0 5px #0c8ce914; } 100% { background-color:transparent; box-shadow:0 0 0 0 transparent; } }
-    @media(min-width:1101px) { body.narrative-panel-open .document-outline{right:calc(var(--narrative-panel-width,420px) + 18px)}body.narrative-panel-collapsed .document-outline{right:72px} }
+    @media(min-width:1101px) { body.narrative-panel-open .document-outline{right:calc(var(--narrative-panel-width,420px) + 18px)}body.narrative-panel-collapsed .document-outline{right:52px} }
     .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:var(--book-page-height,1123px); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); box-sizing:border-box; width:var(--book-page-width,794px); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 0 calc(100% - 1px),#ffffff20 calc(100% - 1px) 100%),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
     .page[data-layout="book"] .content.book-paginated { display:flex; flex-direction:column; gap:var(--book-sheet-gap); min-height:0; }
     .content .book-page-content { box-sizing:border-box; width:100%; min-width:0; flex:0 0 auto; min-height:0; overflow:hidden; outline:none; overflow-wrap:anywhere; }
@@ -457,21 +459,23 @@
     body.reading-mode .doc-subtitle::placeholder { color:transparent; }
     body.reading-mode .mermaid-action { display:none; }
     body.reading-mode .slash-menu { display:none!important; }
-    .narrative-dialog { position:relative; z-index:20; grid-column:3; grid-row:2; min-width:0; min-height:0; overflow:hidden; border:0; border-left:1px solid #ffffff18; color:var(--text); background:#1b1a20; box-shadow:-12px 0 34px #0005; }
+    .narrative-dialog { position:relative; z-index:20; grid-column:3; grid-row:2; min-width:0; min-height:0; overflow:hidden; border:0; border-left:1px solid #ffffff18; color:var(--text); background:#1b1a20; box-shadow:-12px 0 34px #0005; container-name:production-panel; container-type:inline-size; }
     .narrative-dialog[hidden] { display:none!important; }
     body.focus-mode .narrative-dialog { grid-column:2; }
     .narrative-resizer { position:absolute; z-index:4; inset:0 auto 0 0; width:7px; transform:translateX(-3px); cursor:col-resize; touch-action:none; }
     .narrative-resizer::after { content:''; position:absolute; top:50%; left:3px; width:2px; height:44px; transform:translateY(-50%); border-radius:999px; background:#ffffff20; transition:background .14s ease,height .14s ease; }
     .narrative-resizer:hover::after,.narrative-resizer:focus-visible::after,.narrative-dialog[data-resizing="true"] .narrative-resizer::after { height:72px; background:var(--accent); }
-    .narrative-panel { display:grid; grid-template-rows:auto auto auto auto minmax(160px,1fr) auto; gap:12px; width:100%; height:100%; min-height:0; padding:16px 14px 14px 18px; }
-    body.narrative-panel-collapsed .app { --narrative-panel-width:54px; }
-    body.narrative-panel-collapsed .narrative-panel { display:flex; align-items:center; padding:8px; }
+    .narrative-panel { display:flex; flex-direction:column; gap:12px; width:100%; height:100%; min-height:0; padding:16px 14px 14px 18px; }
+    .narrative-panel > * { min-width:0; }
+    body.narrative-panel-collapsed .app { --narrative-panel-width:34px; }
+    body.narrative-panel-collapsed .narrative-dialog { border-left:0; background:transparent; box-shadow:none; }
+    body.narrative-panel-collapsed .narrative-panel { display:flex; align-items:stretch; padding:2px; }
     body.narrative-panel-collapsed .narrative-panel > :not(.narrative-heading) { display:none; }
-    body.narrative-panel-collapsed .narrative-heading { width:100%; flex-direction:column; }
+    body.narrative-panel-collapsed .narrative-heading { width:100%; height:100%; flex-direction:column; justify-content:center; }
     body.narrative-panel-collapsed .narrative-heading h2,body.narrative-panel-collapsed .narrative-heading #narrative-close { display:none; }
-    body.narrative-panel-collapsed .narrative-heading > div { display:block; }
-    body.narrative-panel-collapsed #narrative-collapse { width:36px; min-width:36px; padding:0; font-size:0; }
-    body.narrative-panel-collapsed #narrative-collapse::before { content:'‹'; font-size:22px; }
+    body.narrative-panel-collapsed .narrative-heading > div { display:flex; height:100%; align-items:center; }
+    body.narrative-panel-collapsed #narrative-collapse { width:30px; min-width:30px; height:66px; padding:0; color:#acd9f7; border-color:#0c8ce944; border-radius:10px 0 0 10px; background:#1d1d22ef; box-shadow:0 0 18px #0c8ce922; font-size:0; writing-mode:horizontal-tb; transform:none; }
+    body.narrative-panel-collapsed #narrative-collapse::before { content:'‹'; margin:0; font-size:20px; }
     .narrative-heading,.narrative-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .narrative-heading > div { display:flex; align-items:center; gap:6px; }
     .narrative-actions > div { display:flex; align-items:center; gap:7px; }
@@ -492,10 +496,12 @@
     .narrative-insert-tools > span { margin-right:3px; color:#85808b; font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
     .narrative-insert-tools button { min-height:28px; padding:0 8px; border:1px solid #ffffff13; border-radius:6px; color:#bbb4c0; background:#ffffff05; font-size:10px; }
     .narrative-insert-tools button:hover { color:#eef8ff; border-color:#0c8ce955; background:#0c8ce918; }
+    .narrative-settings[hidden],.narrative-insert-tools[hidden],.narrative-actions[hidden] { display:none; }
     .narrative-tabs { display:flex; gap:4px; padding:3px; border:1px solid var(--line); border-radius:8px; background:#111115; }
     .narrative-tabs button { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-height:31px; border-radius:6px; color:#9f98a5; background:transparent; }
     .narrative-tabs button[aria-selected="true"] { color:#eef8ff; background:#0c8ce93d; }
     .narrative-view[hidden] { display:none; }
+    .narrative-view:not([hidden]) { flex:1; min-height:0; max-height:none; }
     .narrative-sequence { display:grid; align-content:start; gap:5px; min-height:160px; max-height:460px; padding:5px; overflow:auto; border:1px solid var(--line); border-radius:9px; background:#111115; }
     .narrative-node { display:grid; grid-template-columns:30px minmax(0,1fr); gap:9px; width:100%; padding:9px; border-radius:7px; color:#e5dfe8; background:transparent; text-align:left; cursor:grab; }
     .narrative-node:active { cursor:grabbing; }
@@ -551,15 +557,64 @@
     .narrative-variable-row button:disabled { color:#6f6974; cursor:not-allowed; }
     .narrative-variable-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#8f8995; font-size:10px; }
     .narrative-variable-save { border-color:#4c9b6966; background:#316444; }
-    .narrative-localization { display:grid; grid-template-rows:auto auto auto minmax(150px,1fr); gap:10px; min-height:200px; max-height:460px; padding:12px; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#111115; }
-    .localization-toolbar { display:grid; grid-template-columns:minmax(110px,1fr) minmax(110px,1fr); align-items:end; gap:7px; }
-    .localization-toolbar label { display:grid; gap:5px; min-width:0; color:#a9a2ae; font-size:10px; }
-    .localization-toolbar select,.localization-toolbar button { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
-    .localization-toolbar button { color:#b9ddf7; border-color:#0c8ce944; background:#0c8ce912; }
-    .localization-toolbar button:disabled,.localization-toolbar select:disabled { opacity:.4; cursor:not-allowed; }
-    .localization-review-tools { display:grid; grid-template-columns:minmax(150px,1fr) minmax(120px,.55fr); gap:7px; }
-    .localization-review-tools input,.localization-review-tools select { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; outline:none; color:#ded8e3; background:#19181d; }
+    .narrative-localization { display:grid; grid-template-rows:auto auto auto minmax(150px,1fr); gap:10px; min-height:200px; max-height:none; padding:12px; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#111115; }
+    .localization-toolbar { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); align-items:end; gap:7px; }
+    .localization-toolbar > label { grid-column:span 3; }
+    .localization-toolbar > button,.localization-toolbar > details { grid-column:span 2; }
+    .localization-toolbar label,.localization-settings-popover label { display:grid; gap:5px; min-width:0; color:#a9a2ae; font-size:10px; }
+    .localization-toolbar select,.localization-toolbar button,.localization-settings-menu summary,.localization-settings-popover select,.localization-settings-popover button { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
+    .localization-toolbar button,.localization-settings-menu summary,.localization-settings-popover button { color:#b9ddf7; border-color:#0c8ce944; background:#0c8ce912; }
+    .localization-toolbar button[aria-pressed="true"] { color:#eef8ff; background:#0c8ce93d; }
+    .localization-toolbar button:disabled,.localization-toolbar select:disabled,.localization-settings-popover button:disabled,.localization-settings-popover select:disabled { opacity:.4; cursor:not-allowed; }
+    .localization-settings-menu { position:relative; }
+    .localization-settings-menu summary { display:flex; align-items:center; justify-content:center; list-style:none; cursor:pointer; user-select:none; }
+    .localization-settings-menu summary::-webkit-details-marker { display:none; }
+    .localization-settings-menu[open] summary { color:#eef8ff; background:#0c8ce93d; }
+    .localization-settings-popover { position:absolute; z-index:30; top:calc(100% + 7px); right:0; display:grid; grid-template-columns:minmax(150px,1fr) minmax(150px,1fr); gap:7px; width:min(360px,calc(100vw - 40px)); padding:10px; border:1px solid #ffffff1d; border-radius:9px; background:#201f25; box-shadow:0 16px 38px #0009; }
+    .localization-review-tools { display:grid; grid-template-columns:minmax(150px,1fr) minmax(120px,.55fr) auto; gap:7px; }
+    .localization-review-tools input,.localization-review-tools select,.localization-review-tools button { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; outline:none; color:#ded8e3; background:#19181d; }
+    .localization-review-tools button { color:#b9ddf7; border-color:#0c8ce944; background:#0c8ce912; }
+    .localization-review-tools button:disabled { opacity:.4; cursor:not-allowed; }
     .localization-review-tools input:focus,.localization-review-tools select:focus { border-color:#0c8ce988; }
+    .localization-preview-banner { position:sticky; top:8px; z-index:12; display:flex; align-items:center; gap:9px; width:min(100% - 48px,1040px); margin:0 auto 8px; padding:8px 10px; border:1px solid #0c8ce955; border-radius:8px; color:#cbe8fb; background:#102131ee; box-shadow:0 10px 28px #0005; font-size:11px; backdrop-filter:blur(12px); }
+    .localization-preview-banner span { flex:1; color:#9db3c2; }
+    .localization-preview-banner button { min-height:28px; padding:0 9px; border:1px solid #ffffff18; border-radius:6px; color:#d8eaf6; background:#ffffff08; }
+    .localization-preview-page [data-localization-preview-state="stale"] { text-decoration:underline dotted #b68a4b99; text-underline-offset:3px; }
+    .localization-preview-page [data-localization-preview-state="issue"] { text-decoration:underline wavy #d96b5faa; text-underline-offset:3px; }
+    .narrative-localization[data-project-view="true"] .localization-review-tools,.narrative-localization[data-project-view="true"] .localization-progress,.narrative-localization[data-project-view="true"] .localization-list { display:none; }
+    .narrative-localization[data-glossary-view="true"] .localization-review-tools,.narrative-localization[data-glossary-view="true"] .localization-progress,.narrative-localization[data-glossary-view="true"] .localization-list,.narrative-localization[data-glossary-view="true"] .localization-project-summary { display:none; }
+    .localization-project-summary { display:grid; align-content:start; gap:8px; min-height:150px; overflow:auto; }
+    .localization-project-summary[hidden] { display:none; }
+    .localization-project-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:8px; border-bottom:1px solid #ffffff10; }
+    .localization-project-heading div { display:grid; gap:3px; }
+    .localization-project-heading strong { color:#ddd7e1; font-size:12px; }
+    .localization-project-heading span { color:#8f8995; font-size:10px; }
+    .localization-project-actions { display:flex; gap:6px; }
+    .localization-project-actions button,.localization-project-row button { min-height:30px; padding:0 8px; border:1px solid #0c8ce944; border-radius:6px; color:#b9ddf7; background:#0c8ce912; font-size:10px; }
+    .localization-project-list { display:grid; gap:6px; }
+    .localization-project-row { display:grid; grid-template-columns:minmax(120px,1fr) auto auto; align-items:center; gap:8px; padding:8px; border:1px solid #ffffff0e; border-radius:8px; background:#ffffff04; }
+    .localization-project-row div { display:grid; gap:3px; min-width:0; }
+    .localization-project-row strong { overflow:hidden; color:#d0c9d4; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+    .localization-project-row small { color:#827c87; font-size:9px; }
+    .localization-project-meter { width:72px; height:5px; overflow:hidden; border-radius:999px; background:#ffffff0b; }
+    .localization-project-meter span { display:block; height:100%; background:#0c8ce9; }
+    .localization-glossary { display:grid; align-content:start; gap:9px; min-height:150px; overflow:auto; }
+    .localization-glossary[hidden] { display:none; }
+    .localization-glossary-heading { display:flex; align-items:end; justify-content:space-between; gap:8px; }
+    .localization-glossary-heading div { display:grid; gap:3px; }
+    .localization-glossary-heading strong { color:#ddd7e1; font-size:12px; }
+    .localization-glossary-heading span { color:#8f8995; font-size:10px; }
+    .localization-glossary-heading label { display:grid; gap:4px; color:#8f8995; font-size:9px; }
+    .localization-glossary-heading select,.localization-glossary-form input,.localization-glossary-row input,.localization-glossary-form button,.localization-glossary-row button { min-width:0; min-height:32px; padding:0 8px; border:1px solid #ffffff16; border-radius:6px; color:#d8d1dc; background:#19181d; }
+    .localization-glossary-form { display:grid; grid-template-columns:minmax(110px,.8fr) minmax(130px,1fr) minmax(120px,1fr) auto; gap:6px; }
+    .localization-glossary-form button { color:#b9ddf7; border-color:#0c8ce944; background:#0c8ce912; }
+    .localization-glossary-list { display:grid; gap:6px; }
+    .localization-glossary-row { display:grid; grid-template-columns:minmax(100px,.75fr) minmax(130px,1fr) minmax(110px,.8fr) auto; align-items:center; gap:6px; padding:7px; border:1px solid #ffffff0e; border-radius:8px; background:#ffffff04; }
+    .localization-glossary-row strong { overflow:hidden; color:#d4cdd8; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+    .localization-glossary-row button { color:#d7aaa0; }
+    .localization-assists { display:flex; flex-wrap:wrap; gap:5px; padding-top:2px; }
+    .localization-assists span,.localization-assists button { min-height:25px; padding:4px 7px; border:1px solid #ffffff12; border-radius:6px; color:#a7a0ac; background:#ffffff05; font-size:9px; line-height:1.35; }
+    .localization-assists button { color:#acd7f5; border-color:#0c8ce933; background:#0c8ce90d; text-align:left; }
     .localization-progress { display:flex; align-items:center; gap:8px; color:#98919d; font-size:10px; }
     .localization-progress-bar { height:5px; flex:1; overflow:hidden; border-radius:999px; background:#ffffff0b; }
     .localization-progress-bar > span { display:block; width:0; height:100%; border-radius:inherit; background:#0c8ce9; transition:width .16s ease; }
@@ -569,8 +624,8 @@
     .localization-row[data-state="issue"] { border-color:#d96b5f77; background:#b94b3d0f; }
     .localization-row[data-state="missing"] { border-style:dashed; }
     .localization-row-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
-    .localization-row-heading button { min-width:0; padding:0; overflow:hidden; color:#8bc9f6; background:transparent; font:10px ui-monospace,SFMono-Regular,Consolas,monospace; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
-    .localization-row-heading span { flex:0 0 auto; color:#827c87; font-size:9px; }
+    .localization-row-heading button { flex:0 0 auto; min-width:28px; min-height:26px; padding:0 7px; color:#8bc9f6; border:1px solid #0c8ce933; border-radius:6px; background:#0c8ce90d; font-size:11px; }
+    .localization-row-heading span { min-width:0; overflow:hidden; color:#a7a0ab; font-size:10px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
     .localization-source { color:#c9c3cd; font-size:11px; line-height:1.4; white-space:pre-wrap; }
     .localization-row textarea { width:100%; min-height:58px; padding:8px 9px; resize:vertical; border:1px solid #ffffff16; border-radius:7px; outline:none; color:#e6e0e9; background:#18171c; font:12px/1.45 Inter,system-ui,sans-serif; }
     .localization-row textarea:focus { border-color:#0c8ce988; box-shadow:0 0 0 2px #0c8ce91c; }
@@ -670,10 +725,42 @@
     .search-result[aria-selected="true"],.search-result:hover { background:#0c8ce944; }
     .search-result small { color:#aaa3af; }
     .search-empty { padding:16px 12px; color:var(--quiet); }
-    @media(max-width:1100px) { body.narrative-panel-open .app{grid-template-columns:252px minmax(0,1fr)}body.focus-mode.narrative-panel-open .app{grid-template-columns:minmax(0,1fr)}.narrative-dialog:not([hidden]),body.focus-mode .narrative-dialog:not([hidden]){position:fixed;z-index:55;top:var(--topbar-height);right:0;bottom:0;display:block;width:min(var(--narrative-panel-width,420px),calc(100vw - 64px));border-left:1px solid #ffffff20}body.narrative-panel-collapsed .narrative-dialog:not([hidden]){width:54px}.narrative-tabs{overflow-x:auto}.narrative-tabs button{min-width:max-content;padding-inline:10px} }
+    @container production-panel (max-width:380px) {
+      body:not(.narrative-panel-collapsed) .narrative-panel { gap:9px; padding:12px 10px 10px 14px; }
+      body:not(.narrative-panel-collapsed) .narrative-heading h2 { min-width:0; overflow:hidden; font-size:15px; text-overflow:ellipsis; white-space:nowrap; }
+      body:not(.narrative-panel-collapsed) .narrative-heading button { min-height:30px; padding-inline:8px; font-size:10px; }
+      body:not(.narrative-panel-collapsed) .narrative-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); overflow:visible; }
+      body:not(.narrative-panel-collapsed) .narrative-tabs button { min-width:0; min-height:29px; padding:0 4px; overflow:hidden; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+      body:not(.narrative-panel-collapsed) .narrative-tab-icon { display:none; }
+      body:not(.narrative-panel-collapsed) .narrative-settings { grid-template-columns:1fr; }
+      body:not(.narrative-panel-collapsed) .narrative-sequence-picker { grid-template-columns:1fr 1fr; }
+      body:not(.narrative-panel-collapsed) .narrative-sequence-picker label { grid-column:1/-1; }
+      body:not(.narrative-panel-collapsed) .narrative-localization { padding:8px; }
+      body:not(.narrative-panel-collapsed) .localization-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      body:not(.narrative-panel-collapsed) .localization-toolbar > label,body:not(.narrative-panel-collapsed) .localization-toolbar > button { grid-column:span 1; }
+      body:not(.narrative-panel-collapsed) .localization-toolbar > details { grid-column:1/-1; }
+      body:not(.narrative-panel-collapsed) .localization-toolbar button,body:not(.narrative-panel-collapsed) .localization-settings-menu summary { padding-inline:6px; font-size:10px; }
+      body:not(.narrative-panel-collapsed) .localization-settings-popover { right:0; grid-template-columns:1fr; width:100%; max-height:min(420px,70vh); overflow:auto; }
+      body:not(.narrative-panel-collapsed) .localization-review-tools { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      body:not(.narrative-panel-collapsed) .localization-review-tools input { grid-column:1/-1; }
+      body:not(.narrative-panel-collapsed) .localization-review-tools input,body:not(.narrative-panel-collapsed) .localization-review-tools select,body:not(.narrative-panel-collapsed) .localization-review-tools button { width:100%; }
+      body:not(.narrative-panel-collapsed) .localization-row { padding:8px; }
+      body:not(.narrative-panel-collapsed) .localization-row-heading { align-items:flex-start; }
+      body:not(.narrative-panel-collapsed) .localization-row-heading span { white-space:normal; }
+      body:not(.narrative-panel-collapsed) .narrative-character-create,body:not(.narrative-panel-collapsed) .narrative-character-row,body:not(.narrative-panel-collapsed) .narrative-variable-create,body:not(.narrative-panel-collapsed) .narrative-variable-row,body:not(.narrative-panel-collapsed) .narrative-rules-row,body:not(.narrative-panel-collapsed) .localization-glossary-form,body:not(.narrative-panel-collapsed) .localization-glossary-row { grid-template-columns:1fr; }
+      body:not(.narrative-panel-collapsed) .localization-project-heading,body:not(.narrative-panel-collapsed) .localization-glossary-heading { align-items:stretch; flex-direction:column; }
+      body:not(.narrative-panel-collapsed) .localization-project-actions { display:grid; grid-template-columns:1fr 1fr; }
+      body:not(.narrative-panel-collapsed) .localization-project-row { grid-template-columns:minmax(0,1fr) auto; }
+      body:not(.narrative-panel-collapsed) .localization-project-meter { display:none; }
+      body:not(.narrative-panel-collapsed) .narrative-actions { align-items:stretch; flex-direction:column; }
+      body:not(.narrative-panel-collapsed) .narrative-actions > div { display:grid; grid-template-columns:1fr; }
+      body:not(.narrative-panel-collapsed) .narrative-actions button { width:100%; }
+    }
+    @media(max-width:1100px) { body.narrative-panel-open .app{grid-template-columns:252px minmax(0,1fr)}body.focus-mode.narrative-panel-open .app{grid-template-columns:minmax(0,1fr)}.narrative-dialog:not([hidden]),body.focus-mode .narrative-dialog:not([hidden]){position:fixed;z-index:55;top:var(--topbar-height);right:0;bottom:0;display:block;width:min(var(--narrative-panel-width,420px),calc(100vw - 64px));border-left:1px solid #ffffff20}body.narrative-panel-collapsed .narrative-dialog:not([hidden]){width:34px;border-left:0}.narrative-tabs{overflow-x:auto}.narrative-tabs button{min-width:max-content;padding-inline:10px} }
     @media(max-width:1050px) { .app{grid-template-columns:220px minmax(0,1fr)}body.narrative-panel-open .app{grid-template-columns:220px minmax(0,1fr)}body.focus-mode.narrative-panel-open .app{grid-template-columns:minmax(0,1fr)}.topbar{grid-template-columns:220px minmax(0,1fr)} .page{padding:48px 54px 75px} .toolbar{gap:1px;padding:0 9px}.tool{padding:0 7px} }
     @media(max-width:800px) {
       body{min-width:0;height:var(--mobile-visual-height,100svh)}.app,body.narrative-panel-open .app,body.focus-mode.narrative-panel-open .app{position:fixed;top:var(--mobile-visual-offset,0px);right:0;left:0;grid-template-columns:minmax(0,1fr);grid-template-rows:var(--topbar-height) minmax(0,1fr);height:var(--mobile-visual-height,100svh)}.workspace,body.focus-mode .workspace{grid-column:1;grid-row:2;grid-template-rows:48px minmax(0,1fr)}
+      .zen-sidebar-toggle{display:none!important}
       .sidebar,body.focus-mode .sidebar{position:fixed;z-index:51;inset:var(--topbar-height) auto 0 0;width:min(320px,88vw);min-height:0;padding:14px 12px 12px;transform:translateX(-105%);transition:transform .18s ease;box-shadow:16px 0 42px #0009;}
       body.focus-mode .sidebar:focus-within{transform:translateX(-105%)}
       body.focus-mode.zen-sidebar-open .sidebar{transform:translateX(-105%)}
@@ -686,6 +773,7 @@
       .editor-area{scroll-padding-block:24px 96px}.editor-wrap{width:100%;padding:10px 8px 128px}.page{padding:34px 22px 62px}.page[data-layout="book"]{width:var(--book-page-width,794px);padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0;transform-origin:top center}.page[data-layout="book"] .doc-title{font-size:34px}.page[data-layout="book"] .doc-subtitle{font-size:15px}.doc-title{font-size:clamp(25px,7vw,29px);overflow-wrap:anywhere}.doc-subtitle{font-size:14px}.bottom-status{right:10px;bottom:10px}.word-count{display:none}.editor-wrap.is-canvas{padding:0}.page[data-layout="canvas"]{min-height:0;padding:22px 16px}.page[data-layout="canvas"] .content{min-height:1.5em}.document-outline{top:calc(var(--topbar-height) + 56px);right:10px;width:min(260px,calc(100vw - 20px));max-height:calc(var(--mobile-visual-height,100svh) - var(--topbar-height) - 78px)}.zoom-control{left:8px;bottom:8px}.page-settings-popover{position:fixed;top:100px;right:auto;left:8px;z-index:70}
     }
     @media(max-width:480px){:root{--topbar-height:48px}.workspace,body.focus-mode .workspace{grid-template-rows:46px minmax(0,1fr)}.topbar>.brand{padding:0 9px}.topbar>.brand .brand-wordmark{display:none}.topbar-content{padding:0 7px}.topbar-right{gap:3px}.actions-menu>summary{font-size:12px}.top-button{font-size:12px}.page{padding:28px 16px 54px}.page[data-layout="book"]{width:var(--book-page-width,794px);padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0}.page[data-layout="canvas"]{padding-inline:12px}.zoom-control{transform:scale(.92);transform-origin:bottom left}.doc-kind-options{grid-template-columns:1fr}.narrative-settings{grid-template-columns:1fr}.narrative-summary{white-space:normal}.narrative-actions{align-items:stretch;flex-direction:column-reverse}.narrative-actions button{width:100%}.narrative-choice-option-decoration{max-width:260px}.narrative-choice-arrow{display:none}.narrative-character-create,.narrative-character-row,.narrative-variable-create,.narrative-variable-row,.narrative-rules-row,.localization-toolbar{grid-template-columns:1fr}.narrative-character-row small,.narrative-variable-row small{white-space:normal}.document-view-select{min-width:88px;height:38px}.narrative-test-layout{grid-template-columns:1fr}.narrative-test-sidebar{grid-template-columns:1fr 1fr;grid-template-rows:170px}.narrative-test-stage{min-height:190px;padding:18px}.narrative-tabs{overflow-x:auto}.narrative-tabs button{min-width:90px}}
+    @media(max-width:480px){.localization-toolbar>*{grid-column:1/-1!important}.localization-settings-popover{position:fixed;top:110px;right:10px;grid-template-columns:1fr;width:calc(100vw - 20px);max-height:calc(100svh - 130px);overflow:auto}.localization-review-tools{grid-template-columns:1fr}.localization-project-heading,.localization-glossary-heading{align-items:stretch;flex-direction:column}.localization-project-actions{display:grid;grid-template-columns:1fr 1fr}.localization-project-row{grid-template-columns:minmax(0,1fr) auto}.localization-project-meter{display:none}.localization-glossary-form,.localization-glossary-row{grid-template-columns:1fr}}
     @media(max-width:480px){.narrative-sequence-picker{grid-template-columns:1fr 1fr}.narrative-sequence-picker label{grid-column:1/-1}}
   </style>
 </head>
@@ -695,7 +783,7 @@
       <div class="brand" aria-label="HeartSpace Docs"><img class="brand-mark" src="./assets/docs/heartspace_logo.svg" alt=""><span class="brand-wordmark" aria-hidden="true"><span class="brand-product">Docs</span><span class="brand-suite"><span>H</span><span>E</span><span>A</span><span>R</span><span>T</span><span>S</span><span>P</span><span>A</span><span>C</span><span>E</span></span></span></div>
       <div class="topbar-content">
         <div class="topbar-left"><button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
-        <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Narrativa</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
+        <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Produção</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
       </div>
     </header>
     <aside class="sidebar" id="sidebar" aria-label="Navegação do Docs">
@@ -741,6 +829,7 @@
       <div class="folder-context-menu" id="folder-context-menu" role="menu" aria-label="Ações da pasta" hidden><button type="button" id="folder-context-rename" role="menuitem"><span aria-hidden="true">✎</span>Renomear</button><button type="button" id="folder-context-delete" role="menuitem"><span aria-hidden="true">×</span>Excluir pasta</button></div>
       <div class="sidebar-spacer"></div>
     </aside>
+    <button class="zen-sidebar-toggle" id="zen-sidebar-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">›</button>
     <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
     <main class="workspace">
 
@@ -774,9 +863,9 @@
     <aside class="narrative-dialog" id="narrative-dialog" aria-labelledby="narrative-title" contenteditable="false" spellcheck="false" hidden>
       <div class="narrative-resizer" id="narrative-resizer" role="separator" aria-label="Redimensionar painel de narrativa" aria-orientation="vertical" tabindex="0"></div>
     <section class="narrative-panel">
-        <div class="narrative-heading"><h2 id="narrative-title">Narrativa do jogo</h2><div><button type="button" id="narrative-collapse" aria-label="Recolher painel">Recolher</button><button type="button" id="narrative-close">Fechar</button></div></div>
-        <div class="narrative-settings"><div class="narrative-sequence-picker"><label>Sequência ativa<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add">Nova sequência</button><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir</button></div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span></div>
-        <div class="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><span>Adicionar</span><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div>
+        <div class="narrative-heading"><h2 id="narrative-title">Central de produção</h2><div><button type="button" id="narrative-collapse" aria-label="Minimizar central de produção">Minimizar</button><button type="button" id="narrative-close" hidden>Fechar</button></div></div>
+        <div class="narrative-settings" id="narrative-settings"><div class="narrative-sequence-picker"><label>Sequência ativa<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add">Nova sequência</button><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir</button></div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span></div>
+        <div class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><span>Adicionar</span><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div>
         <div class="narrative-tabs" role="tablist" aria-label="Visualização narrativa">
           <button type="button" id="narrative-sequence-tab" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
           <button type="button" id="narrative-map-tab" role="tab" aria-selected="false" aria-controls="narrative-map">Mapa</button>
@@ -787,11 +876,27 @@
         </div>
         <div class="narrative-sequence narrative-view" id="narrative-sequence" role="tabpanel" aria-labelledby="narrative-sequence-tab" aria-label="Sequência narrativa"></div>
         <div class="narrative-map narrative-view" id="narrative-map" role="tabpanel" aria-labelledby="narrative-map-tab" aria-label="Mapa de eventos narrativos" hidden></div>
-        <div class="narrative-localization narrative-view" id="narrative-localization" role="tabpanel" aria-labelledby="narrative-localization-tab" hidden><div class="localization-toolbar"><label>Idioma original<select id="localization-source-locale" aria-label="Idioma original"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="es-ES">Español</option><option value="es-MX">Español (México)</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="zh-CN">简体中文</option><option value="ru-RU">Русский</option></select></label><label>Idioma de tradução<select id="localization-target-locale" aria-label="Idioma de tradução"></select></label><label>Conteúdo<select id="localization-scope" aria-label="Conteúdo exibido"><option value="all">Documento inteiro</option><option value="narrative">Somente narrativa</option><option value="common">Somente texto comum</option></select></label><label>Novo idioma<select id="localization-new-locale" aria-label="Novo idioma"></select></label><button type="button" id="localization-add-locale">Adicionar idioma</button><button type="button" id="localization-remove-locale">Remover idioma atual</button><button type="button" id="localization-export-csv">Exportar CSV</button><button type="button" id="localization-import-csv">Importar CSV</button><input type="file" id="localization-csv-file" accept=".csv,text/csv" hidden></div><div class="localization-progress" id="localization-progress"><span>0 de 0 linhas</span><div class="localization-progress-bar" aria-hidden="true"><span></span></div></div><div class="localization-list" id="localization-list"></div></div>
+        <div class="narrative-localization narrative-view" id="narrative-localization" role="tabpanel" aria-labelledby="narrative-localization-tab" hidden>
+          <div class="localization-toolbar">
+            <label>Idioma de tradução<select id="localization-target-locale" aria-label="Idioma de tradução"></select></label>
+            <label>Conteúdo<select id="localization-scope" aria-label="Conteúdo exibido"><option value="all">Documento inteiro</option><option value="narrative">Somente narrativa</option><option value="common">Somente texto comum</option></select></label>
+            <button type="button" id="localization-project-toggle" aria-pressed="false">Projeto</button>
+            <button type="button" id="localization-glossary-toggle" aria-pressed="false">Glossário</button>
+            <details class="localization-settings-menu" id="localization-settings-menu"><summary>Configurar</summary><div class="localization-settings-popover">
+              <label>Idioma original<select id="localization-source-locale" aria-label="Idioma original"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="es-ES">Español</option><option value="es-MX">Español (México)</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="zh-CN">简体中文</option><option value="ru-RU">Русский</option></select></label>
+              <label>Novo idioma<select id="localization-new-locale" aria-label="Novo idioma"></select></label>
+              <button type="button" id="localization-add-locale">Adicionar idioma</button><button type="button" id="localization-remove-locale">Remover idioma atual</button>
+              <button type="button" id="localization-export-csv">Exportar CSV</button><button type="button" id="localization-import-csv">Importar CSV</button>
+            </div></details>
+            <input type="file" id="localization-csv-file" accept=".csv,text/csv" hidden><input type="file" id="localization-project-csv-file" accept=".csv,text/csv" hidden>
+          </div>
+          <div class="localization-review-tools"><input type="search" id="localization-search" placeholder="Buscar texto ou contexto…" aria-label="Buscar linhas de tradução"><select id="localization-status-filter" aria-label="Filtrar situação da tradução"><option value="all">Todas as situações</option><option value="missing">Sem tradução</option><option value="ready">Prontas</option><option value="stale">Precisam de revisão</option><option value="issue">Marcadores divergentes</option></select><button type="button" id="localization-preview" aria-pressed="false">Prévia do idioma</button></div>
+          <section class="localization-project-summary" id="localization-project-summary" aria-label="Progresso de tradução do projeto" hidden></section><section class="localization-glossary" id="localization-glossary" aria-label="Glossário do projeto" hidden></section><div class="localization-progress" id="localization-progress"><span>0 de 0 linhas</span><div class="localization-progress-bar" aria-hidden="true"><span></span></div></div><div class="localization-list" id="localization-list"></div>
+        </div>
         <div class="narrative-characters narrative-view" id="narrative-characters" role="tabpanel" aria-labelledby="narrative-characters-tab" hidden><form class="narrative-character-create" id="narrative-character-create"><input id="narrative-character-name" type="text" placeholder="Nome exibido" autocomplete="off" required><input id="narrative-character-id" type="text" placeholder="character.id" autocomplete="off" spellcheck="false"><button type="submit">Adicionar</button></form><div class="narrative-character-list" id="narrative-character-list"></div><div class="narrative-character-footer"><span id="narrative-character-status">Registro do projeto</span><button class="narrative-character-save" type="button" id="narrative-character-save">Salvar personagens</button></div></div>
         <div class="narrative-variables narrative-view" id="narrative-variables" role="tabpanel" aria-labelledby="narrative-variables-tab" hidden><form class="narrative-variable-create" id="narrative-variable-create"><input id="narrative-variable-id" type="text" placeholder="estado.variable" autocomplete="off" spellcheck="false" required><select id="narrative-variable-type" aria-label="Tipo da variável"><option value="boolean">Verdadeiro/falso</option><option value="number">Número</option><option value="string">Texto</option></select><input id="narrative-variable-default" type="text" placeholder="Valor inicial" autocomplete="off"><button type="submit">Adicionar</button></form><div class="narrative-variable-list" id="narrative-variable-list"></div><div class="narrative-variable-footer"><span id="narrative-variable-status">Variáveis do projeto</span><button class="narrative-variable-save" type="button" id="narrative-variable-save">Salvar variáveis</button></div></div>
         <div class="narrative-validation narrative-view" id="narrative-validation" role="tabpanel" aria-labelledby="narrative-validation-tab" hidden></div>
-        <div class="narrative-actions"><span>Use / Narrativa no texto. As escolhas conectam sequências pelo ID.</span><div><button type="button" id="narrative-test-current">Testar sequência</button><button class="narrative-export" type="button" id="narrative-export">Exportar narrativa JSON</button></div></div>
+        <div class="narrative-actions" id="narrative-actions"><span>Use / Narrativa no texto. As escolhas conectam sequências pelo ID.</span><div><button type="button" id="narrative-test-current">Testar sequência</button><button class="narrative-export" type="button" id="narrative-export">Exportar narrativa JSON</button></div></div>
       </section>
     </aside>
   </div>
@@ -2293,21 +2398,24 @@
         mobileNavToggle.setAttribute('aria-expanded', String(open));
       });
       document.querySelector('#sidebar-backdrop').addEventListener('click', closeMobileSidebar);
-      document.addEventListener('pointermove', event => {
-        lastPointerX = event.clientX;
-        if (mobileViewport.matches || !document.body.classList.contains('focus-mode')) return;
-        if (event.clientX <= 8 && event.clientY > Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-height')) + 48) { document.body.classList.remove('zen-sidebar-dismissed'); document.body.classList.add('zen-sidebar-open'); return; }
-        if (event.clientX > 252 && !document.body.classList.contains('zen-sidebar-pinned')) {
-          document.body.classList.remove('zen-sidebar-open');
-          document.body.classList.add('zen-sidebar-dismissed');
-        }
+      const zenSidebarToggle = document.querySelector('#zen-sidebar-toggle');
+      const syncZenSidebarToggle = () => {
+        const open = document.body.classList.contains('zen-sidebar-open') || document.body.classList.contains('zen-sidebar-pinned');
+        zenSidebarToggle.textContent = open ? '‹' : '›';
+        zenSidebarToggle.setAttribute('aria-expanded', String(open));
+        zenSidebarToggle.setAttribute('aria-label', open ? 'Fechar navegação' : 'Abrir navegação');
+        zenSidebarToggle.title = open ? 'Fechar navegação' : 'Abrir navegação';
+      };
+      zenSidebarToggle.addEventListener('click', () => {
+        if (mobileViewport.matches) return;
+        const open = !(document.body.classList.contains('zen-sidebar-open') || document.body.classList.contains('zen-sidebar-pinned'));
+        document.body.classList.toggle('zen-sidebar-open', open);
+        document.body.classList.toggle('zen-sidebar-pinned', open);
+        document.body.classList.toggle('zen-sidebar-dismissed', !open);
+        syncZenSidebarToggle();
       });
-      document.querySelector('.sidebar').addEventListener('pointerenter', () => {
-        if (!mobileViewport.matches && document.body.classList.contains('focus-mode')) {
-          document.body.classList.remove('zen-sidebar-dismissed');
-          document.body.classList.add('zen-sidebar-open');
-        }
-      });
+      new MutationObserver(syncZenSidebarToggle).observe(document.body, { attributes:true, attributeFilter:['class'] });
+      syncZenSidebarToggle();
       document.querySelector('#insert-diagram').addEventListener('click', () => {
         editor.focus();
         insertMermaidBlock();
@@ -2388,6 +2496,9 @@
       });
       const narrativeDialog = document.querySelector('#narrative-dialog');
       const narrativeCollapse = document.querySelector('#narrative-collapse');
+      const narrativeSettings = document.querySelector('#narrative-settings');
+      const narrativeInsertTools = document.querySelector('#narrative-insert-tools');
+      const narrativeActions = document.querySelector('#narrative-actions');
       const narrativeResizer = document.querySelector('#narrative-resizer');
       const narrativeEventId = document.querySelector('#narrative-event-id');
       const narrativeSequenceSelect = document.querySelector('#narrative-sequence-select');
@@ -2410,6 +2521,15 @@
       const localizationExportCsv = document.querySelector('#localization-export-csv');
       const localizationImportCsv = document.querySelector('#localization-import-csv');
       const localizationCsvFile = document.querySelector('#localization-csv-file');
+      const localizationProjectToggle = document.querySelector('#localization-project-toggle');
+      const localizationGlossaryToggle = document.querySelector('#localization-glossary-toggle');
+      const localizationSettingsMenu = document.querySelector('#localization-settings-menu');
+      const localizationProjectCsvFile = document.querySelector('#localization-project-csv-file');
+      const localizationProjectSummary = document.querySelector('#localization-project-summary');
+      const localizationGlossary = document.querySelector('#localization-glossary');
+      const localizationSearch = document.querySelector('#localization-search');
+      const localizationStatusFilter = document.querySelector('#localization-status-filter');
+      const localizationPreview = document.querySelector('#localization-preview');
       const localizationProgress = document.querySelector('#localization-progress');
       const localizationList = document.querySelector('#localization-list');
       const narrativeCharactersTab = document.querySelector('#narrative-characters-tab');
@@ -2436,6 +2556,7 @@
       let narrativeTestState = null;
       let narrativeCharacters = [];
       let narrativeVariables = [];
+      let translationGlossary = [];
       let narrativeRegistryRemoteReady = false;
       let narrativeRulesOption = null;
       const narrativeDialogShell = [...narrativeDialog.childNodes];
@@ -2453,8 +2574,9 @@
       const setNarrativePanelCollapsed = collapsed => {
         document.body.classList.toggle('narrative-panel-collapsed', collapsed);
         narrativeDialog.classList.toggle('is-collapsed', collapsed);
-        narrativeCollapse.textContent = collapsed ? 'Expandir' : 'Recolher';
-        narrativeCollapse.setAttribute('aria-label', collapsed ? 'Expandir painel' : 'Recolher painel');
+        narrativeCollapse.textContent = collapsed ? 'Produção' : 'Minimizar';
+        narrativeCollapse.setAttribute('aria-label', collapsed ? 'Abrir central de produção' : 'Minimizar central de produção');
+        narrativeCollapse.title = collapsed ? 'Abrir central de produção' : '';
       };
       let narrativeLayoutFrame = 0;
       const syncNarrativePanelLayout = () => {
@@ -2745,6 +2867,72 @@
         });
         return [...fixed, ...bodyEntries];
       };
+      const projectLocalizationDocuments = () => documents.filter(record => !record.trashedAt && !record.archivedAt);
+      const localizationEntriesForRecord = record => {
+        if (record.id === activeDocumentId) {
+          const sequenceNames = new Map((record.narrativeSequences || []).map(sequence => [sequence.id, sequence.title]));
+          return allLocalizableEntries().map(entry => ({
+            id:entry.node.localization_id,
+            text:entry.node.text,
+            label:entry.label,
+            kind:entry.kind,
+            context:entry.kind === 'narrative' ? sequenceNames.get(entry.node.sequence_id) || 'Sem sequência' : entry.context || 'Documento'
+          }));
+        }
+        const root = document.createElement('div');
+        root.innerHTML = record.body || '';
+        const entries = [
+          { id:'document.title', text:record.title || '', label:'Título do documento', kind:'common', context:'Documento' },
+          ...(record.subtitle ? [{ id:'document.subtitle', text:record.subtitle, label:'Subtítulo', kind:'common', context:'Documento' }] : [])
+        ];
+        const selector = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,figcaption,.callout-title,[data-checklist-text]';
+        [...root.querySelectorAll(selector)].forEach(element => {
+          if (element.closest('.narrative-block,.authoring-decoration,.mermaid-source')) return;
+          if (element.matches('li[data-checklist-item]')) return;
+          if (element.matches('li,td,th,blockquote') && element.querySelector(selector)) return;
+          const text = commonLocalizationText(element);
+          if (!text) return;
+          if (!element.dataset.localizationId) element.dataset.localizationId = newLocalizationId();
+          entries.push({ id:element.dataset.localizationId, text, label:commonLocalizationLabel(element), kind:'common', context:element.closest('.callout') ? 'Chamada' : 'Documento', target:element });
+        });
+        const sequences = ensureNarrativeSequences(record, root, false);
+        const sequenceNames = new Map(sequences.map(sequence => [sequence.id, sequence.title]));
+        collectNarrativeNodesFromRoot(root, true, sequences[0]?.id || '').forEach(({ block, node }) => {
+          if (['dialogue','narration','choice'].includes(node.type) && !node.localization_id) {
+            node.localization_id = newLocalizationId();
+            block.dataset.localizationId = node.localization_id;
+          }
+          const context = sequenceNames.get(node.sequence_id) || 'Sem sequência';
+          if (node.type === 'dialogue' || node.type === 'narration') entries.push({ id:node.localization_id, text:node.text || '', label:node.type === 'dialogue' ? 'Diálogo' : 'Narração', kind:'narrative', context, target:block });
+          if (node.type === 'choice') {
+            entries.push({ id:node.localization_id, text:node.prompt || '', label:'Pergunta', kind:'narrative', context, target:block });
+            const options = [...block.querySelectorAll('.narrative-choice-option')];
+            (node.options || []).forEach((option, index) => {
+              const optionElement = options[index];
+              if (!option.localization_id) {
+                option.localization_id = newLocalizationId();
+                if (optionElement) optionElement.dataset.localizationId = option.localization_id;
+              }
+              entries.push({ id:option.localization_id, text:option.text || '', label:`Opção ${index + 1}`, kind:'narrative', context, target:optionElement || block });
+            });
+          }
+        });
+        const fixed = entries.filter(entry => entry.id === 'document.title' || entry.id === 'document.subtitle');
+        const body = entries.filter(entry => !fixed.includes(entry));
+        body.sort((left, right) => {
+          if (left.target === right.target) return 0;
+          const position = left.target?.compareDocumentPosition?.(right.target) || 0;
+          return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : position & Node.DOCUMENT_POSITION_PRECEDING ? 1 : 0;
+        });
+        const nextBody = root.innerHTML;
+        if (nextBody !== record.body) {
+          record.body = nextBody;
+          record.savedAt = new Date().toISOString();
+          record.editRevision = (record.editRevision || 0) + 1;
+          if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+        }
+        return [...fixed, ...body].map(({ target, ...entry }) => entry);
+      };
       const godotLocaleCode = locale => normalizeLocaleCode(locale).replace(/-/g, '_');
       const csvCell = value => {
         const text = String(value ?? '');
@@ -2847,15 +3035,491 @@
         if (!localization.activeLocale && localization.locales.length) localization.activeLocale = localization.locales[0];
         return { imported, removed, unknown, locales:targetColumns.length };
       };
+      const buildProjectLocalizationCsv = () => {
+        const records = projectLocalizationDocuments();
+        const locales = [...new Set(records.flatMap(record => {
+          const localization = localizationDataFor(record);
+          return [localization.sourceLocale, ...localization.locales];
+        }))];
+        const rows = [['keys', ...locales.map(godotLocaleCode), '_document_id', '_localization_id', '_document', '_context', '_kind']];
+        records.forEach(record => {
+          const localization = localizationDataFor(record);
+          const documentId = record.remoteId || record.id;
+          localizationEntriesForRecord(record).forEach(entry => rows.push([
+            `doc.${documentId}.${entry.id}`,
+            ...locales.map(locale => locale === localization.sourceLocale ? entry.text : localization.translations[locale]?.[entry.id]?.text || ''),
+            documentId,
+            entry.id,
+            record.title,
+            `${entry.context} / ${entry.label}`,
+            entry.kind
+          ]));
+        });
+        return `${rows.map(row => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
+      };
+      const downloadProjectLocalizationCsv = () => {
+        const blob = new Blob([buildProjectLocalizationCsv()], { type:'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'heartspace-projeto-traducao.csv';
+        link.hidden = true;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+      const importProjectLocalizationCsv = source => {
+        const rows = parseLocalizationCsv(source);
+        if (rows.length < 2) throw new Error('O CSV do projeto não contém linhas de tradução.');
+        const headers = rows[0].map(value => value.trim());
+        const documentIndex = headers.indexOf('_document_id');
+        const localizationIndex = headers.indexOf('_localization_id');
+        if (documentIndex < 0 || localizationIndex < 0) throw new Error('Este arquivo não foi exportado pela visão de projeto.');
+        const keyIndex = headers.findIndex(header => header.toLocaleLowerCase('en-US') === 'keys');
+        const localeColumns = headers.map((header, index) => ({ index, locale:normalizeLocaleCode(header) }))
+          .filter(({ index, locale }) => index !== keyIndex && !headers[index].startsWith('_') && locale);
+        const records = projectLocalizationDocuments();
+        const byId = new Map(records.flatMap(record => [[record.id, record], ...(record.remoteId ? [[record.remoteId, record]] : [])]));
+        const entryCache = new Map();
+        const touched = new Set();
+        let imported = 0;
+        let removed = 0;
+        let unknown = 0;
+        rows.slice(1).forEach(row => {
+          const record = byId.get(String(row[documentIndex] || '').trim());
+          const id = String(row[localizationIndex] || '').trim();
+          if (!record || !id) { unknown += 1; return; }
+          if (!entryCache.has(record.id)) entryCache.set(record.id, new Map(localizationEntriesForRecord(record).map(entry => [entry.id, entry])));
+          const entry = entryCache.get(record.id).get(id);
+          if (!entry) { unknown += 1; return; }
+          const localization = localizationDataFor(record);
+          localeColumns.filter(({ locale }) => locale !== localization.sourceLocale).forEach(({ index, locale }) => {
+            const text = String(row[index] || '');
+            const knownLocale = localization.locales.includes(locale);
+            if (!knownLocale && !text) return;
+            if (!knownLocale) { localization.locales.push(locale); touched.add(record); }
+            if (!localization.translations[locale]) localization.translations[locale] = {};
+            const previous = localization.translations[locale][id]?.text || '';
+            if (text) {
+              localization.translations[locale][id] = { text, source:entry.text };
+              if (text !== previous) { imported += 1; touched.add(record); }
+            } else if (localization.translations[locale][id]) {
+              delete localization.translations[locale][id];
+              removed += 1;
+              touched.add(record);
+            }
+          });
+          if (!localization.activeLocale && localization.locales.length) localization.activeLocale = localization.locales[0];
+        });
+        touched.forEach(record => {
+          record.savedAt = new Date().toISOString();
+          record.editRevision = (record.editRevision || 0) + 1;
+          if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+        });
+        persistLibrary();
+        touched.forEach(record => {
+          if (record.id === activeDocumentId) queueSave();
+          else if (currentProjectId) void syncRecord(record);
+        });
+        return { imported, removed, unknown, documents:touched.size };
+      };
+      const localizationTokens = value => {
+        const matches = String(value || '').match(/{{\s*[^{}]+?\s*}}|{[A-Za-z_][\w.:-]*}|%(?:\d+\$)?[sdif]|%[A-Za-z_][\w.:-]*%/g) || [];
+        return matches.map(token => token.startsWith('{{') ? `{{${token.slice(2, -2).trim()}}}` : token).sort();
+      };
+      const localizationTokenIssue = (source, translation) => {
+        if (!String(translation || '').trim()) return false;
+        return localizationTokens(source).join('\u0000') !== localizationTokens(translation).join('\u0000');
+      };
+      const localizationEntryState = (entry, source) => {
+        if (!entry?.text?.trim()) return 'missing';
+        if (localizationTokenIssue(source, entry.text)) return 'issue';
+        if (entry.source && entry.source !== source) return 'stale';
+        return 'ready';
+      };
+      const localizationStateLabel = state => ({ missing:'sem tradução', ready:'pronta', stale:'revisar original alterado', issue:'marcadores divergentes' }[state] || state);
+      const localizationExportIssues = record => {
+        const localization = localizationDataFor(record);
+        const entries = allLocalizableEntries();
+        return localization.locales.flatMap(locale => entries.flatMap(entry => {
+          const translated = localization.translations[locale]?.[entry.node.localization_id];
+          return localizationEntryState(translated, entry.node.text) === 'issue' ? [{ locale, entry }] : [];
+        }));
+      };
+      const normalizedMemoryText = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').replace(/\s+/g, ' ').trim();
+      const translationMemorySimilarity = (left, right) => {
+        const a = normalizedMemoryText(left);
+        const b = normalizedMemoryText(right);
+        if (!a || !b) return 0;
+        if (a === b) return 1;
+        const leftTokens = new Set(a.split(/[^\p{L}\p{N}_]+/u).filter(Boolean));
+        const rightTokens = new Set(b.split(/[^\p{L}\p{N}_]+/u).filter(Boolean));
+        if (Math.min(leftTokens.size, rightTokens.size) < 2) return 0;
+        const intersection = [...leftTokens].filter(token => rightTokens.has(token)).length;
+        const union = new Set([...leftTokens, ...rightTokens]).size;
+        return union ? intersection / union : 0;
+      };
+      const buildTranslationMemory = locale => projectLocalizationDocuments().flatMap(record => {
+        const localization = localizationDataFor(record);
+        return localizationEntriesForRecord(record).flatMap(entry => {
+          const translated = localization.translations[locale]?.[entry.id];
+          return localizationEntryState(translated, entry.text) === 'ready' ? [{ source:entry.text, translation:translated.text, document:record.title, id:entry.id }] : [];
+        });
+      });
+      const translationMemorySuggestions = (memory, source, current = '') => {
+        const seen = new Set();
+        return memory.map(item => ({ ...item, score:translationMemorySimilarity(source, item.source) }))
+          .filter(item => item.score >= .55 && normalizedMemoryText(item.translation) !== normalizedMemoryText(current))
+          .sort((left, right) => right.score - left.score)
+          .filter(item => {
+            const key = normalizedMemoryText(item.translation);
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }).slice(0, 3);
+      };
+      const containsLocalizedTerm = (text, term) => {
+        const normalize = value => normalizedMemoryText(value).replace(/[^\p{L}\p{N}_]+/gu, ' ').trim();
+        const haystack = normalize(text);
+        const needle = normalize(term);
+        return Boolean(needle && ` ${haystack} `.includes(` ${needle} `));
+      };
+      const glossaryMatchesFor = (source, locale) => {
+        return translationGlossary.filter(item => item.translations[locale] && containsLocalizedTerm(source, item.term));
+      };
+      const localizationProjectStats = record => {
+        const localization = localizationDataFor(record);
+        const entries = localizationEntriesForRecord(record);
+        const states = localization.locales.flatMap(locale => entries.map(entry => localizationEntryState(localization.translations[locale]?.[entry.id], entry.text)));
+        const total = states.length;
+        const complete = states.filter(state => state !== 'missing').length;
+        return {
+          entries:entries.length,
+          languages:localization.locales.length,
+          total,
+          complete,
+          stale:states.filter(state => state === 'stale').length,
+          issues:states.filter(state => state === 'issue').length,
+          percentage:total ? Math.round((complete / total) * 100) : 0
+        };
+      };
+      const renderLocalizationProjectSummary = () => {
+        const records = projectLocalizationDocuments();
+        const summaries = records.map(record => ({ record, stats:localizationProjectStats(record) }));
+        const total = summaries.reduce((sum, item) => sum + item.stats.total, 0);
+        const complete = summaries.reduce((sum, item) => sum + item.stats.complete, 0);
+        const issues = summaries.reduce((sum, item) => sum + item.stats.issues, 0);
+        localizationProjectSummary.replaceChildren();
+        const heading = document.createElement('header');
+        heading.className = 'localization-project-heading';
+        const copy = document.createElement('div');
+        const titleElement = document.createElement('strong');
+        titleElement.textContent = 'Tradução do projeto';
+        const detail = document.createElement('span');
+        detail.textContent = `${records.length} documentos · ${complete} de ${total} traduções${issues ? ` · ${issues} com marcadores divergentes` : ''}`;
+        copy.append(titleElement, detail);
+        const actions = document.createElement('div');
+        actions.className = 'localization-project-actions';
+        const exportButton = document.createElement('button');
+        exportButton.type = 'button';
+        exportButton.textContent = 'Exportar projeto CSV';
+        exportButton.addEventListener('click', () => {
+          flushSave();
+          const projectIssues = projectLocalizationDocuments().reduce((sum, record) => sum + localizationProjectStats(record).issues, 0);
+          if (projectIssues) { statusMessage(`Exportação bloqueada: ${projectIssues} traduções têm marcadores divergentes.`, 'pending'); return; }
+          downloadProjectLocalizationCsv();
+          statusMessage('CSV consolidado do projeto exportado');
+        });
+        const importButton = document.createElement('button');
+        importButton.type = 'button';
+        importButton.textContent = 'Importar projeto CSV';
+        importButton.addEventListener('click', () => localizationProjectCsvFile.click());
+        actions.append(exportButton, importButton);
+        heading.append(copy, actions);
+        const list = document.createElement('div');
+        list.className = 'localization-project-list';
+        summaries.forEach(({ record, stats }) => {
+          const row = document.createElement('article');
+          row.className = 'localization-project-row';
+          const info = document.createElement('div');
+          const name = document.createElement('strong');
+          name.textContent = record.title || 'Sem título';
+          const status = document.createElement('small');
+          status.textContent = stats.languages ? `${stats.languages} ${stats.languages === 1 ? 'idioma' : 'idiomas'} · ${stats.percentage}%${stats.stale ? ` · ${stats.stale} para revisar` : ''}${stats.issues ? ` · ${stats.issues} com marcadores` : ''}` : 'Nenhum idioma de tradução';
+          info.append(name, status);
+          const meter = document.createElement('span');
+          meter.className = 'localization-project-meter';
+          const fill = document.createElement('span');
+          fill.style.width = `${stats.percentage}%`;
+          meter.append(fill);
+          const open = document.createElement('button');
+          open.type = 'button';
+          open.textContent = 'Abrir';
+          open.addEventListener('click', () => {
+            setLocalizationProjectView(false);
+            if (record.id !== activeDocumentId) openDocument(record.id);
+            setNarrativePanelView('localization');
+            if (stats.issues) localizationStatusFilter.value = 'issue';
+            renderNarrativeLocalization();
+          });
+          row.append(info, meter, open);
+          list.append(row);
+        });
+        if (!summaries.length) {
+          const empty = document.createElement('div');
+          empty.className = 'narrative-empty';
+          empty.textContent = 'Crie um documento para iniciar a localização do projeto.';
+          list.append(empty);
+        }
+        localizationProjectSummary.append(heading, list);
+        persistLibrary();
+      };
+      const persistTranslationGlossary = () => {
+        translationGlossary = normalizeTranslationGlossary(translationGlossary);
+        cacheNarrativeRegistry();
+        void saveNarrativeRegistry(true);
+      };
+      const renderLocalizationGlossary = () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        const currentLocalization = record ? localizationDataFor(record) : null;
+        const knownLocales = [...new Set([
+          ...(currentLocalization?.locales || []),
+          ...projectLocalizationDocuments().flatMap(item => localizationDataFor(item).locales),
+          ...localizationLocaleCatalog.map(([locale]) => locale)
+        ])];
+        let locale = normalizeLocaleCode(localizationGlossary.dataset.locale) || currentLocalization?.activeLocale || knownLocales[0] || 'en-US';
+        if (!knownLocales.includes(locale)) knownLocales.unshift(locale);
+        localizationGlossary.dataset.locale = locale;
+        localizationGlossary.replaceChildren();
+        const heading = document.createElement('header');
+        heading.className = 'localization-glossary-heading';
+        const copy = document.createElement('div');
+        const titleElement = document.createElement('strong');
+        titleElement.textContent = 'Glossário do projeto';
+        const detail = document.createElement('span');
+        detail.textContent = `${translationGlossary.length} ${translationGlossary.length === 1 ? 'termo compartilhado' : 'termos compartilhados'}`;
+        copy.append(titleElement, detail);
+        const localeLabel = document.createElement('label');
+        localeLabel.textContent = 'Idioma editado';
+        const localeSelect = document.createElement('select');
+        localeSelect.replaceChildren(...knownLocales.map(code => new Option(localizationLocaleLabel(code), code)));
+        localeSelect.value = locale;
+        localeSelect.addEventListener('change', () => {
+          localizationGlossary.dataset.locale = localeSelect.value;
+          renderLocalizationGlossary();
+        });
+        localeLabel.append(localeSelect);
+        heading.append(copy, localeLabel);
+        const form = document.createElement('form');
+        form.className = 'localization-glossary-form';
+        const term = document.createElement('input');
+        term.type = 'text';
+        term.placeholder = 'Termo original';
+        term.required = true;
+        const preferred = document.createElement('input');
+        preferred.type = 'text';
+        preferred.placeholder = `Forma preferida em ${localizationLocaleLabel(locale)}`;
+        const note = document.createElement('input');
+        note.type = 'text';
+        note.placeholder = 'Nota de uso ou contexto';
+        const add = document.createElement('button');
+        add.type = 'submit';
+        add.textContent = 'Adicionar termo';
+        form.append(term, preferred, note, add);
+        form.addEventListener('submit', event => {
+          event.preventDefault();
+          const source = term.value.trim();
+          if (!source) return;
+          const existing = translationGlossary.find(item => item.term.toLocaleLowerCase('pt-BR') === source.toLocaleLowerCase('pt-BR'));
+          if (existing) {
+            existing.note = note.value.trim() || existing.note;
+            if (preferred.value.trim()) existing.translations[locale] = preferred.value.trim();
+          } else translationGlossary.push({ id:`term-${crypto.randomUUID?.() || Date.now()}`, term:source, note:note.value.trim(), translations:preferred.value.trim() ? { [locale]:preferred.value.trim() } : {} });
+          persistTranslationGlossary();
+          renderLocalizationGlossary();
+          renderNarrativeLocalization();
+        });
+        const list = document.createElement('div');
+        list.className = 'localization-glossary-list';
+        translationGlossary.forEach(item => {
+          const row = document.createElement('article');
+          row.className = 'localization-glossary-row';
+          const source = document.createElement('strong');
+          source.textContent = item.term;
+          source.title = item.term;
+          const translation = document.createElement('input');
+          translation.type = 'text';
+          translation.value = item.translations[locale] || '';
+          translation.placeholder = `Tradução em ${localizationLocaleLabel(locale)}`;
+          const itemNote = document.createElement('input');
+          itemNote.type = 'text';
+          itemNote.value = item.note || '';
+          itemNote.placeholder = 'Nota de contexto';
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.textContent = 'Excluir';
+          const saveRow = () => {
+            if (translation.value.trim()) item.translations[locale] = translation.value.trim();
+            else delete item.translations[locale];
+            item.note = itemNote.value.trim();
+            persistTranslationGlossary();
+            renderNarrativeLocalization();
+          };
+          translation.addEventListener('change', saveRow);
+          itemNote.addEventListener('change', saveRow);
+          remove.addEventListener('click', () => {
+            translationGlossary = translationGlossary.filter(entry => entry.id !== item.id);
+            persistTranslationGlossary();
+            renderLocalizationGlossary();
+            renderNarrativeLocalization();
+          });
+          row.append(source, translation, itemNote, remove);
+          list.append(row);
+        });
+        if (!translationGlossary.length) {
+          const empty = document.createElement('div');
+          empty.className = 'narrative-empty';
+          empty.textContent = 'Adicione nomes, objetos e expressões que precisam manter a mesma tradução.';
+          list.append(empty);
+        }
+        localizationGlossary.append(heading, form, list);
+      };
+      const setLocalizationProjectView = open => {
+        closeLocalizationPreview();
+        localizationSettingsMenu.open = false;
+        narrativeLocalizationView.dataset.glossaryView = 'false';
+        localizationGlossary.hidden = true;
+        localizationGlossaryToggle.textContent = 'Glossário';
+        localizationGlossaryToggle.setAttribute('aria-pressed', 'false');
+        narrativeLocalizationView.dataset.projectView = String(open);
+        localizationProjectSummary.hidden = !open;
+        localizationProjectToggle.textContent = open ? 'Linhas' : 'Projeto';
+        localizationProjectToggle.setAttribute('aria-pressed', String(open));
+        if (open) renderLocalizationProjectSummary();
+        else renderNarrativeLocalization();
+      };
+      const setLocalizationGlossaryView = open => {
+        closeLocalizationPreview();
+        localizationSettingsMenu.open = false;
+        narrativeLocalizationView.dataset.projectView = 'false';
+        localizationProjectSummary.hidden = true;
+        localizationProjectToggle.textContent = 'Projeto';
+        localizationProjectToggle.setAttribute('aria-pressed', 'false');
+        narrativeLocalizationView.dataset.glossaryView = String(open);
+        localizationGlossary.hidden = !open;
+        localizationGlossaryToggle.textContent = open ? 'Linhas' : 'Glossário';
+        localizationGlossaryToggle.setAttribute('aria-pressed', String(open));
+        if (open) renderLocalizationGlossary();
+        else renderNarrativeLocalization();
+      };
+      let localizationPreviewPage = null;
+      let localizationPreviewBanner = null;
+      let localizationPreviewPreviousViewMode = 'writing';
+      const isLocalizationPreviewOpen = () => document.body.classList.contains('localization-preview-active');
+      const closeLocalizationPreview = () => {
+        if (!isLocalizationPreviewOpen()) return;
+        localizationPreviewPage?.remove();
+        localizationPreviewBanner?.remove();
+        localizationPreviewPage = null;
+        localizationPreviewBanner = null;
+        documentPage.hidden = false;
+        document.body.classList.remove('localization-preview-active');
+        localizationPreview.textContent = 'Prévia do idioma';
+        localizationPreview.setAttribute('aria-pressed', 'false');
+        documentViewModeControl.disabled = false;
+        applyDocumentViewMode(localizationPreviewPreviousViewMode);
+        scheduleBookPagination();
+      };
+      const localizedPreviewTarget = (clone, entry) => {
+        if (entry.target === title) return clone.querySelector('.doc-title');
+        if (entry.target === subtitle) return clone.querySelector('.doc-subtitle');
+        const owner = clone.querySelector(`[data-localization-id="${CSS.escape(entry.node.localization_id)}"]`);
+        if (!owner) return null;
+        const selectors = ['.narrative-text', '.narrative-choice-prompt', '.narrative-choice-text'];
+        const selector = selectors.find(candidate => entry.target?.matches?.(candidate));
+        return selector ? owner.matches(selector) ? owner : owner.querySelector(selector) : owner;
+      };
+      const renderLocalizationPreview = () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record) return;
+        const localization = localizationDataFor(record);
+        const locale = localization.activeLocale;
+        if (!locale) { closeLocalizationPreview(); statusMessage('Adicione um idioma antes de abrir a prévia.', 'pending'); return; }
+        const wasOpen = isLocalizationPreviewOpen();
+        if (!wasOpen) {
+          localizationPreviewPreviousViewMode = documentViewMode;
+          applyDocumentViewMode('reading');
+        }
+        const entries = allLocalizableEntries();
+        const translations = localization.translations[locale] || {};
+        const clone = documentPage.cloneNode(true);
+        clone.classList.add('localization-preview-page');
+        clone.hidden = false;
+        clone.removeAttribute('id');
+        clone.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+        let fallback = 0;
+        let stale = 0;
+        let issues = 0;
+        entries.forEach(entry => {
+          const translated = translations[entry.node.localization_id];
+          const state = localizationEntryState(translated, entry.node.text);
+          const target = localizedPreviewTarget(clone, entry);
+          if (!target) return;
+          const text = translated?.text?.trim() ? translated.text : entry.node.text;
+          if (state === 'missing') fallback += 1;
+          if (state === 'stale') stale += 1;
+          if (state === 'issue') issues += 1;
+          if (target.matches('textarea,input')) { target.value = text; target.setAttribute('value', text); }
+          else target.textContent = text;
+          target.dataset.localizationPreviewState = state;
+          if (state === 'stale') target.title = 'A tradução foi criada antes da última alteração no original.';
+          if (state === 'issue') target.title = 'A tradução alterou marcadores usados pelo jogo.';
+        });
+        clone.querySelectorAll('.authoring-decoration').forEach(element => element.remove());
+        clone.querySelectorAll('[contenteditable]').forEach(element => element.contentEditable = 'false');
+        clone.querySelectorAll('textarea').forEach(element => element.readOnly = true);
+        clone.querySelectorAll('input,button,select').forEach(element => element.disabled = true);
+        clone.querySelectorAll('a').forEach(element => element.tabIndex = -1);
+        const banner = document.createElement('div');
+        banner.className = 'localization-preview-banner';
+        const heading = document.createElement('strong');
+        heading.textContent = `Prévia · ${localizationLocaleLabel(locale)}`;
+        const summary = document.createElement('span');
+        summary.textContent = `${entries.length - fallback} de ${entries.length} linhas traduzidas${fallback ? ` · ${fallback} usando o original` : ''}${stale ? ` · ${stale} para revisar` : ''}${issues ? ` · ${issues} com marcadores` : ''}`;
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.textContent = 'Sair da prévia';
+        close.addEventListener('click', closeLocalizationPreview);
+        banner.append(heading, summary, close);
+        localizationPreviewPage?.remove();
+        localizationPreviewBanner?.remove();
+        localizationPreviewPage = clone;
+        localizationPreviewBanner = banner;
+        documentPage.hidden = true;
+        editorWrap.prepend(banner);
+        editorWrap.append(clone);
+        document.body.classList.add('localization-preview-active');
+        localizationPreview.textContent = 'Sair da prévia';
+        localizationPreview.setAttribute('aria-pressed', 'true');
+        documentViewModeControl.disabled = true;
+      };
+      let localizationPreviewRefreshFrame = 0;
+      const scheduleLocalizationPreviewRefresh = () => {
+        if (!isLocalizationPreviewOpen() || localizationPreviewRefreshFrame) return;
+        localizationPreviewRefreshFrame = requestAnimationFrame(() => {
+          localizationPreviewRefreshFrame = 0;
+          renderLocalizationPreview();
+        });
+      };
       const updateLocalizationProgress = (entries, localization, locale) => {
         const values = localization.translations[locale] || {};
         const complete = entries.filter(({ node }) => values[node.localization_id]?.text.trim()).length;
-        const stale = entries.filter(({ node }) => {
-          const value = values[node.localization_id];
-          return value?.text.trim() && value.source && value.source !== node.text;
-        }).length;
+        const states = entries.map(({ node }) => localizationEntryState(values[node.localization_id], node.text));
+        const stale = states.filter(state => state === 'stale').length;
+        const issues = states.filter(state => state === 'issue').length;
         const percentage = entries.length ? Math.round((complete / entries.length) * 100) : 0;
-        localizationProgress.querySelector(':scope > span').textContent = locale ? `${complete} de ${entries.length} linhas · ${percentage}%${stale ? ` · ${stale} para revisar` : ''}` : 'Adicione um idioma para começar';
+        localizationProgress.querySelector(':scope > span').textContent = locale ? `${complete} de ${entries.length} linhas · ${percentage}%${stale ? ` · ${stale} para revisar` : ''}${issues ? ` · ${issues} com marcadores` : ''}` : 'Adicione um idioma para começar';
         localizationProgress.querySelector('.localization-progress-bar > span').style.width = `${percentage}%`;
       };
       const renderNarrativeLocalization = () => {
@@ -2876,14 +3540,27 @@
         localizationRemoveLocale.disabled = !localization.activeLocale;
         localizationRemoveLocale.textContent = 'Remover idioma atual';
         delete localizationRemoveLocale.dataset.confirm;
+        localizationPreview.disabled = !localization.activeLocale;
+        if (!localization.activeLocale && isLocalizationPreviewOpen()) closeLocalizationPreview();
         const scope = localizationScope.value;
-        const entries = allLocalizableEntries().filter(entry => scope === 'all' || entry.kind === scope);
+        const scopedEntries = allLocalizableEntries().filter(entry => scope === 'all' || entry.kind === scope);
         const sequenceNames = new Map((record.narrativeSequences || []).map(sequence => [sequence.id, sequence.title]));
         const locale = localization.activeLocale;
         const localeTranslations = locale ? localization.translations[locale] || (localization.translations[locale] = {}) : {};
+        const translationMemory = locale ? buildTranslationMemory(locale) : [];
+        const query = localizationSearch.value.trim().toLocaleLowerCase('pt-BR');
+        const statusFilter = localizationStatusFilter.value;
+        const entries = scopedEntries.filter(entry => {
+          const translation = localeTranslations[entry.node.localization_id];
+          const state = localizationEntryState(translation, entry.node.text);
+          if (statusFilter !== 'all' && state !== statusFilter) return false;
+          if (!query) return true;
+          const sequence = entry.kind === 'narrative' ? sequenceNames.get(entry.node.sequence_id) || 'Sem sequência' : entry.context || 'Documento';
+          return [entry.node.localization_id, entry.node.text, translation?.text, entry.label, sequence].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(query));
+        });
         const previousScrollTop = localizationList.scrollTop;
         localizationList.replaceChildren();
-        if (!entries.length) {
+        if (!scopedEntries.length) {
           const empty = document.createElement('div');
           empty.className = 'narrative-empty';
           empty.textContent = scope === 'narrative' ? 'Adicione diálogos, narrações ou escolhas para criar linhas traduzíveis.' : scope === 'common' ? 'Escreva textos comuns no documento para criar segmentos traduzíveis.' : 'Escreva no documento para criar segmentos traduzíveis.';
@@ -2893,19 +3570,24 @@
           empty.className = 'narrative-empty';
           empty.textContent = 'Escolha “Adicionar idioma” para criar a primeira variação sincronizada deste documento.';
           localizationList.append(empty);
+        } else if (!entries.length) {
+          const empty = document.createElement('div');
+          empty.className = 'narrative-empty';
+          empty.textContent = 'Nenhuma linha corresponde à busca e à situação escolhidas.';
+          localizationList.append(empty);
         } else entries.forEach(({ block, node, target, label, context:entryContext, kind }) => {
           const entry = localeTranslations[node.localization_id] || { text:'', source:'' };
-          const stale = Boolean(entry.text.trim() && entry.source && entry.source !== node.text);
           const row = document.createElement('section');
           row.className = 'localization-row';
-          row.dataset.stale = String(stale);
           const heading = document.createElement('div');
           heading.className = 'localization-row-heading';
           const jump = document.createElement('button');
           jump.type = 'button';
-          jump.textContent = node.localization_id;
-          jump.title = 'Ir para esta linha no documento';
+          jump.textContent = 'Ir';
+          jump.title = `Ir para este trecho · ${node.localization_id}`;
+          jump.setAttribute('aria-label', `Ir para ${label} no documento`);
           jump.addEventListener('click', () => {
+            closeLocalizationPreview();
             block.scrollIntoView({ behavior:'smooth', block:'center' });
             if (target === subtitle) { subtitle.focus(); subtitle.setSelectionRange(subtitle.value.length, subtitle.value.length); }
             else if (target === title) {
@@ -2917,7 +3599,6 @@
           });
           const context = document.createElement('span');
           const contextName = kind === 'narrative' ? sequenceNames.get(node.sequence_id) || 'Sem sequência' : entryContext || 'Documento';
-          context.textContent = `${contextName} · ${label}${stale ? ' · revisar' : ''}`;
           const source = document.createElement('div');
           source.className = 'localization-source';
           source.textContent = node.text || 'Linha original vazia';
@@ -2925,19 +3606,59 @@
           translation.value = entry.text;
           translation.placeholder = `Tradução em ${localizationLocaleLabel(locale)}`;
           translation.setAttribute('aria-label', `Tradução de ${node.localization_id} para ${localizationLocaleLabel(locale)}`);
+          const updateRowState = () => {
+            const current = localeTranslations[node.localization_id];
+            const state = localizationEntryState(current, node.text);
+            row.dataset.state = state;
+            context.textContent = `${contextName} · ${label} · ${localizationStateLabel(state)}`;
+            translation.setAttribute('aria-invalid', String(state === 'issue'));
+            translation.title = state === 'issue' ? `Preserve os marcadores: ${localizationTokens(node.text).join(', ') || 'nenhum'}` : '';
+          };
           translation.addEventListener('input', () => {
-            localeTranslations[node.localization_id] = { text:translation.value, source:node.text };
-            row.dataset.stale = 'false';
-            context.textContent = `${contextName} · ${label}`;
-            updateLocalizationProgress(entries, localization, locale);
+            if (translation.value) localeTranslations[node.localization_id] = { text:translation.value, source:node.text };
+            else delete localeTranslations[node.localization_id];
+            updateRowState();
+            updateLocalizationProgress(scopedEntries, localization, locale);
+            scheduleLocalizationPreviewRefresh();
             queueSave();
           });
-          heading.append(jump, context);
+          translation.addEventListener('blur', () => {
+            if (localizationStatusFilter.value !== 'all' || localizationSearch.value.trim()) renderNarrativeLocalization();
+          });
+          updateRowState();
+          heading.append(context, jump);
           row.append(heading, source, translation);
+          const glossaryMatches = glossaryMatchesFor(node.text, locale);
+          const suggestions = translationMemorySuggestions(translationMemory, node.text, entry.text);
+          if (glossaryMatches.length || suggestions.length) {
+            const assists = document.createElement('div');
+            assists.className = 'localization-assists';
+            glossaryMatches.forEach(item => {
+              const hint = document.createElement('span');
+              const preferred = item.translations[locale];
+              hint.textContent = `Glossário: ${item.term} → ${preferred}`;
+              if (translation.value.trim() && !containsLocalizedTerm(translation.value, preferred)) hint.title = 'A forma preferida ainda não aparece nesta tradução.';
+              else if (item.note) hint.title = item.note;
+              assists.append(hint);
+            });
+            suggestions.forEach(suggestion => {
+              const use = document.createElement('button');
+              use.type = 'button';
+              use.textContent = `${suggestion.score === 1 ? 'Memória exata' : `Memória ${Math.round(suggestion.score * 100)}%`}: ${suggestion.translation}`;
+              use.title = `Usada em ${suggestion.document}`;
+              use.addEventListener('click', () => {
+                translation.value = suggestion.translation;
+                translation.dispatchEvent(new Event('input', { bubbles:true }));
+                translation.focus();
+              });
+              assists.append(use);
+            });
+            row.append(assists);
+          }
           localizationList.append(row);
         });
         localizationList.scrollTop = previousScrollTop;
-        updateLocalizationProgress(entries, localization, locale);
+        updateLocalizationProgress(scopedEntries, localization, locale);
       };
       let localizationRefreshFrame = 0;
       const scheduleLocalizationRefresh = () => {
@@ -2982,6 +3703,23 @@
         });
         return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, 'pt-BR'));
       };
+      const normalizeTranslationGlossary = glossary => {
+        const byTerm = new Map();
+        (Array.isArray(glossary) ? glossary : []).forEach(item => {
+          const term = String(item?.term || '').trim();
+          if (!term) return;
+          const key = term.toLocaleLowerCase('pt-BR');
+          const translations = Object.fromEntries(Object.entries(item?.translations && typeof item.translations === 'object' ? item.translations : {}).map(([locale, value]) => [normalizeLocaleCode(locale), String(value || '').trim()]).filter(([locale, value]) => locale && value));
+          const previous = byTerm.get(key);
+          byTerm.set(key, {
+            id:String(previous?.id || item?.id || `term-${crypto.randomUUID?.() || Date.now()}`),
+            term:previous?.term || term,
+            note:String(item?.note || previous?.note || '').trim(),
+            translations:{ ...(previous?.translations || {}), ...translations }
+          });
+        });
+        return [...byTerm.values()].sort((left, right) => left.term.localeCompare(right.term, 'pt-BR'));
+      };
       const narrativeVariableById = id => narrativeVariables.find(variable => variable.id === id);
       const characterById = id => narrativeCharacters.find(character => character.id === id);
       const characterByName = name => {
@@ -2997,13 +3735,13 @@
       };
       const narrativeRegistryCacheKey = () => `${storageKey || 'heartspace-docs-local'}:narrative-registry`;
       const cacheNarrativeRegistry = () => {
-        try { localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 1, characters: narrativeCharacters, variables: narrativeVariables })); } catch (_) {}
+        try { localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 2, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary })); } catch (_) {}
       };
       const readCachedNarrativeRegistry = () => {
         try {
           const cached = JSON.parse(localStorage.getItem(narrativeRegistryCacheKey()) || 'null');
-          return { characters: normalizeCharacterRegistry(cached?.characters), variables: normalizeVariableRegistry(cached?.variables) };
-        } catch (_) { return { characters: [], variables: [] }; }
+          return { characters: normalizeCharacterRegistry(cached?.characters), variables: normalizeVariableRegistry(cached?.variables), glossary:normalizeTranslationGlossary(cached?.glossary) };
+        } catch (_) { return { characters: [], variables: [], glossary:[] }; }
       };
       const narrativeRoots = () => documents.filter(record => !record.trashedAt).map(record => {
         if (record.id === activeDocumentId) return { record, root: editor };
@@ -3054,6 +3792,7 @@
       const saveNarrativeRegistry = async (silent = false) => {
         narrativeCharacters = normalizeCharacterRegistry(narrativeCharacters);
         narrativeVariables = normalizeVariableRegistry(narrativeVariables);
+        translationGlossary = normalizeTranslationGlossary(translationGlossary);
         cacheNarrativeRegistry();
         if (!currentProjectId || !currentAccessToken) {
           narrativeRegistryRemoteReady = false;
@@ -3066,7 +3805,7 @@
         }
         try {
           const query = new URLSearchParams({ on_conflict: 'project_id' });
-          await apiFetch(`/rest/v1/project_narrative_registry?${query}`, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ project_id: currentProjectId, characters: narrativeCharacters, variables: narrativeVariables, updated_by: currentUser?.id || null, updated_at: new Date().toISOString() }) });
+          await apiFetch(`/rest/v1/project_narrative_registry?${query}`, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ project_id: currentProjectId, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary, updated_by: currentUser?.id || null, updated_at: new Date().toISOString() }) });
           narrativeRegistryRemoteReady = true;
           if (!silent) statusMessage('Registro narrativo sincronizado com o projeto');
         } catch (error) {
@@ -3078,14 +3817,16 @@
         const cached = readCachedNarrativeRegistry();
         narrativeCharacters = cached.characters;
         narrativeVariables = cached.variables;
+        translationGlossary = cached.glossary;
         narrativeRegistryRemoteReady = false;
         if (currentProjectId && currentAccessToken) {
           try {
-            const query = new URLSearchParams({ select: 'characters,variables,updated_at', project_id: `eq.${currentProjectId}`, limit: '1' });
+            const query = new URLSearchParams({ select: 'characters,variables,glossary,updated_at', project_id: `eq.${currentProjectId}`, limit: '1' });
             const rows = await apiFetch(`/rest/v1/project_narrative_registry?${query}`);
             if (Array.isArray(rows) && rows[0]) {
               narrativeCharacters = normalizeCharacterRegistry(rows[0].characters);
               narrativeVariables = normalizeVariableRegistry(rows[0].variables);
+              translationGlossary = normalizeTranslationGlossary(rows[0].glossary);
             }
             narrativeRegistryRemoteReady = true;
           } catch (_) { /* mantém o cache enquanto a migration ainda não estiver publicada */ }
@@ -3096,6 +3837,8 @@
         if (observed.length && narrativeRegistryRemoteReady && canEditProject({ capabilities: projectCapabilities })) void saveNarrativeRegistry(true);
         if (isNarrativePanelOpen() && !narrativeCharactersView.hidden) renderNarrativeCharacters();
         if (isNarrativePanelOpen() && !narrativeVariablesView.hidden) renderNarrativeVariables();
+        if (isNarrativePanelOpen() && narrativeLocalizationView.dataset.glossaryView === 'true') renderLocalizationGlossary();
+        if (isNarrativePanelOpen() && !narrativeLocalizationView.hidden && narrativeLocalizationView.dataset.glossaryView !== 'true') renderNarrativeLocalization();
         if (isNarrativePanelOpen() && !narrativeValidationView.hidden) renderNarrativeValidation();
       };
       const bindNarrativeCharacter = block => {
@@ -3223,6 +3966,25 @@
         const record = documents.find(item => item.id === activeDocumentId);
         const registry = buildNarrativeRegistry();
         const issues = validateNarrativeRegistry(registry, record ? ensureNarrativeEventId(record) : '');
+        if (record) {
+          const localization = localizationDataFor(record);
+          const entries = allLocalizableEntries();
+          localization.locales.forEach(locale => {
+            const states = entries.map(entry => localizationEntryState(localization.translations[locale]?.[entry.node.localization_id], entry.node.text));
+            const markerIssues = states.filter(state => state === 'issue').length;
+            const stale = states.filter(state => state === 'stale').length;
+            const missing = states.filter(state => state === 'missing').length;
+            const glossaryWarnings = entries.filter(entry => {
+              const translated = localization.translations[locale]?.[entry.node.localization_id]?.text || '';
+              return translated && glossaryMatchesFor(entry.node.text, locale).some(item => !containsLocalizedTerm(translated, item.translations[locale]));
+            }).length;
+            const language = localizationLocaleLabel(locale);
+            if (markerIssues) issues.push({ severity:'error', title:`Marcadores divergentes em ${language}`, detail:`${markerIssues} ${markerIssues === 1 ? 'linha perdeu ou alterou' : 'linhas perderam ou alteraram'} variáveis do texto original.` });
+            if (stale) issues.push({ severity:'warning', title:`Traduções para revisar em ${language}`, detail:`${stale} ${stale === 1 ? 'linha foi traduzida antes de o original mudar' : 'linhas foram traduzidas antes de os originais mudarem'}.` });
+            if (glossaryWarnings) issues.push({ severity:'warning', title:`Glossário inconsistente em ${language}`, detail:`${glossaryWarnings} ${glossaryWarnings === 1 ? 'linha não usa' : 'linhas não usam'} a forma preferida cadastrada no projeto.` });
+            if (missing) issues.push({ severity:'warning', title:`Tradução incompleta em ${language}`, detail:`Faltam ${missing} de ${entries.length} linhas deste documento.` });
+          });
+        }
         narrativeValidationView.replaceChildren();
         const summary = document.createElement('div');
         summary.className = 'narrative-validation-summary';
@@ -3536,6 +4298,11 @@
         narrativeCharactersTab.setAttribute('aria-selected', String(showCharacters));
         narrativeVariablesTab.setAttribute('aria-selected', String(showVariables));
         narrativeValidationTab.setAttribute('aria-selected', String(showValidation));
+        const sequenceContext = !showLocalization && !showCharacters && !showVariables && !showValidation;
+        narrativeSettings.hidden = !sequenceContext;
+        narrativeInsertTools.hidden = view !== 'sequence';
+        narrativeActions.hidden = view !== 'sequence' && view !== 'map';
+        if (!showLocalization) localizationSettingsMenu.open = false;
         if (showMap) renderNarrativeMap();
         if (showLocalization) renderNarrativeLocalization();
         if (showCharacters) renderNarrativeCharacters();
@@ -3892,6 +4659,7 @@
         if (!nextLocale || localization.locales.includes(nextLocale)) { localizationSourceLocale.value = localization.sourceLocale; return; }
         localization.sourceLocale = nextLocale;
         renderNarrativeLocalization();
+        scheduleLocalizationPreviewRefresh();
         queueSave();
       });
       localizationTargetLocale.addEventListener('change', () => {
@@ -3900,9 +4668,24 @@
         const localization = localizationDataFor(record);
         localization.activeLocale = localizationTargetLocale.value;
         renderNarrativeLocalization();
+        scheduleLocalizationPreviewRefresh();
         queueSave();
       });
       localizationScope.addEventListener('change', renderNarrativeLocalization);
+      localizationStatusFilter.addEventListener('change', renderNarrativeLocalization);
+      localizationSearch.addEventListener('input', renderNarrativeLocalization);
+      document.addEventListener('pointerdown', event => {
+        if (localizationSettingsMenu.open && !localizationSettingsMenu.contains(event.target)) localizationSettingsMenu.open = false;
+      });
+      localizationProjectToggle.addEventListener('click', () => {
+        flushSave();
+        setLocalizationProjectView(narrativeLocalizationView.dataset.projectView !== 'true');
+      });
+      localizationGlossaryToggle.addEventListener('click', () => setLocalizationGlossaryView(narrativeLocalizationView.dataset.glossaryView !== 'true'));
+      localizationPreview.addEventListener('click', () => {
+        if (isLocalizationPreviewOpen()) closeLocalizationPreview();
+        else renderLocalizationPreview();
+      });
       localizationAddLocale.addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
@@ -3913,6 +4696,7 @@
         localization.translations[locale] = {};
         localization.activeLocale = locale;
         renderNarrativeLocalization();
+        scheduleLocalizationPreviewRefresh();
         queueSave();
       });
       localizationRemoveLocale.addEventListener('click', () => {
@@ -3930,13 +4714,28 @@
         delete localization.translations[locale];
         localization.activeLocale = localization.locales[0] || '';
         renderNarrativeLocalization();
+        scheduleLocalizationPreviewRefresh();
         queueSave();
       });
       localizationExportCsv.addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
+        const issues = localizationExportIssues(record);
+        if (issues.length) {
+          const first = issues[0];
+          const localization = localizationDataFor(record);
+          localization.activeLocale = first.locale;
+          localizationStatusFilter.value = 'issue';
+          localizationSearch.value = '';
+          renderNarrativeLocalization();
+          statusMessage(`Exportação bloqueada: ${issues.length} traduções têm marcadores divergentes.`, 'pending');
+          return;
+        }
         downloadLocalizationCsv(record);
-        statusMessage('CSV de tradução exportado para Godot e planilhas');
+        const localization = localizationDataFor(record);
+        const entries = allLocalizableEntries();
+        const missing = localization.locales.reduce((total, locale) => total + entries.filter(entry => localizationEntryState(localization.translations[locale]?.[entry.node.localization_id], entry.node.text) === 'missing').length, 0);
+        statusMessage(`CSV de tradução exportado${missing ? ` · ${missing} traduções ainda vazias` : ''}`);
       });
       localizationImportCsv.addEventListener('click', () => localizationCsvFile.click());
       localizationCsvFile.addEventListener('change', async () => {
@@ -3948,6 +4747,7 @@
         try {
           const result = importLocalizationCsv(record, await file.text());
           renderNarrativeLocalization();
+          scheduleLocalizationPreviewRefresh();
           queueSave();
           const details = [
             `${result.imported} traduções atualizadas`,
@@ -3957,6 +4757,25 @@
           statusMessage(details || 'CSV importado sem alterações');
         } catch (error) {
           statusMessage(error.message || 'Não foi possível importar o CSV.', 'pending');
+        }
+      });
+      localizationProjectCsvFile.addEventListener('change', async () => {
+        const file = localizationProjectCsvFile.files?.[0];
+        localizationProjectCsvFile.value = '';
+        if (!file) return;
+        try {
+          const result = importProjectLocalizationCsv(await file.text());
+          renderNarrativeLocalization();
+          renderLocalizationProjectSummary();
+          scheduleLocalizationPreviewRefresh();
+          const details = [
+            `${result.imported} traduções atualizadas em ${result.documents} documentos`,
+            result.removed ? `${result.removed} removidas` : '',
+            result.unknown ? `${result.unknown} linhas antigas ignoradas` : ''
+          ].filter(Boolean).join(' · ');
+          statusMessage(details || 'CSV do projeto importado sem alterações');
+        } catch (error) {
+          statusMessage(error.message || 'Não foi possível importar o CSV do projeto.', 'pending');
         }
       });
       document.querySelector('#narrative-character-create').addEventListener('submit', event => {
@@ -4195,6 +5014,7 @@
       };
       const openDocument = id => {
         if (id === activeDocumentId) return;
+        closeLocalizationPreview();
         flushSave();
         const record = documents.find(item => item.id === id && !item.trashedAt); if (!record) return;
         activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(record.body, record.layout);
@@ -4215,6 +5035,7 @@
         else statusMessage('O documento referenciado não está disponível nesta biblioteca.', 'pending');
       });
       const createDocument = (quick = false, layout = 'book', isNotebook = false, templateKey = '') => {
+        closeLocalizationPreview();
         flushSave();
         const customTemplate = templateKey.startsWith('custom:') ? readDocumentTemplates().find(item => item.id === templateKey.slice(7)) : null;
         const builtinKey = templateKey.startsWith('builtin:') ? templateKey.slice(8) : '';
@@ -4282,6 +5103,7 @@
           return;
         }
         if (wasActive) {
+          closeLocalizationPreview();
           clearTimeout(saveTimer);
           Object.assign(record, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() });
         }
@@ -4326,6 +5148,7 @@
         if (!record) return;
         if (currentProjectId && !canEditProject({ capabilities: projectCapabilities })) { statusMessage('Sua permissão não permite restaurar este documento.', 'pending'); return; }
         if (remoteSaveInProgress.has(record.id)) { statusMessage('Aguarde a sincronização atual terminar e tente novamente.', 'pending'); return; }
+        closeLocalizationPreview();
         record.trashedAt = ''; record.trashedBy = ''; record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1;
         if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
         activeDocumentId = record.id;
@@ -4476,7 +5299,7 @@
         }
         const raw = await response.text();
         let data = null; try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
-        if (!response.ok) throw new Error(data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : '') || `Serviço indisponível (${response.status}).`);
+        if (!response.ok) throw new Error(data?.error?.message || data?.message || data?.msg || data?.error_description || (typeof data?.error === 'string' ? data.error : '') || `Serviço indisponível (${response.status}).`);
         return data;
       };
       const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
@@ -4896,10 +5719,15 @@
         event.preventDefault();
         const button = document.querySelector('#auth-submit'); button.disabled = true; authStatus.textContent = 'Enviando link de acesso…';
         try {
-          const redirectTo = location.origin + location.pathname + location.search;
+          const localFile = location.protocol === 'file:';
+          const redirectTo = localFile
+            ? docsConfig.docsUrl || 'https://docs.heartspace.tools/'
+            : location.origin + location.pathname + location.search;
           const redirectQuery = new URLSearchParams({ redirect_to: redirectTo });
           await apiFetch(`/auth/v1/otp?${redirectQuery}`, { method: 'POST', body: JSON.stringify({ email: document.querySelector('#auth-email').value.trim(), create_user: false }) }, '');
-          authStatus.textContent = 'Confira seu e-mail e abra o link neste navegador para continuar.';
+          authStatus.textContent = localFile
+            ? 'Confira seu e-mail. O link abrirá a versão online segura do Docs.'
+            : 'Confira seu e-mail e abra o link neste navegador para continuar.';
         } catch (error) { authStatus.textContent = error.message || 'Não foi possível enviar o link agora.'; }
         finally { button.disabled = false; }
       });

@@ -2,5 +2,6 @@
 window.HEARTSPACE_DOCS_CONFIG = {
   supabaseUrl: "https://yhjetfilhsjtjfvgqfod.supabase.co",
   publishableKey: "sb_publishable_sZOy3pHkcIbCQr2PwPSTog_Yw5BAxMR",
-  dashboardUrl: "https://www.heartspace.tools/account/"
+  dashboardUrl: "https://www.heartspace.tools/account/",
+  docsUrl: "https://docs.heartspace.tools/"
 };
