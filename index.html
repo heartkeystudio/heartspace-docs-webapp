@@ -274,7 +274,7 @@
     .focus-button { color:#d6cbdc; }
     .editor-area { position:relative; min-height:0; overflow:auto; overflow-anchor:none; overscroll-behavior:contain; scroll-padding-block:24px 96px; background:var(--bg); }
     .editor-wrap { container-type:inline-size; width:min(100% - 48px, 1040px); min-height:100%; margin:0 auto; padding:12px 24px 128px; }
-    .page { width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
+    .page { position:relative; width:min(100%,var(--editor-width)); min-height:calc(100vh - 218px); margin:0 auto; padding:60px 76px 90px; border:1px solid #ffffff0d; border-radius:3px; background:var(--paper); box-shadow:0 15px 55px #00000030; transition:width .18s ease,padding .18s ease,background-color .18s ease; }
     .editor-wrap.is-canvas { width:100%; max-width:none; min-height:0; padding:0; }
     .page[data-layout="canvas"] { width:100%; min-height:0; padding:var(--canvas-margin-y,72px) var(--canvas-margin-x,76px); border:0; border-radius:0; background-color:#1b1e20; background-image:radial-gradient(#ffffff0a .7px,transparent .7px); background-size:22px 22px; box-shadow:none; }
     .page[data-layout="canvas"] .content { min-height:1.5em; }
@@ -294,6 +294,13 @@
     .document-outline-empty { margin:0; padding:14px 11px; color:#77717e; font-size:11px; line-height:1.45; }
     .outline-jump-target { animation:outline-jump-highlight 1.2s ease; }
     @keyframes outline-jump-highlight { 0%,30% { background-color:#0c8ce92b; box-shadow:0 0 0 5px #0c8ce914; } 100% { background-color:transparent; box-shadow:0 0 0 0 transparent; } }
+    body:has(.page[data-layout="book"]) .document-outline { top:var(--outline-book-top,112px); right:auto; left:var(--outline-book-left,calc(100vw - 238px)); width:var(--outline-book-width,220px); max-height:var(--outline-book-height,calc(100dvh - 140px)); overflow:visible; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; }
+    body:has(.page[data-layout="book"]) .document-outline-header { min-height:34px; padding:0 2px 0 16px; border:0; }
+    body:has(.page[data-layout="book"]) .document-outline-header strong { color:#c6c1c9; font-size:10px; }
+    body:has(.page[data-layout="book"]) .document-outline-close { width:25px; height:25px; }
+    body:has(.page[data-layout="book"]) .document-outline-list { gap:1px; max-height:calc(var(--outline-book-height,calc(100dvh - 140px)) - 34px); padding:3px 0 5px 10px; border-left:1px solid #ffffff18; }
+    body:has(.page[data-layout="book"]) .document-outline-item { min-height:27px; padding-top:4px; padding-bottom:4px; color:#8f8995; }
+    body:has(.page[data-layout="book"]) .document-outline-item:hover,body:has(.page[data-layout="book"]) .document-outline-item:focus-visible { color:#dcecf7; background:#0c8ce912; }
     @media(min-width:1101px) { body.narrative-panel-open .document-outline{right:calc(var(--narrative-panel-width,420px) + 18px)}body.narrative-panel-collapsed .document-outline{right:52px} }
     .page[data-layout="book"] { --book-page-ratio:1.414; --book-sheet-height:var(--book-page-height,1123px); --book-sheet-gap:36px; --book-page-pitch:calc(var(--book-sheet-height) + var(--book-sheet-gap)); box-sizing:border-box; width:var(--book-page-width,794px); min-height:var(--book-sheet-height); padding:var(--book-margin-y,72px) var(--book-margin-x,76px) 0; border:0; border-radius:0; background-color:transparent; background-image:linear-gradient(to bottom,#ffffff20 0 1px,transparent 1px calc(var(--book-sheet-height) - 1px),#ffffff20 calc(var(--book-sheet-height) - 1px) var(--book-sheet-height)),linear-gradient(to right,#ffffff20 0 1px,transparent 0 calc(100% - 1px),#ffffff20 calc(100% - 1px) 100%),repeating-linear-gradient(to bottom,var(--paper) 0,var(--paper) var(--book-sheet-height),var(--bg) var(--book-sheet-height),var(--bg) var(--book-page-pitch)); background-size:100% var(--book-page-pitch),100% var(--book-page-pitch),100% var(--book-page-pitch); background-repeat:repeat-y; box-shadow:none; }
     .page[data-layout="book"] .content.book-paginated { display:flex; flex-direction:column; gap:var(--book-sheet-gap); min-height:0; }
@@ -308,6 +315,11 @@
     .doc-subtitle::placeholder { color:#77717e; }
     .content { min-width:0; min-height:400px; outline:none; color:#ddd8e1; font-size:16px; line-height:1.5; overflow-wrap:anywhere; white-space:normal; }
     .content p { margin:0 0 8px; }
+    .content hr { height:1px; margin:24px 0; border:0; background:#ffffff26; }
+    .content [data-page-break="true"] { position:relative; height:25px; margin:18px 0; border-top:1px dashed #0c8ce977; color:#75bdf1; user-select:none; }
+    .content [data-page-break="true"] span { position:absolute; top:0; left:50%; padding:2px 9px; border:1px solid #0c8ce944; border-radius:999px; background:var(--paper); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; transform:translate(-50%,-50%); white-space:nowrap; }
+    body.reading-mode .content [data-page-break="true"] { height:0; margin:0; border:0; }
+    body.reading-mode .content [data-page-break="true"] span { display:none; }
     .content [data-indent] { margin-inline-start:var(--line-indent,0px); }
     .content [data-block-margin="narrow"] { margin-inline:24px; }
     .content [data-block-margin="medium"] { margin-inline:48px; }
@@ -411,6 +423,19 @@
     .narrative-meta { position:absolute; z-index:12; top:calc(100% + 4px); right:0; display:flex; align-items:baseline; flex-wrap:wrap; gap:7px; width:max-content; max-width:min(520px,calc(100vw - 32px)); min-height:0; padding:7px 9px; border:1px solid color-mix(in srgb,var(--narrative-accent) 34%,#ffffff16); border-radius:8px; color:#928c98; background:#1b1a20f5; box-shadow:0 12px 34px #0009; font-size:11px; line-height:1.35; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-3px); transition:opacity .12s ease,transform .12s ease,visibility .12s; }
     .narrative-block[data-reading-empty="true"] .narrative-meta { top:27px; right:auto; left:0; }
     .narrative-block[data-inspector-open="true"] > .narrative-meta { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0); }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] { min-height:25px; margin:18px 0; }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"]::before { position:absolute; z-index:1; top:50%; right:0; left:0; border-top:1px dashed color-mix(in srgb,var(--narrative-accent) 55%,transparent); content:''; pointer-events:none; }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-marker { top:50%; right:auto; left:50%; min-width:auto; max-width:none; height:20px; padding:0 10px; color:color-mix(in srgb,var(--narrative-accent) 78%,white); background:var(--paper); box-shadow:none; font-size:9px; opacity:1; transform:translate(-50%,-50%); }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-marker:hover,.narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-marker:focus-visible,.narrative-block[data-narrative-type="pause"][data-reading-empty="true"][data-inspector-open="true"] > .narrative-marker { min-width:auto; max-width:none; padding:0 10px; transform:translate(-50%,-50%); }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"] > .narrative-meta { top:calc(50% + 15px); right:auto; left:50%; transform:translate(-50%,-3px); }
+    .narrative-block[data-narrative-type="pause"][data-reading-empty="true"][data-inspector-open="true"] > .narrative-meta { transform:translate(-50%,0); }
+    .sequence-rail-layer { position:absolute; z-index:5; inset:0; overflow:visible; pointer-events:none; }
+    .sequence-rail { --sequence-color:#0c8ce9; position:absolute; width:2px; min-height:18px; border-radius:999px; background:color-mix(in srgb,var(--sequence-color) 58%,transparent); box-shadow:0 0 0 1px color-mix(in srgb,var(--sequence-color) 10%,transparent); opacity:.72; }
+    .sequence-rail::before,.sequence-rail::after { position:absolute; left:50%; width:6px; height:6px; border:1px solid color-mix(in srgb,var(--sequence-color) 72%,white); border-radius:50%; background:var(--paper); content:''; transform:translate(-50%,-50%); }
+    .sequence-rail::after { top:100%; }
+    .sequence-rail-label { position:absolute; top:8px; left:7px; display:block; max-width:14px; max-height:calc(100% - 16px); overflow:hidden; color:color-mix(in srgb,var(--sequence-color) 62%,white); font-size:8px; font-weight:720; letter-spacing:.08em; line-height:1; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; writing-mode:vertical-rl; }
+    .sequence-rail[data-active="true"] { background:var(--sequence-color); box-shadow:0 0 12px color-mix(in srgb,var(--sequence-color) 32%,transparent); opacity:.94; }
+    .sequence-rail[data-compact="true"] .sequence-rail-label { display:none; }
     .narrative-kind { color:var(--narrative-accent); font-size:9px; font-weight:720; letter-spacing:.09em; text-transform:uppercase; }
     .narrative-delete { min-height:22px; margin-left:auto; padding:0 7px; border:1px solid #ffffff12; border-radius:5px; color:#a59da8; background:transparent; font-size:10px; }
     .narrative-delete:hover,.narrative-delete:focus-visible { border-color:#d76d6d55; color:#efaaaa; background:#d76d6d10; }
@@ -457,6 +482,7 @@
     .page[data-narrative-profile="script"] .narrative-block[data-narrative-type="choice"] .narrative-choice-option { padding-left:24px; }
     .measuring-reading .authoring-decoration { display:none!important; }
     .measuring-reading .narrative-block[data-reading-empty="true"],body.reading-mode .narrative-block[data-reading-empty="true"] { height:0; min-height:0; margin:0; }
+    .measuring-reading .narrative-block[data-narrative-type="pause"]::before,body.reading-mode .narrative-block[data-narrative-type="pause"]::before { display:none; }
     body.reading-mode .authoring-decoration { display:none!important; }
     body.reading-mode .page[data-narrative-profile="prose"] .narrative-block[data-narrative-type="dialogue"]:not(.narrative-inline) > .narrative-text:not(:empty)::before { content:'— '; }
     body.reading-mode .narrative-inline { padding:0; background:transparent; }
@@ -541,6 +567,22 @@
     .narrative-map-event-actions button { min-height:29px; padding:0 8px; border:1px solid #ffffff15; border-radius:6px; color:#d7d0dc; background:#ffffff06; font-size:10px; }
     .narrative-map-event-actions button:hover { background:#ffffff10; }
     .narrative-map-event-actions button:disabled { color:#77717c; cursor:not-allowed; }
+    .narrative-presentation { display:grid; grid-template-rows:auto minmax(190px,1fr) auto; gap:10px; min-height:260px; max-height:520px; padding:12px; overflow:auto; border:1px solid var(--line); border-radius:9px; background:#111115; }
+    .narrative-presentation-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .narrative-presentation-form label { display:grid; gap:5px; min-width:0; color:#9f98a5; font-size:10px; }
+    .narrative-presentation-form select,.narrative-presentation-form input { width:100%; min-width:0; min-height:34px; padding:0 8px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
+    .narrative-presentation-form input[type="color"] { padding:4px; cursor:pointer; }
+    .narrative-presentation-preview { --preview-accent:#0c8ce9; --preview-surface:#10161d; --preview-text:#edf3f7; --preview-scene:#111923; display:flex; align-items:flex-end; justify-content:center; min-height:190px; padding:18px; overflow:hidden; border:1px solid #ffffff12; border-radius:9px; background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--preview-scene) 70%,#506070),var(--preview-scene) 72%); }
+    .narrative-presentation-preview[data-position="top"] { align-items:flex-start; }
+    .narrative-presentation-preview[data-position="center"] { align-items:center; }
+    .narrative-presentation-card { display:grid; gap:5px; width:100%; padding:12px 14px; border:1px solid #ffffff26; border-left:3px solid var(--preview-accent); border-radius:8px; color:var(--preview-text); background:color-mix(in srgb,var(--preview-surface) 92%,transparent); box-shadow:0 10px 28px #0008; }
+    .narrative-presentation-card strong { color:var(--preview-accent); font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
+    .narrative-presentation-card span { font-size:12px; line-height:1.45; }
+    .narrative-presentation-preview[data-model="subtitle"] .narrative-presentation-card { border:0; background:transparent; box-shadow:none; text-align:center; text-shadow:0 2px 8px #000; }
+    .narrative-presentation-preview[data-model="subtitle"] .narrative-presentation-card strong { justify-self:center; }
+    .narrative-presentation-preview[data-model="card"] .narrative-presentation-card { width:min(260px,100%); border-left-width:1px; border-top:3px solid var(--preview-accent); text-align:center; }
+    .narrative-presentation-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#8f8995; font-size:10px; }
+    .narrative-presentation-actions button { min-height:34px; padding:0 11px; border:1px solid #0c8ce955; border-radius:7px; color:#cce9fc; background:#0c8ce916; }
     .narrative-characters { display:grid; grid-template-rows:auto minmax(150px,1fr) auto; gap:10px; min-height:200px; max-height:460px; padding:12px; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#111115; }
     .narrative-character-create { display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1fr) auto; gap:7px; }
     .narrative-character-create input,.narrative-character-row input { min-width:0; min-height:34px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
@@ -661,23 +703,38 @@
     .narrative-rules-actions { justify-content:flex-end; }
     .narrative-rules-actions button { min-height:34px; padding:0 11px; border:1px solid var(--line); border-radius:7px; background:#ffffff08; }
     .narrative-rules-actions button[type="submit"] { border-color:#4c9b6966; background:#316444; }
-    .narrative-test-dialog { width:min(920px,calc(100vw - 32px)); padding:0; border:1px solid #ffffff1c; border-radius:14px; color:var(--text); background:#1b1a20; box-shadow:0 24px 90px #000b; }
-    .narrative-test-dialog::backdrop { background:#09080bd6; backdrop-filter:blur(5px); }
-    .narrative-test-panel { display:grid; gap:14px; padding:20px; }
-    .narrative-test-heading,.narrative-test-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .narrative-test-heading h2 { margin:0; font-size:17px; }
-    .narrative-test-heading button,.narrative-test-actions button,.narrative-test-choices button { min-height:34px; padding:0 10px; border:1px solid var(--line); border-radius:7px; color:#ddd6e2; background:#ffffff07; }
-    .narrative-test-status { color:#98919e; font:10px ui-monospace,SFMono-Regular,Consolas,monospace; }
-    .narrative-test-layout { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:12px; min-height:310px; }
-    .narrative-test-stage { display:grid; align-content:center; gap:8px; min-height:220px; padding:24px; border:1px solid #ffffff12; border-radius:10px; background:#111115; }
-    .narrative-test-speaker { color:#65b8f2; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-    .narrative-test-copy { color:#e6e0e9; font-size:17px; line-height:1.6; white-space:pre-wrap; }
-    .narrative-test-note { color:#9b94a1; font-size:12px; }
-    .narrative-test-choices { display:grid; gap:7px; margin-top:7px; }
-    .narrative-test-choices button { width:100%; min-height:39px; text-align:left; }
-    .narrative-test-choices button:hover:not(:disabled) { border-color:#0c8ce9; background:#0c8ce92b; }
-    .narrative-test-choices button:disabled { color:#8f6963; cursor:not-allowed; }
-    .narrative-test-sidebar { display:grid; grid-template-rows:minmax(0,1fr) minmax(0,1fr); gap:10px; min-height:0; }
+    .narrative-test-dialog { width:100vw; max-width:none; height:100dvh; max-height:none; margin:0; padding:0; border:0; color:var(--text); background:transparent; }
+    .narrative-test-dialog::backdrop { background:#07090ddd; backdrop-filter:blur(9px) saturate(.7); }
+    .narrative-test-panel { position:relative; display:grid; grid-template-rows:auto minmax(0,1fr); width:100%; height:100%; padding:18px; background:linear-gradient(180deg,#0a1018b8,#05070bd1); backdrop-filter:blur(3px); }
+    .narrative-test-heading { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; padding:0 4px 12px; }
+    .narrative-test-heading h2 { margin:0; font-size:15px; }
+    .narrative-test-heading button,.narrative-test-actions button,.narrative-test-choices button { min-height:34px; padding:0 11px; border:1px solid #ffffff20; border-radius:7px; color:#e5edf3; background:#111820cc; }
+    .narrative-test-status { display:block; margin-top:2px; color:#8f9aa5; font:10px ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .narrative-test-shortcuts { margin-left:auto; color:#87939d; font-size:10px; }
+    .narrative-test-layout { min-height:0; }
+    .narrative-test-stage { --preview-accent:#0c8ce9; --preview-surface:#10161d; --preview-text:#edf3f7; --preview-scene:#111923; position:relative; display:flex; align-items:flex-end; justify-content:center; min-height:100%; padding:clamp(24px,5vh,64px) clamp(18px,7vw,110px); overflow:auto; border:1px solid #ffffff12; border-radius:12px; background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--preview-scene) 72%,#506070) 0,var(--preview-scene) 72%); box-shadow:inset 0 -180px 160px #0008; cursor:pointer; }
+    .narrative-test-stage[data-position="top"] { align-items:flex-start; }
+    .narrative-test-stage[data-position="center"] { align-items:center; }
+    .narrative-test-stage:focus { outline:0; border-color:#0c8ce966; }
+    .narrative-player-box { position:relative; display:grid; gap:8px; width:min(980px,100%); min-height:150px; padding:22px 26px 20px; border:1px solid #ffffff2a; border-left:3px solid var(--preview-accent); border-radius:12px; color:var(--preview-text); background:color-mix(in srgb,var(--preview-surface) 92%,transparent); box-shadow:0 18px 70px #000b,inset 0 1px #ffffff0d; backdrop-filter:blur(14px); animation:narrative-player-enter .2s ease-out; cursor:pointer; }
+    .narrative-test-stage[data-model="subtitle"] .narrative-player-box { border:0; background:transparent; box-shadow:none; backdrop-filter:none; text-align:center; text-shadow:0 3px 12px #000; }
+    .narrative-test-stage[data-model="subtitle"] .narrative-test-speaker { justify-self:center; }
+    .narrative-test-stage[data-model="card"] .narrative-player-box { width:min(620px,100%); border-left-width:1px; border-top:3px solid var(--preview-accent); text-align:center; }
+    .narrative-test-stage[data-model="card"] .narrative-test-speaker { justify-self:center; }
+    @keyframes narrative-player-enter { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .narrative-test-speaker { color:var(--preview-accent); font-size:11px; font-weight:750; letter-spacing:.09em; text-transform:uppercase; }
+    .narrative-test-copy { min-height:2.9em; color:var(--preview-text); font-size:clamp(17px,2vw,22px); line-height:1.55; white-space:pre-wrap; }
+    .narrative-test-copy[data-narration="true"] { color:#d6dde3; font-style:italic; }
+    .narrative-test-note { color:#8f9aa4; font-size:11px; }
+    .narrative-test-advance-hint { justify-self:end; align-self:end; color:#83909a; font-size:10px; letter-spacing:.04em; }
+    .narrative-test-advance-hint::after { display:inline-block; margin-left:7px; color:var(--preview-accent); content:'▼'; animation:narrative-hint 1.1s ease-in-out infinite; }
+    @keyframes narrative-hint { 50%{transform:translateY(3px);opacity:.45} }
+    .narrative-test-choices { display:grid; gap:8px; margin-top:5px; }
+    .narrative-test-choices[hidden] { display:none; }
+    .narrative-test-choices button { width:100%; min-height:43px; text-align:left; transition:border-color .14s ease,background .14s ease,transform .14s ease; }
+    .narrative-test-choices button:hover:not(:disabled),.narrative-test-choices button:focus-visible,.narrative-test-choices button[data-active="true"] { border-color:var(--preview-accent); outline:0; background:color-mix(in srgb,var(--preview-accent) 18%,transparent); transform:translateX(3px); }
+    .narrative-test-choices button:disabled { color:#7e6f70; cursor:not-allowed; }
+    .narrative-test-sidebar { display:none; }
     .narrative-test-inspector { display:grid; grid-template-rows:auto minmax(0,1fr); min-height:0; padding:10px; border:1px solid #ffffff12; border-radius:9px; background:#111115; }
     .narrative-test-inspector h3 { display:flex; align-items:center; gap:7px; margin:0 0 8px; color:#c8c1cc; font-size:11px; }
     .narrative-test-inspector-list { display:grid; align-content:start; gap:5px; min-height:0; overflow:auto; }
@@ -687,8 +744,11 @@
     .narrative-test-history-item { display:grid; grid-template-columns:18px minmax(0,1fr); gap:7px; width:100%; padding:6px 7px; border-radius:6px; color:#aaa3af; background:#ffffff04; text-align:left; font-size:10px; }
     .narrative-test-history-item:hover { color:#e4dce8; background:#ffffff09; }
     .narrative-test-history-index { color:#76bff4; font:9px ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .narrative-test-actions { position:absolute; z-index:6; top:24px; right:92px; display:flex; gap:7px; }
     .narrative-test-actions > div { display:flex; gap:7px; }
+    #narrative-test-next { position:fixed; right:clamp(24px,7vw,110px); bottom:clamp(18px,3vh,34px); z-index:8; opacity:0; pointer-events:none; }
     #narrative-test-back:disabled { color:#6f6974; cursor:not-allowed; }
+    @media(prefers-reduced-motion:reduce){.narrative-player-box,.narrative-test-advance-hint::after{animation:none}.narrative-test-choices button{transition:none}}
     .placeholder { color:#77727d; }
     .bottom-status { position:fixed; right:20px; bottom:16px; z-index:2; display:flex; align-items:center; gap:9px; }
     .word-count { padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:#aaa4b0; background:#1d1d22eF; font-size:11px; backdrop-filter:blur(12px); }
@@ -755,6 +815,7 @@
       body:not(.narrative-panel-collapsed) .localization-row-heading { align-items:flex-start; }
       body:not(.narrative-panel-collapsed) .localization-row-heading span { white-space:normal; }
       body:not(.narrative-panel-collapsed) .narrative-character-create,body:not(.narrative-panel-collapsed) .narrative-character-row,body:not(.narrative-panel-collapsed) .narrative-variable-create,body:not(.narrative-panel-collapsed) .narrative-variable-row,body:not(.narrative-panel-collapsed) .narrative-rules-row,body:not(.narrative-panel-collapsed) .localization-glossary-form,body:not(.narrative-panel-collapsed) .localization-glossary-row { grid-template-columns:1fr; }
+      body:not(.narrative-panel-collapsed) .narrative-presentation-form { grid-template-columns:1fr; }
       body:not(.narrative-panel-collapsed) .localization-project-heading,body:not(.narrative-panel-collapsed) .localization-glossary-heading { align-items:stretch; flex-direction:column; }
       body:not(.narrative-panel-collapsed) .localization-project-actions { display:grid; grid-template-columns:1fr 1fr; }
       body:not(.narrative-panel-collapsed) .localization-project-row { grid-template-columns:minmax(0,1fr) auto; }
@@ -783,6 +844,7 @@
     @media(max-width:480px){.localization-toolbar>*{grid-column:1/-1!important}.localization-settings-popover{position:fixed;top:110px;right:10px;grid-template-columns:1fr;width:calc(100vw - 20px);max-height:calc(100svh - 130px);overflow:auto}.localization-review-tools{grid-template-columns:1fr}.localization-project-heading,.localization-glossary-heading{align-items:stretch;flex-direction:column}.localization-project-actions{display:grid;grid-template-columns:1fr 1fr}.localization-project-row{grid-template-columns:minmax(0,1fr) auto}.localization-project-meter{display:none}.localization-glossary-form,.localization-glossary-row{grid-template-columns:1fr}}
     @media(max-width:480px){.narrative-sequence-picker{grid-template-columns:1fr 1fr}.narrative-sequence-picker label{grid-column:1/-1}}
     @media(max-width:800px){.page[data-layout="canvas"]{padding:clamp(22px,var(--canvas-margin-y,72px),72px) clamp(16px,var(--canvas-margin-x,76px),72px)}}
+    @media(max-width:600px){.narrative-test-panel{padding:10px}.narrative-test-heading{padding:0 2px 8px}.narrative-test-heading h2{font-size:13px}.narrative-test-status{max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.narrative-test-shortcuts{display:none}.narrative-test-actions{top:62px;right:18px}.narrative-test-actions>div{gap:5px}.narrative-test-actions button{min-height:30px;padding:0 8px;font-size:11px}.narrative-test-layout{height:100%;padding-top:42px}.narrative-test-stage{min-height:100%;padding:20px 12px}.narrative-player-box{min-height:140px;padding:18px 16px 16px}.narrative-test-copy{font-size:17px}}
   </style>
 </head>
 <body>
@@ -877,6 +939,7 @@
         <div class="narrative-tabs" role="tablist" aria-label="Visualização narrativa">
           <button type="button" id="narrative-sequence-tab" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
           <button type="button" id="narrative-map-tab" role="tab" aria-selected="false" aria-controls="narrative-map">Mapa</button>
+          <button type="button" id="narrative-presentation-tab" role="tab" aria-selected="false" aria-controls="narrative-presentation">Cena</button>
           <button type="button" id="narrative-localization-tab" role="tab" aria-selected="false" aria-controls="narrative-localization">Tradução</button>
           <button type="button" id="narrative-characters-tab" role="tab" aria-selected="false" aria-controls="narrative-characters">Personagens</button>
           <button type="button" id="narrative-variables-tab" role="tab" aria-selected="false" aria-controls="narrative-variables">Variáveis</button>
@@ -884,6 +947,7 @@
         </div>
         <div class="narrative-sequence narrative-view" id="narrative-sequence" role="tabpanel" aria-labelledby="narrative-sequence-tab" aria-label="Sequência narrativa"></div>
         <div class="narrative-map narrative-view" id="narrative-map" role="tabpanel" aria-labelledby="narrative-map-tab" aria-label="Mapa de eventos narrativos" hidden></div>
+        <div class="narrative-presentation narrative-view" id="narrative-presentation" role="tabpanel" aria-labelledby="narrative-presentation-tab" hidden><form class="narrative-presentation-form" id="narrative-presentation-form"><label>Modelo<select id="narrative-presentation-model"><option value="panel">Painel de diálogo</option><option value="subtitle">Legenda cinematográfica</option><option value="card">Cartão central</option></select></label><label>Posição<select id="narrative-presentation-position"><option value="bottom">Embaixo</option><option value="center">Centro</option><option value="top">Em cima</option></select></label><label>Velocidade<select id="narrative-presentation-speed"><option value="0">Sem animação</option><option value="12">Rápida</option><option value="24">Normal</option><option value="42">Lenta</option></select></label><label>Cor da cena<input id="narrative-presentation-scene" type="color" value="#111923"></label><label>Destaque<input id="narrative-presentation-accent" type="color" value="#0c8ce9"></label><label>Painel<input id="narrative-presentation-surface" type="color" value="#10161d"></label><label>Texto<input id="narrative-presentation-text" type="color" value="#edf3f7"></label></form><div class="narrative-presentation-preview" id="narrative-presentation-preview"><section class="narrative-presentation-card"><strong>Personagem</strong><span>Esta é uma amostra de como a sequência aparecerá durante a prévia.</span></section></div><div class="narrative-presentation-actions"><span>Configuração exclusiva da sequência ativa.</span><button type="button" id="narrative-presentation-test">Testar sequência</button></div></div>
         <div class="narrative-localization narrative-view" id="narrative-localization" role="tabpanel" aria-labelledby="narrative-localization-tab" hidden>
           <div class="localization-toolbar">
             <label>Idioma de tradução<select id="localization-target-locale" aria-label="Idioma de tradução"></select></label>
@@ -914,9 +978,9 @@
   <dialog class="history-dialog" id="history-dialog" aria-labelledby="history-title"><div class="history-heading"><h2 id="history-title">Histórico de versões</h2><button type="button" id="history-close">Fechar</button></div><div class="history-list" id="history-list" aria-live="polite"><div class="history-empty">Carregando versões…</div></div></dialog>
   <dialog class="narrative-test-dialog" id="narrative-test-dialog" aria-labelledby="narrative-test-title">
     <section class="narrative-test-panel">
-      <div class="narrative-test-heading"><div><h2 id="narrative-test-title">Testar narrativa</h2><span class="narrative-test-status" id="narrative-test-status"></span></div><button type="button" id="narrative-test-close">Fechar</button></div>
+      <div class="narrative-test-heading"><div><h2 id="narrative-test-title">Prévia da sequência</h2><span class="narrative-test-status" id="narrative-test-status"></span></div><span class="narrative-test-shortcuts">Enter/Espaço avança · ↑↓ escolhe · Esc fecha</span><button type="button" id="narrative-test-close">Fechar</button></div>
       <div class="narrative-test-layout">
-        <div class="narrative-test-stage" id="narrative-test-stage" aria-live="polite"></div>
+        <div class="narrative-test-stage" id="narrative-test-stage" tabindex="0" aria-live="polite" aria-label="Player da sequência"></div>
         <aside class="narrative-test-sidebar" aria-label="Ferramentas do teste">
           <section class="narrative-test-inspector"><h3><img class="narrative-section-icon" src="./assets/docs/settings.svg" alt="">Variáveis atuais</h3><div class="narrative-test-inspector-list" id="narrative-test-variables"></div></section>
           <section class="narrative-test-inspector"><h3><img class="narrative-section-icon" src="./assets/docs/timetravel.svg" alt="">Histórico</h3><div class="narrative-test-inspector-list" id="narrative-test-history"></div></section>
@@ -1023,7 +1087,8 @@
         { label: 'Excluir tabela', detail: 'Remove a tabela inteira do documento', icon: '×▦', kind: 'table-delete' },
         { label: 'Citação', detail: 'Destaque uma referência', icon: '“', kind: 'block', value: 'blockquote' },
         { label: 'Bloco de código', detail: 'Trecho monoespaçado', icon: '</>', kind: 'block', value: 'pre' },
-        { label: 'Divisor', detail: 'Separador visual', icon: '―', kind: 'divider' },
+        { label: 'Divisor', detail: 'Linha visual sem mudar de folha', icon: '―', kind: 'divider' },
+        { label: 'Quebra de página', detail: 'Continue na próxima folha · Ctrl + Enter', icon: '↡', kind: 'page-break' },
         { label: 'Diagrama Mermaid', detail: 'Comece um fluxograma editável', icon: '◇', kind: 'diagram' },
         { label: 'Narrativa', detail: 'Diálogos e narrações usados pelo jogo', icon: '◈', kind: 'folder', id: 'narrative', children: [
           { label: 'Diálogo', detail: 'Fala atribuída a um personagem', icon: '“', kind: 'narrative', value: 'dialogue' },
@@ -1218,7 +1283,21 @@
         const requestedActive = normalizeLocaleCode(input.activeLocale || input.active_locale);
         return { sourceLocale, locales, activeLocale:locales.includes(requestedActive) ? requestedActive : locales[0] || '', translations };
       };
-      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}` })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const normalizeNarrativePresentation = value => {
+        const input = value && typeof value === 'object' ? value : {};
+        const color = (candidate, fallback) => /^#[0-9a-f]{6}$/iu.test(String(candidate || '')) ? String(candidate).toLocaleLowerCase('en-US') : fallback;
+        const speed = [0, 12, 24, 42].includes(Number(input.speed)) ? Number(input.speed) : 24;
+        return {
+          model:['panel','subtitle','card'].includes(input.model) ? input.model : 'panel',
+          position:['top','center','bottom'].includes(input.position) ? input.position : 'bottom',
+          accent:color(input.accent, '#0c8ce9'),
+          surface:color(input.surface, '#10161d'),
+          text:color(input.text, '#edf3f7'),
+          scene:color(input.scene, '#111923'),
+          speed
+        };
+      };
+      const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const normalizeFolder = folder => ({ id: String(folder?.id || `folder-${crypto.randomUUID?.() || Date.now()}`), name: String(folder?.name || 'Nova pasta').trim() || 'Nova pasta', expanded: folder?.expanded !== false });
       const mergeFoldersFromDocuments = () => {
         const known = new Map(libraryFolders.map(folder => [folder.id, folder]));
@@ -1742,6 +1821,62 @@
       const makeChoiceOptionId = () => `option-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const narrativeTypeLabel = type => type === 'dialogue' ? 'Diálogo' : type === 'narration' ? 'Narração' : type === 'pause' ? 'Pausa' : type === 'choice' ? 'Escolha' : 'Sinal do jogo';
       const narrativeTypeSymbol = type => type === 'dialogue' ? '“' : type === 'narration' ? '¶' : type === 'pause' ? 'Ⅱ' : type === 'choice' ? '⑂' : '⌁';
+      const narrativeSequenceRailColors = ['#0c8ce9','#5ba9b7','#72b98c','#d09b55','#a787d8','#d87586'];
+      const narrativeSequenceRailColor = id => {
+        const hash = [...String(id || '')].reduce((total, character) => ((total * 31) + character.codePointAt(0)) | 0, 0);
+        return narrativeSequenceRailColors[Math.abs(hash) % narrativeSequenceRailColors.length];
+      };
+      const renderNarrativeSequenceRails = () => {
+        documentPage.querySelector(':scope > .sequence-rail-layer')?.remove();
+        if (documentViewMode !== 'writing') return;
+        const record = documents.find(item => item.id === activeDocumentId);
+        const blocks = [...editor.querySelectorAll('.narrative-block:not(.narrative-inline)')];
+        if (!record || !blocks.length) return;
+        const titles = new Map((record.narrativeSequences || []).map((sequence, index) => [sequence.id, sequence.title || `Sequência ${index + 1}`]));
+        const layer = document.createElement('div');
+        layer.className = 'sequence-rail-layer authoring-decoration';
+        layer.contentEditable = 'false';
+        layer.setAttribute('aria-hidden', 'true');
+        const pageRect = documentPage.getBoundingClientRect();
+        const measuredScale = documentPage.offsetWidth ? pageRect.width / documentPage.offsetWidth : 1;
+        const scale = Number.isFinite(measuredScale) && measuredScale > 0 ? measuredScale : 1;
+        const segments = [];
+        blocks.forEach(block => {
+          const sequenceId = block.dataset.narrativeSequenceId || record.narrativeSequences?.[0]?.id || '';
+          if (!sequenceId) return;
+          const sheet = block.closest('.book-page-content') || editor;
+          const previous = segments.at(-1);
+          if (previous && previous.sequenceId === sequenceId && previous.sheet === sheet) previous.blocks.push(block);
+          else segments.push({ sequenceId, sheet, blocks:[block] });
+        });
+        segments.forEach(segment => {
+          const firstRect = segment.blocks[0].getBoundingClientRect();
+          const lastRect = segment.blocks.at(-1).getBoundingClientRect();
+          const top = (firstRect.top - pageRect.top) / scale;
+          const height = Math.max(18, (lastRect.bottom - firstRect.top) / scale);
+          const contentRight = Math.max(...segment.blocks.map(block => block.getBoundingClientRect().right));
+          const left = Math.min(documentPage.offsetWidth - 24, ((contentRight - pageRect.left) / scale) + 22);
+          const rail = document.createElement('span');
+          rail.className = 'sequence-rail';
+          rail.style.cssText = `top:${top}px;left:${left}px;height:${height}px;--sequence-color:${narrativeSequenceRailColor(segment.sequenceId)}`;
+          rail.dataset.active = String(segment.sequenceId === record.activeNarrativeSequenceId);
+          rail.dataset.compact = String(height < 54);
+          const label = document.createElement('span');
+          label.className = 'sequence-rail-label';
+          label.textContent = titles.get(segment.sequenceId) || segment.sequenceId.split('.').at(-1)?.replace(/[_-]+/g, ' ') || 'Sequência';
+          rail.append(label);
+          layer.append(rail);
+        });
+        documentPage.append(layer);
+      };
+      let narrativeSequenceRailFrame = 0;
+      const scheduleNarrativeSequenceRails = () => {
+        cancelAnimationFrame(narrativeSequenceRailFrame);
+        narrativeSequenceRailFrame = requestAnimationFrame(renderNarrativeSequenceRails);
+      };
+      editor.addEventListener('input', scheduleNarrativeSequenceRails);
+      new MutationObserver(scheduleNarrativeSequenceRails).observe(editor, { childList:true, subtree:true, attributes:true, attributeFilter:['data-narrative-sequence-id'] });
+      if ('ResizeObserver' in window) new ResizeObserver(scheduleNarrativeSequenceRails).observe(documentPage);
       const refreshNarrativeReadingLabel = block => {
         if (!block) return;
         if (block.classList.contains('narrative-inline')) {
@@ -1858,6 +1993,7 @@
           const previousLane = previous?.matches?.('.narrative-block[data-reading-empty="true"]') ? Number(previous.style.getPropertyValue('--narrative-lane')) + 1 : 0;
           block.style.setProperty('--narrative-lane', String(Math.min(previousLane, 3)));
         });
+        scheduleNarrativeSequenceRails();
       };
       const applyDocumentEditingState = () => {
         const editable = documentViewMode === 'writing';
@@ -1933,14 +2069,35 @@
         const top = caretVisualRect(selection)?.top;
         if (Number.isFinite(top)) anchor.editorArea.scrollTop += top - anchor.top;
       };
+      const rebuildBookPageFlow = (pages, makePage) => {
+        const flow = pages.length
+          ? pages.flatMap(page => [...page.childNodes])
+          : [...editor.childNodes];
+        if (!flow.length) flow.push(Object.assign(document.createElement('p'), { innerHTML:'<br>' }));
+        editor.replaceChildren();
+        pages.length = 0;
+        let page = makePage(0);
+        flow.forEach(block => {
+          page.append(block);
+          if (block.nodeType === Node.ELEMENT_NODE && block.matches('[data-page-break="true"]')) {
+            page = makePage(pages.length);
+            return;
+          }
+          if (pageHasReadingOverflow(page) && page.childNodes.length > 1) {
+            block.remove();
+            page = makePage(pages.length);
+            page.append(block);
+          }
+        });
+        if (!page.childNodes.length) page.append(Object.assign(document.createElement('p'), { innerHTML:'<br>' }));
+        return pages;
+      };
       const paginateBookForMobile = () => {
         const selection = window.getSelection();
         const scrollAnchor = captureCaretScrollAnchor(selection);
         const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode)
           ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset }
           : null;
-        const activeNode = savedSelection?.anchorNode.nodeType === Node.ELEMENT_NODE ? savedSelection.anchorNode : savedSelection?.anchorNode.parentElement;
-        const activePage = activeNode?.closest('.book-page-content');
         let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
         const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
@@ -1983,48 +2140,9 @@
           keepCaretAboveZoom(selection);
         };
         editor.classList.add('book-paginated');
-        if (!pages.length) {
-          const blocks = [...editor.childNodes];
-          editor.replaceChildren();
-          pages = [];
-          let page = makePage(0);
-          for (const block of blocks.length ? blocks : [Object.assign(document.createElement('p'), { innerHTML: '<br>' })]) {
-            page.append(block);
-            if (pageHasReadingOverflow(page) && page.childElementCount > 1) {
-              block.remove();
-              page = makePage(pages.length);
-              page.append(block);
-            }
-          }
-          keepNarrativeControlsInsidePages(pages, makePage);
-          restoreCaret();
-          return;
-        }
+        pages = rebuildBookPageFlow(pages, makePage);
         setPageHeight();
-        for (let index = 0; index < pages.length; index += 1) {
-          const page = pages[index];
-          while (pageHasReadingOverflow(page) && page.childElementCount > 1) {
-            const overflowingBlock = page.lastElementChild;
-            const nextPage = pages[index + 1] || makePage(pages.length);
-            nextPage.prepend(overflowingBlock);
-          }
-          const nextPage = pages[index + 1];
-          while (nextPage?.firstElementChild && nextPage !== activePage) {
-            const nextBlock = nextPage.firstElementChild;
-            page.append(nextBlock);
-            if (pageHasReadingOverflow(page)) {
-              nextPage.prepend(nextBlock);
-              break;
-            }
-          }
-          if (nextPage && !nextPage.childNodes.length) {
-            nextPage.remove();
-            pages.splice(index + 1, 1);
-            index -= 1;
-          }
-        }
         keepNarrativeControlsInsidePages(pages, makePage);
-        while (pages.length > 1 && !pages.at(-1).childNodes.length) pages.pop().remove();
         restoreCaret();
       };
       const paginateBook = () => {
@@ -2042,8 +2160,6 @@
         const selection = window.getSelection();
         const scrollAnchor = captureCaretScrollAnchor(selection);
         const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode) ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset } : null;
-        const activeNode = savedSelection?.anchorNode.nodeType === Node.ELEMENT_NODE ? savedSelection.anchorNode : savedSelection?.anchorNode.parentElement;
-        const activePage = activeNode?.closest('.book-page-content');
         let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
         const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
@@ -2065,40 +2181,11 @@
           pages.push(page);
           return page;
         };
-        if (!pages.length) {
-          const blocks = [...editor.childNodes];
-          editor.replaceChildren();
-          const page = makePage(0);
-          for (const block of blocks.length ? blocks : [Object.assign(document.createElement('p'), { innerHTML: '<br>' })]) page.append(block);
-        }
-        pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
+        pages = rebuildBookPageFlow(pages, makePage);
         pages.forEach((page, index) => {
           page.style.height = `${index === 0 ? firstPageHeight : sheetHeight}px`;
         });
-        for (let index = 0; index < pages.length; index += 1) {
-          const page = pages[index];
-          while (pageHasReadingOverflow(page) && page.childElementCount > 1) {
-            const overflowingBlock = page.lastElementChild;
-            const nextPage = pages[index + 1] || makePage(pages.length);
-            nextPage.prepend(overflowingBlock);
-          }
-          const nextPage = pages[index + 1];
-          while (nextPage?.firstElementChild && nextPage !== activePage) {
-            const nextBlock = nextPage.firstElementChild;
-            page.append(nextBlock);
-            if (pageHasReadingOverflow(page)) {
-              nextPage.prepend(nextBlock);
-              break;
-            }
-          }
-          if (nextPage && !nextPage.childNodes.length) {
-            nextPage.remove();
-            pages.splice(index + 1, 1);
-            index -= 1;
-          }
-        }
         keepNarrativeControlsInsidePages(pages, makePage);
-        while (pages.length > 1 && !pages.at(-1).childNodes.length) pages.pop().remove();
         if (savedSelection?.anchorNode.isConnected && savedSelection.focusNode?.isConnected) {
           try { selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset); } catch (_) { /* keep the browser's nearest caret if offsets shifted */ }
         }
@@ -2256,6 +2343,7 @@
       const readingTextContent = () => {
         const snapshot = editor.cloneNode(true);
         snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
+        snapshot.querySelectorAll('[data-page-break="true"]').forEach(pageBreak => pageBreak.remove());
         snapshot.querySelectorAll('.authoring-decoration,.narrative-block[data-reading-empty="true"]').forEach(element => element.remove());
         if (documentPage.dataset.narrativeProfile === 'prose') snapshot.querySelectorAll('.narrative-reading-label').forEach(label => label.remove());
         return snapshot.textContent || '';
@@ -2360,7 +2448,11 @@
         const previousBlock = previousPage.lastElementChild;
         if (!previousBlock) return;
         event.preventDefault();
-        if (previousBlock.matches('p,h1,h2,h3,blockquote') && block.matches('p,h1,h2,h3,blockquote')) {
+        if (previousBlock.matches('[data-page-break="true"]')) {
+          previousBlock.remove();
+          previousPage.append(block);
+          placeCaret(block);
+        } else if (previousBlock.matches('p,h1,h2,h3,blockquote') && block.matches('p,h1,h2,h3,blockquote')) {
           if (!previousBlock.textContent.trim() && previousBlock.querySelector('br')) previousBlock.replaceChildren();
           while (block.firstChild) previousBlock.append(block.firstChild);
           block.remove();
@@ -2607,6 +2699,16 @@
       const narrativeMap = document.querySelector('#narrative-map');
       const narrativeSequenceTab = document.querySelector('#narrative-sequence-tab');
       const narrativeMapTab = document.querySelector('#narrative-map-tab');
+      const narrativePresentationTab = document.querySelector('#narrative-presentation-tab');
+      const narrativePresentationView = document.querySelector('#narrative-presentation');
+      const narrativePresentationModel = document.querySelector('#narrative-presentation-model');
+      const narrativePresentationPosition = document.querySelector('#narrative-presentation-position');
+      const narrativePresentationSpeed = document.querySelector('#narrative-presentation-speed');
+      const narrativePresentationScene = document.querySelector('#narrative-presentation-scene');
+      const narrativePresentationAccent = document.querySelector('#narrative-presentation-accent');
+      const narrativePresentationSurface = document.querySelector('#narrative-presentation-surface');
+      const narrativePresentationText = document.querySelector('#narrative-presentation-text');
+      const narrativePresentationPreview = document.querySelector('#narrative-presentation-preview');
       const narrativeLocalizationTab = document.querySelector('#narrative-localization-tab');
       const narrativeLocalizationView = document.querySelector('#narrative-localization');
       const localizationSourceLocale = document.querySelector('#localization-source-locale');
@@ -2717,19 +2819,19 @@
           const id = normalizedNarrativeSequenceId(sequence?.id);
           if (!id || seen.has(id)) return;
           seen.add(id);
-          sequences.push({ id, title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}` });
+          sequences.push({ id, title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation) });
         });
         root?.querySelectorAll?.('.narrative-block[data-narrative-sequence-id]').forEach(block => {
           const id = normalizedNarrativeSequenceId(block.dataset.narrativeSequenceId);
           if (!id || seen.has(id)) return;
           seen.add(id);
-          sequences.push({ id, title:id.split('.').filter(Boolean).at(-1)?.replace(/[_-]+/g, ' ') || `Sequência ${sequences.length + 1}` });
+          sequences.push({ id, title:id.split('.').filter(Boolean).at(-1)?.replace(/[_-]+/g, ' ') || `Sequência ${sequences.length + 1}`, presentation:normalizeNarrativePresentation() });
         });
         const hasNarrativeBlocks = Boolean(root?.querySelector?.('.narrative-block'));
         if (!sequences.length && (create || hasNarrativeBlocks || record.narrativeEventId)) {
           const legacyId = normalizedNarrativeSequenceId(record.narrativeEventId);
           const id = legacyId || uniqueNarrativeSequenceId(record, `story.${narrativeSlug(record.title) || 'event'}`);
-          sequences.push({ id, title:record.title || 'Sequência principal' });
+          sequences.push({ id, title:record.title || 'Sequência principal', presentation:normalizeNarrativePresentation() });
         }
         record.narrativeSequences = sequences;
         if (!sequences.some(sequence => sequence.id === record.activeNarrativeSequenceId)) record.activeNarrativeSequenceId = sequences[0]?.id || '';
@@ -2750,7 +2852,7 @@
         const number = sequences.length + 1;
         const title = `Nova sequência ${number}`;
         const id = uniqueNarrativeSequenceId(record, `story.${narrativeSlug(record.title) || 'event'}.${narrativeSlug(title)}`);
-        const sequence = { id, title };
+        const sequence = { id, title, presentation:normalizeNarrativePresentation() };
         record.narrativeSequences.push(sequence);
         record.activeNarrativeSequenceId = id;
         return sequence;
@@ -3972,7 +4074,7 @@
           variable_registry: narrativeVariables,
           localization: exportLocalizationBundle(record),
           nodes: nodes.filter(node => node.sequence_id === current?.id),
-          sequences: sequences.map(sequence => ({ event_id:sequence.id, title:sequence.title, nodes:nodes.filter(node => node.sequence_id === sequence.id) }))
+          sequences: sequences.map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation), nodes:nodes.filter(node => node.sequence_id === sequence.id) }))
         };
       };
       const buildNarrativeRegistry = () => {
@@ -4128,7 +4230,7 @@
         const rawName = eventId.split('.').filter(Boolean).at(-1) || 'evento';
         const eventTitle = rawName.replace(/[_-]+/g, ' ').replace(/\b\w/g, letter => letter.toLocaleUpperCase('pt-BR'));
         const sequences = ensureNarrativeSequences(record, editor, true);
-        if (!sequences.some(sequence => sequence.id === eventId)) sequences.push({ id:eventId, title:eventTitle });
+        if (!sequences.some(sequence => sequence.id === eventId)) sequences.push({ id:eventId, title:eventTitle, presentation:normalizeNarrativePresentation() });
         record.narrativeSequences = sequences;
         record.activeNarrativeSequenceId = eventId;
         renderNarrativePanel();
@@ -4377,20 +4479,53 @@
         narrativeRulesDialog.showModal();
         conditionVariable.focus();
       };
+      const applyNarrativePresentationPreview = presentation => {
+        const value = normalizeNarrativePresentation(presentation);
+        narrativePresentationPreview.dataset.model = value.model;
+        narrativePresentationPreview.dataset.position = value.position;
+        narrativePresentationPreview.style.setProperty('--preview-accent', value.accent);
+        narrativePresentationPreview.style.setProperty('--preview-surface', value.surface);
+        narrativePresentationPreview.style.setProperty('--preview-text', value.text);
+        narrativePresentationPreview.style.setProperty('--preview-scene', value.scene);
+      };
+      const narrativePresentationFromControls = () => normalizeNarrativePresentation({
+        model:narrativePresentationModel.value,
+        position:narrativePresentationPosition.value,
+        speed:Number(narrativePresentationSpeed.value),
+        scene:narrativePresentationScene.value,
+        accent:narrativePresentationAccent.value,
+        surface:narrativePresentationSurface.value,
+        text:narrativePresentationText.value
+      });
+      const renderNarrativePresentation = () => {
+        const sequence = activeNarrativeSequence();
+        const value = normalizeNarrativePresentation(sequence?.presentation);
+        narrativePresentationModel.value = value.model;
+        narrativePresentationPosition.value = value.position;
+        narrativePresentationSpeed.value = String(value.speed);
+        narrativePresentationScene.value = value.scene;
+        narrativePresentationAccent.value = value.accent;
+        narrativePresentationSurface.value = value.surface;
+        narrativePresentationText.value = value.text;
+        applyNarrativePresentationPreview(value);
+      };
       const setNarrativePanelView = view => {
         const showMap = view === 'map';
+        const showPresentation = view === 'presentation';
         const showLocalization = view === 'localization';
         const showCharacters = view === 'characters';
         const showVariables = view === 'variables';
         const showValidation = view === 'validation';
-        narrativeSequence.hidden = showMap || showLocalization || showCharacters || showVariables || showValidation;
+        narrativeSequence.hidden = showMap || showPresentation || showLocalization || showCharacters || showVariables || showValidation;
         narrativeMap.hidden = !showMap;
+        narrativePresentationView.hidden = !showPresentation;
         narrativeLocalizationView.hidden = !showLocalization;
         narrativeCharactersView.hidden = !showCharacters;
         narrativeVariablesView.hidden = !showVariables;
         narrativeValidationView.hidden = !showValidation;
-        narrativeSequenceTab.setAttribute('aria-selected', String(!showMap && !showLocalization && !showCharacters && !showVariables && !showValidation));
+        narrativeSequenceTab.setAttribute('aria-selected', String(!showMap && !showPresentation && !showLocalization && !showCharacters && !showVariables && !showValidation));
         narrativeMapTab.setAttribute('aria-selected', String(showMap));
+        narrativePresentationTab.setAttribute('aria-selected', String(showPresentation));
         narrativeLocalizationTab.setAttribute('aria-selected', String(showLocalization));
         narrativeCharactersTab.setAttribute('aria-selected', String(showCharacters));
         narrativeVariablesTab.setAttribute('aria-selected', String(showVariables));
@@ -4401,6 +4536,7 @@
         narrativeActions.hidden = view !== 'sequence' && view !== 'map';
         if (!showLocalization) localizationSettingsMenu.open = false;
         if (showMap) renderNarrativeMap();
+        if (showPresentation) renderNarrativePresentation();
         if (showLocalization) renderNarrativeLocalization();
         if (showCharacters) renderNarrativeCharacters();
         if (showVariables) renderNarrativeVariables();
@@ -4412,6 +4548,80 @@
         element.textContent = text;
         narrativeTestStage.append(element);
         return element;
+      };
+      const stopNarrativeTestPlayback = () => {
+        if (!narrativeTestState) return;
+        clearInterval(narrativeTestState.typingTimer);
+        clearTimeout(narrativeTestState.pauseTimer);
+        narrativeTestState.typingTimer = null;
+        narrativeTestState.pauseTimer = null;
+        narrativeTestState.typing = null;
+      };
+      const finishNarrativeTestTyping = () => {
+        const typing = narrativeTestState?.typing;
+        if (!typing) return false;
+        clearInterval(narrativeTestState.typingTimer);
+        narrativeTestState.typingTimer = null;
+        typing.element.textContent = typing.text;
+        narrativeTestState.typing = null;
+        typing.onComplete?.();
+        return true;
+      };
+      const applyNarrativeTestPresentation = presentation => {
+        const value = normalizeNarrativePresentation(presentation);
+        if (narrativeTestState) narrativeTestState.presentation = value;
+        narrativeTestStage.dataset.model = value.model;
+        narrativeTestStage.dataset.position = value.position;
+        narrativeTestStage.style.setProperty('--preview-accent', value.accent);
+        narrativeTestStage.style.setProperty('--preview-surface', value.surface);
+        narrativeTestStage.style.setProperty('--preview-text', value.text);
+        narrativeTestStage.style.setProperty('--preview-scene', value.scene);
+      };
+      const typeNarrativeTestText = (element, text, onComplete) => {
+        const content = String(text || '');
+        const speed = Number(narrativeTestState?.presentation?.speed ?? 24);
+        if (!speed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          element.textContent = content;
+          element.setAttribute('aria-label', content);
+          onComplete?.();
+          return;
+        }
+        const characters = [...content];
+        element.textContent = '';
+        element.setAttribute('aria-label', content);
+        narrativeTestState.typing = { element, text:content, onComplete };
+        let index = 0;
+        narrativeTestState.typingTimer = setInterval(() => {
+          index = Math.min(characters.length, index + 1);
+          element.textContent = characters.slice(0, index).join('');
+          if (index >= characters.length) finishNarrativeTestTyping();
+        }, speed);
+      };
+      const createNarrativePlayerBox = (speaker, narration = false) => {
+        const box = document.createElement('section');
+        box.className = 'narrative-player-box';
+        if (speaker) {
+          const label = document.createElement('div');
+          label.className = 'narrative-test-speaker';
+          label.textContent = speaker;
+          box.append(label);
+        }
+        const copy = document.createElement('div');
+        copy.className = 'narrative-test-copy';
+        if (narration) copy.dataset.narration = 'true';
+        box.append(copy);
+        narrativeTestStage.append(box);
+        return { box, copy };
+      };
+      const narrativeTestHint = (box, text = 'Enter ou espaço para continuar') => {
+        let hint = box.querySelector('.narrative-test-advance-hint');
+        if (!hint) {
+          hint = document.createElement('span');
+          hint.className = 'narrative-test-advance-hint';
+          box.append(hint);
+        }
+        hint.textContent = text;
+        return hint;
       };
       const initialNarrativeVariableState = () => Object.fromEntries(narrativeVariables.map(variable => [variable.id, coerceNarrativeValue(variable.default, variable.type)]));
       const narrativeConditionMatches = (condition, values) => {
@@ -4498,14 +4708,37 @@
         });
         narrativeTestBack.disabled = !narrativeTestState.history.length;
       };
+      const advanceNarrativeTest = () => {
+        if (!narrativeTestState) return;
+        if (finishNarrativeTestTyping()) return;
+        const entry = narrativeTestState.registry.byId.get(narrativeTestState.eventId);
+        const node = entry?.nodes[narrativeTestState.index];
+        if (!entry || !node) return;
+        if (node?.type === 'choice') {
+          const enabled = [...narrativeTestStage.querySelectorAll('.narrative-test-choices button:not(:disabled)')];
+          const active = enabled[Math.max(0, narrativeTestState.activeChoiceIndex || 0)];
+          active?.click();
+          return;
+        }
+        stopNarrativeTestPlayback();
+        const labels = { dialogue:'Diálogo', narration:'Narração', pause:'Pausa', signal:'Sinal', choice:'Escolha' };
+        captureNarrativeTestSnapshot(`${labels[node?.type] || 'Etapa'} · ${entry?.id || narrativeTestState.eventId}`);
+        narrativeTestState.index += 1;
+        renderNarrativeTest();
+      };
       const renderNarrativeTest = () => {
+        stopNarrativeTestPlayback();
         narrativeTestStage.replaceChildren();
         if (!narrativeTestState) return;
+        applyNarrativeTestPresentation();
+        narrativeTestState.activeChoiceIndex = 0;
+        queueMicrotask(() => { if (narrativeTestDialog.open && !narrativeTestStage.contains(document.activeElement)) narrativeTestStage.focus({ preventScroll:true }); });
         renderNarrativeTestInspectors();
         if (narrativeTestState.registry.duplicateIds.has(narrativeTestState.eventId)) {
           narrativeTestStatus.textContent = narrativeTestState.eventId;
-          appendNarrativeTestText('narrative-test-copy', 'Este ID pertence a mais de uma sequência.');
-          appendNarrativeTestText('narrative-test-note', 'Renomeie uma das sequências no mapa antes de testar o caminho.');
+          const { box, copy } = createNarrativePlayerBox('Erro de sequência');
+          copy.textContent = 'Este ID pertence a mais de uma sequência.';
+          const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = 'Renomeie uma das sequências no mapa antes de testar o caminho.'; box.append(note);
           narrativeTestNext.hidden = false;
           narrativeTestNext.disabled = true;
           return;
@@ -4513,18 +4746,21 @@
         const entry = narrativeTestState.registry.byId.get(narrativeTestState.eventId);
         if (!entry || entry.provisional) {
           narrativeTestStatus.textContent = narrativeTestState.eventId;
-          appendNarrativeTestText('narrative-test-copy', 'Este destino ainda não existe.');
-          appendNarrativeTestText('narrative-test-note', 'Crie a sequência no mapa para continuar este caminho.');
+          const { box, copy } = createNarrativePlayerBox('Destino ausente');
+          copy.textContent = 'Este destino ainda não existe.';
+          const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = 'Crie a sequência no mapa para continuar este caminho.'; box.append(note);
           narrativeTestNext.hidden = false;
           narrativeTestNext.disabled = true;
           return;
         }
+        applyNarrativeTestPresentation(entry.sequence?.presentation);
         const node = entry.nodes[narrativeTestState.index];
         const validationErrors = narrativeTestState.validation.filter(issue => issue.severity === 'error').length;
         narrativeTestStatus.textContent = `${entry.id} · ${Math.min(narrativeTestState.index + 1, entry.nodes.length)}/${entry.nodes.length} · ${Object.keys(narrativeTestState.variables).length} variáveis${validationErrors ? ` · ${validationErrors} erros de validação` : ''}`;
         if (!node) {
-          appendNarrativeTestText('narrative-test-copy', entry.nodes.length ? 'Fim da sequência.' : 'Esta sequência ainda não possui blocos narrativos.');
-          appendNarrativeTestText('narrative-test-note', entry.record?.title || entry.id);
+          const { box, copy } = createNarrativePlayerBox('Sequência concluída');
+          copy.textContent = entry.nodes.length ? 'Fim da sequência.' : 'Esta sequência ainda não possui blocos narrativos.';
+          const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = entry.record?.title || entry.id; box.append(note);
           narrativeTestNext.hidden = false;
           narrativeTestNext.disabled = true;
           return;
@@ -4533,31 +4769,38 @@
         narrativeTestNext.hidden = node.type === 'choice' && node.options?.length;
         if (node.type === 'dialogue') {
           const characterName = characterById(node.character_id)?.name || node.character || 'Personagem';
-          appendNarrativeTestText('narrative-test-speaker', `${characterName}${node.expression ? ` · ${node.expression}` : ''}`);
-          appendNarrativeTestText('narrative-test-copy', node.text || 'Fala vazia');
+          const { box, copy } = createNarrativePlayerBox(`${characterName}${node.expression ? ` · ${node.expression}` : ''}`);
+          typeNarrativeTestText(copy, node.text || 'Fala vazia', () => narrativeTestHint(box));
         } else if (node.type === 'narration') {
-          appendNarrativeTestText('narrative-test-speaker', 'Narração');
-          appendNarrativeTestText('narrative-test-copy', node.text || 'Narração vazia');
+          const { box, copy } = createNarrativePlayerBox('Narração', true);
+          typeNarrativeTestText(copy, node.text || 'Narração vazia', () => narrativeTestHint(box));
         } else if (node.type === 'pause') {
-          appendNarrativeTestText('narrative-test-copy', `Pausa de ${node.duration_ms} ms`);
-          appendNarrativeTestText('narrative-test-note', 'O runtime aguardará antes de continuar.');
+          const duration = Math.max(0, Math.min(60000, Number(node.duration_ms) || 0));
+          const { box, copy } = createNarrativePlayerBox('Pausa');
+          copy.textContent = `Aguardando ${(duration / 1000).toLocaleString('pt-BR')} s…`;
+          narrativeTestHint(box, 'Enter ou espaço para ignorar a pausa');
+          narrativeTestState.pauseTimer = setTimeout(() => advanceNarrativeTest(), duration);
         } else if (node.type === 'signal') {
-          appendNarrativeTestText('narrative-test-copy', node.name ? `Sinal: ${node.name}` : 'Sinal sem nome');
-          appendNarrativeTestText('narrative-test-note', node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload));
+          const { box, copy } = createNarrativePlayerBox('Sinal do jogo');
+          copy.textContent = node.name ? `Sinal: ${node.name}` : 'Sinal sem nome';
+          const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload); box.append(note);
+          narrativeTestHint(box);
         } else if (node.type === 'choice') {
-          appendNarrativeTestText('narrative-test-copy', node.prompt || 'Escolha uma opção');
+          const { box, copy } = createNarrativePlayerBox('Escolha');
           const choices = document.createElement('div');
           choices.className = 'narrative-test-choices';
-          (node.options || []).forEach(option => {
+          choices.hidden = true;
+          (node.options || []).forEach((option, optionIndex) => {
             const button = document.createElement('button');
             button.type = 'button';
             const target = option.target_event || '';
             const targetEntry = narrativeTestState.registry.byId.get(target);
             const duplicateTarget = narrativeTestState.registry.duplicateIds.has(target);
             const conditionAvailable = narrativeConditionMatches(option.condition, narrativeTestState.variables);
-            button.textContent = `${option.text || 'Opção sem texto'}${!conditionAvailable ? ' · condição não atendida' : target && (!targetEntry || targetEntry.provisional) ? ' · destino ausente' : duplicateTarget ? ' · destino ambíguo' : ''}`;
+            button.textContent = `${optionIndex + 1}. ${option.text || 'Opção sem texto'}${!conditionAvailable ? ' · condição não atendida' : target && (!targetEntry || targetEntry.provisional) ? ' · destino ausente' : duplicateTarget ? ' · destino ambíguo' : ''}`;
             button.disabled = !conditionAvailable || !target || !targetEntry || targetEntry.provisional || duplicateTarget;
             if (!button.disabled) button.addEventListener('click', () => {
+              stopNarrativeTestPlayback();
               captureNarrativeTestSnapshot(`Escolha: ${option.text || target}`);
               applyNarrativeEffects(option.effects, narrativeTestState.variables);
               narrativeTestState.eventId = target;
@@ -4566,15 +4809,21 @@
             });
             choices.append(button);
           });
-          narrativeTestStage.append(choices);
+          box.append(choices);
+          typeNarrativeTestText(copy, node.prompt || 'Escolha uma opção', () => {
+            choices.hidden = false;
+            const firstChoice = choices.querySelector('button:not(:disabled)');
+            if (firstChoice) { firstChoice.dataset.active = 'true'; narrativeTestState.activeChoiceIndex = [...choices.querySelectorAll('button:not(:disabled)')].indexOf(firstChoice); }
+            narrativeTestHint(box, 'Setas, números ou Enter para escolher');
+          });
         }
       };
       const startNarrativeTest = eventId => {
         const registry = buildNarrativeRegistry();
-        narrativeTestState = { registry, startEventId: eventId, eventId, index: 0, variables: initialNarrativeVariableState(), history: [], validation: validateNarrativeRegistry(registry, eventId) };
+        narrativeTestState = { registry, startEventId: eventId, eventId, index: 0, variables: initialNarrativeVariableState(), history: [], validation: validateNarrativeRegistry(registry, eventId), activeChoiceIndex:0, typing:null, typingTimer:null, pauseTimer:null };
         if (isNarrativePanelOpen()) setNarrativePanelOpen(false);
-        renderNarrativeTest();
         narrativeTestDialog.showModal();
+        renderNarrativeTest();
       };
       const reorderNarrativeBlocks = (source, target, position) => {
         const sequenceId = source?.dataset.narrativeSequenceId || '';
@@ -4598,6 +4847,7 @@
         const sequences = ensureNarrativeSequences(record, editor, true);
         const currentSequence = activeNarrativeSequence(record, editor, true);
         syncNarrativeBlockSequenceControls(record, sequences);
+        scheduleNarrativeSequenceRails();
         const allEntries = collectNarrativeNodes();
         const entries = allEntries.filter(item => item.node.sequence_id === currentSequence?.id);
         narrativeSequenceSelect.replaceChildren(...sequences.map(sequence => {
@@ -4622,6 +4872,7 @@
           empty.textContent = 'Esta sequência ainda não tem blocos. Use os botões acima ou mova um bloco pelo inspetor.';
           narrativeSequence.append(empty);
           if (!narrativeMap.hidden) renderNarrativeMap();
+          if (!narrativePresentationView.hidden) renderNarrativePresentation();
           if (!narrativeLocalizationView.hidden) renderNarrativeLocalization();
           if (!narrativeValidationView.hidden) renderNarrativeValidation();
           return;
@@ -4696,6 +4947,7 @@
           narrativeSequence.append(button);
         });
         if (!narrativeMap.hidden) renderNarrativeMap();
+        if (!narrativePresentationView.hidden) renderNarrativePresentation();
         if (!narrativeLocalizationView.hidden) renderNarrativeLocalization();
         if (!narrativeValidationView.hidden) renderNarrativeValidation();
       };
@@ -4744,10 +4996,22 @@
       });
       narrativeSequenceTab.addEventListener('click', () => setNarrativePanelView('sequence'));
       narrativeMapTab.addEventListener('click', () => setNarrativePanelView('map'));
+      narrativePresentationTab.addEventListener('click', () => setNarrativePanelView('presentation'));
       narrativeLocalizationTab.addEventListener('click', () => setNarrativePanelView('localization'));
       narrativeCharactersTab.addEventListener('click', () => setNarrativePanelView('characters'));
       narrativeVariablesTab.addEventListener('click', () => setNarrativePanelView('variables'));
       narrativeValidationTab.addEventListener('click', () => setNarrativePanelView('validation'));
+      document.querySelector('#narrative-presentation-form').addEventListener('input', () => {
+        const sequence = activeNarrativeSequence();
+        if (!sequence) return;
+        sequence.presentation = narrativePresentationFromControls();
+        applyNarrativePresentationPreview(sequence.presentation);
+        queueSave();
+      });
+      document.querySelector('#narrative-presentation-test').addEventListener('click', () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (record) startNarrativeTest(ensureNarrativeEventId(record));
+      });
       localizationSourceLocale.addEventListener('change', () => {
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
@@ -5032,9 +5296,13 @@
         const record = documents.find(item => item.id === activeDocumentId);
         if (record) startNarrativeTest(ensureNarrativeEventId(record));
       });
-      document.querySelector('#narrative-test-close').addEventListener('click', () => narrativeTestDialog.close());
+      const closeNarrativeTest = () => { stopNarrativeTestPlayback(); narrativeTestDialog.close(); };
+      document.querySelector('#narrative-test-close').addEventListener('click', closeNarrativeTest);
+      narrativeTestDialog.addEventListener('close', stopNarrativeTestPlayback);
+      narrativeTestDialog.addEventListener('cancel', event => { event.preventDefault(); closeNarrativeTest(); });
       document.querySelector('#narrative-test-restart').addEventListener('click', () => {
         if (!narrativeTestState) return;
+        stopNarrativeTestPlayback();
         narrativeTestState.eventId = narrativeTestState.startEventId;
         narrativeTestState.index = 0;
         narrativeTestState.variables = initialNarrativeVariableState();
@@ -5043,17 +5311,38 @@
       });
       narrativeTestBack.addEventListener('click', () => {
         if (!narrativeTestState?.history.length) return;
+        stopNarrativeTestPlayback();
         restoreNarrativeTestSnapshot(narrativeTestState.history.pop());
         renderNarrativeTest();
       });
-      narrativeTestNext.addEventListener('click', () => {
-        if (!narrativeTestState) return;
-        const entry = narrativeTestState.registry.byId.get(narrativeTestState.eventId);
-        const node = entry?.nodes[narrativeTestState.index];
-        const labels = { dialogue: 'Diálogo', narration: 'Narração', pause: 'Pausa', signal: 'Sinal', choice: 'Escolha' };
-        captureNarrativeTestSnapshot(`${labels[node?.type] || 'Etapa'} · ${entry?.id || narrativeTestState.eventId}`);
-        narrativeTestState.index += 1;
-        renderNarrativeTest();
+      narrativeTestNext.addEventListener('click', advanceNarrativeTest);
+      narrativeTestStage.addEventListener('click', event => {
+        if (event.target.closest('button')) return;
+        advanceNarrativeTest();
+      });
+      narrativeTestDialog.addEventListener('keydown', event => {
+        if (!narrativeTestDialog.open) return;
+        if (event.key === 'Escape') { event.preventDefault(); closeNarrativeTest(); return; }
+        const numberedChoices = [...narrativeTestStage.querySelectorAll('.narrative-test-choices:not([hidden]) button')];
+        const choiceButtons = [...narrativeTestStage.querySelectorAll('.narrative-test-choices:not([hidden]) button:not(:disabled)')];
+        const numberedChoice = /^[1-9]$/u.test(event.key) ? numberedChoices[Number(event.key) - 1] : null;
+        if (numberedChoice && !numberedChoice.disabled) {
+          event.preventDefault(); numberedChoice.click(); return;
+        }
+        if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && choiceButtons.length) {
+          event.preventDefault();
+          const step = event.key === 'ArrowDown' ? 1 : -1;
+          narrativeTestState.activeChoiceIndex = ((narrativeTestState.activeChoiceIndex || 0) + step + choiceButtons.length) % choiceButtons.length;
+          choiceButtons.forEach((button, index) => { button.dataset.active = String(index === narrativeTestState.activeChoiceIndex); });
+          choiceButtons[narrativeTestState.activeChoiceIndex].focus({ preventScroll:true });
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          if (event.target.closest('button') && !event.target.closest('.narrative-test-choices')) return;
+          event.preventDefault();
+          if (choiceButtons.length && document.activeElement?.matches('.narrative-test-choices button:not(:disabled)')) document.activeElement.click();
+          else advanceNarrativeTest();
+        }
       });
       document.querySelector('#narrative-export').addEventListener('click', () => {
         const payload = buildNarrativePayload();
@@ -5654,7 +5943,7 @@
         const captured = { title: record.title || 'Sem título', subtitle: record.subtitle || '', body: record.body || '<p><br></p>', savedAt: record.savedAt };
         statusMessage('Sincronizando com o projeto…', 'pending');
         try {
-          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', active_event_id: record.activeNarrativeSequenceId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, organization: { folder_id: record.folderId || '', folder_name: record.folderName || '', favorite: Boolean(record.favorite), archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+          const content = { format: 'heartspace-html-v1', title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', active_event_id: record.activeNarrativeSequenceId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, organization: { folder_id: record.folderId || '', folder_name: record.folderName || '', favorite: Boolean(record.favorite), archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
           if (!record.remoteId) {
             const inserted = await apiFetch('/rest/v1/docs', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ project_id: targetProjectId, type: 'page', status: 'draft', title: captured.title, author: currentUser?.email || 'Membro', content }) });
             const row = Array.isArray(inserted) ? inserted[0] : inserted;
@@ -6094,6 +6383,41 @@
           selection.addRange(range);
         }
       };
+      const insertPageBreak = () => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.collapse(true);
+        const pageBreak = document.createElement('div');
+        pageBreak.dataset.pageBreak = 'true';
+        pageBreak.contentEditable = 'false';
+        pageBreak.setAttribute('role', 'separator');
+        pageBreak.setAttribute('aria-label', 'Quebra de página');
+        pageBreak.innerHTML = '<span>Quebra de página</span>';
+        const anchorElement = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+        const page = anchorElement?.closest('.book-page-content') || editor;
+        let topLevel = anchorElement;
+        while (topLevel?.parentElement && topLevel.parentElement !== page) topLevel = topLevel.parentElement;
+        let continuation = document.createElement('p');
+        continuation.innerHTML = '<br>';
+        if (topLevel?.matches('p,h1,h2,h3,h4,h5,h6,blockquote,pre') && topLevel.contains(range.startContainer)) {
+          continuation = topLevel.cloneNode(false);
+          delete continuation.dataset.localizationId;
+          const tail = document.createRange();
+          tail.setStart(range.startContainer, range.startOffset);
+          tail.setEnd(topLevel, topLevel.childNodes.length);
+          continuation.append(tail.extractContents());
+          if (!continuation.childNodes.length || !continuation.textContent.trim() && !continuation.querySelector('img,br')) continuation.innerHTML = '<br>';
+        }
+        if (topLevel && topLevel !== page && topLevel.parentElement === page) {
+          const removeEmptyLeadingBlock = topLevel.matches('p,h1,h2,h3,h4,h5,h6,blockquote,pre') && !topLevel.textContent.trim() && !topLevel.querySelector('img,table,hr,br');
+          topLevel.after(pageBreak, continuation);
+          if (removeEmptyLeadingBlock) topLevel.remove();
+        } else page.append(pageBreak, continuation);
+        placeCaret(continuation);
+        scheduleBookPagination();
+      };
       let mermaidBlockSequence = 0;
       let mermaidLibraryPromise = null;
       const buildMermaidBlock = (id, source) => {
@@ -6404,7 +6728,8 @@
         else if (command.kind === 'table-delete') deleteTable();
         else if (command.kind === 'callout') insertCallout(command.value);
         else if (command.kind === 'narrative') insertNarrativeBlock(command.value);
-        else if (command.kind === 'divider') insertAtCaret('<hr><p><br></p>');
+        else if (command.kind === 'divider') insertAtCaret('<hr data-divider="true"><p><br></p>');
+        else if (command.kind === 'page-break') insertPageBreak();
         else if (command.kind === 'diagram') insertMermaidBlock();
         else if (command.kind === 'inline') applyInlineCommand(command.value);
         else if (command.kind === 'inline-markup') insertInlineMarkup(command.value);
@@ -7609,6 +7934,7 @@
       const markdownBlocks = parent => [...parent.children].map(node => {
         const tag = node.tagName.toLowerCase();
         const alignment = ['center', 'right', 'justify'].includes(node.style.textAlign) ? `<!-- heartspace-align:${node.style.textAlign} -->\n` : '';
+        if (node.matches('[data-page-break="true"]')) return '<!-- heartspace-page-break -->';
         if (node.matches('figure[data-docs-image]')) {
           const image = node.querySelector('img');
           if (!image?.getAttribute('src')) return '';
@@ -7730,7 +8056,7 @@
           element.style.textAlign = pendingAlignment;
           pendingAlignment = '';
         };
-        const isBlockStart = line => /^(#{1,6}\s|```|---\s*$|[-*+]\s|\d+\.\s|>\s?|\|.*\|$)/.test(line);
+        const isBlockStart = line => /^(#{1,6}\s|```|---\s*$|<!--\s*heartspace-page-break\s*-->|[-*+]\s|\d+\.\s|>\s?|\|.*\|$)/.test(line);
         while (index < lines.length) {
           const line = lines[index];
           if (!line.trim()) { index += 1; continue; }
@@ -7767,6 +8093,15 @@
           if (imageMetadata) { pendingImageMetadata = imageMetadata; index += 1; continue; }
           const alignmentMetadata = line.match(/^<!--\s*heartspace-align:(left|center|right|justify)\s*-->$/);
           if (alignmentMetadata) { pendingAlignment = alignmentMetadata[1]; index += 1; continue; }
+          if (/^<!--\s*heartspace-page-break\s*-->$/.test(line)) {
+            const pageBreak = document.createElement('div');
+            pageBreak.dataset.pageBreak = 'true';
+            pageBreak.contentEditable = 'false';
+            pageBreak.setAttribute('role', 'separator');
+            pageBreak.setAttribute('aria-label', 'Quebra de página');
+            pageBreak.innerHTML = '<span>Quebra de página</span>';
+            fragment.append(pageBreak); index += 1; continue;
+          }
           const imageMatch = line.match(/^!\[(.*?)\]\((data:image\/[^)]+)\)$/);
           if (imageMatch) {
             const figure = document.createElement('figure');
@@ -8208,6 +8543,12 @@
         const selectionAnchor = window.getSelection()?.anchorNode;
         const selectionElement = selectionAnchor?.nodeType === Node.ELEMENT_NODE ? selectionAnchor : selectionAnchor?.parentElement;
         const caretTable = selectionElement?.closest('th,td')?.closest('table[data-docs-table]');
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key === 'Enter' && !caretTable) {
+          event.preventDefault();
+          insertPageBreak();
+          queueSave();
+          return;
+        }
         if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLocaleLowerCase('pt-BR') === 'b') {
           event.preventDefault();
           applyInlineCommand('bold');
@@ -8329,13 +8670,38 @@
           outlineList.appendChild(button);
         });
       };
+      const layoutDocumentOutline = () => {
+        if (outlinePanel.hidden || documentPage.dataset.layout !== 'book') return;
+        const editorArea = document.querySelector('.editor-area');
+        const pageRect = documentPage.getBoundingClientRect();
+        const areaRect = editorArea?.getBoundingClientRect();
+        if (!areaRect || !pageRect.width) return;
+        const left = pageRect.right + 20;
+        const availableWidth = Math.max(112, areaRect.right - left - 14);
+        const top = areaRect.top + 20;
+        outlinePanel.style.setProperty('--outline-book-left', `${Math.round(left)}px`);
+        outlinePanel.style.setProperty('--outline-book-top', `${Math.round(top)}px`);
+        outlinePanel.style.setProperty('--outline-book-width', `${Math.round(Math.min(220, availableWidth))}px`);
+        outlinePanel.style.setProperty('--outline-book-height', `${Math.round(Math.max(180, areaRect.bottom - top - 20))}px`);
+      };
+      let outlineLayoutFrame = 0;
+      const scheduleDocumentOutlineLayout = () => {
+        cancelAnimationFrame(outlineLayoutFrame);
+        outlineLayoutFrame = requestAnimationFrame(() => {
+          outlineLayoutFrame = 0;
+          layoutDocumentOutline();
+        });
+      };
       const setDocumentOutlineOpen = open => {
         outlinePanel.hidden = !open;
         outlineToggle.classList.toggle('active', open);
         outlineToggle.setAttribute('aria-expanded', String(open));
         outlineToggle.setAttribute('aria-label', open ? 'Ocultar estrutura' : 'Mostrar estrutura');
         outlineToggle.dataset.tooltip = open ? 'Ocultar estrutura' : 'Estrutura';
-        if (open) renderDocumentOutline();
+        if (open) {
+          renderDocumentOutline();
+          scheduleDocumentOutlineLayout();
+        }
       };
       let outlineRenderFrame = 0;
       const scheduleDocumentOutlineRender = () => {
@@ -8347,6 +8713,14 @@
       };
       new MutationObserver(scheduleDocumentOutlineRender).observe(editor, { childList:true, subtree:true, characterData:true });
       new MutationObserver(scheduleDocumentOutlineRender).observe(title, { childList:true, subtree:true, characterData:true });
+      const outlineEditorArea = document.querySelector('.editor-area');
+      outlineEditorArea.addEventListener('scroll', scheduleDocumentOutlineLayout, { passive:true });
+      window.addEventListener('resize', scheduleDocumentOutlineLayout);
+      if ('ResizeObserver' in window) {
+        const outlineResizeObserver = new ResizeObserver(scheduleDocumentOutlineLayout);
+        outlineResizeObserver.observe(documentPage);
+        outlineResizeObserver.observe(outlineEditorArea);
+      }
       outlineToggle.addEventListener('click', () => setDocumentOutlineOpen(outlinePanel.hidden));
       outlineClose.addEventListener('click', () => {
         setDocumentOutlineOpen(false);
