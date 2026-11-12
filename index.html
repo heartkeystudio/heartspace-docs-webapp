@@ -490,6 +490,8 @@
     .narrative-variation-remove:disabled { opacity:.35; cursor:not-allowed; }
     .narrative-variation-version { display:none; min-height:24px; color:#ddd8e1; line-height:1.5; outline:none; white-space:pre-wrap; }
     .narrative-variation-version[data-active="true"] { display:block; }
+    body.reading-mode .narrative-variation-version[data-reading-active="false"] { display:none; }
+    body.reading-mode .narrative-variation-version[data-reading-active="true"] { display:block; }
     .narrative-variation-version[data-placeholder]:empty::before { color:#77717d; content:attr(data-placeholder); pointer-events:none; }
     .narrative-field:focus { border-bottom-color:var(--narrative-accent); box-shadow:none; }
     .narrative-field[data-placeholder]:empty::before,.narrative-text[data-placeholder]:empty::before { color:#77717d; content:attr(data-placeholder); pointer-events:none; }
@@ -730,6 +732,17 @@
     .narrative-rules-heading,.narrative-rules-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .narrative-rules-heading h2 { margin:0; font-size:17px; }
     .narrative-rules-group { display:grid; gap:8px; padding:12px; border:1px solid #ffffff12; border-radius:9px; background:#111115; }
+    .narrative-rules-group[hidden] { display:none; }
+    .story-export-form > label { display:grid; gap:7px; color:#bbb4c0; font-size:12px; }
+    .story-export-form > label > input,.story-export-form > label > select { width:100%; min-width:0; min-height:36px; padding:8px; border:1px solid var(--line); border-radius:6px; color:var(--text); background:#111115; font:inherit; }
+    .story-export-summary { margin:0; color:#b8c9d6; font-size:12px; line-height:1.6; }
+    .story-export-issues { max-height:180px; margin:0; padding:10px 10px 10px 28px; overflow:auto; border:1px solid #ffffff12; border-radius:8px; font-size:11px; line-height:1.6; }
+    .story-export-issues li[data-severity="error"] { color:#efaaaa; }
+    .story-export-issues li[data-severity="warning"] { color:#d5bd90; }
+    .story-export-form { max-height:calc(100dvh - 48px); overflow:auto; }
+    .story-export-form button:disabled { opacity:.4; cursor:not-allowed; }
+    .narrative-rules-group > label { display:flex; align-items:center; gap:8px; color:#bbb4c0; font-size:12px; }
+    #narrative-version-label { width:100%; min-width:0; padding:9px; border:1px solid var(--line); border-radius:6px; color:var(--text); background:#19181d; }
     .narrative-rules-group h3 { margin:0; color:#bbb4c0; font-size:12px; }
     .narrative-rules-row { display:grid; grid-template-columns:minmax(130px,1fr) 130px minmax(120px,1fr); gap:7px; }
     .narrative-rules-row select,.narrative-rules-row input { min-width:0; min-height:36px; padding:0 9px; border:1px solid #ffffff16; border-radius:7px; color:#ded8e3; background:#19181d; }
@@ -1003,7 +1016,7 @@
         <div class="narrative-characters narrative-view" id="narrative-characters" role="tabpanel" aria-labelledby="narrative-characters-tab" hidden><form class="narrative-character-create" id="narrative-character-create"><input id="narrative-character-name" type="text" placeholder="Nome exibido" autocomplete="off" required><input id="narrative-character-id" type="text" placeholder="character.id" autocomplete="off" spellcheck="false"><button type="submit">Adicionar</button></form><div class="narrative-character-list" id="narrative-character-list"></div><div class="narrative-character-footer"><span id="narrative-character-status">Registro do projeto</span><button class="narrative-character-save" type="button" id="narrative-character-save">Salvar personagens</button></div></div>
         <div class="narrative-variables narrative-view" id="narrative-variables" role="tabpanel" aria-labelledby="narrative-variables-tab" hidden><form class="narrative-variable-create" id="narrative-variable-create"><input id="narrative-variable-id" type="text" placeholder="estado.variable" autocomplete="off" spellcheck="false" required><select id="narrative-variable-type" aria-label="Tipo da variável"><option value="boolean">Verdadeiro/falso</option><option value="number">Número</option><option value="string">Texto</option></select><input id="narrative-variable-default" type="text" placeholder="Valor inicial" autocomplete="off"><button type="submit">Adicionar</button></form><div class="narrative-variable-list" id="narrative-variable-list"></div><div class="narrative-variable-footer"><span id="narrative-variable-status">Variáveis do projeto</span><button class="narrative-variable-save" type="button" id="narrative-variable-save">Salvar variáveis</button></div></div>
         <div class="narrative-validation narrative-view" id="narrative-validation" role="tabpanel" aria-labelledby="narrative-validation-tab" hidden></div>
-        <div class="narrative-actions" id="narrative-actions"><span>Use / Narrativa no texto. As escolhas conectam sequências pelo ID.</span><div><button type="button" id="narrative-test-current">Testar sequência</button><button class="narrative-export" type="button" id="narrative-export">Exportar narrativa JSON</button></div></div>
+        <div class="narrative-actions" id="narrative-actions"><span>Use / Narrativa no texto. As escolhas conectam sequências pelo ID.</span><div><button type="button" id="narrative-test-current">Testar sequência</button><button class="narrative-export" type="button" id="story-export-open">Exportar</button></div></div>
       </section>
     </aside>
   </div>
@@ -1040,8 +1053,19 @@
   <section class="project-loading" id="project-loading" hidden role="status" aria-live="polite" aria-busy="true">
     <div class="project-loading-card"><span class="project-loading-spinner" aria-hidden="true"></span><strong class="project-loading-title">Carregando projeto</strong><span class="project-loading-detail">Buscando os documentos da equipe…</span></div>
   </section>
+  <dialog class="narrative-rules-dialog" id="story-export-dialog" aria-labelledby="story-export-title"><form class="narrative-rules-form story-export-form" id="story-export-form">
+    <div class="narrative-rules-heading"><h2 id="story-export-title">Exportar história</h2><button type="button" id="story-export-close">Fechar</button></div>
+    <label>Nome da história<input id="story-export-name" type="text" maxlength="120" required></label>
+    <label>Sequência inicial<select id="story-export-start" required></select></label>
+    <label>Idioma<select id="story-export-locale"><option value="">Textos originais</option></select></label>
+    <p class="narrative-rules-help">O HTML abre direto no navegador e inclui os caminhos conectados, mesmo em outros documentos. O design de cada sequência segue a configuração da aba Cena.</p>
+    <p class="story-export-summary" id="story-export-summary" role="status"></p><ul class="story-export-issues" id="story-export-issues" hidden></ul>
+    <div class="narrative-rules-actions"><button type="button" id="narrative-export">Baixar JSON do documento</button><button type="submit" id="story-export-download">Baixar HTML</button></div>
+  </form></dialog>
   <script src="desktop/adapter.js"></script>
   <script src="config.js"></script>
+  <script src="narrative-runtime.js"></script>
+  <script src="narrative-html.js"></script>
   <script>
     (() => {
       const editor = document.querySelector('#editor');
@@ -1959,6 +1983,8 @@
         version.dataset.variationVersionId = data.id || newVariationVersionId();
         version.dataset.localizationId = data.localizationId || newLocalizationId();
         version.dataset.label = data.label || '';
+        if (data.condition) version.dataset.condition = JSON.stringify(data.condition);
+        if (data.default) version.dataset.defaultVersion = 'true';
         version.dataset.placeholder = 'Escreva esta versão do trecho…';
         version.setAttribute('role', 'textbox');
         version.setAttribute('aria-label', data.label || 'Versão alternativa do trecho');
@@ -1983,9 +2009,12 @@
           version.setAttribute('aria-label', version.dataset.label);
         });
         const active = versions.find(version => version.dataset.active === 'true') || versions[0];
+        const fallback = versions.find(version => version.dataset.defaultVersion === 'true') || active;
         versions.forEach(version => {
           if (version === active) version.dataset.active = 'true';
           else delete version.dataset.active;
+          if (version === fallback) { version.dataset.defaultVersion = 'true'; delete version.dataset.condition; }
+          else delete version.dataset.defaultVersion;
         });
         let tabs = block.querySelector(':scope > .narrative-variation-tabs');
         if (!tabs) {
@@ -2005,7 +2034,7 @@
           tab.dataset.variationTab = version.dataset.variationVersionId;
           tab.setAttribute('role', 'tab');
           tab.setAttribute('aria-selected', String(version === active));
-          tab.textContent = version.dataset.label;
+          tab.textContent = `${version.dataset.label}${version === fallback ? ' · padrão' : version.dataset.condition ? ' · condicional' : ''}`;
           tabs.append(tab);
         });
         const add = document.createElement('button');
@@ -2021,7 +2050,13 @@
         remove.textContent = 'Remover';
         remove.disabled = versions.length <= 1;
         remove.setAttribute('aria-label', `Remover ${active.dataset.label}`);
-        tabs.append(add, remove);
+        const rules = document.createElement('button');
+        rules.type = 'button';
+        rules.className = 'narrative-variation-tab';
+        rules.dataset.variationRules = 'true';
+        rules.textContent = 'Configurar versão';
+        rules.setAttribute('aria-label', `Configurar ${active.dataset.label}`);
+        tabs.append(add, rules, remove);
       };
       const refreshNarrativeReadingLabel = block => {
         if (!block) return;
@@ -2534,7 +2569,10 @@
         snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
         snapshot.querySelectorAll('[data-page-break="true"]').forEach(pageBreak => pageBreak.remove());
         snapshot.querySelectorAll('.authoring-decoration,.narrative-block[data-reading-empty="true"]').forEach(element => element.remove());
-        snapshot.querySelectorAll('.narrative-variation-version:not([data-active="true"])').forEach(version => version.remove());
+        snapshot.querySelectorAll('.narrative-variation-version').forEach(version => {
+          const visible = documentViewMode === 'reading' && version.hasAttribute('data-reading-active') ? version.dataset.readingActive === 'true' : version.dataset.active === 'true';
+          if (!visible) version.remove();
+        });
         if (documentPage.dataset.narrativeProfile === 'prose') snapshot.querySelectorAll('.narrative-reading-label').forEach(label => label.remove());
         return snapshot.textContent || '';
       };
@@ -2550,6 +2588,7 @@
           delete element.dataset.writingEditable;
         });
         snapshot.querySelectorAll('[data-narrative-sequence-control]').forEach(control => control.remove());
+        snapshot.querySelectorAll('[data-reading-active]').forEach(version => delete version.dataset.readingActive);
         snapshot.querySelectorAll('.narrative-block').forEach(block => {
           delete block.dataset.inspectorOpen;
           block.style.removeProperty('--narrative-lane');
@@ -2933,6 +2972,12 @@
       const narrativeValidationTab = document.querySelector('#narrative-validation-tab');
       const narrativeValidationView = document.querySelector('#narrative-validation');
       const narrativeRulesDialog = document.querySelector('#narrative-rules-dialog');
+      narrativeRulesDialog.querySelector('.narrative-rules-heading').insertAdjacentHTML('afterend', `
+        <section class="narrative-rules-group" id="narrative-version-settings" hidden>
+          <label for="narrative-version-label">Nome da versão</label><input id="narrative-version-label" type="text" maxlength="100" autocomplete="off">
+          <label><input id="narrative-version-default" type="checkbox">Usar como versão padrão</label>
+          <span class="narrative-rules-help">A primeira versão cuja condição for atendida aparece na história, seguindo a ordem das abas. Se nenhuma atender, aparece a versão padrão. As abas permitem editar cada versão livremente.</span>
+        </section>`);
       const narrativeSummary = document.querySelector('#narrative-summary');
       const narrativeTestDialog = document.querySelector('#narrative-test-dialog');
       const narrativeTestStage = document.querySelector('#narrative-test-stage');
@@ -3158,12 +3203,14 @@
           const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
           const active = versions.find(version => version.dataset.active === 'true') || versions[0];
           node.active_version_id = active?.dataset.variationVersionId || '';
+          node.default_version_id = (versions.find(version => version.dataset.defaultVersion === 'true') || active)?.dataset.variationVersionId || '';
           node.versions = versions.map((version, versionIndex) => ({
             id:version.dataset.variationVersionId || `variant_${versionIndex + 1}`,
             localization_id:version.dataset.localizationId || '',
             label:version.dataset.label || `Versão ${versionIndex + 1}`,
             text:version.innerText.trim(),
-            active:version === active
+            active:version === active,
+            ...(parseNarrativeRuleData(version.dataset.condition) ? { condition:parseNarrativeRuleData(version.dataset.condition) } : {})
           }));
           node.text = active?.innerText.trim() || '';
         }
@@ -3176,6 +3223,7 @@
       };
       const applyCanonicalReadingPath = () => {
         const blocks = [...editor.querySelectorAll('.narrative-block')];
+        editor.querySelectorAll('[data-reading-active]').forEach(version => delete version.dataset.readingActive);
         if (documentViewMode !== 'reading') {
           blocks.forEach(block => delete block.dataset.canonicalVisible);
           return;
@@ -3191,14 +3239,19 @@
           return;
         }
         const nodes = collectNarrativeNodesFromRoot(editor, false, startId).map(item => item.node);
+        const values = initialNarrativeVariableState();
+        const selectedVersions = new Map();
         const reachable = new Set();
         const pending = [startId];
         while (pending.length) {
           const sequenceId = pending.shift();
           if (!sequenceId || reachable.has(sequenceId)) continue;
           reachable.add(sequenceId);
-          nodes.filter(node => node.sequence_id === sequenceId && node.type === 'choice').forEach(node => {
+          nodes.filter(node => node.sequence_id === sequenceId).forEach(node => {
+            if (node.type === 'variation') selectedVersions.set(node.id, resolveNarrativeVariation(node, values)?.id);
+            if (node.type !== 'choice') return;
             const canonical = node.options?.find(option => option.canonical) || node.options?.[0];
+            applyNarrativeEffects(canonical?.effects, values);
             const targetId = canonical?.target_event || '';
             if (targetId && knownIds.has(targetId) && !reachable.has(targetId)) pending.push(targetId);
           });
@@ -3206,6 +3259,11 @@
         blocks.forEach(block => {
           const sequenceId = block.dataset.narrativeSequenceId || startId;
           block.dataset.canonicalVisible = String(reachable.has(sequenceId));
+          if (block.dataset.narrativeType === 'variation') {
+            const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+            const selected = selectedVersions.get(block.dataset.narrativeId) || versions.find(version => version.dataset.defaultVersion === 'true')?.dataset.variationVersionId || versions[0]?.dataset.variationVersionId;
+            versions.forEach(version => { version.dataset.readingActive = String(version.dataset.variationVersionId === selected); });
+          }
         });
       };
       const localizationLocaleCatalog = [
@@ -4146,11 +4204,7 @@
         });
         return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
       };
-      const coerceNarrativeValue = (value, type) => {
-        if (type === 'boolean') return value === true || ['true', '1', 'sim', 'verdadeiro'].includes(String(value || '').trim().toLocaleLowerCase('pt-BR'));
-        if (type === 'number') { const numeric = Number(String(value ?? '').replace(',', '.')); return Number.isFinite(numeric) ? numeric : 0; }
-        return String(value ?? '');
-      };
+      const coerceNarrativeValue = HeartspaceNarrativeRuntime.coerce;
       const normalizedVariableRecord = variable => {
         const id = normalizeCharacterId(variable?.id);
         const type = ['boolean', 'number', 'string'].includes(variable?.type) ? variable.type : 'string';
@@ -4375,6 +4429,13 @@
       const validateNarrativeRegistry = (registry, startEventId = '') => {
         const issues = [];
         const add = (severity, title, detail, eventId = '') => issues.push({ severity, title, detail, eventId });
+        const validateCondition = (condition, location, eventId) => {
+          if (!condition) return;
+          const variable = narrativeVariableById(condition.variable);
+          if (!variable) add('error', `Variável ausente: ${condition.variable || 'não definida'}`, `${location} usa esta variável como condição.`, eventId);
+          else if (!['eq','neq','gt','gte','lt','lte'].includes(condition.operator) || (variable.type !== 'number' && !['eq','neq'].includes(condition.operator))) add('error', 'Comparação incompatível', `${location}. Use igualdade ou diferença para texto e verdadeiro/falso.`, eventId);
+          else if (typeof condition.value !== (variable.type === 'number' ? 'number' : variable.type === 'boolean' ? 'boolean' : 'string')) add('error', 'Valor incompatível na condição', `${location}. Reconfigure a condição após alterar o tipo da variável.`, eventId);
+        };
         registry.duplicateIds.forEach(id => add('error', `ID duplicado: ${id}`, 'Mais de uma sequência declara este ID. Cada sequência precisa de um ID único.', id));
         registry.entries.filter(entry => entry.provisional).forEach(entry => add('error', `Destino ausente: ${entry.id}`, 'Uma escolha aponta para esta sequência, mas ela ainda não foi criada.', entry.id));
         const localizationOwners = new Map();
@@ -4392,8 +4453,10 @@
             }
             if (node.type === 'variation') {
               if ((node.versions || []).length < 2) add('warning', 'Variação com uma única versão', `${entry.id}, bloco ${nodeIndex + 1}. Adicione outra versão ou transforme o trecho em texto comum.`, entry.id);
+              if (!node.versions?.some(version => version.id === node.default_version_id)) add('error', 'Variação sem versão padrão', `${entry.id}, bloco ${nodeIndex + 1}. Defina qual versão aparece quando nenhuma condição for atendida.`, entry.id);
               (node.versions || []).forEach((version, versionIndex) => {
                 const location = `${entry.id}, variação ${versionIndex + 1}`;
+                validateCondition(version.condition,location,entry.id);
                 if (!version.text) add('warning', 'Versão alternativa vazia', `${location}. Preencha o trecho antes de publicar.`, entry.id);
                 if (!version.localization_id) return;
                 const owner = localizationOwners.get(version.localization_id);
@@ -4410,12 +4473,14 @@
                 else localizationOwners.set(option.localization_id, location);
               }
               if (!option.target_event) add('warning', 'Escolha sem destino', `${location}. Defina a sequência que será aberta.`, entry.id);
-              if (option.condition?.variable && !narrativeVariableById(option.condition.variable)) add('error', `Variável ausente: ${option.condition.variable}`, `${location} usa esta variável como condição.`, entry.id);
+              validateCondition(option.condition,location,entry.id);
               (option.effects || []).forEach(effect => {
                 const variable = narrativeVariableById(effect.variable);
                 if (!variable) add('error', `Variável ausente: ${effect.variable}`, `${location} tenta alterar uma variável que não existe.`, entry.id);
+                else if (!['set','add','subtract','toggle'].includes(effect.operation)) add('error', 'Operação desconhecida', `${location}. Reconfigure o efeito antes de exportar.`, entry.id);
                 else if (['add', 'subtract'].includes(effect.operation) && variable.type !== 'number') add('error', `Operação incompatível em ${effect.variable}`, `${location} usa uma operação numérica em uma variável ${variable.type}.`, entry.id);
                 else if (effect.operation === 'toggle' && variable.type !== 'boolean') add('error', `Operação incompatível em ${effect.variable}`, `${location} tenta alternar uma variável que não é verdadeira/falsa.`, entry.id);
+                else if (effect.operation !== 'toggle' && typeof effect.value !== (variable.type === 'number' ? 'number' : variable.type === 'boolean' ? 'boolean' : 'string')) add('error', 'Valor incompatível no efeito', `${location}. Reconfigure o efeito após alterar o tipo da variável.`, entry.id);
               });
             });
           });
@@ -4655,7 +4720,7 @@
       };
       const narrativeVariableUsageCounts = () => {
         const counts = new Map(narrativeVariables.map(variable => [variable.id, 0]));
-        narrativeRoots().forEach(({ root }) => root.querySelectorAll('.narrative-choice-option').forEach(option => {
+        narrativeRoots().forEach(({ root }) => root.querySelectorAll('.narrative-choice-option,.narrative-variation-version').forEach(option => {
           const condition = parseNarrativeRuleData(option.dataset.condition);
           const effect = parseNarrativeRuleData(option.dataset.effect);
           [condition?.variable, effect?.variable].filter(Boolean).forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
@@ -4735,8 +4800,34 @@
         const count = Number(Boolean(parseNarrativeRuleData(option.dataset.condition))) + Number(Boolean(parseNarrativeRuleData(option.dataset.effect)));
         button.textContent = count ? `Regras · ${count}` : 'Regras';
       };
+      const updateNarrativeConditionControls = () => {
+        const variableControl = document.querySelector('#narrative-condition-variable');
+        const operatorControl = document.querySelector('#narrative-condition-operator');
+        const valueControl = document.querySelector('#narrative-condition-value');
+        const fallback = narrativeRulesOption?.matches('.narrative-variation-version') && document.querySelector('#narrative-version-default').checked;
+        const variable = narrativeVariableById(variableControl.value);
+        variableControl.disabled = Boolean(fallback);
+        operatorControl.disabled = Boolean(fallback) || !variable;
+        valueControl.disabled = Boolean(fallback) || !variable;
+        [...operatorControl.options].forEach(option => { option.disabled = Boolean(variable && variable.type !== 'number' && !['eq','neq'].includes(option.value)); });
+        if (operatorControl.selectedOptions[0]?.disabled) operatorControl.value = 'eq';
+        valueControl.type = variable?.type === 'number' ? 'number' : 'text';
+        valueControl.step = 'any';
+        valueControl.placeholder = variable?.type === 'boolean' ? 'true ou false' : 'Valor';
+        valueControl.pattern = variable?.type === 'boolean' ? 'true|false' : '.*';
+        valueControl.required = Boolean(variable && variable.type !== 'string' && !fallback);
+      };
       const openNarrativeRules = option => {
         narrativeRulesOption = option;
+        const variation = option.matches('.narrative-variation-version');
+        document.querySelector('#narrative-rules-title').textContent = variation ? 'Configurar versão do trecho' : 'Regras da escolha';
+        document.querySelector('#narrative-version-settings').hidden = !variation;
+        const conditionGroup = document.querySelector('#narrative-condition-variable').closest('section');
+        conditionGroup.querySelector('h3').textContent = variation ? 'Mostrar esta versão quando' : 'Disponibilidade da opção';
+        conditionGroup.querySelector('.narrative-rules-help').textContent = variation ? 'Versões sem condição ficam disponíveis para edição manual. A leitura automática usa as condições e a versão padrão.' : 'Sem variável, a opção permanece sempre disponível.';
+        document.querySelector('#narrative-effect-variable').closest('section').hidden = variation;
+        document.querySelector('#narrative-version-label').value = variation ? option.dataset.label || '' : '';
+        document.querySelector('#narrative-version-default').checked = variation && option.dataset.defaultVersion === 'true';
         const condition = parseNarrativeRuleData(option.dataset.condition);
         const effect = parseNarrativeRuleData(option.dataset.effect);
         const conditionVariable = document.querySelector('#narrative-condition-variable');
@@ -4745,12 +4836,14 @@
         populateNarrativeRuleVariables(effectVariable, 'Nenhum efeito');
         conditionVariable.value = condition?.variable || '';
         document.querySelector('#narrative-condition-operator').value = condition?.operator || 'eq';
+        updateNarrativeConditionControls();
         document.querySelector('#narrative-condition-value').value = condition?.value === undefined ? '' : String(condition.value);
         effectVariable.value = effect?.variable || '';
         document.querySelector('#narrative-effect-operation').value = effect?.operation || 'set';
         document.querySelector('#narrative-effect-value').value = effect?.value === undefined ? '' : String(effect.value);
         narrativeRulesDialog.showModal();
-        conditionVariable.focus();
+        if (variation) document.querySelector('#narrative-version-label').focus();
+        else conditionVariable.focus();
       };
       const applyNarrativePresentationPreview = presentation => {
         const value = normalizeNarrativePresentation(presentation);
@@ -4896,27 +4989,10 @@
         hint.textContent = text;
         return hint;
       };
-      const initialNarrativeVariableState = () => Object.fromEntries(narrativeVariables.map(variable => [variable.id, coerceNarrativeValue(variable.default, variable.type)]));
-      const narrativeConditionMatches = (condition, values) => {
-        if (!condition?.variable) return true;
-        const current = values[condition.variable];
-        const expected = condition.value;
-        if (condition.operator === 'neq') return current !== expected;
-        if (condition.operator === 'gt') return current > expected;
-        if (condition.operator === 'gte') return current >= expected;
-        if (condition.operator === 'lt') return current < expected;
-        if (condition.operator === 'lte') return current <= expected;
-        return current === expected;
-      };
-      const applyNarrativeEffects = (effects, values) => {
-        (effects || []).forEach(effect => {
-          if (!effect?.variable || !(effect.variable in values)) return;
-          if (effect.operation === 'toggle') values[effect.variable] = !values[effect.variable];
-          else if (effect.operation === 'add') values[effect.variable] = Number(values[effect.variable] || 0) + Number(effect.value || 0);
-          else if (effect.operation === 'subtract') values[effect.variable] = Number(values[effect.variable] || 0) - Number(effect.value || 0);
-          else values[effect.variable] = effect.value;
-        });
-      };
+      const initialNarrativeVariableState = () => HeartspaceNarrativeRuntime.initialVariables(narrativeVariables);
+      const narrativeConditionMatches = HeartspaceNarrativeRuntime.conditionMatches;
+      const resolveNarrativeVariation = HeartspaceNarrativeRuntime.resolveVariation;
+      const applyNarrativeEffects = HeartspaceNarrativeRuntime.applyEffects;
       const formatNarrativeVariableValue = value => typeof value === 'string' ? `“${value}”` : String(value);
       const captureNarrativeTestSnapshot = label => {
         if (!narrativeTestState) return;
@@ -4930,9 +5006,7 @@
       };
       const restoreNarrativeTestSnapshot = snapshot => {
         if (!narrativeTestState || !snapshot) return;
-        narrativeTestState.eventId = snapshot.eventId;
-        narrativeTestState.index = snapshot.index;
-        narrativeTestState.variables = { ...snapshot.variables };
+        narrativeTestState.runner.restore(snapshot);
       };
       const renderNarrativeTestInspectors = () => {
         narrativeTestVariables.replaceChildren();
@@ -4996,7 +5070,7 @@
         stopNarrativeTestPlayback();
         const labels = { dialogue:'Diálogo', narration:'Narração', pause:'Pausa', signal:'Sinal', choice:'Escolha', variation:'Variação' };
         captureNarrativeTestSnapshot(`${labels[node?.type] || 'Etapa'} · ${entry?.id || narrativeTestState.eventId}`);
-        narrativeTestState.index += 1;
+        narrativeTestState.runner.advance();
         renderNarrativeTest();
       };
       const renderNarrativeTest = () => {
@@ -5048,7 +5122,7 @@
           const { box, copy } = createNarrativePlayerBox('Narração', true);
           typeNarrativeTestText(copy, node.text || 'Narração vazia', () => narrativeTestHint(box));
         } else if (node.type === 'variation') {
-          const active = node.versions?.find(version => version.id === node.active_version_id) || node.versions?.find(version => version.active) || node.versions?.[0];
+          const active = resolveNarrativeVariation(node, narrativeTestState.variables);
           const { box, copy } = createNarrativePlayerBox(active?.label || 'Variação', true);
           typeNarrativeTestText(copy, active?.text || 'Versão ativa vazia', () => narrativeTestHint(box));
         } else if (node.type === 'pause') {
@@ -5079,9 +5153,7 @@
             if (!button.disabled) button.addEventListener('click', () => {
               stopNarrativeTestPlayback();
               captureNarrativeTestSnapshot(`Escolha: ${option.text || target}`);
-              applyNarrativeEffects(option.effects, narrativeTestState.variables);
-              narrativeTestState.eventId = target;
-              narrativeTestState.index = 0;
+              narrativeTestState.runner.choose(optionIndex);
               renderNarrativeTest();
             });
             choices.append(button);
@@ -5097,7 +5169,9 @@
       };
       const startNarrativeTest = eventId => {
         const registry = buildNarrativeRegistry();
-        narrativeTestState = { registry, startEventId: eventId, eventId, index: 0, variables: initialNarrativeVariableState(), history: [], validation: validateNarrativeRegistry(registry, eventId), activeChoiceIndex:0, typing:null, typingTimer:null, pauseTimer:null };
+        const runner = HeartspaceNarrativeRuntime.createRunner({ start_event_id:eventId, variable_registry:narrativeVariables, sequences:registry.entries.filter(entry => !entry.provisional).map(entry => ({ event_id:entry.id, nodes:entry.nodes })) });
+        narrativeTestState = { registry, runner, startEventId:eventId, history:[], validation:validateNarrativeRegistry(registry,eventId), activeChoiceIndex:0, typing:null, typingTimer:null, pauseTimer:null };
+        ['eventId','index','variables'].forEach(key => Object.defineProperty(narrativeTestState, key, { get:() => runner.state[key], set:value => { runner.state[key] = value; } }));
         if (isNarrativePanelOpen()) setNarrativePanelOpen(false);
         narrativeTestDialog.showModal();
         renderNarrativeTest();
@@ -5473,10 +5547,19 @@
         renderNarrativeVariables();
       });
       ['#narrative-rules-close', '#narrative-rules-cancel'].forEach(selector => document.querySelector(selector).addEventListener('click', () => narrativeRulesDialog.close()));
+      document.querySelector('#narrative-condition-variable').addEventListener('change', () => {
+        document.querySelector('#narrative-condition-value').value = '';
+        updateNarrativeConditionControls();
+      });
+      document.querySelector('#narrative-version-default').addEventListener('change', updateNarrativeConditionControls);
+      narrativeRulesDialog.addEventListener('close', () => { narrativeRulesOption = null; });
       document.querySelector('#narrative-rules-form').addEventListener('submit', event => {
         event.preventDefault();
-        if (!narrativeRulesOption?.isConnected) { narrativeRulesDialog.close(); return; }
-        const conditionVariableId = document.querySelector('#narrative-condition-variable').value;
+        if (!narrativeRulesOption?.isConnected || !editor.contains(narrativeRulesOption) || documentViewMode !== 'writing') { narrativeRulesDialog.close(); return; }
+        const mutation = rememberNarrativeMutation();
+        const variation = narrativeRulesOption.matches('.narrative-variation-version');
+        const fallback = variation && document.querySelector('#narrative-version-default').checked;
+        const conditionVariableId = fallback ? '' : document.querySelector('#narrative-condition-variable').value;
         const effectVariableId = document.querySelector('#narrative-effect-variable').value;
         if (conditionVariableId) {
           const variable = narrativeVariableById(conditionVariableId);
@@ -5487,6 +5570,27 @@
           };
           narrativeRulesOption.dataset.condition = JSON.stringify(condition);
         } else delete narrativeRulesOption.dataset.condition;
+        if (variation) {
+          const block = narrativeRulesOption.closest('.narrative-block');
+          const versions = [...block.querySelectorAll(':scope > .narrative-variation-version')];
+          narrativeRulesOption.dataset.label = document.querySelector('#narrative-version-label').value.trim() || 'Versão sem nome';
+          if (fallback) versions.forEach(version => {
+            if (version === narrativeRulesOption) version.dataset.defaultVersion = 'true';
+            else delete version.dataset.defaultVersion;
+          });
+          else if (narrativeRulesOption.dataset.defaultVersion === 'true') {
+            const replacement = versions.find(version => version !== narrativeRulesOption);
+            if (replacement) { delete narrativeRulesOption.dataset.defaultVersion; replacement.dataset.defaultVersion = 'true'; }
+          }
+          refreshNarrativeVariation(block);
+          commitNarrativeMutation(mutation);
+          narrativeRulesDialog.close();
+          scheduleBookPagination();
+          updateCount();
+          queueSave();
+          if (isNarrativePanelOpen()) renderNarrativePanel();
+          return;
+        }
         if (effectVariableId) {
           const variable = narrativeVariableById(effectVariableId);
           let operation = document.querySelector('#narrative-effect-operation').value;
@@ -5501,6 +5605,7 @@
           narrativeRulesOption.dataset.effect = JSON.stringify(effect);
         } else delete narrativeRulesOption.dataset.effect;
         refreshChoiceRulesButton(narrativeRulesOption);
+        commitNarrativeMutation(mutation);
         narrativeRulesDialog.close();
         queueSave();
         if (isNarrativePanelOpen()) renderNarrativePanel();
@@ -5576,7 +5681,7 @@
       editor.addEventListener('input', () => { if (isNarrativePanelOpen()) renderNarrativePanel(); });
       document.querySelector('#narrative-test-current').addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
-        if (record) startNarrativeTest(ensureNarrativeEventId(record));
+        if (record) startNarrativeTest(activeNarrativeSequence(record,editor,true)?.id || ensureNarrativeEventId(record));
       });
       const closeNarrativeTest = () => { stopNarrativeTestPlayback(); narrativeTestDialog.close(); };
       document.querySelector('#narrative-test-close').addEventListener('click', closeNarrativeTest);
@@ -5585,9 +5690,7 @@
       document.querySelector('#narrative-test-restart').addEventListener('click', () => {
         if (!narrativeTestState) return;
         stopNarrativeTestPlayback();
-        narrativeTestState.eventId = narrativeTestState.startEventId;
-        narrativeTestState.index = 0;
-        narrativeTestState.variables = initialNarrativeVariableState();
+        narrativeTestState.runner.restart();
         narrativeTestState.history = [];
         renderNarrativeTest();
       });
@@ -5626,6 +5729,121 @@
           else advanceNarrativeTest();
         }
       });
+      const storyExportDialog = document.querySelector('#story-export-dialog');
+      const storyExportStart = document.querySelector('#story-export-start');
+      const storyExportLocale = document.querySelector('#story-export-locale');
+      const buildStandaloneNarrativeStory = (startId, locale, gameTitle) => {
+        const registry = buildNarrativeRegistry();
+        const reachable = HeartspaceNarrativeRuntime.reachableSequences(registry.entries.filter(entry => !entry.provisional).map(entry => ({ event_id:entry.id, entry, nodes:entry.nodes })), startId);
+        const ids = new Set(reachable.sequences.map(sequence => sequence.event_id));
+        const scopedRegistry = {
+          entries:registry.entries.filter(entry => ids.has(entry.id) || reachable.missing.includes(entry.id)),
+          byId:registry.byId,
+          duplicateIds:new Set(reachable.duplicates)
+        };
+        const issues = validateNarrativeRegistry(scopedRegistry, startId);
+        if (!startId || !registry.byId.has(startId)) issues.push({ severity:'error', title:'Escolha uma sequência inicial existente.' });
+        if (!registry.byId.get(startId)?.nodes.length) issues.push({ severity:'error', title:'A sequência inicial está vazia.' });
+        let untranslated = 0, stale = 0, signals = 0;
+        const characterIds = new Set(), variableIds = new Set();
+        const registerCondition = condition => { if (condition?.variable) variableIds.add(condition.variable); };
+        const translated = (record, id, original) => {
+          const localization = localizationDataFor(record);
+          if (!locale || locale === localization.sourceLocale || !original) return original;
+          const translation = localization.translations[locale]?.[id];
+          if (!translation?.text?.trim()) { untranslated += 1; return original; }
+          if (translation.source !== original) stale += 1;
+          return translation.text;
+        };
+        const sequences = reachable.sequences.map(({ entry }) => ({
+          event_id:entry.id,
+          title:entry.sequence.title,
+          presentation:normalizeNarrativePresentation(entry.sequence.presentation),
+          nodes:entry.nodes.map(node => {
+            const base = { id:node.id, type:node.type };
+            if (node.type === 'dialogue') {
+              if (node.character_id) characterIds.add(node.character_id);
+              return { ...base, text:translated(entry.record,node.localization_id,node.text), character_id:node.character_id || '', character:node.character || '', expression:node.expression || '' };
+            }
+            if (node.type === 'narration') return { ...base, text:translated(entry.record,node.localization_id,node.text) };
+            if (node.type === 'pause') return { ...base, duration_ms:node.duration_ms };
+            if (node.type === 'signal') { signals += 1; return base; }
+            if (node.type === 'variation') return { ...base, default_version_id:node.default_version_id, active_version_id:node.active_version_id, versions:(node.versions || []).map(version => {
+              registerCondition(version.condition);
+              return { id:version.id, label:version.label, text:translated(entry.record,version.localization_id,version.text), ...(version.condition ? { condition:version.condition } : {}) };
+            }) };
+            if (node.type === 'choice') {
+              if (!node.options?.length) issues.push({ severity:'error', title:`Escolha sem opções em “${entry.sequence.title}”.` });
+              return { ...base, prompt:translated(entry.record,node.localization_id,node.prompt), options:(node.options || []).map(option => {
+                if (!option.target_event) issues.push({ severity:'error', title:`Defina o destino de “${option.text || 'Opção sem texto'}” em “${entry.sequence.title}”.` });
+                registerCondition(option.condition);
+                (option.effects || []).forEach(effect => variableIds.add(effect.variable));
+                return { text:translated(entry.record,option.localization_id,option.text), target_event:option.target_event, ...(option.condition ? { condition:option.condition } : {}), ...(option.effects ? { effects:option.effects } : {}) };
+              }) };
+            }
+            issues.push({ severity:'error', title:`Bloco não suportado: ${node.type}` });
+            return base;
+          })
+        }));
+        if (untranslated) issues.push({ severity:'warning', title:`${untranslated} trecho(s) sem tradução: serão usados os textos originais.` });
+        if (stale) issues.push({ severity:'warning', title:`${stale} tradução(ões) precisam de revisão após mudanças no original.` });
+        if (signals) issues.push({ severity:'warning', title:'Sinais destinados à engine serão ignorados nesta versão do HTML.' });
+        const source = registry.byId.get(startId)?.record;
+        const story = {
+          format:'heartspace-html-story-v1', version:1,
+          title:gameTitle.trim() || source?.title || 'História interativa',
+          locale:locale || (source ? localizationDataFor(source).sourceLocale : 'pt-BR'),
+          start_event_id:startId, sequences,
+          character_registry:narrativeCharacters.filter(character => characterIds.has(character.id)).map(character => ({ id:character.id, name:character.name })),
+          variable_registry:narrativeVariables.filter(variable => variableIds.has(variable.id)).map(variable => ({ id:variable.id, type:variable.type, default:coerceNarrativeValue(variable.default,variable.type) }))
+        };
+        return { story, issues };
+      };
+      const reviewStandaloneNarrativeStory = () => {
+        const result = buildStandaloneNarrativeStory(storyExportStart.value, storyExportLocale.value, document.querySelector('#story-export-name').value);
+        const errors = result.issues.filter(issue => issue.severity === 'error');
+        const count = result.story.sequences.reduce((total,sequence) => total + sequence.nodes.length,0);
+        document.querySelector('#story-export-summary').textContent = `${result.story.sequences.length} sequência(s) conectada(s) · ${count} bloco(s). ${errors.length ? 'Corrija os problemas indicados para baixar o HTML.' : 'Pronto para baixar e jogar sem conexão ou conta.'}`;
+        const list = document.querySelector('#story-export-issues');
+        list.replaceChildren(); list.hidden = !result.issues.length;
+        result.issues.forEach(issue => {
+          const row = document.createElement('li'); row.dataset.severity = issue.severity;
+          row.textContent = `${issue.title}${issue.detail ? ` ${issue.detail}` : ''}`; list.append(row);
+        });
+        document.querySelector('#story-export-download').disabled = errors.length > 0;
+        return result;
+      };
+      document.querySelector('#story-export-open').addEventListener('click', () => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        const current = activeNarrativeSequence(record,editor,true);
+        const registry = buildNarrativeRegistry();
+        const locales = new Set();
+        storyExportStart.replaceChildren();
+        registry.entries.filter(entry => !entry.provisional).forEach(entry => {
+          storyExportStart.add(new Option(`${entry.sequence.title} · ${entry.record.id === activeDocumentId ? title.textContent.trim() : entry.record.title}`,entry.id));
+          localizationDataFor(entry.record).locales.forEach(locale => locales.add(locale));
+        });
+        storyExportStart.value = current?.id || '';
+        storyExportLocale.replaceChildren(new Option('Textos originais',''), ...[...locales].sort().map(locale => new Option(localizationLocaleLabel(locale),locale)));
+        document.querySelector('#story-export-name').value = title.textContent.trim() || 'História interativa';
+        reviewStandaloneNarrativeStory(); storyExportDialog.showModal();
+      });
+      document.querySelector('#story-export-close').addEventListener('click', () => storyExportDialog.close());
+      storyExportStart.addEventListener('change',reviewStandaloneNarrativeStory);
+      storyExportLocale.addEventListener('change',reviewStandaloneNarrativeStory);
+      document.querySelector('#story-export-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const { story, issues } = reviewStandaloneNarrativeStory();
+        if (issues.some(issue => issue.severity === 'error')) return;
+        const html = HeartspaceNarrativeHtml.buildHtml(story);
+        const url = URL.createObjectURL(new Blob([html], { type:'text/html;charset=utf-8' }));
+        const link = document.createElement('a'); link.href = url;
+        link.download = `${narrativeSlug(story.title) || 'heartspace-historia'}.html`;
+        link.hidden = true; document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url),1000);
+        storyExportDialog.close();
+        statusMessage('História HTML exportada');
+      });
       document.querySelector('#narrative-export').addEventListener('click', () => {
         const payload = buildNarrativePayload();
         const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json;charset=utf-8' });
@@ -5639,6 +5857,7 @@
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         transferStatus.textContent = 'Narrativa do documento exportada';
+        storyExportDialog.close();
         setTimeout(() => { transferStatus.textContent = ''; }, 4000);
       });
       const searchDialog = document.querySelector('#search-dialog');
@@ -7387,7 +7606,7 @@
           const versions = Array.isArray(data.versions) && data.versions.length
             ? data.versions
             : [{ label:'Principal', text:data.text || '', active:true }, { label:'Alternativa', text:'' }];
-          block.append(meta, ...versions.map((version, index) => createNarrativeVariationVersion({ ...version, active:version.active === true || (!versions.some(item => item.active) && index === 0) })));
+          block.append(meta, ...versions.map((version, index) => createNarrativeVariationVersion({ ...version, localizationId:version.localization_id || version.localizationId, default:version.id === data.default_version_id || version.default, active:version.id === data.active_version_id || version.active === true || (!data.active_version_id && !versions.some(item => item.active) && index === 0) })));
         } else if (narrativeType === 'dialogue' || narrativeType === 'narration') {
           const text = document.createElement('div');
           text.className = 'narrative-text narrative-reading';
@@ -7812,6 +8031,14 @@
           openNarrativeRules(rules.closest('.narrative-choice-option'));
           return;
         }
+        const variationRules = event.target.closest?.('[data-variation-rules]');
+        if (variationRules) {
+          event.preventDefault();
+          event.stopPropagation();
+          const version = variationRules.closest('.narrative-block')?.querySelector(':scope > .narrative-variation-version[data-active="true"]');
+          if (version && documentViewMode === 'writing') openNarrativeRules(version);
+          return;
+        }
         const variationTab = event.target.closest?.('[data-variation-tab]');
         if (variationTab) {
           event.preventDefault();
@@ -7861,8 +8088,12 @@
           const mutation = rememberNarrativeMutation();
           const active = versions.find(version => version.dataset.active === 'true') || versions[0];
           const next = active.nextElementSibling?.matches('.narrative-variation-version') ? active.nextElementSibling : active.previousElementSibling;
+          const wasDefault = active.dataset.defaultVersion === 'true';
           active.remove();
-          if (next?.matches('.narrative-variation-version')) next.dataset.active = 'true';
+          if (next?.matches('.narrative-variation-version')) {
+            next.dataset.active = 'true';
+            if (wasDefault) next.dataset.defaultVersion = 'true';
+          }
           refreshNarrativeVariation(block);
           commitNarrativeMutation(mutation);
           placeCaret(block.querySelector(':scope > .narrative-variation-version[data-active="true"]'), true);

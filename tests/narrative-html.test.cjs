@@ -1,0 +1,187 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const context = vm.createContext({});
+for (const name of ['narrative-runtime.js','narrative-html.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
+const runtime = context.HeartspaceNarrativeRuntime;
+const htmlExporter = context.HeartspaceNarrativeHtml;
+const { mountExportedHtml } = require('./player-dom.cjs');
+const plain = value => JSON.parse(JSON.stringify(value));
+const story = () => ({
+  title:'A floresta', locale:'pt-BR', start_event_id:'start',
+  variable_registry:[{id:'trust',type:'number',default:0},{id:'met',type:'boolean',default:false}],
+  sequences:[
+    {event_id:'start', nodes:[{type:'dialogue',text:'Olá!'}, {type:'choice',prompt:'Qual caminho?',options:[
+      {text:'Ajudar',target_event:'ending',effects:[{variable:'trust',operation:'add',value:2},{variable:'met',operation:'toggle'}]},
+      {text:'Atalho',target_event:'ending',condition:{variable:'trust',operator:'gte',value:1}}
+    ]}]},
+    {event_id:'ending',nodes:[{type:'variation',default_version_id:'alone',active_version_id:'manual',versions:[
+      {id:'alone',text:'Você segue sozinho.'},
+      {id:'together',text:'Alex segue com você.',condition:{variable:'met',operator:'eq',value:true}},
+      {id:'manual',text:'Rascunho manual.'}
+    ]},{type:'pause',duration_ms:100},{type:'signal'},{type:'narration',text:'Fim.'}]},
+    {event_id:'unrelated',nodes:[{type:'narration',text:'Documento privado fora do caminho.'}]}
+  ]
+});
+test('connected story excludes unrelated sequences and terminates graph cycles', () => {
+  const input = story(); input.sequences[1].nodes.push({type:'choice',options:[{target_event:'start'}]});
+  const result = runtime.reachableSequences(input.sequences,'start');
+  assert.deepEqual(plain(result.sequences.map(sequence => sequence.event_id)),['start','ending']);
+  assert.equal(result.missing.length,0);
+});
+test('reachable missing and duplicate targets are reported', () => {
+  const input = story(); input.sequences.push({...input.sequences[1]});
+  input.sequences[0].nodes[1].options.push({target_event:'missing'});
+  const result = runtime.reachableSequences(input.sequences,'start');
+  assert.deepEqual(plain(result.missing),['missing']);
+  assert.deepEqual(plain(result.duplicates),['ending']);
+});
+test('choice guards prevent effects until an available option is selected', () => {
+  const runner = runtime.createRunner(story());
+  assert.equal(runner.choose(0),false);
+  assert.equal(runner.advance(),true);
+  assert.equal(runner.advance(),false);
+  assert.equal(runner.choose(1),false);
+  assert.equal(runner.state.variables.trust,0);
+  assert.equal(runner.choose(0),true);
+  assert.equal(runner.state.eventId,'ending');
+  assert.deepEqual(plain(runner.state.variables),{trust:2,met:true});
+  assert.equal(runtime.resolveVariation(runner.current().node,runner.state.variables).id,'together');
+});
+test('restoration and restart reset effects and re-resolve the default variation', () => {
+  const runner = runtime.createRunner(story()); runner.advance();
+  const before = runner.snapshot(); runner.choose(0);
+  assert.equal(runner.restore(before),true);
+  assert.equal(runner.state.eventId,'start'); assert.equal(runner.state.variables.met,false);
+  assert.equal(runtime.resolveVariation(story().sequences[1].nodes[0],runner.state.variables).id,'alone');
+  runner.choose(0); runner.restart();
+  assert.equal(runner.state.index,0); assert.equal(runner.state.eventId,'start'); assert.equal(runner.state.variables.trust,0);
+  assert.equal(runner.restore({eventId:'absent',index:0}),false);
+});
+test('variation priority is deterministic, manual tabs do not override the default', () => {
+  const node = story().sequences[1].nodes[0];
+  node.versions.push({id:'also',condition:{variable:'trust',operator:'gte',value:1}});
+  assert.equal(runtime.resolveVariation(node,{trust:2,met:true}).id,'together');
+  assert.equal(runtime.resolveVariation(node,{trust:2,met:false}).id,'also');
+  assert.equal(runtime.resolveVariation(node,{trust:0,met:false}).id,'alone');
+  assert.equal(runtime.conditionMatches({variable:'missing',operator:'neq',value:0},{}),false);
+});
+test('effects reject inherited variable names and preserve typed initial values', () => {
+  const values = runtime.initialVariables([{id:'a',type:'boolean',default:'sim'},{id:'n',type:'number',default:'1,5'},{id:'t',type:'string',default:42}]);
+  runtime.applyEffects([{variable:'toString',operation:'set',value:'bad'},{variable:'n',operation:'subtract',value:.5},{variable:'t',operation:'set',value:'done'}],values);
+  assert.deepEqual(plain(values),{a:true,n:1,t:'done'});
+  assert.equal(Object.hasOwn(values,'toString'),false);
+});
+test('HTML safely embeds script-like titles and dialogue without remote dependencies', () => {
+  const input = story(); const hostile = '</script><script>globalThis.attacked=true</script><img src=x onerror=alert(1)>';
+  input.title = hostile; input.sequences[0].nodes[0].text = hostile;
+  const html = htmlExporter.buildHtml(input);
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  assert.equal(scripts.length,2); assert.equal(/<script\b[^>]*\bsrc\s*=/.test(html),false);
+  assert.equal(/<link\b|<img\b|<iframe\b/.test(html),false);
+  const embedded = JSON.parse(scripts[0][2]);
+  assert.equal(embedded.title,hostile); assert.equal(embedded.sequences[0].nodes[0].text,hostile);
+  assert.ok(html.includes("connect-src 'none'"));
+  new vm.Script(scripts[1][2]);
+});
+test('serialized runtime runs independently from the editor globals', () => {
+  const isolated = vm.runInNewContext(`(${runtime.source})()`);
+  const runner = isolated.createRunner(story()); runner.advance(); runner.choose(0);
+  while(runner.advance()) {}
+  assert.equal(runner.current().ended,true);
+});
+test('exported player handles reveal, keyboard choice, effects, pauses and completion', () => {
+  const ui = mountExportedHtml(htmlExporter.buildHtml(story()));
+  ui.click('start');
+  assert.equal(ui.elements.get('copy').textContent,'');
+  ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Olá!');
+  ui.key('Enter'); ui.key('Enter');
+  assert.equal(ui.elements.get('choices').hidden,false);
+  assert.equal(ui.elements.get('choices').children[1].disabled,true);
+  ui.key('2'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
+  ui.key('ArrowDown'); ui.key('Enter'); ui.key('Enter');
+  assert.equal(ui.elements.get('copy').textContent,'Alex segue com você.');
+  ui.key('Enter'); assert.match(ui.elements.get('hint').textContent,/Pausa/);
+  ui.tick(); ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Fim.');
+  ui.key('Enter'); assert.match(ui.elements.get('copy').textContent,/fim deste caminho/);
+  assert.equal(ui.elements.get('next').hidden,true);
+});
+test('home and restart cancel typing and pause timers', () => {
+  const ui = mountExportedHtml(htmlExporter.buildHtml(story()));
+  ui.click('start'); assert.ok(ui.timers.size);
+  ui.key('Escape'); assert.equal(ui.timers.size,0); assert.equal(ui.elements.get('menu').hidden,false);
+  ui.click('start'); ui.key('Enter'); ui.key('Enter'); ui.key('Enter'); ui.key('1'); ui.key('Enter'); ui.key('Enter');
+  assert.ok([...ui.timers.values()].some(timer => timer.delay === 100));
+  ui.click('home'); assert.equal(ui.timers.size,0);
+  ui.click('start'); ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Olá!');
+});
+test('Enter respects a choice focused by Tab and the final restart button', () => {
+  const input = story();
+  const option = input.sequences[0].nodes[1].options[1];
+  delete option.condition; option.target_event = 'alternative';
+  input.sequences.push({event_id:'alternative',nodes:[{type:'narration',text:'Outro caminho.'}]});
+  const ui = mountExportedHtml(htmlExporter.buildHtml(input),true);
+  ui.click('start'); ui.key('Enter');
+  const second = ui.elements.get('choices').children[1]; second.focus();
+  ui.key('Enter',second); assert.equal(ui.elements.get('copy').textContent,'Outro caminho.');
+  ui.key('Enter');
+  const restart = ui.elements.get('choices').children[0]; restart.focus(); ui.key('Enter',restart);
+  assert.equal(ui.elements.get('copy').textContent,'Olá!');
+});
+test('reduced motion skips typing; blocked choices offer a clear dead-end message', () => {
+  const input = story(); input.sequences[0].nodes = [input.sequences[0].nodes[1]];
+  input.sequences[0].nodes[0].options = [input.sequences[0].nodes[0].options[1]];
+  const ui = mountExportedHtml(htmlExporter.buildHtml(input),true); ui.click('start');
+  assert.equal(ui.timers.size,0);
+  assert.equal(ui.elements.get('choices').hidden,false);
+  assert.match(ui.elements.get('hint').textContent,/Nenhuma opção disponível/);
+  ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
+  ui.click('restart'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
+});
+test('actual export adapter strips document metadata and handles translations across documents', () => {
+  const editor = fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+  const begin = editor.indexOf('      const buildStandaloneNarrativeStory =');
+  const end = editor.indexOf('      const reviewStandaloneNarrativeStory =',begin);
+  const input = story();
+  const records = [
+    {title:'Original',access_token:'DO-NOT-EXPORT',localization:{sourceLocale:'pt-BR',translations:{'en-US':{line:{text:'Hello!',source:'Olá!'}}}}},
+    {title:'Final',localization:{sourceLocale:'pt-BR',translations:{}}}
+  ];
+  input.sequences[0].nodes[0].localization_id = 'line';
+  const entries = input.sequences.map((sequence,index) => ({id:sequence.event_id,record:records[index ? 1 : 0],sequence:{title:sequence.event_id,presentation:{}},nodes:sequence.nodes}));
+  const exportContext = vm.createContext({
+    HeartspaceNarrativeRuntime:runtime, buildNarrativeRegistry:() => ({entries,byId:new Map(entries.map(entry => [entry.id,entry]))}),
+    validateNarrativeRegistry:() => [], localizationDataFor:record => record.localization,
+    normalizeNarrativePresentation:value => value, narrativeCharacters:[], narrativeVariables:input.variable_registry,
+    coerceNarrativeValue:runtime.coerce
+  });
+  const result = vm.runInContext(editor.slice(begin,end) + '\nbuildStandaloneNarrativeStory("start","en-US","My story");',exportContext);
+  assert.equal(result.story.sequences.length,2);
+  assert.equal(result.story.sequences[0].nodes[0].text,'Hello!');
+  assert.equal(result.story.sequences[1].nodes[0].versions[0].text,'Você segue sozinho.');
+  assert.ok(result.issues.some(issue => issue.title.includes('sem tradução')));
+  assert.equal(JSON.stringify(result.story).includes('DO-NOT-EXPORT'),false);
+  assert.equal(JSON.stringify(result.story).includes('Documento privado'),false);
+});
+test('export validation catches missing targets and rules invalidated by variable type changes', () => {
+  const editor = fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+  const begin = editor.indexOf('      const validateNarrativeRegistry =');
+  const end = editor.indexOf('      const renderNarrativeValidation =',begin);
+  const input = story();
+  const options = input.sequences[0].nodes[1].options;
+  options[0].effects = [{variable:'met',operation:'set',value:'not-a-boolean'}];
+  options[1].condition = {variable:'met',operator:'gt',value:true};
+  const entries = input.sequences.slice(0,2).map(sequence => ({id:sequence.event_id,nodes:sequence.nodes,routes:[]}));
+  entries.push({id:'absent',nodes:[],routes:[],provisional:true});
+  const registry = {entries,byId:new Map(entries.map(entry => [entry.id,entry])),duplicateIds:new Set()};
+  const validationContext = vm.createContext({
+    registry,characterById:() => null,
+    narrativeVariableById:id => input.variable_registry.find(variable => variable.id === id)
+  });
+  const issues = vm.runInContext(editor.slice(begin,end) + '\nvalidateNarrativeRegistry(registry,"start");',validationContext);
+  assert.ok(issues.some(issue => issue.title.includes('Destino ausente') && issue.severity === 'error'));
+  assert.ok(issues.some(issue => issue.title === 'Comparação incompatível' && issue.severity === 'error'));
+  assert.ok(issues.some(issue => issue.title === 'Valor incompatível no efeito' && issue.severity === 'error'));
+});
