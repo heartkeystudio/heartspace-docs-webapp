@@ -15,6 +15,90 @@
     const editorArea = doc.querySelector('.editor-area');
     const edgeHandle = doc.querySelector('.project-tools-edge');
     let edgeFrame = 0;
+    const motions = new WeakMap();
+    let panelWasOpen = false, presentedArea = 'writing', presentedSplit = false;
+    function reveal(surface, fromRight = true) {
+      if (!surface?.animate || win.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      motions.get(surface)?.cancel();
+      const animation = surface.animate([
+        {opacity:0,transform:`translateX(${fromRight ? 18 : -10}px)`},
+        {opacity:1,transform:'translateX(0)'}
+      ],{duration:180,easing:'cubic-bezier(.2,.7,.3,1)'});
+      motions.set(surface,animation);
+    }
+    // Project resources live independently of the current document task.
+    const libraryDrawer = doc.createElement('aside');
+    libraryDrawer.className = 'project-library-drawer'; libraryDrawer.hidden = true;
+    libraryDrawer.setAttribute('aria-label','Biblioteca do projeto');
+    libraryDrawer.innerHTML = '<header><h2>Biblioteca do projeto</h2><button type="button" aria-label="Fechar biblioteca do projeto">Fechar</button></header><nav aria-label="Recursos do projeto"></nav>';
+    doc.body.append(libraryDrawer);
+    const libraryViews = {characters:doc.querySelector('#narrative-characters'),variables:doc.querySelector('#narrative-variables'),glossary:doc.querySelector('#narrative-glossary-view')};
+    const libraryTabs = libraryDrawer.querySelector('nav');
+    ['characters','variables','glossary'].forEach(view => {
+      libraryTabs.append(doc.querySelector(`[data-production-view="${view}"]`));
+      libraryDrawer.append(libraryViews[view]);
+    });
+    let libraryMotion = 0, libraryClosing = false;
+    function slideLibrary(closing = false) {
+      const from = Math.max(0,Math.min(1,parseFloat(win.getComputedStyle(doc.body).getPropertyValue('--library-progress')) || 0));
+      motions.get(libraryDrawer)?.cancel();
+      const target = closing ? 0 : 1;
+      doc.body.style.setProperty('--library-progress',String(target));
+      if (!doc.body.animate || win.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+      // One animated value moves the drawer and reserves its space together.
+      const animation = doc.body.animate([
+        {'--library-progress':String(from)},
+        {'--library-progress':String(target)}
+      ],{duration:160 * Math.abs(target - from),easing:'ease'});
+      motions.set(libraryDrawer,animation);
+      return animation;
+    }
+    function closeLibrary() {
+      if (libraryDrawer.hidden || libraryClosing) return;
+      libraryClosing = true;
+      const token = ++libraryMotion;
+      const animation = slideLibrary(true);
+      const finish = () => {
+        if (token !== libraryMotion) return;
+        libraryDrawer.hidden = true;
+        libraryClosing = false;
+        animation?.cancel();
+        doc.body.classList.remove('library-drawer-open');
+        scheduleEdgeHandle(); options.layout?.();
+      };
+      if (animation) animation.finished.then(finish,() => {}); else finish();
+      const button = doc.querySelector('#project-library-open');
+      button.setAttribute('aria-expanded','false'); button.setAttribute('aria-label','Abrir biblioteca do projeto');
+      scheduleEdgeHandle(); options.layout?.();
+    }
+    function openLibrary(view = lastViews.library) {
+      const entering = libraryDrawer.hidden || libraryClosing;
+      ++libraryMotion; libraryClosing = false;
+      options.loadRegistry?.();
+      libraryDrawer.hidden = false;
+      doc.body.classList.add('library-drawer-open');
+      Object.entries(libraryViews).forEach(([key,node]) => { node.hidden = key !== view; });
+      const glossary = doc.querySelector('#localization-glossary');
+      if (glossary) glossary.hidden = view !== 'glossary';
+      libraryTabs.querySelectorAll('button').forEach(button => {
+        button.hidden = false;
+        const active = button.dataset.productionView === view;
+        button.setAttribute('aria-selected',String(active)); button.tabIndex = active ? 0 : -1;
+      });
+      lastViews.library = view; persistPreferences();
+      const button = doc.querySelector('#project-library-open');
+      button.setAttribute('aria-expanded','true'); button.setAttribute('aria-label','Fechar biblioteca do projeto');
+      options.renderLibraryView?.(view); if (entering) slideLibrary(); scheduleEdgeHandle(); options.layout?.();
+    }
+    libraryDrawer.querySelector('header button').addEventListener('click',closeLibrary);
+    libraryTabs.addEventListener('keydown',event => {
+      if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      const buttons = [...libraryTabs.querySelectorAll('button')];
+      const index = buttons.indexOf(event.target); if (index < 0) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[next].click(); buttons[next].focus();
+    });
     const memories = new Map();
     const viewPositions = new Map();
     const splits = { history:false, translation:false, scene:false };
@@ -49,7 +133,6 @@
     function cancelRestore() { win.cancelAnimationFrame(restoreFrame); win.cancelAnimationFrame(viewFrame); restoreFrame = 0; viewFrame = 0; }
     ['pointerdown','keydown','beforeinput','wheel','touchstart'].forEach(name => doc.addEventListener(name,cancelRestore,{capture:true,passive:true}));
     if (win.ResizeObserver) new win.ResizeObserver(() => {
-      doc.documentElement.style.setProperty('--work-area-nav-height',`${nav.getBoundingClientRect().height}px`);
       scheduleEdgeHandle();
     }).observe(nav);
     const narrow = win.matchMedia('(max-width: 1100px)');
@@ -88,7 +171,7 @@
     function splitMaximum() {
       const app = doc.querySelector('.app').getBoundingClientRect();
       const source = doc.querySelector('.workspace').getBoundingClientRect();
-      return Math.max(420,Math.min(900,app.right - source.left - 320));
+      return Math.max(420,Math.min(900,app.right - source.left - 320 - (parseFloat(win.getComputedStyle(doc.body).getPropertyValue('--zen-sidebar-space')) || 0)));
     }
     function syncSplitAccessibility() {
       const resizer = doc.querySelector('#narrative-resizer');
@@ -105,8 +188,8 @@
       const visible = node => node && node.getClientRects().length && node.clientWidth >= 36 && node.clientHeight >= 52;
       let surface = visible(editorArea) && !(area === 'library' && narrow.matches) ? editorArea : null;
       if (!surface) {
-        const view = panel.querySelector('.narrative-view:not([hidden])');
-        surface = [...(view?.querySelectorAll('.localization-list,.localization-project-summary,.narrative-character-list,.narrative-variable-list,.localization-glossary') || [])].find(visible) || (visible(view) ? view : null);
+        // Use the outer boundary, never a translation card or an inset list.
+        surface = !panel.hidden && visible(panel) ? panel : null;
       }
       edgeHandle.hidden = !surface;
       if (!surface) return;
@@ -130,9 +213,9 @@
       doc.body.classList.toggle('work-area-split', effectiveSplit);
       nav.querySelectorAll('[data-work-area]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.workArea === (area === 'library' ? 'writing' : area))));
       const libraryButton = doc.querySelector('#project-library-open');
-      libraryButton.setAttribute('aria-expanded',String(area === 'library'));
-      libraryButton.setAttribute('aria-label',area === 'library' ? 'Fechar biblioteca do projeto' : 'Abrir biblioteca do projeto');
-      libraryButton.title = area === 'library' ? 'Fechar biblioteca do projeto' : 'Biblioteca do projeto · Personagens, variáveis e glossário';
+      libraryButton.setAttribute('aria-expanded',String(!libraryDrawer.hidden));
+      libraryButton.setAttribute('aria-label',!libraryDrawer.hidden ? 'Fechar biblioteca do projeto' : 'Abrir biblioteca do projeto');
+      libraryButton.title = !libraryDrawer.hidden ? 'Fechar biblioteca do projeto' : 'Biblioteca do projeto · Personagens, variáveis e glossário';
       splitButton.hidden = narrow.matches || ['writing','library','validation'].includes(area);
       splitButton.disabled = narrow.matches;
       splitButton.setAttribute('aria-pressed',String(effectiveSplit));
@@ -153,6 +236,8 @@
       syncSplitAccessibility();
       scheduleEdgeHandle();
       options.layout?.();
+      if (!panel.hidden && (presentedArea !== area || presentedSplit !== effectiveSplit)) reveal(panel.querySelector('.narrative-panel'));
+      presentedArea = area; presentedSplit = effectiveSplit;
     }
     function activateView(view) {
       rememberView();
@@ -178,6 +263,7 @@
       if (restoreSelection) restore(deferred);
     }
     function select(next) {
+      if (next === 'library') { openLibrary(); return; }
       if (next === 'writing') { write(); return; }
       if (!areas[next] || (area === next && !panel.hidden)) return;
       closeInspector();
@@ -193,13 +279,16 @@
       if (button) select(button.dataset.workArea);
     });
     doc.querySelector('#project-library-open').addEventListener('pointerdown',remember);
-    doc.querySelector('#project-library-open').addEventListener('click',() => area === 'library' ? write() : select('library'));
+    doc.querySelector('#project-library-open').addEventListener('click',() => libraryDrawer.hidden || libraryClosing ? openLibrary() : closeLibrary());
     doc.querySelector('#work-area-issues').addEventListener('click',() => select('validation'));
     splitButton.addEventListener('click',() => {
       rememberView();
+      doc.querySelector('#actions-menu').open = false;
       splits[area] = !splits[area]; persistPreferences(); layout(); restoreView();
     });
     narrow.addEventListener('change',() => { rememberView(); layout(); restoreView(); });
+    doc.addEventListener('docs-layout-change',() => { closeMenus(); layout(); });
+    doc.querySelector('#actions-menu').addEventListener('pointerdown',remember);
     doc.querySelector('#scene-settings-toggle').addEventListener('click',event => {
       const view = doc.querySelector('#narrative-presentation');
       const open = view.dataset.settingsOpen !== 'true';
@@ -216,7 +305,7 @@
       buttons[index].click(); buttons[index].focus();
     });
     // Menus live outside the surfaces that clip/scroll their working contents.
-    const menus = [...panel.querySelectorAll('.sequence-properties,#localization-settings-menu,#narrative-insert-tools')].map(details => {
+    const menus = [...doc.querySelectorAll('.sequence-properties,#localization-settings-menu,#narrative-insert-tools,#toolbar-lists,#toolbar-callouts')].map(details => {
       const content = details.querySelector(':scope > div');
       const summary = details.querySelector(':scope > summary');
       return {details,content,summary,parent:content.parentNode,next:content.nextSibling};
@@ -253,10 +342,15 @@
       menus.forEach(menu => { if (menu !== except && (menu.details.open || menu.content.parentNode === doc.body)) closeMenu(menu); });
     }
     menus.forEach(menu => {
-      menu.content.dataset.menuKind = menu.details.id === 'narrative-insert-tools' ? 'insert' : menu.details.id === 'localization-settings-menu' ? 'localization' : 'sequence';
-      if (!menu.content.id) menu.content.id = `work-area-menu-${menu.content.dataset.menuKind}`;
+      menu.content.dataset.menuKind = menu.details.classList.contains('toolbar-menu') ? 'toolbar' : menu.details.id === 'narrative-insert-tools' ? 'insert' : menu.details.id === 'localization-settings-menu' ? 'localization' : 'sequence';
+      if (!menu.content.id) menu.content.id = `work-area-menu-${menu.details.id}`;
       menu.summary.setAttribute('aria-controls',menu.content.id);
       menu.summary.setAttribute('aria-expanded',String(menu.details.open));
+      if (menu.details.classList.contains('toolbar-menu')) {
+        menu.content.addEventListener('click',event => {
+          if (event.target.closest('button:not([disabled])')) closeMenu(menu);
+        });
+      }
       menu.details.addEventListener('toggle',() => {
         menu.summary.setAttribute('aria-expanded',String(menu.details.open));
         if (!menu.details.open) { if (menu.content.parentNode === doc.body) closeMenu(menu); return; }
@@ -265,6 +359,7 @@
         menu.content.classList.add('work-area-popover');
         positionMenu(menu);
         if (!menu.details.open) return;
+        reveal(menu.content,false);
         menu.content.querySelector('input:not([disabled]):not([type="hidden"]),select:not([disabled]),button:not([disabled])')?.focus({preventScroll:true});
       });
       menu.content.addEventListener('keydown',event => {
@@ -291,6 +386,7 @@
       if (event.key !== 'Escape' || doc.querySelector('dialog[open]')) return;
       const menu = menus.find(item => item.details.open);
       if (menu) { event.preventDefault(); event.stopPropagation(); closeMenu(menu,true); }
+      else if (!libraryDrawer.hidden) { event.preventDefault(); closeLibrary(); doc.querySelector('#project-library-open').focus({preventScroll:true}); }
       else if (!inspector.hidden) { event.preventDefault(); closeInspector(); restore(); options.layout?.(); }
     },true);
     doc.addEventListener('selectionchange',() => {
@@ -303,7 +399,7 @@
     menus.find(menu => menu.details.id === 'narrative-insert-tools')?.content.addEventListener('click',event => {
       if (event.target.closest('[data-insert-narrative]')) options.insertBlock?.(event.target.closest('[data-insert-narrative]').dataset.insertNarrative);
     });
-    // Existing export/test buttons keep their listeners and are placed beside the task navigation.
+    // Existing export/test buttons keep their listeners inside the contextual actions menu.
     doc.querySelector('#work-area-story-actions').append(doc.querySelector('#narrative-test-current'),doc.querySelector('#story-export-open'));
     panel.querySelector('#narrative-actions').hidden = true;
     const glossaryView = doc.querySelector('#narrative-glossary-view');
@@ -373,6 +469,7 @@
       inspector.hidden = false;
       doc.body.classList.add('writing-inspector-open');
       options.layout?.();
+      reveal(inspector);
     }
     doc.querySelector('#writing-inspector-close').addEventListener('click',() => { closeInspector(); restore(); options.layout?.(); });
     doc.querySelector('#writing-inspector-jump').addEventListener('click',() => {
@@ -404,10 +501,22 @@
       const edgeObserver = new win.ResizeObserver(scheduleEdgeHandle);
       [editorArea,panel,...panel.querySelectorAll('.narrative-view,.localization-list,.localization-project-summary,.narrative-character-list,.narrative-variable-list,.localization-glossary')].forEach(node => edgeObserver.observe(node));
     }
+    let sidebarLayoutFrame = 0;
+    const sidebarClasses = ['focus-mode','zen-sidebar-open','zen-sidebar-pinned','zen-sidebar-dismissed','library-drawer-open'];
+    let sidebarState = sidebarClasses.map(name => doc.body.classList.contains(name)).join(':');
+    new win.MutationObserver(() => {
+      const next = sidebarClasses.map(name => doc.body.classList.contains(name)).join(':');
+      if (next === sidebarState) return;
+      sidebarState = next;
+      win.cancelAnimationFrame(sidebarLayoutFrame);
+      sidebarLayoutFrame = win.requestAnimationFrame(() => {
+        repositionMenus(); scheduleEdgeHandle(); syncSplitAccessibility(); options.layout?.();
+      });
+    }).observe(doc.body,{attributes:true,attributeFilter:['class']});
     layout();
-    return { select, activateView, inspect, closeInspector, write, remember,
+    return { select, activateView, inspect, closeInspector, write, remember, openLibrary,
       previewDocument() { if (narrow.matches) write(false); else { splits[area] = true; layout(); } },
-      documentChanged() { closeMenus(); closeInspector(); savedSelection = null; currentView = null; if (area !== 'writing') showView(lastViews[area]); },
+      documentChanged() { closeMenus(); closeInspector(); if (!libraryDrawer.hidden) options.renderLibraryView?.(lastViews.library); savedSelection = null; currentView = null; if (area !== 'writing') showView(lastViews[area]); },
       resizeSplit(width, save = false) {
         if (!widths[area] || !Number.isFinite(width)) return;
         widths[area] = Math.max(420,Math.min(splitMaximum(),width));
@@ -417,7 +526,13 @@
       },
       saveLayout:persistPreferences,
       panelVisibility(open) {
-        if (open) return;
+        if (open) {
+          if (!panelWasOpen) reveal(panel.querySelector('.narrative-panel'));
+          panelWasOpen = true;
+          scheduleEdgeHandle();
+          return;
+        }
+        panelWasOpen = false;
         if (area === 'writing') { doc.body.classList.remove('work-area-split'); return; }
         remember(); closeMenus(); area = 'writing'; layout(); restore();
       },

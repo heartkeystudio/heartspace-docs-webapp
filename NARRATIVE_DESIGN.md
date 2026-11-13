@@ -161,3 +161,47 @@ Decisão registrada para uma fatia futura:
 8. Implementar variações condicionais de leitura conforme a decisão acima. **Implementado:** o bloco Variação de trecho possui versões com IDs estáveis, abas de autoria, localização por versão, simulação, validação e exportação. Em **Configurar versão**, o autor renomeia o trecho, define a versão padrão e configura uma condição por variável (booleano, número ou texto). A primeira condição atendida, na ordem das abas, vence; quando nenhuma atende, usa-se a versão padrão. Versões sem condição permanecem acessíveis para edição manual. A aba selecionada para escrita é independente da resolução da leitura e do simulador. A leitura usa os valores iniciais e efeitos do caminho canônico; a simulação usa o estado atual, inclusive ao voltar no histórico. O JSON inclui `default_version_id` e `versions[].condition`; IDs de localização permanecem estáveis. A remoção da versão padrão transfere essa função a uma versão vizinha. A validação verifica variáveis ausentes, comparações incompatíveis e tipos de valor; o registro de variáveis contabiliza essas referências antes de permitir exclusão.
 9. Exportar a história como visual novel HTML antes da integração com engine. **Três fatias implementadas:** arquivo HTML independente, sequência inicial selecionável, caminhos conectados entre documentos, idiomas com fallback explícito para o original, personagens, modelos e cores de apresentação por sequência, animação, teclado/clique/toque, escolhas, condições, efeitos, variações, pausas, conclusão e reinício. Prévia do Docs e exportação usam o mesmo motor em `narrative-runtime.js`. A exportação valida somente o grafo incluído, bloqueia destinos ausentes/ambíguos e regras inválidas e exclui documentos desconectados, credenciais e metadados de conta. Sinais de integração são ignorados com aviso. O player salva progresso e histórico, oferece preferências de leitura persistentes, confirma reinícios e lida com armazenamento indisponível. A incorporação possui código pronto no diálogo de exportação, modo compacto e layout adaptado a telas pequenas. A cena visual inclui fundos e ambiente por sequência, retratos por personagem, posições e transições; a mesma camada é usada na amostra, no simulador e no HTML. Há exportação em HTML único com mídia embutida ou ZIP com imagens e áudio deduplicados em uma pasta de assets. As três fatias HTML estão implementadas; conferência visual em navegadores reais continua como aceite, e Godot permanece a próxima integração. Detalhes em [HTML_STORY_EXPORT.md](HTML_STORY_EXPORT.md).
 10. Criar o primeiro adaptador de engine para Godot, mantendo o JSON genérico como contrato central. Esta integração fica por último nesta sequência.
+
+
+## Ajustes de espaço de trabalho e modo Zen
+
+- Escrever, História, Tradução e Cena ficam no cabeçalho, sem faixa intermediária. Em telas pequenas, a navegação permanece acessível por rolagem horizontal.
+- Ações reúne Pendências, Dividir área / Uma área e as ações contextuais de teste e exportação.
+- O modo Zen usa as mesmas regras de colunas da divisão e da biblioteca; não define colunas por estilo inline. A preferência de Zen do desktop é preservada ao voltar de uma janela estreita.
+- Alterar Zen notifica o controlador para reposicionar a alça da biblioteca e recalcular as decorações do documento. A alça usa a borda interna do editor quando ele está visível; em uma ferramenta de tela inteira, usa a borda externa do painel, sem se prender às listas de tradução.
+- A folha de livro inclui espaço simétrico para as etiquetas externas no seu tamanho rolável, respeitando o zoom e permitindo rolagem horizontal quando não couber. A seleção de documentos usa cinza discreto.
+- Conferência visual das combinações de Zen, divisão, biblioteca e zoom permanece pendente em navegadores reais.
+
+
+## Padronização visual e adaptação dos controles
+
+- Abas de tarefa seguem o padrão do Canvas: ícone e rótulo, divisórias discretas e contorno da aba ativa. Os SVGs fornecidos de biblioteca, livro e folha são recursos locais em `assets/docs` e também aparecem na navegação e na alça da biblioteca.
+- No Zen desktop, abrir a navegação reserva sua largura na área de escrita. A barra de ferramentas e o zoom acompanham o movimento; a divisão mantém pelo menos 320 px de área útil após descontar a navegação.
+- Listas agrupa marcadores, numeração e tarefas. Callouts agrupa código, citação e os estilos de destaque de produção. Esses menus usam a camada externa de popovers, preservam a seleção e fecham após a ação. Configurações da página usa posição fixa para não ser recortada pela rolagem da barra.
+- Painéis de produção e inspeção têm entrada suave; menus e estrutura também. A preferência de movimento reduzido desativa esses efeitos.
+- Subtítulo vazio fica oculto, sem campo obrigatório nem espaço reservado. Pode ser adicionado em Configurações da página e volta a desaparecer quando for apagado e perder o foco.
+- Removida a divisória vertical do cabeçalho ao lado da marca.
+- Aceite visual permanece pendente; estas alterações não foram exercitadas em navegador nesta etapa.
+
+
+## Biblioteca independente e hierarquia da navegação
+
+- A biblioteca usa um drawer próprio e mantém a tarefa, a aba e a posição do trabalho atual. Em janelas largas, reserva 360 px; em janelas menores, abre sobre o conteúdo com fechamento próprio. Personagens, variáveis e glossário reutilizam os mesmos controles e registros, sem duplicar o documento.
+- No Zen, a área de produção sem divisão também desconta a navegação esquerda. Os limites da divisão consideram o espaço da biblioteca quando ela está acoplada.
+- A árvore de bibliotecas tem recuos e linhas de ligação; documentos selecionados usam realce plano. O botão Nova sequência usa o SVG de adição e o padrão de Propriedades; o ícone de salvar tem enquadramento óptico compatível com os outros atalhos.
+- Cartões do mapa e a alça da navegação usam bordas neutras, sem brilho azul. Foco de teclado permanece visível.
+- Conferência visual em navegador segue pendente.
+
+
+## Entrada e movimento do drawer
+
+- A tela de entrada ocupa a camada superior com fundo opaco; o editor e os popovers ficam invisíveis e sem interação enquanto ela estiver aberta.
+- O drawer direito possui um único movimento de entrada/saída. A reserva da largura do aplicativo não tem transição concorrente; ao fechar, ela é liberada ao término do deslizamento.
+
+
+## Movimento compartilhado da biblioteca
+
+- O progresso de abertura é um único valor CSS registrado, animado pelo controlador: deslocamento do drawer e reserva do espaço da área de trabalho seguem exatamente esse valor.
+- A largura do aplicativo permanece integral. A reserva usa padding abaixo do cabeçalho; o cabeçalho continua fixo de ponta a ponta.
+- Reverter a abertura parte do progresso atual, sem reiniciar o movimento. A alça da biblioteca permanece cinza também aberta e sob hover.
+- A gravação fornecida foi inspecionada; a alteração ainda requer conferência visual no navegador.
