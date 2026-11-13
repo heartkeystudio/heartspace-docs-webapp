@@ -4,11 +4,15 @@
 
 O documento é a fonte narrativa. Texto, diálogos, escolhas e ações formam um modelo semântico portátil. Escrita, leitura, mapa, sequência, simulação e código são projeções desse mesmo modelo; nenhuma delas mantém uma cópia independente do conteúdo.
 
+## Distribuição nesta etapa
+
+A divulgação pública do Docs prioriza o modo local, com edição, narrativa, tradução e exportação utilizáveis sem conta. O online fica em beta fechado para a equipe e pessoas liberadas pelo responsável do produto. Medir consumo e comportamento da sincronização nesse grupo antes de definir franquias públicas, monetização e capacidade de nuvem. As hipóteses de cotas não autorizam bloqueios comerciais no modo local. Detalhes em [FREE_PLAN_DESIGN.md](FREE_PLAN_DESIGN.md).
+
 ## Regra de leitura e paginação
 
 1. A projeção de leitura é a referência para quebra de linhas, altura do conteúdo e paginação.
 2. Controles de produção, identificadores, expressões, destinos, condições, avisos e alças de arraste não participam do fluxo de layout da leitura.
-3. Elementos exclusivos de produção devem viver em uma camada sobreposta, em uma margem editorial, em um inspetor flutuante ou na tela Narrativa.
+3. Elementos exclusivos de produção devem viver em uma camada sobreposta, em uma margem editorial, no inspetor contextual ou nas áreas de História e Cena.
 4. Ocultar controles com `display: none` apenas no modo de leitura não resolve a paginação: eles também não podem ter sido considerados ao calcular as folhas durante a escrita.
 5. Cada bloco semântico deve expor duas partes:
    - `reading projection`: conteúdo que aparece ao leitor e ocupa espaço;
@@ -17,7 +21,32 @@ O documento é a fonte narrativa. Texto, diálogos, escolhas e ações formam um
 7. O documento poderá escolher uma apresentação narrativa:
    - `prosa`: diálogo integrado ao livro ou lore;
    - `roteiro`: personagem, rubrica e fala visíveis;
-   - `jogo`: personagem, expressão e opções no formato de interface de diálogo.
+   A simulação de jogo é configurada em **Cena**, separadamente do formato de leitura.
+
+## Organização da área de trabalho
+
+A antiga Central de produção foi distribuída por tarefa, usando as mesmas projeções e registros:
+
+- **Escrever** mantém o documento. Clicar na etiqueta de um bloco abre o inspetor contextual com personagem, expressão, sequência e demais propriedades; identificadores ficam recolhidos. Digitar texto comum não abre o inspetor.
+- **História** ocupa a área principal com **Sequência** e **Mapa**. Seleção da sequência permanece compacta; nome, ID e exclusão ficam em **Propriedades**, e inserções ficam em **Adicionar bloco**.
+- **Tradução** ocupa a área principal com original e tradução lado a lado. Em áreas menores, cada par fica empilhado. Filtros, progresso, importação, exportação e visão do projeto continuam disponíveis.
+- **Cena** dá prioridade à amostra visual, com os ajustes ao lado. Em áreas menores, **Ajustes da cena** revela os controles abaixo da amostra.
+- **Biblioteca do projeto**, acessível pelo botão na extremidade direita, reúne **Personagens**, **Variáveis** e **Glossário** em um painel de apoio à direita, mantendo o documento visível. O botão compacto fica imediatamente antes da barra de rolagem, encostado à sua borda interna e sem reservar uma faixa externa e alterna a abertura por clique, com estado ativo e indicação acessível. Em janelas menores, o painel abre sobre a borda direita e pode ser fechado pelo mesmo botão ou pelo cabeçalho.
+- **Pendências** é um indicador discreto. Sua lista permite abrir a sequência, mapa ou ferramenta relacionada para revisão. **Testar sequência** e **Exportar** aparecem na barra superior de História e Cena.
+
+**Dividir área** é uma escolha explícita em História, Tradução e Cena. O divisor é ajustável; abaixo de 1100 px, usa-se uma área por vez, mantendo a preferência de divisão para quando a janela voltar a comportá-la. A divisão e a largura são independentes por tarefa e ficam guardadas como preferências locais; a última aba escolhida de História e Biblioteca também é lembrada. A divisão efetiva é sempre um booleano: Escrever e Pendências não reservam uma coluna de produção; Biblioteca reserva apenas seu painel de apoio enquanto estiver visível. A grade dividida exige também que o painel esteja visível; ocultar o painel sincroniza o retorno à escrita. Na escrita, o inspetor pode ser fechado independentemente.
+
+Os menus de Propriedades, Adicionar bloco e Configurar tradução usam uma camada fora dos painéis, com posição limitada à janela, fechamento por clique fora ou Escape e navegação por Tab. Criar uma sequência abre suas propriedades para renomear. O inspetor mostra um trecho de contexto, acompanha os metadados do documento e permite aplicar um campo com Enter, voltando à escrita; pausas e sinais retornam a uma linha de texto comum.
+
+A rolagem das ferramentas é lembrada por documento e visualização. Voltar a uma área já ativa não reconstrói seus campos. Uma nova interação cancela restaurações de foco/rolagem que ainda estavam agendadas.
+
+A troca de área não reconstrói o editor: guarda seleção, foco e rolagem por documento. Voltar a **Escrever** restaura esse contexto. Saltos explícitos de sequência ou tradução levam ao trecho solicitado. A paginação não mede o editor enquanto ele está oculto. O controlador fica em `production-workspaces.js`, também carregado pelo aplicativo desktop.
+
+O menu `/` mantém coleções para exploração sem busca. Ao digitar, busca ações finais em todas as coleções, com normalização de acentos, termos compostos, sinônimos e prioridade para o nome exato; ações de legenda e tabela só aparecem no contexto apropriado. Enter/Tab aplica o resultado; Backspace edita a busca. Atalhos de formatação no editor: Ctrl/Cmd+B, I e U; Ctrl/Cmd+Shift+X para tachado, Shift+7/8 para listas e Shift+K para link. Ctrl/Cmd+K continua abrindo a busca de documentos.
+
+Novas imagens passam por `image-optimizer.js` antes de persistir localmente ou enviar à nuvem, incluindo fundos, retratos e imagens importadas por data URI. Os perfis limitam dimensões e bytes e reencodificam em WebP (PNG como alternativa compatível) sem carregar metadados do original. Animações não são achatadas silenciosamente: essa inserção pede uma imagem estática. Arquivos existentes não são migrados automaticamente. Detalhes e proposta de cotas em [FREE_PLAN_DESIGN.md](FREE_PLAN_DESIGN.md).
+
+Conferência de sintaxe concluída. Aceite visual e de interação em navegadores reais permanece pendente.
 
 ## Pontos adotados de outras ferramentas
 

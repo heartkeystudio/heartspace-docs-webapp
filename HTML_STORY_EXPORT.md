@@ -2,7 +2,7 @@
 
 ## Uso
 
-Na Central de produção, abra **Sequência** ou **Mapa** e clique em **Exportar**.
+Abra a área **História** ou **Cena** e clique em **Exportar** na barra superior.
 Escolha nome, sequência inicial, idioma e formato. **HTML único** inclui as
 mídias no próprio arquivo. **Pacote ZIP** separa `index.html` e a pasta `assets`.
 O mesmo diálogo mantém a opção de baixar o JSON do documento atual.

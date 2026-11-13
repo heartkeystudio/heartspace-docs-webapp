@@ -906,20 +906,245 @@
     @media(max-width:480px){.narrative-sequence-picker{grid-template-columns:1fr 1fr}.narrative-sequence-picker label{grid-column:1/-1}}
     @media(max-width:800px){.page[data-layout="canvas"]{padding:clamp(22px,var(--canvas-margin-y,72px),72px) clamp(16px,var(--canvas-margin-x,76px),72px)}}
     @media(max-width:600px){.narrative-test-panel{padding:10px}.narrative-test-heading{padding:0 2px 8px}.narrative-test-heading h2{font-size:13px}.narrative-test-status{max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.narrative-test-shortcuts{display:none}.narrative-test-actions{top:62px;right:18px}.narrative-test-actions>div{gap:5px}.narrative-test-actions button{min-height:30px;padding:0 8px;font-size:11px}.narrative-test-layout{height:100%;padding-top:42px}.narrative-test-stage{min-height:100%;padding:20px 12px}.narrative-player-box{min-height:140px;padding:18px 16px 16px}.narrative-test-copy{font-size:17px}}
+    body[data-work-area] [hidden] { display:none!important; }
+    /* Workspaces: keep each task in the main surface, with an optional explicit split. */
+    body[data-work-area] .app { grid-template-columns:252px minmax(0,1fr); grid-template-rows:var(--topbar-height) auto minmax(0,1fr); }
+    body[data-work-area].focus-mode .app { grid-template-columns:minmax(0,1fr); }
+    body[data-work-area] .sidebar { grid-row:2 / 4; }
+    body[data-work-area] .workspace { grid-column:2; grid-row:3; }
+    body[data-work-area].focus-mode .workspace { grid-column:1; }
+    body[data-work-area]:not([data-work-area="writing"]):not([data-work-area="library"]):not(.work-area-split) .workspace { display:none; }
+    body[data-work-area] .narrative-dialog:not([hidden]),body[data-work-area].focus-mode .narrative-dialog:not([hidden]) { position:relative; inset:auto; grid-column:2; grid-row:3; display:block; width:auto; min-width:0; border:0; box-shadow:none; }
+    body[data-work-area].focus-mode .narrative-dialog:not([hidden]) { grid-column:1; }
+    body[data-work-area]:is([data-work-area="history"],[data-work-area="translation"],[data-work-area="scene"]).work-area-split:has(#narrative-dialog:not([hidden])) .app { grid-template-columns:252px minmax(320px,1fr) minmax(420px,min(var(--narrative-panel-width,520px),calc(100vw - 572px))); }
+    body[data-work-area].focus-mode:is([data-work-area="history"],[data-work-area="translation"],[data-work-area="scene"]).work-area-split:has(#narrative-dialog:not([hidden])) .app { grid-template-columns:minmax(320px,1fr) minmax(420px,min(var(--narrative-panel-width,520px),calc(100vw - 320px))); }
+    body[data-work-area]:is([data-work-area="history"],[data-work-area="translation"],[data-work-area="scene"]).work-area-split:has(#narrative-dialog:not([hidden])) .narrative-dialog:not([hidden]) { grid-column:3; border-left:1px solid var(--line); }
+    body[data-work-area].focus-mode:is([data-work-area="history"],[data-work-area="translation"],[data-work-area="scene"]).work-area-split:has(#narrative-dialog:not([hidden])) .narrative-dialog:not([hidden]) { grid-column:2; }
+    .work-area-nav { grid-column:2 / -1; grid-row:2; z-index:25; display:flex; flex-wrap:wrap; min-height:46px; align-items:center; gap:14px; min-width:0; padding:5px 16px; border-bottom:1px solid var(--line); background:#17171b; }
+    body.focus-mode .work-area-nav { grid-column:1 / -1; }
+    .work-area-switcher { display:flex; flex:0 0 auto; gap:3px; height:34px; }
+    .work-area-nav button { min-height:32px; padding:0 12px; border:1px solid transparent; border-radius:6px; background:transparent; color:#a9a5b1; font-size:12px; white-space:nowrap; }
+    .work-area-nav button:hover { background:#ffffff09; color:#eeeaf2; }
+    .work-area-switcher button[aria-pressed="true"] { color:#badef9; border-color:#0c8ce940; background:#0c8ce919; }
+    .work-area-context { display:none; }
+    .work-area-utilities { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; flex:1 0 auto; gap:4px; min-width:0; max-width:100%; }
+    #work-area-story-actions { display:flex; gap:4px; }
+    #work-area-story-actions[hidden],.work-area-nav [hidden] { display:none!important; }
+    #work-area-issues { color:#8d8996; font-size:11px; }
+    #work-area-issues[data-has-issues="true"] { color:#d8b17d; }
+    #work-area-story-actions #story-export-open { border-color:#0c8ce93d; color:#a8d4f3; }
+    body[data-work-area] .narrative-panel-launcher { display:none; }
+    body[data-work-area] .narrative-panel { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto auto minmax(0,1fr); gap:12px 16px; padding:20px 24px; overflow:hidden; }
+    body[data-work-area] .narrative-heading { grid-column:1 / -1; margin:0; min-height:32px; }
+    body[data-work-area] .narrative-heading h2 { font-size:18px; letter-spacing:-.02em; }
+    body[data-work-area] .narrative-settings { grid-column:1; grid-row:2; display:flex; gap:8px; align-items:end; min-width:0; }
+    body[data-work-area] .narrative-settings[hidden] { display:none; }
+    .narrative-settings .sequence-context { flex:1; max-width:420px; min-width:100px; }
+    .sequence-properties { position:relative; flex:0 0 auto; font-size:12px; }
+    .sequence-properties summary,.narrative-insert-tools summary { display:flex; align-items:center; min-height:34px; padding:0 10px; border:1px solid #ffffff18; border-radius:6px; color:#b9b3c2; cursor:pointer; list-style:none; }
+    .sequence-properties summary::-webkit-details-marker,.narrative-insert-tools summary::-webkit-details-marker { display:none; }
+    .sequence-properties > div { position:absolute; z-index:35; top:calc(100% + 8px); right:0; display:grid; gap:14px; width:300px; max-width:calc(100vw - 40px); padding:18px; border:1px solid #ffffff20; border-radius:9px; background:#24232b; box-shadow:0 16px 40px #0008; }
+    .sequence-properties .narrative-summary { white-space:normal; line-height:1.6; }
+    body[data-work-area] .narrative-insert-tools { position:relative; grid-column:2; grid-row:2; align-self:end; display:block; margin:0; }
+    body[data-work-area] .narrative-insert-tools[hidden] { display:none; }
+    .narrative-insert-tools > div { position:absolute; z-index:30; top:calc(100% + 6px); right:0; display:grid; gap:4px; min-width:160px; padding:8px; border:1px solid #ffffff20; border-radius:8px; background:#24232b; box-shadow:0 12px 24px #0008; }
+    body[data-work-area] .narrative-insert-tools button { min-height:34px; text-align:left; font-size:12px; }
+    body[data-work-area]:not(.narrative-panel-collapsed) .narrative-tabs { grid-column:1 / -1; grid-row:3; display:flex; justify-content:flex-start; gap:4px; width:max-content; max-width:100%; padding:3px; overflow:auto; }
+    body[data-work-area] .narrative-tabs[hidden] { display:none; }
+    body[data-work-area]:not(.narrative-panel-collapsed) .narrative-tabs button { flex:none; min-width:100px; padding:0 14px; min-height:32px; font-size:12px; }
+    body[data-work-area] .narrative-tabs button[hidden] { display:none; }
+    body[data-work-area] .narrative-view { grid-column:1 / -1; grid-row:4; min-width:0; min-height:0; max-height:none; }
+    body[data-work-area="translation"] .narrative-panel,body[data-work-area="library"] .narrative-panel,body[data-work-area="validation"] .narrative-panel { grid-template-rows:auto 0 auto minmax(0,1fr); row-gap:10px; }
+    body[data-work-area="translation"] .narrative-panel,body[data-work-area="validation"] .narrative-panel { grid-template-rows:auto minmax(0,1fr); }
+    body[data-work-area="translation"] .narrative-view,body[data-work-area="validation"] .narrative-view { grid-row:2; }
+    body[data-work-area] #narrative-actions { display:none!important; }
+    body[data-work-area]:not(.work-area-split) .narrative-resizer { display:none; }
+    body[data-work-area] .narrative-sequence { padding:18px; }
+    body[data-work-area] .narrative-node { min-height:64px; }
+    body[data-work-area] .narrative-map { grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); padding:24px; gap:24px; }
+    body[data-work-area] .narrative-localization { display:flex; flex-direction:column; gap:12px; padding:16px; }
+    body[data-work-area]:not(.narrative-panel-collapsed) .localization-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:end; }
+    body[data-work-area] .localization-toolbar > label { flex:1 1 160px; max-width:260px; }
+    body[data-work-area] .localization-toolbar > button,body[data-work-area] .localization-toolbar > details { flex:0 0 auto; }
+    body[data-work-area] .localization-review-tools { display:grid; grid-template-columns:minmax(140px,1fr) minmax(130px,190px) auto; gap:8px; }
+    body[data-work-area] .localization-list { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding-right:5px; }
+    body[data-work-area] .localization-project-summary { flex:1; min-height:0; }
+    body[data-work-area] .localization-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px 20px; padding:16px; }
+    body[data-work-area] .localization-row-heading,body[data-work-area] .localization-assists { grid-column:1 / -1; }
+    body[data-work-area] .localization-source { grid-column:1; margin:0; font-size:14px; line-height:1.65; overflow-wrap:anywhere; white-space:pre-wrap; }
+    body[data-work-area] .localization-source::before { display:block; margin-bottom:8px; color:#777380; content:'ORIGINAL'; font-size:9px; font-weight:700; letter-spacing:.08em; }
+    body[data-work-area] .localization-row textarea { grid-column:2; min-height:110px; font-size:14px; line-height:1.65; }
+    body[data-work-area]:not(.narrative-panel-collapsed) .localization-row-heading span { white-space:normal; }
+    body[data-work-area] .narrative-presentation { display:grid; grid-template-columns:minmax(0,1fr) 290px; grid-template-rows:minmax(220px,1fr) auto; gap:18px; padding:16px; overflow:hidden; }
+    body[data-work-area]:not(.narrative-panel-collapsed) .narrative-presentation-form { grid-column:2; grid-row:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; overflow:auto; padding:0 6px 12px 0; }
+    body[data-work-area] .narrative-presentation-preview { grid-column:1; grid-row:1; min-width:0; min-height:240px; padding:30px; }
+    body[data-work-area] .narrative-presentation-card span { font-size:clamp(14px,1.4vw,20px); }
+    body[data-work-area] .narrative-presentation-actions { grid-column:1; grid-row:2; }
+    #scene-settings-toggle { display:none; }
+    body[data-work-area] .narrative-characters,body[data-work-area] .narrative-variables { padding:16px; }
+    body[data-work-area] .narrative-character-list,body[data-work-area] .narrative-variable-list { grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr)); gap:14px; }
+    body[data-work-area] .narrative-character-row,body[data-work-area] .narrative-variable-row { padding:16px; }
+    .narrative-glossary-view { overflow:auto; padding:16px; border:1px solid var(--line); border-radius:8px; background:#111115; }
+    .narrative-glossary-view .localization-glossary { overflow:visible; }
+    .writing-inspector { grid-column:3; grid-row:3; min-width:0; min-height:0; overflow:auto; display:flex; flex-direction:column; align-items:stretch; gap:16px; padding:18px; border-left:1px solid var(--line); background:#1b1a20; }
+    .writing-inspector[hidden] { display:none!important; }
+    body[data-work-area="writing"].writing-inspector-open .app { grid-template-columns:252px minmax(0,1fr) 300px; }
+    body[data-work-area="writing"].focus-mode.writing-inspector-open .app { grid-template-columns:minmax(0,1fr) 300px; }
+    body.focus-mode .writing-inspector { grid-column:2; }
+    .writing-inspector header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .writing-inspector h2 { font-size:15px; margin:0; }
+    .writing-inspector button { min-height:34px; padding:6px 10px; border:1px solid #ffffff18; border-radius:6px; color:#c3bcca; background:#ffffff05; }
+    #writing-inspector-delete { color:#e5a5a5; margin-top:auto; }
+    #writing-inspector-fields,#writing-inspector-fields details { display:grid; gap:14px; }
+    #writing-inspector-fields details { margin-top:8px; }
+    #writing-inspector-fields label { display:grid; gap:6px; font-size:11px; line-height:1.5; color:#9f98aa; }
+    #writing-inspector-fields input,#writing-inspector-fields select { width:100%; min-width:0; min-height:36px; padding:6px 9px; border:1px solid #ffffff19; border-radius:6px; background:#141318; color:#e1dce8; }
+    #writing-inspector-fields summary { color:#89828f; cursor:pointer; font-size:11px; }
+    body.writing-inspector-open .narrative-block > .narrative-meta { display:none!important; }
+    @container production-panel (max-width:720px) {
+      body[data-work-area] .narrative-localization { padding:10px; }
+      body[data-work-area] .localization-row { grid-template-columns:1fr; gap:10px; }
+      body[data-work-area] .localization-source,body[data-work-area] .localization-row textarea { grid-column:1; }
+      body[data-work-area] .localization-review-tools { display:flex; flex-wrap:wrap; }
+      body[data-work-area] .localization-review-tools input { flex:1 1 180px; }
+      body[data-work-area] .localization-review-tools select { flex:1 1 140px; }
+      body[data-work-area] .narrative-presentation { display:flex; flex-direction:column; overflow:auto; }
+      body[data-work-area] .narrative-presentation-preview { flex:1 0 280px; order:0; }
+      body[data-work-area] .narrative-presentation-actions { order:1; flex-wrap:wrap; }
+      body[data-work-area]:not(.narrative-panel-collapsed) .narrative-presentation-form { display:none; order:2; overflow:visible; flex:none; }
+      body[data-work-area]:not(.narrative-panel-collapsed) .narrative-presentation[data-settings-open="true"] .narrative-presentation-form { display:grid; }
+      body[data-work-area="scene"] #scene-settings-toggle { display:block; }
+      body[data-work-area] .narrative-settings { flex-wrap:wrap; }
+      body[data-work-area] .narrative-insert-tools { grid-row:3; }
+      body[data-work-area] .narrative-tabs { max-width:calc(100% - 125px); }
+    }
+    @media(max-width:1100px) {
+      body[data-work-area] .app { grid-template-columns:252px minmax(0,1fr); }
+      body[data-work-area].focus-mode .app { grid-template-columns:minmax(0,1fr); }
+      .work-area-nav { gap:6px; padding-inline:8px; }
+      .work-area-nav button { padding-inline:8px; }
+      body[data-work-area] .narrative-panel { padding:14px; }
+      body[data-work-area="writing"].writing-inspector-open .app { grid-template-columns:252px minmax(0,1fr); }
+      body[data-work-area="writing"].focus-mode.writing-inspector-open .app { grid-template-columns:minmax(0,1fr); }
+      .writing-inspector,body.focus-mode .writing-inspector { position:fixed; z-index:45; inset:calc(var(--topbar-height) + var(--work-area-nav-height,46px)) 0 0 auto; width:300px; max-width:85vw; box-shadow:-12px 0 40px #0006; }
+    }
+    @media(max-width:800px) {
+      body[data-work-area] .app,body[data-work-area].focus-mode .app,body[data-work-area="writing"].writing-inspector-open .app { grid-template-columns:minmax(0,1fr); grid-template-rows:var(--topbar-height) auto minmax(0,1fr); }
+      body[data-work-area] .workspace,body[data-work-area] .narrative-dialog:not([hidden]),body[data-work-area] .work-area-nav { grid-column:1; }
+      .work-area-nav { flex-wrap:wrap; row-gap:3px; padding-block:5px; }
+      .work-area-switcher { flex:1; }
+      .work-area-switcher button { flex:1; }
+      .work-area-utilities { flex:1 1 auto; }
+      .work-area-utilities:has(> #work-area-story-actions:not([hidden])) { flex-basis:100%; }
+      .work-area-nav #work-area-split { display:none!important; }
+      body[data-work-area] .narrative-panel { padding:12px; gap:10px; }
+      body[data-work-area] .narrative-view { max-width:100%; }
+      body[data-work-area] .narrative-map { padding:12px; }
+      .sequence-properties > div { right:0; }
+      .work-area-nav #work-area-issues { margin-right:auto; }
+      .writing-inspector,body.focus-mode .writing-inspector { top:calc(var(--topbar-height) + var(--work-area-nav-height,46px)); }
+    }
+
+    body[data-work-area] .narrative-validation-issue { display:flex; align-items:start; justify-content:space-between; gap:16px; }
+    body[data-work-area] .narrative-validation-issue button { flex:none; min-height:32px; padding:0 12px; border:1px solid #0c8ce944; border-radius:6px; color:#afd4f0; background:#0c8ce911; }
+    body[data-work-area] .narrative-heading > div { display:flex; gap:8px; }
+    body[data-work-area] .localization-row textarea { align-self:start; }
+    @container production-panel (max-width:520px) {
+      body[data-work-area] .narrative-character-create,body[data-work-area] .narrative-character-row,body[data-work-area] .narrative-variable-create,body[data-work-area] .narrative-variable-row { grid-template-columns:1fr; }
+      body[data-work-area] .narrative-character-row > *,body[data-work-area] .narrative-variable-row > * { grid-column:1; }
+      body[data-work-area] .localization-glossary-form,body[data-work-area] .localization-glossary-row { grid-template-columns:1fr; }
+      body[data-work-area] .localization-project-row { grid-template-columns:minmax(0,1fr) auto; }
+      body[data-work-area] .localization-project-meter { display:none; }
+      body[data-work-area] .localization-settings-popover { position:fixed; top:calc(var(--topbar-height) + var(--work-area-nav-height,46px) + 20px); right:12px; width:min(380px,calc(100vw - 24px)); max-height:calc(100dvh - var(--topbar-height) - var(--work-area-nav-height,46px) - 40px); overflow:auto; }
+      body[data-work-area] .sequence-properties > div { position:fixed; top:calc(var(--topbar-height) + var(--work-area-nav-height,46px) + 70px); right:12px; max-height:calc(100dvh - var(--topbar-height) - var(--work-area-nav-height,46px) - 90px); overflow:auto; }
+      body[data-work-area] .narrative-settings { gap:6px; }
+      body[data-work-area] .narrative-settings .sequence-context { flex-basis:100%; max-width:none; }
+    }
+
+    @media(min-width:801px) and (max-width:1050px) {
+      body[data-work-area] .app,body[data-work-area="writing"].writing-inspector-open .app { grid-template-columns:220px minmax(0,1fr); }
+      body[data-work-area].focus-mode .app,body[data-work-area="writing"].focus-mode.writing-inspector-open .app { grid-template-columns:minmax(0,1fr); }
+    }
+
+    /* Popovers use a shared layer, outside clipping and scrolling work surfaces. */
+    body[data-work-area] .work-area-popover { position:fixed; z-index:85; display:grid; gap:12px; width:320px; max-width:calc(100vw - 20px); padding:16px; margin:0; overflow:auto; overscroll-behavior:contain; border:1px solid #ffffff22; border-radius:9px; color:#c8c2cf; background:#24232b; box-shadow:0 16px 40px #0008; font-size:12px; }
+    .work-area-popover label { display:grid; gap:6px; min-width:0; font-size:11px; color:#aaa3b3; }
+    .work-area-popover input,.work-area-popover select,.work-area-popover button { width:100%; min-width:0; min-height:36px; padding:6px 9px; border:1px solid #ffffff1c; border-radius:6px; color:#e0dbe5; background:#17161c; }
+    .work-area-popover button { cursor:pointer; }
+    body[data-work-area] .narrative-character-row > .narrative-character-artwork { grid-column:1 / -1; }
+    .work-area-popover button:hover { background:#0c8ce91c; border-color:#0c8ce955; }
+    .work-area-popover .narrative-summary { white-space:normal; font-size:11px; line-height:1.6; }
+    body[data-work-area] .work-area-popover[data-menu-kind="insert"] { width:180px; gap:4px; padding:8px; }
+    .work-area-popover[data-menu-kind="insert"] button { text-align:left; border-color:transparent; background:transparent; }
+    body[data-work-area] .work-area-popover[data-menu-kind="localization"] { width:380px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .writing-inspector-context { margin:0; padding-bottom:14px; border-bottom:1px solid var(--line); color:#928a9f; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+    body[data-work-area] .narrative-character-row { grid-template-columns:minmax(0,1fr) auto; }
+    body[data-work-area] .narrative-character-row > input[data-character-name] { grid-column:1; grid-row:1; }
+    body[data-work-area] .narrative-character-row > input[data-character-id] { grid-column:1; grid-row:2; }
+    body[data-work-area] .narrative-character-row > small { grid-column:2; grid-row:1; white-space:normal; }
+    body[data-work-area] .narrative-character-row > button { grid-column:2; grid-row:2; }
+    body[data-work-area] .narrative-variable-row { grid-template-columns:minmax(0,1fr) minmax(90px,.6fr); }
+    body[data-work-area] .narrative-variable-row > input[data-variable-id] { grid-column:1 / -1; }
+    body[data-work-area] .narrative-variable-row > small { white-space:normal; }
+    @container production-panel (max-width:720px) {
+      body[data-work-area="library"] .narrative-tabs { max-width:100%; width:100%; }
+      body[data-work-area="library"]:not(.narrative-panel-collapsed) .narrative-tabs button { flex:1; min-width:0; padding-inline:8px; }
+      body[data-work-area="scene"] .narrative-tabs { max-width:100%; }
+    }
+    @media(max-width:400px) {
+      body[data-work-area] .work-area-popover[data-menu-kind="localization"] { grid-template-columns:1fr; }
+    }
+
+    body[data-work-area]:has(.page[data-layout="canvas"]) .document-outline { top:var(--outline-canvas-top,calc(var(--topbar-height) + var(--work-area-nav-height,46px) + 58px)); left:var(--outline-canvas-left,auto); right:18px; width:var(--outline-canvas-width,220px); max-height:var(--outline-canvas-height,calc(100dvh - var(--topbar-height) - var(--work-area-nav-height,46px) - 92px)); }
+    @media(max-width:800px) {
+      body[data-work-area] .page-settings-popover { top:calc(var(--topbar-height) + var(--work-area-nav-height,46px) + 56px); max-height:calc(100dvh - var(--topbar-height) - var(--work-area-nav-height,46px) - 76px); }
+    }
+
+    body[data-work-area] .sidebar { gap:10px; }
+    .sidebar > .sidebar-shortcuts,.sidebar > .search { flex-shrink:0; }
+    body[data-work-area] .sidebar > .search { margin:0; }
+    .sidebar-documents { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-gutter:stable; padding-right:3px; }
+    body[data-work-area] .sidebar-documents .nav-section { margin:7px 0 12px; }
+    .sidebar-documents .section-heading-row { margin-bottom:3px; }
+    .sidebar-documents .tree { padding-bottom:0; }
+    body[data-work-area] .sidebar-spacer { display:none; }
+    body[data-work-area="library"] .workspace { display:grid; }
+    @media(min-width:1101px) {
+      body[data-work-area="library"]:has(#narrative-dialog:not([hidden])) .app { grid-template-columns:252px minmax(320px,1fr) 360px; }
+      body[data-work-area="library"].focus-mode:has(#narrative-dialog:not([hidden])) .app { grid-template-columns:minmax(320px,1fr) 360px; }
+      body[data-work-area="library"] .narrative-dialog:not([hidden]) { grid-column:3; border-left:1px solid var(--line); }
+      body[data-work-area="library"].focus-mode .narrative-dialog:not([hidden]) { grid-column:2; }
+    }
+    body[data-work-area="library"] .narrative-panel { padding:14px; gap:10px; }
+    body[data-work-area="library"] .narrative-heading h2 { font-size:15px; }
+    body[data-work-area="library"] .narrative-character-create,body[data-work-area="library"] .narrative-variable-create { grid-template-columns:1fr; }
+    @media(max-width:1100px) {
+      body[data-work-area="library"] .narrative-dialog:not([hidden]),body[data-work-area="library"].focus-mode .narrative-dialog:not([hidden]) { position:fixed; z-index:45; top:calc(var(--topbar-height) + var(--work-area-nav-height,46px)); bottom:0; right:0; left:auto; width:min(360px,calc(100vw - 28px)); border-left:1px solid var(--line); box-shadow:-14px 0 32px #0007; }
+    }
+
+    /* Place the handle against the inner edge of the active scrollbar. */
+    .project-tools-edge { position:fixed; z-index:46; left:var(--project-handle-left,calc(100vw - 52px)); top:var(--project-handle-top,50%); display:flex; align-items:center; justify-content:flex-end; width:36px; height:52px; pointer-events:none; }
+    .project-library-open { display:grid; place-items:center; flex:none; width:36px; height:52px; padding:0; pointer-events:auto; border:1px solid #ffffff19; border-right:0; border-radius:10px 0 0 10px; background:#1c1c23; color:#a3a4b3; cursor:pointer; transition:background .15s ease,color .15s ease,border-color .15s ease; }
+    .project-library-open:hover,.project-library-open:focus-visible { background:#222d3c; border-color:#4284ba70; color:#d1e9fb; }
+    .project-library-open[aria-expanded="true"] { background:#17344b; border-color:#0c8ce977; color:#83c8ff; }
+    .project-library-open:focus-visible { outline-offset:-3px; }
+    .project-library-open svg { display:block; }
+    body[data-work-area] .editor-area { scrollbar-gutter:stable; }
   </style>
 </head>
-<body>
+<body data-work-area="writing">
   <div class="app">
     <header class="topbar">
       <div class="brand" aria-label="HeartSpace Docs"><img class="brand-mark" src="./assets/docs/heartspace_logo.svg" alt=""><span class="brand-wordmark" aria-hidden="true"><span class="brand-product">Docs</span><span class="brand-suite"><span>H</span><span>E</span><span>A</span><span>R</span><span>T</span><span>S</span><span>P</span><span>A</span><span>C</span><span>E</span></span></span></div>
       <div class="topbar-content">
         <div class="topbar-left"><button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb">Workspace</span><span class="crumb">/</span><select id="project-picker" class="project-picker" aria-label="Projeto ativo" hidden></select><span class="crumb"><strong>Guia de produção</strong></span></div>
-        <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Produção</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/*" hidden><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
+        <div class="topbar-right"><span class="save-state" id="save-state" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Produção</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
       </div>
     </header>
     <aside class="sidebar" id="sidebar" aria-label="Navegação do Docs">
       <div class="sidebar-shortcuts"><button class="icon-only icon-tooltip" type="button" id="versions-button" aria-label="Histórico de versões" data-tooltip="Versões"><img src="./assets/docs/timetravel.svg" alt=""></button><button type="button" id="review-button" title="Revisão do documento">Revisão</button></div>
       <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar documentos  Ctrl K" aria-label="Buscar documentos"></label>
+      <div class="sidebar-documents" aria-label="Documentos e pastas">
       <section class="nav-section" id="favorites-section" hidden>
         <button class="section-heading" type="button" aria-expanded="true" aria-controls="favorite-list"><span class="chevron">⌄</span> Favoritos</button>
         <nav class="favorite-list" id="favorite-list" aria-label="Documentos favoritos"></nav>
@@ -956,17 +1181,28 @@
         <button class="section-heading" id="trash-toggle" type="button" aria-expanded="false" aria-controls="trash-list"><span class="chevron">›</span> Lixeira <span id="trash-count"></span></button>
         <div class="trash-list" id="trash-list" aria-label="Documentos na lixeira" hidden></div>
       </section>
+      </div>
       <div class="document-context-menu" id="document-context-menu" role="menu" aria-label="Ações do documento" hidden><button type="button" id="context-favorite-document" role="menuitem"><span aria-hidden="true">★</span>Adicionar aos favoritos</button><button type="button" id="context-archive-document" role="menuitem"><span aria-hidden="true">▱</span>Arquivar documento</button><button type="button" id="context-trash-document" role="menuitem"><span aria-hidden="true">×</span>Mover para a lixeira</button></div>
       <div class="folder-context-menu" id="folder-context-menu" role="menu" aria-label="Ações da pasta" hidden><button type="button" id="folder-context-rename" role="menuitem"><span aria-hidden="true">✎</span>Renomear</button><button type="button" id="folder-context-delete" role="menuitem"><span aria-hidden="true">×</span>Excluir pasta</button></div>
       <div class="sidebar-spacer"></div>
     </aside>
     <button class="zen-sidebar-toggle" id="zen-sidebar-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">›</button>
     <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+    <div class="project-tools-edge" role="group" aria-label="Ferramentas do projeto">
+      <button class="project-library-open" id="project-library-open" type="button" aria-label="Abrir biblioteca do projeto" aria-controls="narrative-dialog" aria-expanded="false" title="Biblioteca do projeto · Personagens, variáveis e glossário">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1"/><path d="M5 8h1M5 16h1"/><rect x="9" y="4" width="5" height="16" rx="1"/><path d="m16 5 4-1 3 15-4 1z"/></svg>
+      </button>
+    </div>
+    <nav class="work-area-nav" id="work-area-nav" aria-label="Áreas de trabalho">
+      <div class="work-area-switcher" role="group" aria-label="Tarefa atual"><button type="button" data-work-area="writing" aria-pressed="true">Escrever</button><button type="button" data-work-area="history" aria-pressed="false">História</button><button type="button" data-work-area="translation" aria-pressed="false">Tradução</button><button type="button" data-work-area="scene" aria-pressed="false">Cena</button></div>
+      <span class="work-area-context" id="work-area-context">Escrever</span>
+      <div class="work-area-utilities"><button type="button" id="work-area-issues" title="Ver pendências do projeto">Pendências</button><button type="button" id="work-area-split" aria-pressed="false" hidden>Dividir área</button><div id="work-area-story-actions" hidden></div></div>
+    </nav>
     <main class="workspace">
 
       <nav class="toolbar" aria-label="Ferramentas de edição">
         <button class="tool icon-only" type="button" id="undo" title="Desfazer" aria-label="Desfazer"><img class="undo-icon" src="./assets/docs/redo.svg" alt=""></button><button class="tool icon-only" type="button" id="redo" title="Refazer" aria-label="Refazer"><img class="redo-icon" src="./assets/docs/redo.svg" alt=""></button><span class="tool-separator"></span>
-        <button class="tool" type="button" data-command="bold"><b>B</b></button><button class="tool" type="button" data-command="italic"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
+        <button class="tool" type="button" data-command="bold" title="Negrito (Ctrl+B)" aria-label="Negrito" aria-keyshortcuts="Control+B Meta+B"><b>B</b></button><button class="tool" type="button" data-command="italic" title="Itálico (Ctrl+I)" aria-label="Itálico" aria-keyshortcuts="Control+I Meta+I"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
         <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><select class="document-view-select block-margin-select" id="block-margin" aria-label="Margem do trecho" title="Aplicar margem ao trecho selecionado"><option value="none">Sem margem</option><option value="narrow">Margem estreita</option><option value="medium">Margem média</option><option value="wide">Margem larga</option></select><span class="tool-separator"></span>
         <button class="tool" type="button" data-command="insertUnorderedList">Lista</button><button class="tool" type="button" data-command="insertOrderedList">Numerada</button><button class="tool" type="button" data-command="formatBlock" data-value="pre">Código</button><span class="tool-separator"></span>
         <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
@@ -992,20 +1228,25 @@
       <button class="narrative-panel-launcher" id="narrative-panel-launcher" type="button" aria-label="Abrir central de produção" aria-controls="narrative-dialog" aria-expanded="false" title="Abrir central de produção">‹</button>
       <div class="zoom-control" aria-label="Zoom da página"><button class="icon-tooltip" type="button" id="zoom-out" aria-label="Diminuir zoom" data-tooltip="Diminuir zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_out.svg" alt=""></button><select id="zoom-level" aria-label="Zoom da página" title="Zoom da página"><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100%</option><option value="110">110%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button class="icon-tooltip" type="button" id="zoom-in" aria-label="Aumentar zoom" data-tooltip="Aumentar zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_in.svg" alt=""></button></div><div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span></div>
     </main>
+    <aside class="writing-inspector" id="writing-inspector" aria-labelledby="writing-inspector-title" hidden>
+      <header><h2 id="writing-inspector-title">Trecho</h2><button type="button" id="writing-inspector-close" aria-label="Fechar propriedades do trecho">×</button></header>
+      <p class="writing-inspector-context" id="writing-inspector-context"></p><div id="writing-inspector-fields"></div><button type="button" id="writing-inspector-jump">Editar texto no documento</button><button type="button" id="writing-inspector-delete">Excluir trecho</button>
+    </aside>
     <aside class="narrative-dialog" id="narrative-dialog" aria-labelledby="narrative-title" contenteditable="false" spellcheck="false" hidden>
       <div class="narrative-resizer" id="narrative-resizer" role="separator" aria-label="Redimensionar painel de narrativa" aria-orientation="vertical" tabindex="0"></div>
     <section class="narrative-panel">
-        <div class="narrative-heading"><h2 id="narrative-title">Central de produção</h2><div><button type="button" id="narrative-collapse" aria-label="Minimizar central de produção">Minimizar</button><button type="button" id="narrative-close" hidden>Fechar</button></div></div>
-        <div class="narrative-settings" id="narrative-settings"><div class="narrative-sequence-picker"><label>Sequência ativa<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add">Nova sequência</button><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir</button></div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span></div>
-        <div class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><span>Adicionar</span><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="variation">Variação</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div>
+        <div class="narrative-heading"><h2 id="narrative-title">História</h2><div><button type="button" id="scene-settings-toggle" aria-expanded="false" aria-controls="narrative-presentation-form">Ajustes da cena</button><button type="button" id="narrative-collapse" aria-label="Voltar à escrita">Escrever</button><button type="button" id="narrative-close" hidden>Fechar</button></div></div>
+        <div class="narrative-settings" id="narrative-settings"><label class="sequence-context">Sequência<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add">Nova sequência</button><details class="sequence-properties"><summary>Propriedades</summary><div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir sequência</button></div></details></div>
+        <details class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><summary>Adicionar bloco</summary><div><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="variation">Variação</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div></details>
         <div class="narrative-tabs" role="tablist" aria-label="Visualização narrativa">
-          <button type="button" id="narrative-sequence-tab" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
-          <button type="button" id="narrative-map-tab" role="tab" aria-selected="false" aria-controls="narrative-map">Mapa</button>
-          <button type="button" id="narrative-presentation-tab" role="tab" aria-selected="false" aria-controls="narrative-presentation">Cena</button>
-          <button type="button" id="narrative-localization-tab" role="tab" aria-selected="false" aria-controls="narrative-localization">Tradução</button>
-          <button type="button" id="narrative-characters-tab" role="tab" aria-selected="false" aria-controls="narrative-characters">Personagens</button>
-          <button type="button" id="narrative-variables-tab" role="tab" aria-selected="false" aria-controls="narrative-variables">Variáveis</button>
-          <button type="button" id="narrative-validation-tab" role="tab" aria-selected="false" aria-controls="narrative-validation"><img class="narrative-tab-icon" src="./assets/docs/list.svg" alt="">Validação</button>
+          <button type="button" id="narrative-sequence-tab" data-production-view="sequence" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
+          <button type="button" id="narrative-map-tab" data-production-view="map" role="tab" aria-selected="false" aria-controls="narrative-map">Mapa</button>
+          <button type="button" id="narrative-presentation-tab" data-production-view="presentation" role="tab" aria-selected="false" aria-controls="narrative-presentation">Cena</button>
+          <button type="button" id="narrative-localization-tab" data-production-view="localization" role="tab" aria-selected="false" aria-controls="narrative-localization">Tradução</button>
+          <button type="button" id="narrative-characters-tab" data-production-view="characters" role="tab" aria-selected="false" aria-controls="narrative-characters">Personagens</button>
+          <button type="button" id="narrative-variables-tab" data-production-view="variables" role="tab" aria-selected="false" aria-controls="narrative-variables">Variáveis</button>
+          <button type="button" id="narrative-validation-tab" data-production-view="validation" role="tab" aria-selected="false" aria-controls="narrative-validation"><img class="narrative-tab-icon" src="./assets/docs/list.svg" alt="">Validação</button>
+          <button type="button" id="narrative-glossary-tab" data-production-view="glossary" role="tab" aria-selected="false" aria-controls="narrative-glossary-view">Glossário</button>
         </div>
         <div class="narrative-sequence narrative-view" id="narrative-sequence" role="tabpanel" aria-labelledby="narrative-sequence-tab" aria-label="Sequência narrativa"></div>
         <div class="narrative-map narrative-view" id="narrative-map" role="tabpanel" aria-labelledby="narrative-map-tab" aria-label="Mapa de eventos narrativos" hidden></div>
@@ -1029,6 +1270,7 @@
         </div>
         <div class="narrative-characters narrative-view" id="narrative-characters" role="tabpanel" aria-labelledby="narrative-characters-tab" hidden><form class="narrative-character-create" id="narrative-character-create"><input id="narrative-character-name" type="text" placeholder="Nome exibido" autocomplete="off" required><input id="narrative-character-id" type="text" placeholder="character.id" autocomplete="off" spellcheck="false"><button type="submit">Adicionar</button></form><div class="narrative-character-list" id="narrative-character-list"></div><div class="narrative-character-footer"><span id="narrative-character-status">Registro do projeto</span><button class="narrative-character-save" type="button" id="narrative-character-save">Salvar personagens</button></div></div>
         <div class="narrative-variables narrative-view" id="narrative-variables" role="tabpanel" aria-labelledby="narrative-variables-tab" hidden><form class="narrative-variable-create" id="narrative-variable-create"><input id="narrative-variable-id" type="text" placeholder="estado.variable" autocomplete="off" spellcheck="false" required><select id="narrative-variable-type" aria-label="Tipo da variável"><option value="boolean">Verdadeiro/falso</option><option value="number">Número</option><option value="string">Texto</option></select><input id="narrative-variable-default" type="text" placeholder="Valor inicial" autocomplete="off"><button type="submit">Adicionar</button></form><div class="narrative-variable-list" id="narrative-variable-list"></div><div class="narrative-variable-footer"><span id="narrative-variable-status">Variáveis do projeto</span><button class="narrative-variable-save" type="button" id="narrative-variable-save">Salvar variáveis</button></div></div>
+        <div class="narrative-glossary-view narrative-view" id="narrative-glossary-view" role="tabpanel" aria-labelledby="narrative-glossary-tab" hidden></div>
         <div class="narrative-validation narrative-view" id="narrative-validation" role="tabpanel" aria-labelledby="narrative-validation-tab" hidden></div>
         <div class="narrative-actions" id="narrative-actions"><span>Use / Narrativa no texto. As escolhas conectam sequências pelo ID.</span><div><button type="button" id="narrative-test-current">Testar sequência</button><button class="narrative-export" type="button" id="story-export-open">Exportar</button></div></div>
       </section>
@@ -1081,9 +1323,11 @@
   <script src="desktop/adapter.js"></script>
   <script src="config.js"></script>
   <script src="narrative-runtime.js"></script>
+  <script src="image-optimizer.js"></script>
   <script src="narrative-media.js"></script>
   <script src="narrative-html.js"></script>
   <script src="narrative-package.js"></script>
+  <script src="production-workspaces.js"></script>
   <script>
     (() => {
       const narrativeMediaStyles = document.createElement('style');
@@ -1183,13 +1427,13 @@
           { label: 'Atenção', detail: 'Aviso, risco ou ponto importante', icon: '⚠️', iconAsset: 'warning', kind: 'callout', value: 'callout_warning' },
           { label: 'Ideia', detail: 'Sugestão ou pensamento em destaque', icon: '💡', iconAsset: 'idea', kind: 'callout', value: 'callout_idea' }
         ] },
-        { label: 'Negrito', detail: 'Continue escrevendo em negrito', icon: 'B', kind: 'inline', value: 'bold' },
-        { label: 'Itálico', detail: 'Continue escrevendo em itálico', icon: 'I', kind: 'inline', value: 'italic' },
-        { label: 'Tachado', detail: 'Risque o texto', icon: 'S̶', kind: 'inline', value: 'strikeThrough' },
-        { label: 'Sublinhado', detail: 'Sublinhe o texto', icon: 'U̲', kind: 'inline', value: 'underline' },
+        { label: 'Negrito', detail: 'Ctrl+B · aplica ou remove o negrito', icon: 'B', kind: 'inline', value: 'bold' },
+        { label: 'Itálico', detail: 'Ctrl+I · aplica ou remove o itálico', icon: 'I', kind: 'inline', value: 'italic' },
+        { label: 'Tachado', detail: 'Ctrl+Shift+X · risque o texto', icon: 'S̶', kind: 'inline', value: 'strikeThrough' },
+        { label: 'Sublinhado', detail: 'Ctrl+U · sublinhe o texto', icon: 'U̲', kind: 'inline', value: 'underline' },
         { label: 'Código inline', detail: 'Destaque um trecho de código', icon: '</>', kind: 'inline-markup', value: 'code' },
         { label: 'Realce', detail: 'Destaque um trecho do texto', icon: '▰', kind: 'inline-markup', value: 'mark' },
-        { label: 'Link', detail: 'Insira um endereço e edite o rótulo', icon: '↗', kind: 'link' },
+        { label: 'Link', detail: 'Ctrl+Shift+K · insira um endereço', icon: '↗', kind: 'link' },
         { label: 'Modelo: GDD', detail: 'Documento de design de jogo', icon: '✦', kind: 'template', value: 'gdd' },
         { label: 'Modelo: Especificação', detail: 'Proposta e escopo de recurso', icon: '✦', kind: 'template', value: 'spec' },
         { label: 'Modelo: Notas de reunião', detail: 'Pauta, decisões e próximos passos', icon: '✦', kind: 'template', value: 'meeting' }
@@ -1205,7 +1449,6 @@
         { label: 'Modelos', detail: 'Estruturas prontas para começar', icon: '✦', labels: ['Modelo: GDD', 'Modelo: Especificação', 'Modelo: Notas de reunião'] },
         { label: 'Documento', detail: 'Gerencie o documento atual', icon: '▤', labels: ['Mover documento para a lixeira'] }
       ];
-      const frequentLabels = new Set(['Texto', 'Título 2', 'Lista com marcadores', 'Lista de tarefas', 'Imagem do dispositivo', 'Narrativa', 'Callouts', 'Negrito', 'Itálico', 'Link']);
       const alignmentFolder = {
         label: 'Alinhamento', detail: 'Posição do texto no parágrafo', icon: '↔', kind: 'folder', id: 'alignment',
         children: ['Alinhar à esquerda', 'Centralizar', 'Alinhar à direita', 'Justificar'].map(label => allCommands.find(command => command.label === label)).filter(Boolean)
@@ -1235,9 +1478,9 @@
         children: group.labels.map(label => allCommands.find(command => command.label === label)).filter(Boolean)
       }));
       commands.splice(0, commands.length,
-        ...allCommands.filter(command => frequentLabels.has(command.label)),
+        ...['Texto','Título 2','Lista com marcadores','Lista numerada','Lista de tarefas','Imagem do dispositivo','Tabela','Diagrama Mermaid','Narrativa','Callouts','Divisor','Quebra de página','Negrito','Itálico','Link'].map(label => allCommands.find(command => command.label === label)).filter(Boolean),
         alignmentFolder,
-        { label: 'Mais opções', detail: 'Títulos, tabelas, alinhamento, blocos, modelos e mais', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
+        { label: 'Todos os blocos', detail: 'Explore as coleções ou digite para buscar qualquer ação', icon: '···', kind: 'folder', id: 'more', children: moreOptions }
       );
       let saveTimer;
       let revisionTimer;
@@ -1264,6 +1507,7 @@
         ? `${desktopContext.account.id}:docs:${desktopContext.project.id}:${id}`
         : id;
       const storeImage = async (id, blob) => {
+        blob = await HeartspaceImageOptimizer.prepare(blob);
         const db = await imageStorePromise;
         await new Promise((resolve, reject) => {
           const transaction = db.transaction('images', 'readwrite');
@@ -1310,8 +1554,10 @@
         reader.readAsDataURL(blob);
       });
       const persistEmbeddedImages = async root => {
+        const importProjectId = currentProjectId, importDocumentId = activeDocumentId;
         for (const image of root.querySelectorAll('img[src^="data:image/"]')) {
-          const blob = await (await fetch(image.src)).blob();
+          const blob = await HeartspaceImageOptimizer.prepare(await (await fetch(image.src)).blob());
+          if (currentProjectId !== importProjectId || activeDocumentId !== importDocumentId || !root.contains(image)) throw new Error('O documento ou projeto mudou durante a otimização. Importe novamente no destino correto.');
           const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
           await storeImage(id, blob);
           image.dataset.localImage = id;
@@ -2371,6 +2617,8 @@
         restoreCaret();
       };
       const paginateBook = () => {
+        if (documentPage.hidden) return;
+        if (document.body.dataset.workArea && !['writing','library'].includes(document.body.dataset.workArea) && !document.body.classList.contains('work-area-split')) return;
         const existingPages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         if (documentPage.dataset.layout !== 'book') {
           if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
@@ -3019,6 +3267,12 @@
       let translationGlossary = [];
       let narrativeRegistryRemoteReady = false;
       let narrativeRulesOption = null;
+      let productionWorkspace = null;
+      let productionIssueFrame = 0;
+      const scheduleProductionIssueCount = () => {
+        clearTimeout(productionIssueFrame);
+        productionIssueFrame = setTimeout(renderNarrativeValidation, 900);
+      };
       const narrativeDialogShell = [...narrativeDialog.childNodes];
       const narrativePanelIsIntact = () => narrativeDialog.contains(narrativeCollapse)
         && narrativeDialog.contains(narrativeResizer)
@@ -3034,8 +3288,8 @@
       const setNarrativePanelCollapsed = collapsed => {
         document.body.classList.toggle('narrative-panel-collapsed', collapsed);
         narrativeDialog.classList.toggle('is-collapsed', collapsed);
-        narrativeCollapse.textContent = collapsed ? 'Produção' : 'Minimizar';
-        narrativeCollapse.setAttribute('aria-label', collapsed ? 'Abrir central de produção' : 'Minimizar central de produção');
+        narrativeCollapse.textContent = 'Escrever';
+        narrativeCollapse.setAttribute('aria-label', 'Voltar à escrita');
         narrativeCollapse.title = collapsed ? 'Abrir central de produção' : '';
       };
       let narrativeLayoutFrame = 0;
@@ -3043,6 +3297,7 @@
         restoreNarrativePanelShell();
         narrativeDialog.contentEditable = 'false';
         const open = !narrativeDialog.hidden;
+        productionWorkspace?.panelVisibility(open);
         document.body.classList.toggle('narrative-panel-open', open);
         narrativeOpenButton.setAttribute('aria-expanded', String(open));
         narrativePanelLauncher.setAttribute('aria-expanded', String(open));
@@ -3946,16 +4201,8 @@
       const setLocalizationGlossaryView = open => {
         closeLocalizationPreview();
         localizationSettingsMenu.open = false;
-        narrativeLocalizationView.dataset.projectView = 'false';
-        localizationProjectSummary.hidden = true;
-        localizationProjectToggle.textContent = 'Projeto';
-        localizationProjectToggle.setAttribute('aria-pressed', 'false');
-        narrativeLocalizationView.dataset.glossaryView = String(open);
-        localizationGlossary.hidden = !open;
-        localizationGlossaryToggle.textContent = open ? 'Linhas' : 'Glossário';
-        localizationGlossaryToggle.setAttribute('aria-pressed', String(open));
-        if (open) renderLocalizationGlossary();
-        else renderNarrativeLocalization();
+        setNarrativePanelView(open ? 'glossary' : 'localization');
+        setNarrativePanelOpen(true);
       };
       let localizationPreviewPage = null;
       let localizationPreviewBanner = null;
@@ -4132,6 +4379,7 @@
           jump.setAttribute('aria-label', `Ir para ${label} no documento`);
           jump.addEventListener('click', () => {
             closeLocalizationPreview();
+            productionWorkspace?.write(false);
             block.scrollIntoView({ behavior:'smooth', block:'center' });
             if (target === subtitle) { subtitle.focus(); subtitle.setSelectionRange(subtitle.value.length, subtitle.value.length); }
             else if (target === title) {
@@ -4377,9 +4625,9 @@
         if (observed.length && narrativeRegistryRemoteReady && canEditProject({ capabilities: projectCapabilities })) void saveNarrativeRegistry(true);
         if (isNarrativePanelOpen() && !narrativeCharactersView.hidden) renderNarrativeCharacters();
         if (isNarrativePanelOpen() && !narrativeVariablesView.hidden) renderNarrativeVariables();
-        if (isNarrativePanelOpen() && narrativeLocalizationView.dataset.glossaryView === 'true') renderLocalizationGlossary();
+        if (isNarrativePanelOpen() && !document.querySelector('#narrative-glossary-view').hidden) renderLocalizationGlossary();
         if (isNarrativePanelOpen() && !narrativeLocalizationView.hidden && narrativeLocalizationView.dataset.glossaryView !== 'true') renderNarrativeLocalization();
-        if (isNarrativePanelOpen() && !narrativeValidationView.hidden) renderNarrativeValidation();
+        if (productionWorkspace) renderNarrativeValidation();
       };
       const bindNarrativeCharacter = block => {
         if (!block?.matches?.('.narrative-block[data-narrative-type="dialogue"]')) return;
@@ -4527,10 +4775,10 @@
       const renderNarrativeValidation = () => {
         const record = documents.find(item => item.id === activeDocumentId);
         const registry = buildNarrativeRegistry();
-        const issues = validateNarrativeRegistry(registry, record ? ensureNarrativeEventId(record) : '');
+        const issues = validateNarrativeRegistry(registry, record ? activeNarrativeSequence(record, editor, false)?.id || '' : '');
         if (record) {
           const localization = localizationDataFor(record);
-          const entries = allLocalizableEntries();
+          const entries = localization.locales.length ? allLocalizableEntries() : [];
           localization.locales.forEach(locale => {
             const states = entries.map(entry => localizationEntryState(localization.translations[locale]?.[entry.node.localization_id], entry.node.text));
             const markerIssues = states.filter(state => state === 'issue').length;
@@ -4541,10 +4789,10 @@
               return translated && glossaryMatchesFor(entry.node.text, locale).some(item => !containsLocalizedTerm(translated, item.translations[locale]));
             }).length;
             const language = localizationLocaleLabel(locale);
-            if (markerIssues) issues.push({ severity:'error', title:`Marcadores divergentes em ${language}`, detail:`${markerIssues} ${markerIssues === 1 ? 'linha perdeu ou alterou' : 'linhas perderam ou alteraram'} variáveis do texto original.` });
-            if (stale) issues.push({ severity:'warning', title:`Traduções para revisar em ${language}`, detail:`${stale} ${stale === 1 ? 'linha foi traduzida antes de o original mudar' : 'linhas foram traduzidas antes de os originais mudarem'}.` });
-            if (glossaryWarnings) issues.push({ severity:'warning', title:`Glossário inconsistente em ${language}`, detail:`${glossaryWarnings} ${glossaryWarnings === 1 ? 'linha não usa' : 'linhas não usam'} a forma preferida cadastrada no projeto.` });
-            if (missing) issues.push({ severity:'warning', title:`Tradução incompleta em ${language}`, detail:`Faltam ${missing} de ${entries.length} linhas deste documento.` });
+            if (markerIssues) issues.push({ severity:'error', title:`Marcadores divergentes em ${language}`, detail:`${markerIssues} ${markerIssues === 1 ? 'linha perdeu ou alterou' : 'linhas perderam ou alteraram'} variáveis do texto original.`, view:'localization' });
+            if (stale) issues.push({ severity:'warning', title:`Traduções para revisar em ${language}`, detail:`${stale} ${stale === 1 ? 'linha foi traduzida antes de o original mudar' : 'linhas foram traduzidas antes de os originais mudarem'}.`, view:'localization' });
+            if (glossaryWarnings) issues.push({ severity:'warning', title:`Glossário inconsistente em ${language}`, detail:`${glossaryWarnings} ${glossaryWarnings === 1 ? 'linha não usa' : 'linhas não usam'} a forma preferida cadastrada no projeto.`, view:'glossary' });
+            if (missing) issues.push({ severity:'warning', title:`Tradução incompleta em ${language}`, detail:`Faltam ${missing} de ${entries.length} linhas deste documento.`, view:'localization' });
           });
         }
         narrativeValidationView.replaceChildren();
@@ -4556,6 +4804,7 @@
         badge.className = 'narrative-validation-badge';
         const errors = issues.filter(issue => issue.severity === 'error').length;
         const warnings = issues.length - errors;
+        productionWorkspace?.updateIssues(issues.length);
         badge.dataset.severity = errors ? 'error' : warnings ? 'warning' : 'ok';
         badge.textContent = errors ? `${errors} ${errors === 1 ? 'erro' : 'erros'} · ${warnings} avisos` : warnings ? `${warnings} ${warnings === 1 ? 'aviso' : 'avisos'}` : 'Pronto para testar';
         summary.append(copy, badge);
@@ -4578,6 +4827,21 @@
           detail.textContent = issue.detail;
           content.append(title, detail);
           row.append(content);
+          const open = document.createElement('button');
+          open.type = 'button';
+          open.textContent = 'Revisar';
+          open.addEventListener('click', () => {
+            const entry = registry.entries.find(entry => entry.id === issue.eventId && !entry.provisional);
+            if (entry) {
+              openDocument(entry.record.id);
+              entry.record.activeNarrativeSequenceId = entry.id;
+            }
+            setNarrativePanelView(issue.view || (entry ? 'sequence' : 'map'));
+            setNarrativePanelOpen(true);
+            renderNarrativePanel();
+            if (!entry && issue.eventId) focusNarrativeMapEvent(issue.eventId);
+          });
+          row.append(open);
           narrativeValidationView.append(row);
         });
       };
@@ -4669,6 +4933,8 @@
             openButton.type = 'button';
             openButton.textContent = 'Abrir';
             openButton.addEventListener('click', () => {
+              productionWorkspace?.remember();
+              productionWorkspace?.write(false);
               openDocument(entry.record.id);
               entry.record.activeNarrativeSequenceId = entry.id;
               renderNarrativePanel();
@@ -4748,7 +5014,7 @@
           const position = document.createElement('select'); position.disabled = !editable;
           [['left','Esquerda'],['center','Centro'],['right','Direita']].forEach(([value,label]) => position.add(new Option(label,value)));
           position.value = HeartspaceNarrativeMedia.position(character.portrait_position); positionLabel.append(position);
-          const mediaStatus = document.createElement('small'); mediaStatus.textContent = character.portrait?.name || 'PNG, JPEG ou WebP, até 4 MB.'; mediaStatus.setAttribute('role','status');
+          const mediaStatus = document.createElement('small'); mediaStatus.textContent = character.portrait?.name || 'PNG, JPEG ou WebP; o retrato é otimizado antes de salvar.'; mediaStatus.setAttribute('role','status');
           upload.addEventListener('click',() => file.click());
           position.addEventListener('change',() => { character.portrait_position = position.value; cacheNarrativeRegistry(); });
           clear.addEventListener('click',() => { character.portrait = null; cacheNarrativeRegistry(); renderNarrativeCharacters(); });
@@ -4757,7 +5023,7 @@
             if (!selectedFile) return;
             upload.disabled = true; mediaStatus.textContent = 'Adicionando retrato…';
             try {
-              const portrait = await HeartspaceNarrativeMedia.readFile(selectedFile,'image');
+              const portrait = await HeartspaceNarrativeMedia.readFile(selectedFile,'image',{purpose:'portrait'});
               const current = characterById(character.id);
               if (contextKey !== narrativeRegistryCacheKey() || !current || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) throw new Error('O projeto mudou durante o envio. Adicione o retrato novamente.');
               current.portrait = portrait;
@@ -4946,27 +5212,34 @@
         applyNarrativePresentationPreview(value);
       };
       const setNarrativePanelView = view => {
+        productionWorkspace?.activateView(view);
+        const showGlossary = view === 'glossary';
+        document.querySelector('#narrative-glossary-view').hidden = !showGlossary;
+        document.querySelector('#narrative-glossary-tab').setAttribute('aria-selected', String(showGlossary));
+        localizationGlossary.hidden = !showGlossary;
+        narrativeLocalizationView.dataset.glossaryView = 'false';
+        if (showGlossary) renderLocalizationGlossary();
         const showMap = view === 'map';
         const showPresentation = view === 'presentation';
         const showLocalization = view === 'localization';
         const showCharacters = view === 'characters';
         const showVariables = view === 'variables';
         const showValidation = view === 'validation';
-        narrativeSequence.hidden = showMap || showPresentation || showLocalization || showCharacters || showVariables || showValidation;
+        narrativeSequence.hidden = showGlossary || showMap || showPresentation || showLocalization || showCharacters || showVariables || showValidation;
         narrativeMap.hidden = !showMap;
         narrativePresentationView.hidden = !showPresentation;
         narrativeLocalizationView.hidden = !showLocalization;
         narrativeCharactersView.hidden = !showCharacters;
         narrativeVariablesView.hidden = !showVariables;
         narrativeValidationView.hidden = !showValidation;
-        narrativeSequenceTab.setAttribute('aria-selected', String(!showMap && !showPresentation && !showLocalization && !showCharacters && !showVariables && !showValidation));
+        narrativeSequenceTab.setAttribute('aria-selected', String(!showGlossary && !showMap && !showPresentation && !showLocalization && !showCharacters && !showVariables && !showValidation));
         narrativeMapTab.setAttribute('aria-selected', String(showMap));
         narrativePresentationTab.setAttribute('aria-selected', String(showPresentation));
         narrativeLocalizationTab.setAttribute('aria-selected', String(showLocalization));
         narrativeCharactersTab.setAttribute('aria-selected', String(showCharacters));
         narrativeVariablesTab.setAttribute('aria-selected', String(showVariables));
         narrativeValidationTab.setAttribute('aria-selected', String(showValidation));
-        const sequenceContext = !showLocalization && !showCharacters && !showVariables && !showValidation;
+        const sequenceContext = !showGlossary && !showLocalization && !showCharacters && !showVariables && !showValidation;
         narrativeSettings.hidden = !sequenceContext;
         narrativeInsertTools.hidden = view !== 'sequence';
         narrativeActions.hidden = view !== 'sequence' && view !== 'map';
@@ -5243,7 +5516,6 @@
         const runner = HeartspaceNarrativeRuntime.createRunner({ start_event_id:eventId, variable_registry:narrativeVariables, sequences:registry.entries.filter(entry => !entry.provisional).map(entry => ({ event_id:entry.id, nodes:entry.nodes })) });
         narrativeTestState = { registry, runner, startEventId:eventId, history:[], validation:validateNarrativeRegistry(registry,eventId), activeChoiceIndex:0, typing:null, typingTimer:null, pauseTimer:null };
         ['eventId','index','variables'].forEach(key => Object.defineProperty(narrativeTestState, key, { get:() => runner.state[key], set:value => { runner.state[key] = value; } }));
-        if (isNarrativePanelOpen()) setNarrativePanelOpen(false);
         narrativeTestDialog.showModal();
         renderNarrativeTest();
       };
@@ -5266,8 +5538,10 @@
       const renderNarrativePanel = () => {
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
-        const sequences = ensureNarrativeSequences(record, editor, true);
-        const currentSequence = activeNarrativeSequence(record, editor, true);
+        if (productionWorkspace) scheduleProductionIssueCount();
+        const create = !productionWorkspace || ['history','scene'].includes(productionWorkspace.area);
+        const sequences = ensureNarrativeSequences(record, editor, create);
+        const currentSequence = activeNarrativeSequence(record, editor, false);
         syncNarrativeBlockSequenceControls(record, sequences);
         scheduleNarrativeSequenceRails();
         const allEntries = collectNarrativeNodes();
@@ -5323,13 +5597,16 @@
             : node.type === 'signal' ? (node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload))
             : node.type === 'choice' ? node.prompt || 'Pergunta ainda não definida'
             : node.type === 'variation' ? node.text || 'Versão ativa vazia'
-            : `${node.text || 'Bloco vazio'}${node.localization_id ? ` · ${node.localization_id}` : ''}`;
+            : node.text || 'Bloco vazio';
+          button.title = node.localization_id || '';
           copy.append(heading, preview);
           button.append(indexLabel, copy);
           button.addEventListener('click', () => {
             if (narrativeDragMoved) return;
+            productionWorkspace?.write(false);
             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            placeCaret(block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]'), true);
+            if (block.dataset.readingEmpty === 'true') productionWorkspace?.inspect(block);
+            else placeCaret(block.querySelector('.narrative-text,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]'), true);
           });
           button.addEventListener('dragstart', event => {
             if (block.classList.contains('narrative-inline')) { event.preventDefault(); return; }
@@ -5391,10 +5668,11 @@
       document.querySelector('#narrative-close').addEventListener('click', () => setNarrativePanelOpen(false));
       narrativeCollapse.addEventListener('click', () => setNarrativePanelOpen(false));
       const resizeNarrativePanel = clientX => {
-        const minimum = 300;
-        const maximum = Math.max(minimum, Math.min(680, window.innerWidth - 420));
+        const minimum = 420;
+        const maximum = Math.max(minimum, Math.min(900, window.innerWidth - (document.body.classList.contains('focus-mode') ? 0 : 252) - 320));
         const width = Math.max(minimum, Math.min(maximum, window.innerWidth - clientX));
-        document.documentElement.style.setProperty('--narrative-panel-width', `${Math.round(width)}px`);
+        if (productionWorkspace) productionWorkspace.resizeSplit(width);
+        else document.documentElement.style.setProperty('--narrative-panel-width', `${Math.round(width)}px`);
       };
       narrativeResizer.addEventListener('pointerdown', event => {
         if (document.body.classList.contains('narrative-panel-collapsed')) return;
@@ -5410,16 +5688,18 @@
       const finishNarrativeResize = event => {
         if (narrativeDialog.dataset.resizing !== 'true') return;
         delete narrativeDialog.dataset.resizing;
+        productionWorkspace?.saveLayout();
         if (narrativeResizer.hasPointerCapture(event.pointerId)) narrativeResizer.releasePointerCapture(event.pointerId);
       };
       narrativeResizer.addEventListener('pointerup', finishNarrativeResize);
       narrativeResizer.addEventListener('pointercancel', finishNarrativeResize);
       narrativeResizer.addEventListener('keydown', event => {
-        if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+        if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
         event.preventDefault();
-        const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--narrative-panel-width')) || 420;
-        const next = current + (event.key === 'ArrowLeft' ? 24 : -24);
-        document.documentElement.style.setProperty('--narrative-panel-width', `${Math.max(300, Math.min(680, next))}px`);
+        const current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--narrative-panel-width')) || 520;
+        const next = event.key === 'Home' ? 420 : event.key === 'End' ? 900 : current + (event.key === 'ArrowLeft' ? 24 : -24);
+        if (productionWorkspace) productionWorkspace.resizeSplit(next,true);
+        else document.documentElement.style.setProperty('--narrative-panel-width', `${Math.max(420, Math.min(900, next))}px`);
       });
       narrativeSequenceTab.addEventListener('click', () => setNarrativePanelView('sequence'));
       narrativeMapTab.addEventListener('click', () => setNarrativePanelView('map'));
@@ -5428,6 +5708,7 @@
       narrativeCharactersTab.addEventListener('click', () => setNarrativePanelView('characters'));
       narrativeVariablesTab.addEventListener('click', () => setNarrativePanelView('variables'));
       narrativeValidationTab.addEventListener('click', () => setNarrativePanelView('validation'));
+      document.querySelector('#narrative-glossary-tab').addEventListener('click', () => setNarrativePanelView('glossary'));
       document.querySelector('#narrative-presentation-form').addEventListener('input', event => {
         if (event.target === narrativeSampleCharacter) { applyNarrativePresentationPreview(activeNarrativeSequence()?.presentation); return; }
         if (event.target.type === 'file' || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
@@ -5454,7 +5735,7 @@
           if (!file || !sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
           const status = document.querySelector('#narrative-artwork-status'); status.textContent = 'Adicionando arquivo…';
           try {
-            const asset = await HeartspaceNarrativeMedia.readFile(file,field === 'music' ? 'audio' : 'image');
+            const asset = await HeartspaceNarrativeMedia.readFile(file,field === 'music' ? 'audio' : 'image',{purpose:'background'});
             const sequence = activeNarrativeSequence();
             if (documentId !== activeDocumentId || sequence?.id !== sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) throw new Error('A sequência mudou durante o envio. Adicione o arquivo novamente.');
             sequence.presentation = normalizeNarrativePresentation({...sequence.presentation,[field]:asset});
@@ -5487,7 +5768,7 @@
       localizationStatusFilter.addEventListener('change', renderNarrativeLocalization);
       localizationSearch.addEventListener('input', renderNarrativeLocalization);
       document.addEventListener('pointerdown', event => {
-        if (localizationSettingsMenu.open && !localizationSettingsMenu.contains(event.target)) localizationSettingsMenu.open = false;
+        if (!productionWorkspace && localizationSettingsMenu.open && !localizationSettingsMenu.contains(event.target)) localizationSettingsMenu.open = false;
       });
       localizationProjectToggle.addEventListener('click', () => {
         flushSave();
@@ -5496,7 +5777,7 @@
       localizationGlossaryToggle.addEventListener('click', () => setLocalizationGlossaryView(narrativeLocalizationView.dataset.glossaryView !== 'true'));
       localizationPreview.addEventListener('click', () => {
         if (isLocalizationPreviewOpen()) closeLocalizationPreview();
-        else renderLocalizationPreview();
+        else { renderLocalizationPreview(); productionWorkspace?.previewDocument(); }
       });
       localizationAddLocale.addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -5717,6 +5998,7 @@
         if (!record) return;
         createNarrativeSequence(record);
         renderNarrativePanel();
+        document.querySelector('.sequence-properties').open = true;
         narrativeSequenceTitle.focus();
         narrativeSequenceTitle.select();
         queueSave();
@@ -6026,9 +6308,12 @@
         closeLocalizationPreview();
         flushSave();
         const record = documents.find(item => item.id === id && !item.trashedAt); if (!record) return;
+        productionWorkspace?.remember();
         activeDocumentId = id; title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(record.body, record.layout);
         applyNarrativeCharactersToRoot(editor);
         hydrateImages(editor); resizeSubtitle(); updateDocumentLabel(); updateCount(); renderLibrary();
+        productionWorkspace?.documentChanged();
+        scheduleProductionIssueCount();
         if (!pageSettingsPopover.hidden) hydrateMetadataSettings();
         if (isNarrativePanelOpen()) renderNarrativePanel();
         refreshDocumentPresence();
@@ -6323,9 +6608,12 @@
       const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
       const uploadSharedImage = async file => {
         if (!currentProjectId || !currentAccessToken) return '';
-        const extensionByType = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
-        if (!extensionByType[file.type]) throw new Error('Para compartilhar, use uma imagem PNG, JPG, WebP ou GIF.');
-        if (file.size > 12 * 1024 * 1024) throw new Error('A imagem compartilhada deve ter até 12 MB.');
+        const uploadProjectId = currentProjectId, uploadToken = currentAccessToken;
+        file = await HeartspaceImageOptimizer.prepare(file);
+        if (currentProjectId !== uploadProjectId || currentAccessToken !== uploadToken) throw new Error('A sessão ou o projeto mudou durante a otimização. Tente inserir a imagem novamente.');
+        const extensionByType = { 'image/png':'png', 'image/webp':'webp' };
+        if (!extensionByType[file.type]) throw new Error('A imagem precisa ser otimizada antes de compartilhar.');
+        if (file.size > HeartspaceImageOptimizer.profiles.document.maximum) throw new Error('A imagem otimizada ultrapassou o limite de envio.');
         const path = `${currentProjectId}/${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}.${extensionByType[file.type]}`;
         const response = await fetch(storageObjectUrl(path), { method: 'POST', headers: { apikey: docsConfig.publishableKey, Authorization: `Bearer ${currentAccessToken}`, 'Content-Type': file.type, 'x-upsert': 'false' }, body: file, ...(desktopMode ? { cache: 'no-store', signal: desktopAdapter.requestSignal } : {}) });
         if (!response.ok) {
@@ -6888,10 +7176,35 @@
         slashMenu.style.left = `${left}px`;
         slashMenu.style.top = `${top}px`;
       };
-      const matchesSlashCommand = (command, query) => {
-        const normalizedQuery = query.toLocaleLowerCase('pt-BR');
-        const ownMatch = `${command.label} ${command.detail}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery);
-        return ownMatch || Boolean(command.children?.some(child => matchesSlashCommand(child, query)));
+      const normalizeSlashQuery = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+      const slashAliases = { dialogue:'fala dialogo personagem', narration:'narracao narrador', pause:'pausa espera', signal:'sinal evento', choice:'escolha caminhos opcoes', variation:'variacao alternativa', tasks:'checklist tarefas checkbox', diagram:'diagrama fluxograma mermaid', ordered:'lista numerada numeros', list:'lista marcadores bullet', image:'imagem foto figura upload', divider:'divisor separador linha', 'page-break':'quebra pagina folha', bold:'negrito bold', italic:'italico italic', underline:'sublinhado underline', strikeThrough:'tachado riscado', blockquote:'citacao quote', pre:'codigo code', callout_info:'informacao nota aviso callout', callout_warning:'atencao risco alerta aviso callout', callout_idea:'ideia dica callout' };
+      const flattenSlashCommands = (items, category = '', result = new Map()) => {
+        items.forEach(command => {
+          if (command.kind === 'folder') flattenSlashCommands(command.children || [],[category,command.label].filter(Boolean).join(' › '),result);
+          else {
+            const key = `${command.kind}:${command.value || command.label}`;
+            if (!result.has(key)) result.set(key,{...command,searchCategory:category});
+          }
+        });
+        return [...result.values()];
+      };
+      const slashSearchCatalog = flattenSlashCommands([...allCommands,...moreOptions,imageOptionsFolder,tableActionsFolder]);
+      const availableSlashCommand = command => {
+        if (command.kind.startsWith('image-') && !slashImageFigure) return false;
+        if ((command.kind.startsWith('table-')) && !slashTableCell) return false;
+        if (slashTableCell && ['image','callout'].includes(command.kind)) return false;
+        return true;
+      };
+      const searchSlashCommands = query => {
+        const needle = normalizeSlashQuery(query), words = needle.split(/\s+/);
+        const candidates = slashTarget === title ? alignmentFolder.children : slashSearchCatalog.filter(availableSlashCommand);
+        return candidates.map(command => {
+          const label = normalizeSlashQuery(command.label);
+          const aliases = slashAliases[command.value] || slashAliases[command.kind] || '';
+          const haystack = normalizeSlashQuery(`${label} ${aliases} ${command.detail} ${command.searchCategory || ''}`);
+          const score = label === needle ? 0 : label.startsWith(needle) ? 1 : label.includes(needle) ? 2 : normalizeSlashQuery(aliases).includes(needle) ? 3 : 4;
+          return {command,score,match:words.every(word => haystack.includes(word))};
+        }).filter(item => item.match).sort((a,b) => a.score - b.score).map(item => item.command);
       };
       const renderSlashMenu = query => {
         const activeSlashFolder = slashFolderStack.at(-1);
@@ -6899,12 +7212,13 @@
         if (slashTarget === title) source = alignmentFolder.children;
         else if (activeSlashFolder) source = activeSlashFolder.children;
         else if (slashImageFigure) source = [imageOptionsFolder, ...allCommands.filter(command => ['inline', 'inline-markup', 'link'].includes(command.kind))];
-        else if (slashTableCell) source = [tableActionsFolder, ...commands.filter(command => !['Mais opções', 'Imagem do dispositivo', 'Callouts'].includes(command.label))];
+        else if (slashTableCell) source = [tableActionsFolder, ...commands.filter(command => !['Mais opções','Todos os blocos', 'Imagem do dispositivo', 'Callouts'].includes(command.label))];
         else source = commands;
-        filteredCommands = source.filter(command => matchesSlashCommand(command, query));
+        const searching = Boolean(normalizeSlashQuery(query));
+        filteredCommands = searching ? searchSlashCommands(query) : source;
         const breadcrumb = slashFolderStack.map(folder => folder.label).join(' › ');
-        const navigationHint = '↑↓ navegar · → entrar · ← voltar · Enter selecionar · Esc/Backspace fechar';
-        slashHeading.textContent = slashTarget === title ? `Alinhamento do título · ${navigationHint}` : breadcrumb ? `${breadcrumb} · ${navigationHint}` : `Inserir bloco · ${navigationHint}`;
+        const navigationHint = searching ? '↑↓ escolher · Enter/Tab inserir · Esc fechar' : '↑↓ escolher · Enter abrir/inserir · ← voltar';
+        slashHeading.textContent = searching ? `Resultados · ${navigationHint}` : slashTarget === title ? `Alinhamento do título · ${navigationHint}` : breadcrumb ? `${breadcrumb} · ${navigationHint}` : `Inserir bloco · ${navigationHint}`;
         selectedCommand = Math.min(selectedCommand, Math.max(0, filteredCommands.length - 1));
         slashOptions.replaceChildren();
         if (!filteredCommands.length) {
@@ -6924,7 +7238,7 @@
           option.setAttribute('aria-selected', String(index === selectedCommand));
           if (command.kind === 'folder') option.setAttribute('aria-expanded', 'false');
           const iconAsset = command.iconAsset ? ` data-icon="${escapeHtml(command.iconAsset)}"` : '';
-          option.innerHTML = `<span class="slash-option-icon"${iconAsset} aria-hidden="true">${command.iconAsset ? '' : escapeHtml(command.icon)}</span><span class="slash-option-copy"><span>${escapeHtml(command.label)}</span><small>${escapeHtml(command.detail)}</small></span>${command.kind === 'folder' ? '<span class="slash-folder-arrow" aria-hidden="true">›</span>' : ''}`;
+          option.innerHTML = `<span class="slash-option-icon"${iconAsset} aria-hidden="true">${command.iconAsset ? '' : escapeHtml(command.icon)}</span><span class="slash-option-copy"><span>${escapeHtml(command.label)}</span><small>${escapeHtml([command.detail,searching ? command.searchCategory : ''].filter(Boolean).join(' · '))}</small></span>${command.kind === 'folder' ? '<span class="slash-folder-arrow" aria-hidden="true">›</span>' : ''}`;
           option.addEventListener('mousedown', event => event.preventDefault());
           option.addEventListener('click', () => applyCommand(index));
           slashOptions.append(option);
@@ -6964,10 +7278,10 @@
         const anchorElement = node.parentElement;
         if (anchorElement?.closest('[data-mermaid-block]')) { closeSlashMenu(); return; }
         const beforeCaret = node.textContent.slice(0, selection.anchorOffset);
-        const match = beforeCaret.match(/(?:^|\s)\/([^\s/]*)$/u);
+        const match = beforeCaret.match(/(?:^|\s)\/([^/\n]{0,80})$/u);
         if (!match || dismissedSlash) { closeSlashMenu(); return; }
         slashTarget = inTitle ? title : editor;
-        const slashIndex = beforeCaret.length - match[0].length + (match[0].startsWith(' ') ? 1 : 0);
+        const slashIndex = beforeCaret.length - match[1].length - 1;
         slashTableCell = inTitle ? null : anchorElement?.closest('th,td') || null;
         slashImageFigure = inTitle ? null : anchorElement?.closest('figcaption')?.closest('figure[data-docs-image]') || null;
         slashRange = document.createRange();
@@ -7378,12 +7692,14 @@
       }
       const handleSlashMenuKeydown = event => {
         if (!slashMenu.classList.contains('open')) return false;
-        if (event.key === 'Escape' || event.key === 'Backspace') {
+        if (event.key === 'Escape') {
           event.preventDefault();
           cancelSlashMenu();
           return true;
         }
-        if (event.key === 'ArrowLeft' && leaveSlashFolder()) { event.preventDefault(); return true; }
+        const hasQuery = Boolean(normalizeSlashQuery((slashRange?.toString() || '').replace(/^\//,'')));
+        if (event.key === 'Backspace' && !hasQuery && leaveSlashFolder()) { event.preventDefault(); return true; }
+        if (event.key === 'ArrowLeft' && !hasQuery && leaveSlashFolder()) { event.preventDefault(); return true; }
         if (event.key === 'ArrowRight' && enterSlashFolder()) { event.preventDefault(); return true; }
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
           event.preventDefault();
@@ -7394,7 +7710,7 @@
           slashMenu.querySelectorAll('.slash-option')[selectedCommand]?.scrollIntoView({ block: 'nearest' });
           return true;
         }
-        if (event.key === 'Enter' && filteredCommands.length) {
+        if ((event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)) && filteredCommands.length) {
           event.preventDefault();
           applyCommand(selectedCommand);
           return true;
@@ -7834,13 +8150,16 @@
         else if (selection?.rangeCount && editor.contains(selection.anchorNode)) selection.getRangeAt(0).insertNode(block);
         else editor.append(block);
         normalizeNarrativeMarkup(editor);
-        const target = type === 'dialogue' && !sourceText ? block.querySelector('.narrative-character') : block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]');
-        if (target?.closest('.narrative-meta')) {
+        const target = block.querySelector('.narrative-text,.narrative-duration,.narrative-signal,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]');
+        if (target?.closest('.narrative-meta') && productionWorkspace) {
+          productionWorkspace.inspect(block);
+        } else if (target?.closest('.narrative-meta')) {
           block.dataset.inspectorOpen = 'true';
           block.querySelector('.narrative-marker')?.setAttribute('aria-expanded', 'true');
         }
-        placeCaret(target, Boolean(sourceText));
-        if (type === 'pause' && target) {
+        if (!target?.closest('.narrative-meta') || !productionWorkspace) placeCaret(target, Boolean(sourceText));
+        else document.querySelector('#writing-inspector-fields input')?.focus({ preventScroll:true });
+        if (type === 'pause' && target && !productionWorkspace) {
           const range = document.createRange();
           range.selectNodeContents(target);
           const selection = window.getSelection();
@@ -7856,10 +8175,14 @@
       narrativeDialog.addEventListener('pointerdown', event => {
         if (event.target.closest?.('[data-insert-narrative]')) event.preventDefault();
       });
+      const insertNarrativeFromTools = type => {
+        narrativeInsertTools.open = false;
+        productionWorkspace?.write(true, false);
+        insertNarrativeBlock(type);
+      };
       narrativeDialog.addEventListener('click', event => {
         const button = event.target.closest?.('[data-insert-narrative]');
-        if (!button) return;
-        insertNarrativeBlock(button.dataset.insertNarrative);
+        if (button) insertNarrativeFromTools(button.dataset.insertNarrative);
       });
       const caretBoundaryIn = (element, edge) => {
         const selection = window.getSelection();
@@ -8119,6 +8442,11 @@
           const willOpen = block?.dataset.inspectorOpen !== 'true';
           closeNarrativeInspectors(willOpen ? block : null);
           if (!block) return;
+          if (productionWorkspace) {
+            if (willOpen) productionWorkspace.inspect(block);
+            else productionWorkspace.closeInspector();
+            return;
+          }
           if (willOpen) block.dataset.inspectorOpen = 'true';
           else delete block.dataset.inspectorOpen;
           inspectorToggle.setAttribute('aria-expanded', String(willOpen));
@@ -8126,7 +8454,7 @@
           return;
         }
         const clickedNarrative = event.target.closest?.('.narrative-block');
-        if (clickedNarrative?.dataset.inspectorOpen === 'true' && !event.target.closest('.authoring-decoration')) closeNarrativeInspectors();
+        if (!productionWorkspace && clickedNarrative?.dataset.inspectorOpen === 'true' && !event.target.closest('.authoring-decoration')) closeNarrativeInspectors();
         const deleteNarrative = event.target.closest?.('[data-delete-narrative]');
         if (deleteNarrative) {
           event.preventDefault();
@@ -8253,7 +8581,7 @@
         queueSave();
       });
       document.addEventListener('pointerdown', event => {
-        if (!event.target.closest?.('.narrative-block')) closeNarrativeInspectors();
+        if (!productionWorkspace && !event.target.closest?.('.narrative-block,.writing-inspector')) closeNarrativeInspectors();
       });
       const insertChecklist = () => {
         checklistSequence += 1;
@@ -9089,7 +9417,7 @@
           return;
         }
         const marker = pendingImageMarker;
-        const targetDocumentId = pendingImageDocumentId;
+        const targetDocumentId = pendingImageDocumentId, insertionProjectId = currentProjectId;
         if (!marker?.isConnected || !editor.contains(marker) || targetDocumentId !== activeDocumentId) {
           clearPendingImageInsertion();
           transferStatus.textContent = 'O ponto de inserção não está mais disponível. Posicione o cursor e tente novamente.';
@@ -9097,8 +9425,11 @@
         }
         try {
           const id = `image-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
-          await storeImage(id, file);
-          const remotePath = await uploadSharedImage(file);
+          transferStatus.textContent = 'Otimizando imagem…';
+          const optimizedFile = await HeartspaceImageOptimizer.prepare(file);
+          if (!marker.isConnected || targetDocumentId !== activeDocumentId || currentProjectId !== insertionProjectId) throw new Error('O documento ou projeto mudou durante a otimização. Tente novamente.');
+          await storeImage(id, optimizedFile);
+          const remotePath = await uploadSharedImage(optimizedFile);
           if (!marker.isConnected || !editor.contains(marker) || targetDocumentId !== activeDocumentId) {
             throw new Error('O documento mudou durante o envio da imagem. Tente inserir novamente.');
           }
@@ -9108,7 +9439,7 @@
           image.dataset.localImage = id;
           if (remotePath) image.dataset.remoteImage = remotePath;
           image.alt = file.name.replace(/\.[^.]+$/, '');
-          const imageUrl = URL.createObjectURL(file);
+          const imageUrl = URL.createObjectURL(optimizedFile);
           imageObjectUrls.add(imageUrl);
           image.src = imageUrl;
           const caption = document.createElement('figcaption');
@@ -9125,7 +9456,7 @@
           pendingImageDocumentId = '';
           placeCaret(caption);
           queueSave();
-          transferStatus.textContent = remotePath ? 'Imagem compartilhada com a equipe' : 'Imagem adicionada e salva neste dispositivo';
+          transferStatus.textContent = `${remotePath ? 'Imagem otimizada e compartilhada' : 'Imagem otimizada e salva neste dispositivo'} · ${Math.ceil(optimizedFile.size / 1024)} KB`;
           setTimeout(() => { transferStatus.textContent = ''; }, 4000);
         } catch (error) {
           clearPendingImageInsertion(true);
@@ -9302,18 +9633,27 @@
         const selectionAnchor = window.getSelection()?.anchorNode;
         const selectionElement = selectionAnchor?.nodeType === Node.ELEMENT_NODE ? selectionAnchor : selectionAnchor?.parentElement;
         const caretTable = selectionElement?.closest('th,td')?.closest('table[data-docs-table]');
+        if (documentViewMode !== 'writing' || !eventTarget?.isContentEditable) return;
         if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key === 'Enter' && !caretTable) {
           event.preventDefault();
           insertPageBreak();
           queueSave();
           return;
         }
-        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLocaleLowerCase('pt-BR') === 'b') {
+        const inlineShortcut = !event.shiftKey ? ({b:'bold',i:'italic',u:'underline'})[event.key.toLocaleLowerCase('pt-BR')] : event.key.toLowerCase() === 'x' ? 'strikeThrough' : null;
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.isComposing && inlineShortcut) {
           event.preventDefault();
-          applyInlineCommand('bold');
+          applyInlineCommand(inlineShortcut);
           queueSave();
           return;
         }
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.shiftKey && ['Digit7','Digit8'].includes(event.code)) {
+          event.preventDefault(); document.execCommand(event.code === 'Digit7' ? 'insertOrderedList' : 'insertUnorderedList'); queueSave(); return;
+        }
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.shiftKey && event.key.toLowerCase() === 'k') {
+          event.preventDefault(); event.stopPropagation(); insertLink(); queueSave(); return;
+        }
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'y' && redoNarrativeMutation()) { event.preventDefault(); return; }
         if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase('pt-BR') === 'z') {
           const handled = event.shiftKey ? redoNarrativeMutation() : undoNarrativeMutation();
           if (handled) { event.preventDefault(); return; }
@@ -9430,8 +9770,17 @@
         });
       };
       const layoutDocumentOutline = () => {
-        if (outlinePanel.hidden || documentPage.dataset.layout !== 'book') return;
+        if (outlinePanel.hidden) return;
         const editorArea = document.querySelector('.editor-area');
+        if (documentPage.dataset.layout === 'canvas') {
+          const area = editorArea.getBoundingClientRect();
+          const width = Math.max(0,Math.min(220,area.width - 36));
+          outlinePanel.style.setProperty('--outline-canvas-left',`${Math.round(Math.max(area.left + 12,area.right - width - 18))}px`);
+          outlinePanel.style.setProperty('--outline-canvas-top',`${Math.round(area.top + 12)}px`);
+          outlinePanel.style.setProperty('--outline-canvas-width',`${Math.round(width)}px`);
+          outlinePanel.style.setProperty('--outline-canvas-height',`${Math.round(Math.max(0,area.height - 32))}px`);
+          return;
+        }
         const pageRect = documentPage.getBoundingClientRect();
         const areaRect = editorArea?.getBoundingClientRect();
         if (!areaRect || !pageRect.width) return;
@@ -9490,6 +9839,29 @@
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); openGlobalSearch(); }
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); flushSave(); }
       });
+      productionWorkspace = HeartspaceProductionWorkspaces.mount({
+        document, editor, panel:narrativeDialog,
+        loadRegistry:() => { void loadNarrativeRegistry(); },
+        canEdit:() => !currentProjectId || canEditProject({capabilities:projectCapabilities}),
+        showView:setNarrativePanelView, setOpen:setNarrativePanelOpen, render:renderNarrativePanel,
+        documentId:() => activeDocumentId,
+        layout:() => { scheduleBookPagination(); scheduleDocumentOutlineLayout(); scheduleNarrativeSequenceRails(); },
+        beginMutation:rememberNarrativeMutation, endMutation:commitNarrativeMutation,
+        insertBlock:insertNarrativeFromTools,
+        removeBlock:removeNarrativeBlock,
+        resumeBlock:block => {
+          if (block.dataset.readingEmpty === 'true') {
+            if (block.nextElementSibling?.matches('.narrative-block[data-reading-empty="true"]')) {
+              const paragraph = document.createElement('p'); paragraph.innerHTML = '<br>'; block.after(paragraph); placeCaret(paragraph);
+            } else moveOutsideNarrative(block,'after');
+            queueSave();
+          }
+          else { block.scrollIntoView({block:'nearest'}); placeCaret(block.querySelector('.narrative-text,.narrative-choice-prompt,.narrative-variation-version[data-active="true"]'),true); }
+        }
+      });
+      editor.addEventListener('input', scheduleProductionIssueCount);
+      document.querySelector('#localization-list').addEventListener('input', scheduleProductionIssueCount);
+      renderNarrativeValidation();
     })();
   </script>
 </body>

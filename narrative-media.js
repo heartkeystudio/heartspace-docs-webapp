@@ -131,7 +131,11 @@
   }
   const media = createNarrativeMedia();
   media.sourceCode = createNarrativeMedia.toString();
-  media.readFile = async (file,kind) => {
+  media.readFile = async (file,kind,options = {}) => {
+    if (kind === 'image') {
+      if (!root.HeartspaceImageOptimizer) throw new Error('A otimização de imagens não está disponível. Recarregue o Docs.');
+      file = await root.HeartspaceImageOptimizer.prepare(file,options);
+    }
     if (!file || file.size > media.limits[kind]) throw new Error(kind === 'image' ? 'Use uma imagem de até 4 MB (PNG, JPEG ou WebP).' : 'Use um áudio de até 8 MB (MP3, OGG, WAV, WebM ou M4A).');
     const bytes = new Uint8Array(await file.arrayBuffer());
     // Infer from signatures; names and browser-provided MIME types are not trusted.
