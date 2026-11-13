@@ -2,9 +2,9 @@
 (function (root) {
   'use strict';
   const areas = { writing:'Escrever', history:'História', translation:'Tradução', scene:'Cena', library:'Biblioteca do projeto', validation:'Pendências' };
-  const areaForView = view => ({ sequence:'history', map:'history', localization:'translation', presentation:'scene', characters:'library', variables:'library', glossary:'library', validation:'validation' })[view] || 'history';
+  const areaForView = view => ({ sequence:'history', planning:'history', map:'history', localization:'translation', presentation:'scene', characters:'library', variables:'library', glossary:'library', validation:'validation' })[view] || 'history';
   const preferenceKey = 'heartspace.docs.workspaces.v1';
-  const viewGroups = { history:['sequence','map'], translation:['localization'], scene:['presentation'], library:['characters','variables','glossary'], validation:['validation'] };
+  const viewGroups = { history:['sequence','planning','map'], translation:['localization'], scene:['presentation'], library:['characters','variables','glossary'], validation:['validation'] };
   function mount(options) {
     const { document:doc, editor, panel, showView, setOpen, render, documentId } = options;
     const win = doc.defaultView;
@@ -117,16 +117,17 @@
     }
     let area = 'writing', currentView = null, inspectedBlock = null, savedSelection = null;
     let restoreFrame = 0, viewFrame = 0;
-    const scrollTargets = '#narrative-sequence,#narrative-map,#localization-list,#localization-project-summary,#narrative-character-list,#narrative-variable-list,#narrative-glossary-view,#narrative-presentation,#narrative-presentation-form,#narrative-validation';
+    const scrollTargets = '#narrative-sequence,#narrative-planning,#narrative-map,#localization-list,#localization-project-summary,#narrative-character-list,#narrative-variable-list,#narrative-glossary-view,#narrative-presentation,#narrative-presentation-form,#narrative-validation';
+    const viewMemoryKey = () => `${currentView === 'planning' ? options.planningId?.() || documentId() : documentId()}:${currentView}`;
     function rememberView() {
       if (!currentView || panel.hidden) return;
-      viewPositions.set(`${documentId()}:${currentView}`,[...panel.querySelectorAll(scrollTargets)].map(node => ({node,top:node.scrollTop,left:node.scrollLeft})));
+      viewPositions.set(viewMemoryKey(),[...panel.querySelectorAll(scrollTargets)].map(node => ({node,top:node.scrollTop,left:node.scrollLeft})));
     }
     function restoreView() {
       win.cancelAnimationFrame(viewFrame);
-      const key = `${documentId()}:${currentView}`;
+      const key = viewMemoryKey();
       viewFrame = win.requestAnimationFrame(() => {
-        if (key !== `${documentId()}:${currentView}` || panel.hidden) return;
+        if (key !== viewMemoryKey() || panel.hidden) return;
         viewPositions.get(key)?.forEach(({node,top,left}) => { node.scrollTop = top; node.scrollLeft = left; });
       });
     }
@@ -225,7 +226,7 @@
       doc.querySelector('#work-area-context').textContent = areas[area];
       doc.querySelector('#narrative-collapse').textContent = area === 'library' ? 'Fechar' : 'Escrever';
       doc.querySelector('#narrative-collapse').setAttribute('aria-label',area === 'library' ? 'Fechar biblioteca do projeto' : 'Voltar à escrita');
-      const group = area === 'history' ? ['sequence','map'] : area === 'library' ? ['characters','variables','glossary'] : [];
+      const group = area === 'history' ? ['sequence','planning','map'] : area === 'library' ? ['characters','variables','glossary'] : [];
       const tabs = panel.querySelector('.narrative-tabs');
       tabs.hidden = !group.length;
       tabs.querySelectorAll('[data-production-view]').forEach(button => { button.hidden = !group.includes(button.dataset.productionView); });

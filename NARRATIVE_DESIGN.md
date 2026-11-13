@@ -205,3 +205,100 @@ Decisão registrada para uma fatia futura:
 - A largura do aplicativo permanece integral. A reserva usa padding abaixo do cabeçalho; o cabeçalho continua fixo de ponta a ponta.
 - Reverter a abertura parte do progresso atual, sem reiniciar o movimento. A alça da biblioteca permanece cinza também aberta e sob hover.
 - A gravação fornecida foi inspecionada; a alteração ainda requer conferência visual no navegador.
+
+
+## Planejamento da história — primeira fatia
+
+Implementado em História → Planejamento, por documento:
+
+- Resumos opcionais de Começo, Meio e Fim, sem exigir modelo narrativo.
+- Marcos livres com título, descrição e etapa (Começo, Meio, Fim ou livre), reordenação por botões e remoção com desfazer durante a sessão do documento.
+- Vínculos de cada marco a várias sequências do mesmo documento e atalho para abri-las. Reordenar o planejamento não move os blocos do texto. Renomear o ID de uma sequência atualiza os vínculos. Sequências removidas aparecem como indisponíveis e podem ser desvinculadas.
+- Dados normalizados em `storyPlanning` no registro local e em `content.story_planning` na sincronização e nas versões remotas. O registro é independente da projeção de leitura e do player HTML; o planejamento não participa das falas exportadas.
+- Controles respeitam permissões do projeto; a consulta e os atalhos continuam disponíveis sem permissão de edição. A aba funciona com divisão de área e preserva sua posição de rolagem por documento.
+- O formulário usa os nomes das sequências e não expõe seus IDs técnicos.
+
+Implementação em `story-planning.js`, carregada também pelo loader desktop. Modelos da jornada do herói, mapa visual do planejamento, preparação/consequências, fichas do mundo e faixas de ambientação permanecem para próximas fatias. A conferência desta etapa é de sintaxe e integração por leitura do código; uso em navegador ainda não conferido.
+
+
+## Bibliotecas como livros e pranchetas
+
+Esta estrutura substitui o planejamento por documento da primeira fatia.
+
+- `libraryFolders` passa a representar coleções com `layout` (`book` ou `canvas`), `storyPlanning`, `legacyPlans`, `migratedDocuments` e `updatedAt`.
+- Cada coleção tem acesso próprio a Planejamento e criação direta de capítulo/seção. Novos documentos criados nesse acesso herdam o modelo da coleção; os documentos existentes conservam suas configurações de página, inclusive ao serem movidos entre coleções.
+- O planejamento existe mesmo com a coleção vazia. As sequências disponíveis vêm de todos os capítulos visíveis da coleção; cada vínculo usa o par `documentId`/`sequenceId`, com rótulo `Capítulo → Sequência`. Renomear um evento e receber um ID remoto para um capítulo atualizam as referências.
+- Planejamentos anteriores ficam arquivados pelo capítulo de origem. Uma única origem é adotada quando o plano geral ainda está vazio; múltiplas origens permanecem separadas. Seus marcos podem ser copiados para o plano geral sem concatenar os resumos. Documentos soltos preservam seus dados antigos e entram nessa migração ao serem movidos para uma biblioteca.
+- Expandir um capítulo de livro abre sua paginação real e apresenta folhas como atalhos derivados; elas não são registros salvos. A árvore atualiza a contagem do capítulo ativo após a paginação. Mais de 40 folhas são agrupadas em intervalos de 20. Pranchetas mostram os títulos internos ou um acesso à área contínua.
+- O livro pode ser configurado pelo menu da biblioteca. Excluir uma biblioteca informa que também exclui seu planejamento; capítulos retornam à Caixa de entrada.
+- No modo local, coleções e planos são salvos no cache existente. No beta online, o snapshot da coleção acompanha `content.organization.collection` dos capítulos e é reconciliado por `updatedAt`; coleções vazias permanecem no cache até existir um capítulo sincronizado. Isso não cria documentos artificiais para guardar páginas ou planejamento. Uma tabela independente para coleções e conflitos de edição simultânea do planejamento continua necessária antes da abertura pública da nuvem.
+- A sincronização após a pausa percorre documentos pendentes em sequência, permitindo gravar mudanças de coleção que afetam vários capítulos.
+
+Conferência realizada nesta etapa: leitura das integrações, sintaxe de JavaScript e atualização da CSP desktop. A migração e a navegação ainda precisam ser exercitadas em navegador real; não foram executados testes funcionais.
+
+
+## Desenvolvimento dos marcos — segunda fatia do planejamento
+
+- Cada marco passa a guardar `preparation` (o que precisa aparecer antes), `consequences` (o que deve repercutir depois) e `dependsOn`, com IDs estáveis dos marcos de preparação. O planejamento normalizado usa versão 2; campos ausentes nos dados antigos recebem valores vazios.
+- A seção Preparação e consequências é expansível, evitando deixar todos os formulários permanentemente expostos. Seu conteúdo só é montado quando aberta.
+- O autor pode marcar quais outros marcos preparam aquele acontecimento e navegar até eles. O caminho inverso, “Este marco prepara…”, é derivado dessas mesmas referências, sem duplicar relações persistidas.
+- A ordem dos marcos permanece livre. A interface não reordena capítulos nem altera o fluxo jogável; permite vínculos em qualquer etapa da história. Não permite selecionar o próprio marco como preparação de si mesmo.
+- Remover um marco conserva as referências dos demais como vínculos a revisar. Desfazer restaura o mesmo ID e recupera essas conexões. Títulos são usados na interface, incluindo o último nome conhecido quando o destino estiver indisponível.
+- Os dados seguem o salvamento já existente da coleção. A consulta e os atalhos continuam disponíveis sem permissão de edição. A cópia de planejamentos preservados remapeia também as relações entre seus marcos para os novos IDs.
+- Nenhuma informação do planejamento é inserida no texto de leitura ou no player exportado.
+
+Conferência desta fatia: sintaxe JavaScript, diff e CSP desktop. Não foram executados testes funcionais nem conferência visual no navegador. Modelos narrativos, fichas do mundo e mapa visual do planejamento permanecem para próximas fatias.
+
+
+## Guias narrativos — terceira fatia do planejamento
+
+- O painel Planejamento oferece um seletor expansível de guias opcionais: Livre, Começo, Meio e Fim (3 marcos), Três atos (9 marcos) e uma adaptação da Jornada do herói (12 marcos).
+- A escolha apresenta uma prévia das etapas e perguntas antes de confirmar. Aplicar acrescenta sugestões ao fim do plano da coleção, preservando resumos, marcos e vínculos existentes. Escolher Livre mantém o conteúdo e libera a organização própria.
+- Todos os marcos sugeridos podem ser renomeados, reordenados, desenvolvidos ou removidos. A pergunta-guia aparece como orientação separada do texto do autor e pode ser editada em Preparação e consequências, inclusive em marcos livres.
+- O formato normalizado passa à versão 3, com `guide` no plano e `guidance`/`templateKey` nos marcos. Dados antigos recebem guia Livre e campos vazios. A persistência continua na coleção, incluindo seus snapshots locais e de sincronização do beta.
+- Reaplicar um guia acrescenta somente suas etapas ausentes, identificadas por `templateKey`; não duplica sugestões ainda presentes, mesmo que tenham sido renomeadas. Guias diferentes podem coexistir no mesmo plano.
+- Desfazer inclusão está disponível durante a sessão da coleção para a última inclusão de sugestões. Remove apenas os marcos gerados que continuam sem alterações e conserva os já editados. Os demais vínculos seguem a revisão de referências indisponíveis existente.
+- Os guias não impõem regras à história, não criam capítulos ou sequências e não alteram o conteúdo exportado.
+
+Conferência desta fatia: leitura do código, sintaxe JavaScript, diff e atualização da CSP desktop. Não foram executados testes funcionais nem conferência visual no navegador. Fichas do mundo e mapa visual do planejamento permanecem para próximas fatias.
+
+
+## Fichas do mundo — quarta fatia do planejamento
+
+- Em História → Planejamento, cada livro ou prancheta tem uma seção expansível Fichas do mundo, compartilhada entre seus capítulos. As fichas são agrupadas em Personagens, Lugares e Regras do mundo; os formulários só são montados ao abrir uma ficha.
+- Todos os campos são opcionais. Além de nome/título e visão geral, personagens têm papel, motivação, conflito e transformação; lugares têm ambiente, características e tensões; regras têm funcionamento, limites e consequências.
+- Estas fichas guardam notas do autor no planejamento. Fichas de personagem não cadastram automaticamente personagens no registro de diálogos do projeto.
+- Cada marco pode vincular várias fichas em Referências do mundo. Ver ficha abre a referência e navega até ela; a ficha mostra os marcos relacionados e oferece o caminho de volta. A consulta e a navegação permanecem disponíveis sem permissão de edição.
+- Os vínculos usam IDs estáveis e conservam o último título conhecido. Renomear uma ficha atualiza os rótulos das referências. Removê-la mantém os vínculos sinalizados como removidos/indisponíveis, permitindo revisão ou desvinculação. Desfazer restaura a última ficha removida durante a sessão da coleção com seu ID e relações.
+- O formato normalizado passa à versão 4: `worldEntries` no plano, com `id`, `type`, `title`, `summary`, `details`; `worldLinks` em cada marco, com `entryId` e `title`. Dados antigos recebem listas vazias. IDs duplicados são desambiguados; vínculos repetidos e campos de tipos inválidos são normalizados.
+- As fichas seguem a persistência e os snapshots da coleção existentes. Planos que têm somente fichas também contam como preenchidos na migração e exclusão da coleção. A consulta de planejamentos preservados inclui as fichas; copiar marcos e fichas remapeia suas referências e evita cópias repetidas.
+- Os dados são anotações de planejamento e não entram na projeção de leitura nem no player exportado. A estrutura de sincronização do beta mantém as limitações já registradas para coleções.
+
+Conferência desta fatia: leitura das integrações, sintaxe JavaScript, diff e atualização da CSP desktop. Não foram executados testes funcionais nem conferência visual no navegador. O mapa visual do planejamento e as faixas de ambientação permanecem para próximas fatias.
+
+
+## Mapa do planejamento — quinta fatia
+
+- História → Planejamento oferece as visualizações Formulário e Mapa para o mesmo livro/prancheta. O mapa organiza os marcos nas colunas Começo, Meio e Fim, com uma coluna adicional quando há marcos livres; mantém a ordem relativa dos marcos dentro de cada etapa.
+- Os cartões mostram o título, um trecho da descrição (ou pergunta-guia), contagens de preparações/fichas e referências que precisam de revisão. A seleção destaca o marco e suas relações diretas; Todas as conexões amplia a exibição das setas.
+- As setas representam as relações `dependsOn` já existentes, sempre da preparação para o acontecimento. A direção pode atravessar etapas em qualquer sentido; o mapa não impõe ordem nem valida uma estrutura narrativa. Relações cíclicas não causam recursão no desenho. Referências removidas são apresentadas no painel de detalhes para revisão, sem criar nós artificiais.
+- O painel de detalhes apresenta o texto completo, perguntas-guia, preparação, consequências, marcos de origem/destino e atalhos para fichas e sequências. Selecionar uma relação revela o cartão correspondente no mapa. Editar marco e Editar preparação levam ao campo/seção correspondente no formulário, respeitando as permissões de edição; consultas continuam disponíveis em modo de leitura.
+- O mapa tem rolagem própria horizontal/vertical e o painel de detalhes se acomoda abaixo dele em áreas estreitas. Setas são SVG decorativo e as relações também têm navegação textual e por teclado. Linhas e seleção usam tons neutros. A geometria é recalculada com ResizeObserver quando a área muda, incluindo abertura dos painéis laterais e divisão da área de trabalho.
+- A seleção, modo de visualização, posição da rolagem e seções expandidas ficam na memória de interface por coleção durante a sessão. Alterar a visualização não modifica o plano. O formato persistido permanece na versão 4; não há uma cópia separada do grafo ou coordenadas salvas.
+- Implementação do mapa em `story-planning-map.js`, carregada antes do planejador também no desktop. Organização manual livre de posições e arraste de conexões ficam para uma evolução posterior.
+
+Conferência desta fatia: leitura da integração, sintaxe JavaScript, diff e atualização da CSP desktop. Não foram executados testes funcionais nem conferência visual no navegador. As faixas de ambientação permanecem para próximas fatias.
+
+
+## Faixa de ambientação — primeira fatia
+
+- Configurações da página → Ambientação do capítulo permite ativar uma faixa decorativa junto à borda esquerda das folhas no modelo Livro. Cada capítulo/documento mantém sua própria configuração, desativada por padrão; não depende de um marco do planejamento.
+- Há sugestões de cor/nome para Floresta, Fogo, Industrial, Castelo, Calma, Tensão e Mistério, além de cor e nome personalizados. Largura e intensidade são ajustáveis; a configuração pode ser consultada e a faixa continua visível no modo de leitura e no Zen.
+- O fundo pode usar uma textura PNG, JPEG ou WebP importada, repetida nos dois eixos. O tamanho da repetição é ajustável e conserva a proporção da imagem. A importação preserva o desenho do arquivo fornecido; não transforma uma imagem comum em seamless automaticamente.
+- A faixa é um elemento decorativo fora do conteúdo editável. A máscara acompanha a altura das folhas e oculta os intervalos da paginação. A largura usa somente o espaço disponível à esquerda, considerando zoom, rolagem, painéis e área dividida; ela encolhe ou se oculta quando não há espaço. No modelo Prancheta, a preferência é preservada e a faixa fica oculta.
+- A visualização de tradução remove a faixa do clone; a impressão a oculta. O texto, a paginação e os pacotes narrativos exportados não recebem a decoração. Esta fatia aplica um ambiente por capítulo; variações por cena/trecho e associação às fichas de lugares ficam para uma evolução posterior.
+- `ambience` é normalizado no registro do documento; metadados e referências de textura seguem em `content.appearance.ambience` nas versões remotas, carregamento e conflitos. Templates explícitos também conservam a preferência. Documentos antigos recebem valores padrão sem faixa ativa.
+- Texturas usam o armazenamento IndexedDB de imagens existente e, no beta online, o mesmo bucket protegido dos anexos. Os metadados guardam referências e nome do arquivo, sem base64 no cache de documentos. Um perfil específico do otimizador limita a textura a 512 px de borda, com alvo de 128 KiB e máximo de 256 KiB. A interface respeita permissões e invalida importações se o capítulo, projeto ou sessão mudar. Se o arquivo estiver indisponível, a cor é mantida como fundo e a interface informa o problema.
+- A implementação fica em `document-ambience.js`, carregada também pelo loader desktop. URLs temporárias de textura são liberadas ao trocar de fonte ou fechar a página.
+
+Conferência desta fatia: leitura das integrações de página, persistência e mídia; sintaxe JavaScript, diff e atualização da CSP desktop. Não foram executados testes funcionais nem conferência visual no navegador.

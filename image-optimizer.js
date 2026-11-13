@@ -5,7 +5,8 @@
   const profiles = {
     document:{edge:1920,target:700 * KiB,maximum:1536 * KiB,floor:640},
     background:{edge:1920,target:900 * KiB,maximum:1536 * KiB,floor:640},
-    portrait:{edge:1024,target:250 * KiB,maximum:512 * KiB,floor:384}
+    portrait:{edge:1024,target:250 * KiB,maximum:512 * KiB,floor:384},
+    texture:{edge:512,target:128 * KiB,maximum:256 * KiB,floor:128}
   };
   const inputLimit = 24 * MiB, pixelLimit = 40 * 1000 * 1000;
   const prepared = new WeakMap(), pending = new WeakMap();
