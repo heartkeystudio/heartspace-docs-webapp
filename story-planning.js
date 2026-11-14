@@ -64,9 +64,14 @@
       while (usedWorld.has(id)) id += '-copy';
       usedWorld.add(id);
       const type = Object.hasOwn(worldTypes,item.type) ? item.type : 'rule';
-      return {id,type,title:string(item.title),summary:string(item.summary),details:Object.fromEntries(worldTypes[type].fields.map(([key]) => [key,string(item.details?.[key])]))};
+      return {id,type,title:string(item.title),summary:string(item.summary),characterLink:type === 'character' && string(item.characterLink?.id) ? {id:item.characterLink.id,name:string(item.characterLink.name)} : null,ambience:type === 'place' && item.ambience ? HeartspaceDocumentAmbience.style(item.ambience) : null,details:Object.fromEntries(worldTypes[type].fields.map(([key]) => [key,string(item.details?.[key])]))};
     });
-    return {version:4,worldEntries, guide:Object.hasOwn(models,source.guide) ? source.guide : 'free', beginning:string(source.beginning), middle:string(source.middle), ending:string(source.ending),
+    const positions = new Map();
+    (Array.isArray(source.mapLayout?.positions) ? source.mapLayout.positions : []).forEach(item => {
+      if (!string(item?.milestoneId) || !Number.isFinite(item.x) || !Number.isFinite(item.y)) return;
+      positions.set(item.milestoneId,{milestoneId:item.milestoneId,x:Math.max(0,Math.min(100000,item.x)),y:Math.max(0,Math.min(100000,item.y))});
+    });
+    return {version:5,worldEntries,mapLayout:{mode:source.mapLayout?.mode === 'free' ? 'free' : 'auto',positions:[...positions.values()]}, guide:Object.hasOwn(models,source.guide) ? source.guide : 'free', beginning:string(source.beginning), middle:string(source.middle), ending:string(source.ending),
       milestones:(Array.isArray(source.milestones) ? source.milestones : []).filter(item => item && typeof item === 'object').map((item,index) => {
         let id = string(item.id) || `milestone-${index + 1}`;
         while (used.has(id)) id += '-copy';
@@ -84,13 +89,13 @@
       })};
   }
   function mount(options) {
-    const {element,document:doc,getRecord,getSequences,canEdit,onChange,openSequence} = options;
+    const {element,document:doc,getRecord,getSequences,canEdit,onChange,openSequence,getCharacters = () => [],openCharacter,createCharacter,importTexture,loadTexture} = options;
     const win = doc.defaultView;
     let removed = null, templateBatch = null, removedWorld = null, pendingWorld = '';
     const selectedModels = new Map(), uiStates = new Map();
     let mapSurface = null, mapFrame = 0, pendingMilestone = '', pendingConnections = false, pendingMapReveal = '';
     const uiState = id => {
-      if (!uiStates.has(id)) uiStates.set(id,{view:'form',selected:'',allConnections:false,scroll:{form:0,map:0},opened:new Set(),mapScroll:{top:0,left:0}});
+      if (!uiStates.has(id)) uiStates.set(id,{view:'form',selected:'',allConnections:false,scroll:{form:0,map:0},opened:new Set(),mapScroll:{top:0,left:0},connecting:'',layoutUndo:[]});
       return uiStates.get(id);
     };
     const scheduleMap = () => {
@@ -100,6 +105,7 @@
     const mapObserver = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(scheduleMap) : null;
     if (!mapObserver) win.addEventListener('resize',scheduleMap);
     function rememberSurface() {
+      element.querySelectorAll('.place-ambience-editor').forEach(item => item.dispose?.());
       const previousId = element.dataset.documentId;
       if (previousId && uiStates.has(previousId)) {
         const previous = uiState(previousId), view = element.dataset.planView || 'form';
@@ -108,7 +114,7 @@
         if (mapSurface?.viewport) previous.mapScroll = {top:mapSurface.viewport.scrollTop,left:mapSurface.viewport.scrollLeft};
       }
       if (mapFrame) { win.cancelAnimationFrame(mapFrame); mapFrame = 0; }
-      mapObserver?.disconnect(); mapSurface = null;
+      mapObserver?.disconnect(); mapSurface?.dispose?.(); mapSurface = null;
     }
     const node = (tag,className,text) => {
       const result = doc.createElement(tag); if (className) result.className = className;
@@ -153,6 +159,28 @@
           if (card.open) {
             const content = node('div','story-plan-world-content');
             content.append(field('input','Nome ou título',entry.title,'world-title',entry.id,'Como você chama esta referência?'),field('textarea','Visão geral',entry.summary,'world-summary',entry.id,'O que é importante lembrar?'));
+            if (entry.type === 'character') {
+              const link = field('select','Personagem nos diálogos',entry.characterLink?.id || '','character-link',entry.id);
+              const select = link.querySelector('select'), characters = getCharacters(); select.append(new win.Option('Sem vínculo',''),...characters.map(character => new win.Option(character.name,character.id)));
+              if (entry.characterLink && !characters.some(character => character.id === entry.characterLink.id)) select.append(new win.Option(`${entry.characterLink.name || 'Personagem'} · removido ou indisponível`,entry.characterLink.id));
+              select.value = entry.characterLink?.id || ''; content.append(link);
+              const actions = node('div','story-plan-actions');
+              if (entry.characterLink && characters.some(character => character.id === entry.characterLink.id)) actions.append(button('Abrir personagem','open-character',entry.id));
+              else if (entry.title.trim()) { const create = button('Registrar personagem com este nome','create-character',entry.id); create.disabled = !canEdit(); actions.append(create); }
+              content.append(actions,node('p','','O vínculo usa o mesmo personagem das falas. As notas da ficha continuam independentes do nome exibido.'));
+            }
+            if (entry.type === 'place') {
+              const collectionId = getRecord()?.id;
+              const editor = HeartspaceDocumentAmbience.styleEditor({document:doc,value:entry.ambience,canEdit:canEdit(),importTexture,loadTexture,
+                isCurrent:() => getRecord()?.id === collectionId && Boolean(getRecord()?.storyPlanning.worldEntries.some(item => item.id === entry.id)) && canEdit(),
+                onChange:value => {
+                  const record = getRecord(); if (record?.id !== collectionId || !canEdit()) return;
+                  const current = record.storyPlanning.worldEntries.find(item => item.id === entry.id); if (!current) return;
+                  const previous = current.ambience; current.ambience = value;
+                  try { save(record); } catch (error) { current.ambience = previous; throw error; }
+                }});
+              editor.dataset.id = `place-ambience:${entry.id}`; editor.open = opened.has(editor.dataset.id); content.append(editor);
+            }
             const fields = node('div','story-plan-development-fields');
             config.fields.forEach(([key,label,placeholder]) => fields.append(field('textarea',label,entry.details[key],`world-detail:${key}`,entry.id,placeholder)));
             content.append(fields);
@@ -198,7 +226,7 @@
       const focusKey = active?.dataset.focus, selection = typeof active?.selectionStart === 'number' ? [active.selectionStart,active.selectionEnd] : null;
       const state = uiState(record.id), scroll = state.scroll[state.view];
       const opened = new Set(state.opened);
-      if (!sameDocument) { removed = null; templateBatch = null; removedWorld = null; pendingWorld = ''; pendingMilestone = ''; pendingConnections = false; pendingMapReveal = ''; }
+      if (!sameDocument) { removed = null; templateBatch = null; removedWorld = null; pendingWorld = pendingWorld && record.storyPlanning.worldEntries.some(item => item.id === pendingWorld) ? pendingWorld : ''; pendingMilestone = ''; pendingConnections = false; pendingMapReveal = ''; }
       if (pendingWorld) { opened.add('world'); opened.add(`world:${pendingWorld}`); }
       if (pendingConnections && pendingMilestone) opened.add(`development:${pendingMilestone}`);
       element.dataset.documentId = record.id; element.dataset.planView = state.view;
@@ -207,18 +235,34 @@
       const sequences = getSequences(); const byId = new Map(sequences.map(sequence => [linkKey(sequence),sequence]));
       const fragment = doc.createDocumentFragment();
       const heading = node('header','story-plan-heading');
-      const copy = node('div'); copy.append(node('h3','',`Planejamento · ${record.name || record.title || 'Sem título'}`),node('p','',`${record.layout === 'canvas' ? 'Prancheta' : 'Livro'} · Planejamento compartilhado entre todos os capítulos e seções. Tudo aqui é opcional.`));
+      const copy = node('div','story-plan-context');
+      copy.append(node('h3','',`${record.layout === 'canvas' ? 'Prancheta' : 'Livro'} · ${record.name || record.title || 'Sem título'}`));
+      const help = node('button','story-plan-help-toggle','?'); help.type = 'button'; help.dataset.focus = 'planning-help';
+      help.setAttribute('aria-label','Sobre o planejamento'); help.setAttribute('aria-expanded',String(Boolean(state.helpOpen))); help.setAttribute('aria-controls','story-plan-help');
+      const explanation = node('section','story-plan-help'); explanation.id = 'story-plan-help'; explanation.hidden = !state.helpOpen; explanation.setAttribute('aria-label','Sobre o planejamento');
+      explanation.append(node('p','','O planejamento pertence a este livro ou prancheta e é compartilhado entre todos os seus capítulos e seções. Use-o para guardar o começo, o meio e o fim, desenvolver marcos e reunir personagens, lugares e regras do mundo.'));
+      explanation.append(node('p','','Tudo é opcional. Os guias oferecem sugestões editáveis, e Formulário e Mapa mostram o mesmo plano. Vincular sequências ajuda a localizar os acontecimentos sem mudar a ordem dos capítulos ou o texto.'));
+      help.addEventListener('click',() => { state.helpOpen = !state.helpOpen; explanation.hidden = !state.helpOpen; help.setAttribute('aria-expanded',String(state.helpOpen)); });
+      const closeHelp = event => { if (event.key === 'Escape' && state.helpOpen) { event.preventDefault(); state.helpOpen = false; explanation.hidden = true; help.setAttribute('aria-expanded','false'); help.focus({preventScroll:true}); } };
+      help.addEventListener('keydown',closeHelp); explanation.addEventListener('keydown',closeHelp); copy.append(help);
       const views = node('div','story-plan-view-switch'); views.setAttribute('role','group'); views.setAttribute('aria-label','Visualização do planejamento');
       [['form','Formulário'],['map','Mapa']].forEach(([value,label]) => {
         const view = button(label,'plan-view',value); view.setAttribute('aria-pressed',String(state.view === value)); views.append(view);
-      }); heading.append(copy,views); fragment.append(heading);
+      }); heading.append(copy,views); fragment.append(heading,explanation);
       if (state.view === 'map') {
         if (!plan.milestones.some(item => item.id === state.selected)) state.selected = plan.milestones[0]?.id || '';
-        mapSurface = HeartspaceStoryPlanningMap.create({document:doc,plan,sequences,selectedId:state.selected,allConnections:state.allConnections,canEdit:canEdit()});
+        mapSurface = HeartspaceStoryPlanningMap.create({document:doc,plan,sequences,selectedId:state.selected,allConnections:state.allConnections,canEdit:canEdit(),connectingId:state.connecting,canUndo:Boolean(state.layoutUndo.length),
+          onMove:(id,position) => {
+            const current = getRecord(); if (current?.id !== record.id || !canEdit() || !current.storyPlanning.milestones.some(item => item.id === id)) return;
+            state.layoutUndo.push(JSON.parse(JSON.stringify(current.storyPlanning.mapLayout))); if (state.layoutUndo.length > 30) state.layoutUndo.shift();
+            current.storyPlanning.mapLayout.positions = current.storyPlanning.mapLayout.positions.filter(item => item.milestoneId !== id);
+            current.storyPlanning.mapLayout.positions.push({milestoneId:id,...position}); save(current); render();
+          },onConnect:(source,target) => { const current = getRecord(); if (current?.id === record.id) { connectMap(current,source,target); state.connecting = ''; state.selected = target; pendingMapReveal = target; render(); } }
+        });
         fragment.append(mapSurface.element);
       } else {
         const guidePicker = node('details','story-plan-model'); guidePicker.dataset.id = 'narrative-guide'; guidePicker.open = opened.has('narrative-guide');
-        guidePicker.append(node('summary','',`Guia narrativo · ${models[plan.guide]?.label || 'Livre'}`));
+        guidePicker.append(node('summary','','Guia narrativo'));
         const selectedModel = selectedModels.get(record.id) || plan.guide || 'free';
         const choice = field('select','Modelo de planejamento',selectedModel,'model-choice');
         const selector = choice.querySelector('select'); Object.entries(models).forEach(([key,model]) => selector.append(new win.Option(model.label,key))); selector.value = selectedModel;
@@ -379,6 +423,13 @@
       const record = getRecord(); return record && record.id === element.dataset.documentId ? record : null;
     }
     function save(record) { onChange(record); }
+    function connectMap(record,sourceId,targetId) {
+      if (!canEdit() || record.id !== getRecord()?.id || sourceId === targetId) return;
+      const source = record.storyPlanning.milestones.find(item => item.id === sourceId), target = record.storyPlanning.milestones.find(item => item.id === targetId);
+      if (!source || !target || target.dependsOn.some(link => link.milestoneId === sourceId)) return;
+      target.dependsOn.push({milestoneId:sourceId,title:source.title}); save(record);
+    }
+
     element.addEventListener('input',event => {
       const control = event.target, key = control.dataset.planField;
       if ((key === 'world-title' || key === 'world-summary' || key?.startsWith('world-detail:')) && canEdit()) {
@@ -404,6 +455,12 @@
     });
     element.addEventListener('change',event => {
       const control = event.target;
+      if (control.dataset.planField === 'character-link') {
+        const record = current(); if (!record || !canEdit()) return;
+        const entry = record.storyPlanning.worldEntries.find(item => item.id === control.dataset.id && item.type === 'character'); if (!entry) return;
+        const character = getCharacters().find(item => item.id === control.value);
+        entry.characterLink = character ? {id:character.id,name:character.name} : null; save(record); render(); return;
+      }
       if (control.dataset.planField === 'model-choice') {
         const record = current(); if (!record || !canEdit() || !Object.hasOwn(models,control.value)) return;
         selectedModels.set(record.id,control.value); render(); return;
@@ -436,11 +493,34 @@
       const record = current(); if (!record) return;
       const action = control.dataset.planAction;
       const state = uiState(record.id);
+      if (action === 'open-character') {
+        const entry = record.storyPlanning.worldEntries.find(item => item.id === control.dataset.id); if (entry?.characterLink) openCharacter?.(entry.characterLink.id); return;
+      }
+      if (action === 'create-character' && canEdit()) {
+        const entry = record.storyPlanning.worldEntries.find(item => item.id === control.dataset.id && item.type === 'character'); if (!entry?.title.trim()) return;
+        const character = createCharacter?.(entry.title.trim()); if (character) { entry.characterLink = {id:character.id,name:character.name}; save(record); render(); } return;
+      }
+      if (action === 'map-connect-start') { if (canEdit()) { state.connecting = control.dataset.id; state.selected = control.dataset.id; render(); } return; }
+      if (action === 'map-connect-cancel') { state.connecting = ''; render(); return; }
+      if (action === 'map-layout' && canEdit()) {
+        state.layoutUndo.push(JSON.parse(JSON.stringify(record.storyPlanning.mapLayout))); record.storyPlanning.mapLayout.mode = record.storyPlanning.mapLayout.mode === 'free' ? 'auto' : 'free'; save(record); render(); return;
+      }
+      if (action === 'map-reset' && canEdit()) {
+        state.layoutUndo.push(JSON.parse(JSON.stringify(record.storyPlanning.mapLayout))); record.storyPlanning.mapLayout.positions = []; save(record); render(); return;
+      }
+      if (action === 'map-undo' && canEdit()) {
+        const layout = state.layoutUndo.pop(); if (layout) { record.storyPlanning.mapLayout = layout; save(record); render(); } return;
+      }
+      if (action === 'map-remove-link' && canEdit()) {
+        const milestone = record.storyPlanning.milestones.find(item => item.id === control.dataset.targetId); if (!milestone) return;
+        milestone.dependsOn = milestone.dependsOn.filter(link => link.milestoneId !== control.dataset.id); save(record); render(); return;
+      }
       if (action === 'plan-view') {
         if (!['form','map'].includes(control.dataset.id)) return;
         state.view = control.dataset.id; render();
         [...element.querySelectorAll('[data-plan-action="plan-view"]')].find(item => item.dataset.id === state.view)?.focus({preventScroll:true}); return;
       }
+      if (action === 'select-map' && state.connecting) { connectMap(record,state.connecting,control.dataset.id); state.connecting = ''; state.selected = control.dataset.id; pendingMapReveal = control.dataset.id; render(); return; }
       if (action === 'select-map') {
         if (!record.storyPlanning.milestones.some(item => item.id === control.dataset.id)) return;
         state.selected = control.dataset.id; pendingMapReveal = control.dataset.id; render(); return;
@@ -520,7 +600,7 @@
         const target = [...element.querySelectorAll('[data-plan-field="title"]')].at(-1); target?.focus({preventScroll:true}); target?.scrollIntoView({block:'nearest'});
       }
     });
-    return {render};
+    return {render,openWorld:id => { const record = getRecord(); if (!record?.storyPlanning.worldEntries.some(item => item.id === id)) return; uiState(record.id).view = 'form'; pendingWorld = id; render(); }};
   }
   root.HeartspaceStoryPlanning = {normalize,mount};
 })(globalThis);

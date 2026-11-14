@@ -4,6 +4,8 @@
     const runner = runtime.createRunner(story);
     const byId = id => document.getElementById(id);
     const menu = byId('menu'), stage = byId('stage'), card = byId('card');
+    const gameViewport = media.viewport(story.viewport || story.sequences?.find(sequence => sequence.event_id === story.start_event_id)?.presentation?.viewport);
+    const viewport = media.createViewport(stage,{kind:'player'});
     const speaker = byId('speaker'), copy = byId('copy'), choices = byId('choices');
     const hint = byId('hint'), next = byId('next'), announcement = byId('announcement');
     const utility = byId('utility-dialog'), historyList = byId('history-list');
@@ -11,7 +13,7 @@
     let pauseDeadline = 0, pauseRemaining = null, returnFocus = null;
     let transcript = [], savedGame = null, storageAvailable = true, saveNotice = '';
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const scene = media.createScene(stage,{
+    const scene = media.createScene(stage,{characters:() => story.character_registry || [],
       reducedMotion:() => motionReduced(),
       onAudioIssue:message => { byId('media-status').textContent = message; },
       onImageIssue:message => { byId('media-status').textContent = message; }
@@ -108,12 +110,14 @@
     };
     const applyPresentation = (raw,character) => {
       const presentation = raw || {};
+      viewport.update({...presentation,viewport:gameViewport});
       scene.update(presentation,character);
       scene.setActive(playing && !utility.open && !document.hidden);
       const color = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || '') ? value : fallback;
       stage.dataset.model = ['panel','subtitle','card'].includes(presentation.model) ? presentation.model : 'panel';
       stage.dataset.position = ['top','center','bottom'].includes(presentation.position) ? presentation.position : 'bottom';
       Object.entries({ accent:color(presentation.accent,'#0c8ce9'), surface:color(presentation.surface,'#10161d'), ink:color(presentation.text,'#edf3f7'), scene:color(presentation.scene,'#111923') }).forEach(([key,value]) => stage.style.setProperty(`--${key}`,value));
+      if (presentation.dialogue_visible === false) return 0;
       return preferences.speed !== 'story' ? Number(preferences.speed) : [0,12,24,42].includes(Number(presentation.speed)) ? Number(presentation.speed) : 24;
     };
     const schedulePause = duration => {
@@ -140,7 +144,7 @@
       if (!node || ['pause','signal'].includes(node.type)) return null;
       return {
         speaker:node.type === 'dialogue' ? (story.character_registry || []).find(character => character.id === node.character_id)?.name || node.character || 'Diálogo' : node.type === 'choice' ? 'Escolha' : 'Narração',
-        text:node.type === 'variation' ? runtime.resolveVariation(node,runner.state.variables)?.text || '' : node.type === 'choice' ? node.prompt || 'Escolha uma opção' : node.text || '',
+        text:node.type === 'variation' ? runtime.resolveVariation(node,runner.state.variables)?.text || '' : node.type === 'choice' ? (node.prompt || '').trim() : node.text || '',
         choice:node.type === 'choice' && Number.isInteger(optionIndex) ? node.options?.[optionIndex]?.text || '' : ''
       };
     };
@@ -158,7 +162,8 @@
       lines.forEach(line => {
         const row = document.createElement('li');
         const name = document.createElement('strong'); name.textContent = line.speaker;
-        const text = document.createElement('p'); text.textContent = line.text; row.append(name,text);
+        row.append(name);
+        if (line.text) { const text = document.createElement('p'); text.textContent = line.text; row.append(text); }
         if (line.choice) { const choice = document.createElement('p'); choice.className = 'history-choice'; choice.textContent = `Você escolheu: ${line.choice}`; row.append(choice); }
         historyList.append(row);
       });
@@ -210,11 +215,11 @@
       while (runner.current().node?.type === 'signal') runner.advance();
       const { sequence, node, missing } = runner.current();
       persistProgress();
-      if (node?.type !== 'pause') sceneCharacter = node?.type === 'dialogue' ? (story.character_registry || []).find(character => character.id === node.character_id) : null;
-      const speed = applyPresentation(sequence?.presentation,sceneCharacter);
+      sceneCharacter = media.resolveSceneCharacter(sequence?.nodes || [],runner.state.index,story.character_registry || []);
+      const speed = applyPresentation(media.resolveScene(sequence?.presentation,sequence?.nodes || [],runner.state.index),sceneCharacter);
       if (node?.type === 'pause') {
         choices.replaceChildren(); choices.hidden = true; selectedChoice = 0;
-        if (!copy.textContent) copy.textContent = '…';
+        if (!copy.textContent) { copy.hidden = false; copy.textContent = '…'; }
         hint.textContent = 'Pausa · Enter ou clique para continuar';
         next.hidden = false; next.disabled = false;
         const duration = Math.max(0, Math.min(60000, Number(node.duration_ms) || 0));
@@ -222,10 +227,11 @@
         return;
       }
       choices.replaceChildren(); choices.hidden = true; selectedChoice = 0;
-      speaker.textContent = ''; copy.removeAttribute('aria-hidden');
+      speaker.textContent = ''; copy.hidden = false; copy.removeAttribute('aria-hidden');
       card.dataset.narration = String(node?.type === 'narration' || node?.type === 'variation');
       next.hidden = false; next.disabled = false; hint.textContent = '';
       if (!node) {
+        stage.dataset.dialogueVisible = 'true';
         speaker.textContent = missing ? 'História indisponível' : 'Fim';
         copy.textContent = missing ? 'Não foi possível encontrar esta parte da história.' : 'Você chegou ao fim deste caminho.';
         next.hidden = true;
@@ -240,7 +246,7 @@
         if (node.expression) speaker.textContent += `${speaker.textContent ? ' · ' : ''}${node.expression}`;
       } else if (node.type === 'variation') text = runtime.resolveVariation(node, runner.state.variables)?.text || '';
       if (node.type === 'choice') {
-        text = node.prompt || 'Escolha uma opção'; next.hidden = true;
+        text = (node.prompt || '').trim(); copy.hidden = !text; next.hidden = true;
         (node.options || []).forEach((option,index) => {
           const button = document.createElement('button'); button.type = 'button';
           button.textContent = `${index + 1}. ${option.text || 'Continuar'}`;

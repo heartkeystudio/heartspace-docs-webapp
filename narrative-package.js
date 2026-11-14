@@ -53,7 +53,18 @@
       return {name:asset.name,mime:asset.mime,src:seen.get(asset.data)};
     };
     (packed.sequences || []).forEach(sequence => {
-      sequence.presentation = {...sequence.presentation,background:add(sequence.presentation?.background,'image'),music:add(sequence.presentation?.music,'audio')};
+      const presentation = media.presentation(sequence.presentation);
+      const mapAssets = (state,partial = false) => {
+        if (!partial || Object.prototype.hasOwnProperty.call(state,'background')) state.background = add(state.background,'image');
+        if (!partial || Object.prototype.hasOwnProperty.call(state,'music')) state.music = add(state.music,'audio');
+      };
+      mapAssets(presentation);
+      presentation.elements.forEach(item => { item.asset = add(item.asset,'image'); });
+      presentation.cues.forEach(cue => {
+        mapAssets(cue.settings,true);
+        cue.set.forEach(patch => { if (Object.prototype.hasOwnProperty.call(patch,'asset')) patch.asset = add(patch.asset,'image'); });
+      });
+      sequence.presentation = presentation;
     });
     (packed.character_registry || []).forEach(character => { character.portrait = add(character.portrait,'image'); });
     files.unshift({name:'index.html',data:root.HeartspaceNarrativeHtml.buildHtml(packed)});

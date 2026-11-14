@@ -361,14 +361,14 @@
     .content th { color:#ececec; background:#ffffff08; font-weight:600; }
     .content td:empty::after { content:'\00a0'; }
     .content th:empty::before { color:#747474; content:attr(data-placeholder); pointer-events:none; }
-    .mermaid-block { position:relative; margin:20px 0; overflow:visible; border:1px solid #ffffff18; border-radius:10px; background:#191919; }
+    .mermaid-block { position:relative; margin:20px 0; overflow:visible; border:0; border-radius:0; background:transparent; }
     .mermaid-action { position:absolute; z-index:3; top:8px; right:8px; min-height:28px; padding:0 10px; border:1px solid #ffffff22; border-radius:6px; color:#e6e6e6; background:#171717eF; box-shadow:0 5px 18px #00000088; opacity:0; pointer-events:none; transform:translateY(-3px); transition:opacity .12s ease,transform .12s ease; }
     .mermaid-block:hover > .mermaid-action,.mermaid-block:focus-within > .mermaid-action,.mermaid-action:focus-visible { opacity:1; pointer-events:auto; transform:translateY(0); }
     .mermaid-source { margin:0; padding:14px; overflow:auto; color:#cfeaff; background:#151515; white-space:pre-wrap; outline:none; }
     .mermaid-source code { display:block; padding:0; border:0; color:inherit; background:transparent; white-space:inherit; }
-    .mermaid-preview { max-width:100%; padding:20px; overflow:auto; background:#171717; }
+    .mermaid-preview { max-width:100%; padding:20px; overflow:auto; background:transparent; }
     .mermaid-preview[hidden],.mermaid-source[hidden],.mermaid-status[hidden] { display:none; }
-    .mermaid-preview svg { display:block; max-width:100%; height:auto; margin:auto; }
+    .mermaid-preview svg { display:block; max-width:100%; height:auto; margin:auto; background:transparent!important; }
     .mermaid-preview foreignObject { overflow:visible; }
     .mermaid-preview .nodeLabel { overflow:visible; white-space:normal; }
     .mermaid-preview .docs-mermaid-label { box-sizing:border-box; width:210px; max-width:210px; overflow-wrap:anywhere; white-space:normal; text-align:left; }
@@ -515,9 +515,11 @@
     body.reading-mode .page[data-narrative-profile="prose"] .narrative-block[data-narrative-type="dialogue"]:not(.narrative-inline) > .narrative-text:not(:empty)::before { content:'— '; }
     body.reading-mode .narrative-block[data-canonical-visible="false"] { display:none!important; }
     body.reading-mode .narrative-block[data-narrative-type="choice"] > .narrative-choice-prompt,body.reading-mode .narrative-block[data-narrative-type="choice"] > .narrative-choice-options { display:inline; }
+    .measuring-reading .narrative-block[data-choice-prompt-empty="true"] > .narrative-choice-prompt,body.reading-mode .narrative-block[data-choice-prompt-empty="true"] > .narrative-choice-prompt,body.reading-mode .narrative-block[data-choice-prompt-empty="true"] > .narrative-reading-label { display:none!important; }
     body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option { display:none; padding:0; }
     body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option[data-canonical="true"] { display:inline; }
     body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-option[data-canonical="true"]::before { position:static; content:' — '; }
+    body.reading-mode .narrative-block[data-choice-prompt-empty="true"] .narrative-choice-option[data-canonical="true"]::before { content:none; }
     body.reading-mode .narrative-block[data-narrative-type="choice"] .narrative-choice-text { display:inline; color:#dadada; }
     body.reading-mode .narrative-inline { padding:0; background:transparent; }
     body.reading-mode .toolbar > button,body.reading-mode .toolbar > .tool-separator,body.reading-mode .toolbar > .page-settings { display:none; }
@@ -1130,7 +1132,7 @@
     .project-library-open[aria-expanded="true"] { background:#17344b; border-color:#0c8ce977; color:#83c8ff; }
     .project-library-open:focus-visible { outline-offset:-3px; }
     .project-library-open svg { display:block; }
-    body[data-work-area] .editor-area { scrollbar-gutter:stable; }
+    body[data-work-area] .editor-area { scrollbar-gutter:auto; }
 
     /* Task navigation belongs to the header; content starts directly below it. */
     .topbar-content { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:16px; }
@@ -1146,7 +1148,7 @@
     .work-area-utilities,#work-area-story-actions { display:grid; width:100%; gap:2px; }
     .work-area-utilities #work-area-split[aria-pressed="true"] { background:#ffffff0c; color:#ebebeb; }
     /* Keep both outside annotations and the paper inside the scrollable footprint. */
-    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max-content; min-width:max(calc(100% / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-gutter) + var(--book-gutter))); max-width:none; padding-inline:var(--book-gutter); }
+    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max(calc(var(--editor-viewport-width,0px) / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-gutter) + var(--book-gutter))); min-width:0; max-width:none; margin-inline:0; padding-inline:var(--book-gutter); }
     @media(max-width:1200px) {
       .topbar-content { grid-template-columns:minmax(0,1fr) auto auto; gap:10px; padding-inline:12px; }
       .topbar-left .crumb:not(:last-child) { display:none; }
@@ -1305,9 +1307,6 @@
     .story-plan-notice { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px; background:#ffffff06; color:#aaa; font-size:12px; }
     @media(max-width:800px) { body[data-work-area] .story-planning { padding:12px; } .story-plan-milestone { padding:12px; } }
 
-    body[data-work-area="history"]:has(#narrative-planning:not([hidden])) .narrative-panel { grid-template-rows:auto auto minmax(0,1fr); }
-    body[data-work-area="history"]:has(#narrative-planning:not([hidden])) .narrative-tabs { grid-row:2; max-width:100%; }
-    body[data-work-area="history"] #narrative-planning { grid-row:3; }
 
     .tree-entry:has(> .chapter-row) { display:flex; flex-direction:column; min-width:0; }
     .chapter-row { display:flex; align-items:center; min-width:0; }
@@ -1394,6 +1393,8 @@
     .story-plan-map-relations { display:grid; gap:7px; list-style:none; margin:0; padding:0; color:#999; font-size:12px; line-height:1.6; }
     .story-plan-map-relations button { max-width:100%; text-align:left; overflow-wrap:anywhere; }
     .document-ambience { position:absolute; top:0; bottom:0; left:calc(-1 * var(--ambience-width,48px)); width:var(--ambience-width,48px); pointer-events:none; background-repeat:repeat; border-radius:5px 0 0 5px; overflow:hidden; mask-image:repeating-linear-gradient(to bottom,#000 0,#000 var(--book-sheet-display-height),transparent var(--book-sheet-display-height),transparent var(--book-page-pitch)); }
+    .document-ambience-segment { position:absolute; right:0; overflow:hidden; background-repeat:repeat; border-radius:4px 0 0 4px; }
+    .document-ambience-segment > .document-ambience-label { max-height:calc(100% - 40px); }
     .document-ambience-label { display:block; position:absolute; top:24px; left:50%; transform:translateX(-50%); writing-mode:vertical-rl; max-height:calc(var(--book-sheet-display-height) - 48px); overflow:hidden; color:#fff; text-shadow:0 1px 4px #000; font-size:11px; letter-spacing:.12em; line-height:1.5; }
     #ambience-settings details > summary { color:#bbb; font-size:12px; cursor:pointer; }
     #ambience-settings details > label { margin-top:12px; }
@@ -1408,9 +1409,215 @@
     .ambience-texture-actions[hidden] { display:none; }
     .ambience-texture-actions button { min-height:30px; padding:5px 9px; border:1px solid #ffffff20; border-radius:5px; color:#ccc; background:#ffffff05; font:inherit; font-size:11px; }
     .ambience-preview { height:62px; margin-top:14px; padding:12px; border-radius:5px; background-repeat:repeat; color:white; text-shadow:0 1px 4px #000; font-size:12px; overflow:hidden; overflow-wrap:anywhere; }
-    .localization-preview-page > .document-ambience { display:none!important; }
     @media print { .document-ambience { display:none!important; } }
+    .story-plan-map-cards > li { position:relative; }
+    .story-plan-map-stage.is-free { display:block; min-width:900px; padding:0; }
+    .story-plan-map-stage.is-free .story-plan-map-lane,.story-plan-map-stage.is-free .story-plan-map-cards { display:contents; }
+    .story-plan-map-stage.is-free .story-plan-map-lane > h4,.story-plan-map-stage.is-free .story-plan-map-lane-empty { display:none; }
+    .story-plan-map-stage.is-free .story-plan-map-cards > li { position:absolute; width:264px; list-style:none; }
+    .story-planning .story-plan-map-drag,.story-planning .story-plan-map-connect { position:absolute; z-index:2; padding:0; width:26px; height:26px; min-height:26px; background:#303030; border-color:#ffffff28; color:#bbb; touch-action:none; user-select:none; }
+    .story-plan-map-drag { top:5px; right:6px; cursor:grab; }
+    .story-plan-map-connect { bottom:5px; right:6px; cursor:crosshair; }
+    .story-plan-map-node small { padding-right:22px; }
+    .is-connection-target > .story-plan-map-node { outline:2px solid #bbb; outline-offset:2px; }
+    .story-plan-map-draft { stroke:#bbb; stroke-width:2; stroke-dasharray:5 4; }
+    .story-plan-map-feedback { color:#aaa; font-size:12px; }
+    .story-plan-map-feedback:empty { display:none; }
+    .story-plan-map-unlink { margin-top:14px; color:#aaa; font-size:12px; }
+    .story-plan-map-unlink summary { cursor:pointer; }
+    .story-plan-map-unlink button { display:block; margin-top:7px; max-width:100%; }
+    .narrative-character-notes { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:6px; }
+    .narrative-character-notes button { max-width:100%; overflow-wrap:anywhere; }
+    .place-ambience-editor { padding:12px; border:1px solid #ffffff18; border-radius:5px; }
+    .place-ambience-editor > summary { color:#bbb; font-size:12px; cursor:pointer; }
+    .place-ambience-editor > label { margin-top:12px; }
+    .place-ambience-editor input[type=checkbox] { width:16px; height:16px; }
+    .place-ambience-editor input[type=color] { min-height:36px; }
+    .place-ambience-editor > button { margin:12px 6px 0 0; }
+    /* History already has its task title and writing navigation in the top bar. */
+    body[data-work-area="history"] .narrative-heading { display:none; }
+    body[data-work-area="history"] .narrative-panel { grid-template-rows:auto auto minmax(0,1fr); }
+    body[data-work-area="history"]:not(.narrative-panel-collapsed) .narrative-tabs { grid-row:1; max-width:100%; }
+    body[data-work-area="history"] .narrative-settings,body[data-work-area="history"] .narrative-insert-tools { grid-row:2; }
+    body[data-work-area="history"] .narrative-view { grid-row:3; }
+    body[data-work-area="history"]:has(#narrative-settings[hidden]) .narrative-panel { grid-template-rows:auto minmax(0,1fr); }
+    body[data-work-area="history"]:has(#narrative-settings[hidden]) .narrative-view { grid-row:2; }
+
+    /* Each child draws its own branch; the final branch ends at the row center. */
+    #folder-list,.folder-documents,.chapter-navigation { border-left:0; }
+    #folder-list > .folder-entry::after { content:''; position:absolute; left:-10px; top:0; bottom:0; border-left:1px solid #ffffff18; pointer-events:none; }
+    #folder-list > .folder-entry:last-child::after { bottom:auto; height:18px; }
+    .folder-documents > * { position:relative; }
+    .folder-documents > *::before { content:''; position:absolute; top:17px; left:-17px; width:13px; border-top:1px solid #ffffff18; pointer-events:none; }
+    .folder-documents > *::after { content:''; position:absolute; top:0; bottom:0; left:-17px; border-left:1px solid #ffffff18; pointer-events:none; }
+    .folder-documents > :last-child::after { bottom:auto; height:17px; }
+    .folder-documents > .collection-planning-link { margin-bottom:0; }
+    .folder-documents > .collection-planning-link::before { top:13px; }
+    .folder-documents > .collection-planning-link:last-child::after { height:13px; }
+    .chapter-navigation { gap:0; padding-top:0; padding-bottom:0; }
+    .chapter-range-leaves { margin-left:10px; padding-left:8px; }
+    .chapter-navigation > *,.chapter-range-leaves > * { position:relative; }
+    .chapter-navigation > *::before,.chapter-range-leaves > *::before { content:''; position:absolute; left:-8px; top:12px; width:8px; border-top:1px solid #ffffff14; pointer-events:none; }
+    .chapter-navigation > *::after,.chapter-range-leaves > *::after { content:''; position:absolute; left:-8px; top:0; bottom:0; border-left:1px solid #ffffff14; pointer-events:none; }
+    .chapter-navigation > :last-child::after,.chapter-range-leaves > :last-child::after { bottom:auto; height:12px; }
+    .zoom-control select { width:82px; }
+    .editor-area { scrollbar-gutter:auto; }
+    #clean-writing-toggle[aria-pressed="true"] { color:#eee; background:#ffffff16; }
+    body.writing-clean .editor-area .authoring-decoration,body.writing-clean .editor-area .document-ambience,body.writing-clean .word-count,body.writing-clean[data-work-area="writing"] .project-tools-edge { display:none!important; }
+    body.writing-clean .editor-area .narrative-block:is([data-narrative-type="narration"],[data-narrative-type="choice"]) > .narrative-reading-label { display:none!important; }
+    body.writing-clean .editor-area .narrative-block[data-narrative-type="pause"]::before,body.writing-clean .editor-area [data-page-break="true"] > span { display:none!important; }
+    body.writing-clean .editor-area [data-page-break="true"] { border-color:transparent; }
+    body.writing-clean .editor-area .narrative-inline { background:transparent; }
+    body.writing-clean .editor-area .outline-jump-target { animation:none; }
+    body[data-work-area="translation"] #narrative-dialog .narrative-heading { display:none; }
+    body[data-work-area="translation"] #narrative-dialog .narrative-panel { grid-template-rows:minmax(0,1fr); row-gap:0; }
+    body[data-work-area="translation"] #narrative-localization { grid-row:1; padding:12px; gap:8px; }
+    body[data-work-area="translation"] #narrative-localization .localization-toolbar { display:flex; flex-wrap:nowrap; align-items:end; gap:6px; }
+    body[data-work-area="translation"] #narrative-localization .localization-toolbar > label { flex:1 1 100px; max-width:260px; min-width:0; }
+    body[data-work-area="translation"] #narrative-localization .localization-toolbar > button,body[data-work-area="translation"] #narrative-localization .localization-toolbar > details { flex:0 0 auto; }
+    body[data-work-area="translation"] #narrative-localization .localization-toolbar :is(button,summary) { font-size:12px; padding-inline:8px; white-space:nowrap; }
+    body[data-work-area="translation"] #narrative-localization .localization-review-tools { grid-template-columns:minmax(0,1fr); }
+    body[data-work-area="translation"] #narrative-localization .localization-progress { margin:0; }
+    .localization-preview-banner { flex-wrap:wrap; overflow-wrap:anywhere; }
+    body[data-work-area="translation"] #narrative-dialog .narrative-panel { padding:0; gap:0; }
+    body[data-work-area="translation"] #narrative-localization { padding:12px 16px; border:0; border-radius:0; background:transparent; }
+    body[data-work-area="translation"] #localization-list { padding:0; }
+    body[data-work-area="translation"] #localization-list .localization-row { margin:0; padding:14px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; }
+    body[data-work-area="translation"] #localization-list .localization-row:first-child { padding-top:8px; }
+    .scene-screen-settings { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; min-width:0; margin:0; padding:10px; border:1px solid var(--line); border-radius:7px; }
+    .scene-moment-controls { border:0; border-top:1px solid var(--line); border-radius:0; padding:12px 0; }
+    .scene-moment-controls > div { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px; }
+    .scene-moment-controls button { min-height:30px; padding:5px 8px; border:1px solid #ffffff20; border-radius:5px; background:#ffffff08; color:#ccc; font:inherit; font-size:11px; cursor:pointer; }
+    .scene-moment-controls button:disabled { opacity:.4; cursor:default; }
+    .scene-moment-controls output { line-height:1.5; }
+    .scene-screen-settings legend { padding:0 4px; color:#bcbcbc; font-size:12px; }
+    .scene-screen-settings > label:first-of-type,.scene-screen-settings output,.scene-screen-settings .scene-safe-toggle { grid-column:1 / -1; }
+    .scene-screen-settings output { color:#929292; font-size:11px; }
+    .scene-screen-settings label.scene-safe-toggle { display:flex; align-items:center; gap:8px; font-size:11px; }
+    .scene-screen-settings .scene-safe-toggle input { width:16px; height:16px; min-height:0; margin:0; accent-color:#a7a7a7; }
+    .scene-custom-size[hidden] { display:none!important; }
+    body[data-work-area] .scene-viewport[data-scene-host="sample"][data-scene-fixed="true"] { grid-column:1; grid-row:1; }
+    @container production-panel (max-width:720px) {
+      body[data-work-area] .scene-viewport[data-scene-host="sample"][data-scene-fixed="true"] { flex:1 0 280px; order:0; height:auto; min-height:280px; }
+    }
+    .story-plan-context { display:flex; align-items:center; gap:10px; min-width:0; }
+    .story-plan-context > h3 { overflow-wrap:anywhere; }
+    .story-planning .story-plan-help-toggle { display:grid; place-items:center; flex:none; width:24px; height:24px; min-height:24px; padding:0; border-radius:50%; color:#aaa; }
+    .story-plan-help { margin:0 0 18px; padding:12px 14px; border:1px solid #ffffff18; border-radius:5px; background:#ffffff03; }
+    .story-plan-help[hidden] { display:none; }
+    .story-plan-help p { margin:0; color:#aaa; font-size:12px; line-height:1.7; }
+    .story-plan-help p + p { margin-top:8px; }
     .story-plan-guidance { margin:0; color:#929292; font-size:12px; line-height:1.6; }
+    /* Sequence map: authored routes on a movable canvas. */
+    body[data-work-area] #narrative-map:not([hidden]),#narrative-map:not([hidden]) { display:block; grid-template-columns:none; padding:0; overflow:hidden; background:#141414; max-height:none; min-height:0; }
+    .sequence-graph { display:flex; flex-direction:column; height:100%; min-height:280px; min-width:0; color:#c7c7c7; }
+    .sequence-graph-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:10px; border-bottom:1px solid #ffffff12; background:#191919; }
+    .sequence-graph button,.sequence-graph select { min-height:30px; border:1px solid #ffffff20; border-radius:5px; background:#212121; color:#c7c7c7; font:inherit; font-size:12px; }
+    .sequence-graph button { padding:5px 9px; cursor:pointer; }
+    .sequence-graph button:hover { background:#2b2b2b; color:#eee; }
+    .sequence-graph button:disabled { opacity:.45; cursor:default; }
+    .sequence-graph :is(button,select):focus-visible,.sequence-graph-viewport:focus-visible { outline:2px solid #b5b5b5; outline-offset:2px; }
+    .sequence-graph-context { margin-right:auto; max-width:240px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:12px; }
+    .sequence-graph-toolbar output { min-width:40px; text-align:center; font-size:11px; }
+    .sequence-graph-help { margin:0; padding:10px 14px; color:#aaa; background:#1d1d1d; font-size:12px; line-height:1.6; }
+    .sequence-graph-body { display:grid; grid-template-columns:minmax(0,1fr) 270px; flex:1; min-height:0; min-width:0; }
+    .sequence-graph-viewport { position:relative; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; cursor:grab; touch-action:none; background-color:#111; background-image:radial-gradient(#ffffff13 1px,transparent 1px); background-size:20px 20px; }
+    .sequence-graph-viewport[data-dragging="true"] { cursor:grabbing; user-select:none; }
+    .sequence-graph-spacer { position:relative; }
+    .sequence-graph-stage { position:absolute; top:0; left:0; transform-origin:0 0; }
+    .sequence-graph-lines { position:absolute; top:0; left:0; overflow:visible; pointer-events:none; }
+    .sequence-graph-line { stroke:#777; stroke-width:1.7; }
+    .sequence-graph-line[data-related="true"] { stroke:#b7b7b7; stroke-width:2.2; }
+    .sequence-graph-line[data-selected="true"] { stroke:#e1bc7a; stroke-width:2.8; }
+    .sequence-graph-line[data-dim="true"] { opacity:.2; }
+    .sequence-graph-hit { stroke:transparent; stroke-width:16; pointer-events:stroke; cursor:pointer; }
+    .sequence-graph-card { position:absolute; width:236px; height:154px; display:flex; flex-direction:column; gap:8px; padding:12px; box-sizing:border-box; border:1px solid #444; border-radius:7px; background:#222; overflow:hidden; cursor:default; }
+    .sequence-graph-card[data-selected="true"] { border-color:#aaa; background:#2a2a2a; }
+    .sequence-graph-card[data-dim="true"] { opacity:.35; }
+    .sequence-graph-card[data-missing="true"] { border-style:dashed; }
+    .sequence-graph-card[data-external="true"] { background:#1c1c1c; }
+    .sequence-graph .sequence-graph-handle { min-height:22px; padding:0; width:100%; border:0; background:transparent; text-align:left; font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:move; touch-action:none; }
+    .sequence-graph-chapter { display:block; margin:0; color:#999; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sequence-graph-preview { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:0; font-size:12px; line-height:1.5; color:#aaa; }
+    .sequence-graph-count { margin-top:auto; color:#999; font-size:10px; }
+    .sequence-graph-warning { color:#d6b47d; font-size:11px; }
+    .sequence-graph-inspector { padding:16px; overflow:auto; min-height:0; min-width:0; border-left:1px solid #ffffff15; background:#191919; cursor:default; }
+    .sequence-graph-inspector h3 { margin:0 0 8px; font-size:14px; overflow-wrap:anywhere; }
+    .sequence-graph-id { display:block; margin:10px 0; font-size:10px; color:#929292; overflow-wrap:anywhere; }
+    .sequence-graph-excerpt,.sequence-graph-note { font-size:12px; line-height:1.65; color:#aaa; overflow-wrap:anywhere; white-space:pre-wrap; }
+    .sequence-graph-actions { display:flex; flex-wrap:wrap; gap:6px; }
+    .sequence-graph-route { display:grid; gap:9px; padding:14px 0; margin-top:12px; border-top:1px solid #ffffff18; }
+    .sequence-graph-route[data-selected="true"] { border-top-color:#c7a367; }
+    .sequence-graph-route > strong { font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+    .sequence-graph-route > small { color:#aaa; font-size:11px; }
+    .sequence-graph-route label { display:grid; gap:5px; color:#999; font-size:11px; }
+    .sequence-graph-route select { width:100%; min-width:0; padding:5px; }
+    .sequence-graph-feedback { margin:0; padding:0 12px; font-size:11px; color:#aaa; }
+    .sequence-graph-feedback:not(:empty) { padding:8px 12px; border-top:1px solid #ffffff12; }
+    @media (max-width:900px) { .sequence-graph-body { grid-template-columns:minmax(0,1fr) 230px; } .sequence-graph-context { max-width:150px; } }
+    @media (max-width:650px) { .sequence-graph-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(180px,1fr) minmax(130px,35%); } .sequence-graph-inspector { border-left:0; border-top:1px solid #ffffff15; } .sequence-graph-context { flex-basis:100%; max-width:none; } }
+    .sequence-graph-ports { display:flex; justify-content:center; gap:4px; min-height:32px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+    .sequence-graph .sequence-graph-ports button { flex:0 0 auto; min-height:24px; height:24px; padding:2px 7px; font-size:11px; touch-action:none; cursor:crosshair; }
+    .sequence-graph-ports button[aria-pressed="true"] { border-color:#bda77f; background:#373127; }
+    .sequence-graph-card:has(.sequence-graph-ports) .sequence-graph-preview { -webkit-line-clamp:1; }
+    .sequence-graph-card[data-connectable="true"] { border-style:dashed; opacity:1; }
+    .sequence-graph-card[data-connection-target="true"] { border-color:#d4bb8f; background:#34302a; }
+    .sequence-graph-draft { stroke:#d4bb8f; stroke-width:2; stroke-dasharray:6 4; pointer-events:none; }
+    .sequence-graph-create { width:min(430px,calc(100vw - 32px)); max-height:calc(100vh - 48px); overflow:auto; padding:22px; border:1px solid #484848; border-radius:10px; background:#202020; color:#ddd; }
+    .sequence-graph-create::backdrop { background:#0009; }
+    .sequence-graph-create form,.sequence-graph-create label { display:grid; gap:9px; }
+    .sequence-graph-create form { gap:16px; }
+    .sequence-graph-create h3,.sequence-graph-create p { margin:0; }
+    .sequence-graph-create label { color:#aaa; font-size:12px; }
+    .sequence-graph-create input,.sequence-graph-create select { width:100%; min-width:0; padding:8px; border:1px solid #ffffff26; border-radius:5px; background:#161616; color:#ddd; font:inherit; }
+    .sequence-graph [hidden] { display:none!important; }
+    .sequence-graph-canvas { position:relative; display:grid; min-width:0; min-height:0; overflow:hidden; }
+    .sequence-graph-canvas > .sequence-graph-viewport { grid-area:1 / 1; }
+    .sequence-graph-filters { display:flex; flex-wrap:wrap; align-items:end; gap:9px; padding:10px; border-bottom:1px solid #ffffff15; background:#191919; }
+    .sequence-graph-filters label { display:grid; gap:5px; flex:1 1 150px; color:#aaa; font-size:11px; min-width:0; }
+    .sequence-graph-filters input,.sequence-graph-filters select { width:100%; min-width:0; min-height:30px; padding:5px 7px; border:1px solid #ffffff20; border-radius:5px; background:#151515; color:#ccc; font:inherit; font-size:12px; }
+    .sequence-graph-filter-count { flex-basis:100%; color:#999; font-size:11px; }
+    .sequence-graph-toolbar button[data-active="true"] { border-color:#aaa; }
+    .sequence-graph-card[data-filter-context="true"] { opacity:.45; border-style:dashed; }
+    .sequence-graph-card[data-filter-context="true"][data-selected="true"] { opacity:.85; }
+    .sequence-graph-filter-empty { position:absolute; top:16px; left:16px; max-width:calc(100% - 32px); padding:12px; border:1px solid #444; border-radius:6px; background:#222; color:#bbb; font-size:12px; }
+    .sequence-graph-filter-empty p { margin:0 0 10px; }
+    .sequence-graph-minimap { position:absolute; right:12px; bottom:12px; width:180px; height:118px; overflow:hidden; border:1px solid #555; border-radius:6px; background:#191919ed; box-shadow:0 3px 12px #0004; }
+    .sequence-graph-minimap svg { display:block; width:100%; height:100%; cursor:crosshair; touch-action:none; }
+    .sequence-graph-minimap svg:focus-visible { outline:2px solid #ccc; outline-offset:-3px; }
+    .sequence-graph-minimap g:first-child path { stroke:#777; stroke-width:.7; }
+    .sequence-graph-minimap g:nth-child(2) rect { fill:#777; }
+    .sequence-graph-minimap g:nth-child(2) rect[data-selected="true"] { fill:#ddd; }
+    .sequence-graph-minimap g:nth-child(2) rect[data-context="true"] { fill:#444; }
+    .sequence-graph-miniview { fill:#ffffff12; stroke:#ddd; stroke-width:1.2; pointer-events:none; }
+    @media (max-width:650px) { .sequence-graph-minimap { width:125px; height:84px; right:8px; bottom:8px; } .sequence-graph-filters label { flex-basis:120px; } }
+    .sequence-graph-card[data-visited="true"] { border-color:#847252; }
+    .sequence-graph-card[data-playing="true"] { border-color:#e0bf7f; background:#302a20; opacity:1; }
+    .sequence-graph-card[data-playing="true"] .sequence-graph-handle::before { content:'▶ '; color:#e0bf7f; }
+    .sequence-graph-line[data-traversed="true"] { stroke:#dfc18c; stroke-width:3; opacity:1; }
+    .sequence-graph-line[data-blocked="true"] { stroke-dasharray:4 5; opacity:.3; }
+    .sequence-graph-minimap g:first-child path[data-traversed="true"] { stroke:#dfc18c; stroke-width:1.4; }
+    .sequence-graph-minimap g:nth-child(2) rect[data-visited="true"] { fill:#9b835b; }
+    .sequence-graph-minimap g:nth-child(2) rect[data-playing="true"] { fill:#f0d6a6; }
+    .sequence-graph-sim-follow { display:flex; align-items:center; gap:7px; margin:14px 0; font-size:12px; color:#aaa; }
+    .sequence-graph-sim-follow input { margin:0; width:auto; }
+    .sequence-graph-sim-content { display:grid; gap:12px; padding:13px; margin:14px 0; border:1px solid #ffffff20; border-radius:6px; background:#202020; }
+    .sequence-graph-sim-content p { margin:0; font-size:13px; line-height:1.65; overflow-wrap:anywhere; white-space:pre-wrap; }
+    .sequence-graph-sim-content > strong { font-size:12px; color:#d7c29b; }
+    .sequence-graph-sim-content button { text-align:left; line-height:1.5; }
+    .sequence-graph-sim-content button small { display:block; color:#aaa; font-size:10px; }
+    .sequence-graph-sim-details { padding:10px 0; border-top:1px solid #ffffff15; font-size:12px; color:#aaa; }
+    .sequence-graph-sim-details summary { cursor:pointer; }
+    .sequence-graph-sim-details p,.sequence-graph-sim-details li { overflow-wrap:anywhere; line-height:1.6; }
+    .sequence-graph-sim-details ol { padding-left:20px; }
+    .sequence-graph-choice-create { width:min(550px,calc(100vw - 32px)); }
+    .sequence-graph-choice-rows { display:grid; gap:13px; }
+    .sequence-graph-choice-row { display:grid; gap:10px; min-width:0; margin:0; padding:12px; border:1px solid #ffffff22; border-radius:6px; }
+    .sequence-graph-choice-row legend { padding:0 5px; color:#bbb; font-size:12px; }
+    .sequence-graph-choice-row > button { justify-self:start; }
+    .sequence-graph-choice-create textarea { width:100%; min-height:76px; resize:vertical; padding:8px; border:1px solid #ffffff26; border-radius:5px; background:#161616; color:#ddd; font:inherit; font-size:13px; }
+    .sequence-graph-choice-group { margin-top:18px; padding-top:14px; border-top:1px solid #ffffff20; }
+    .sequence-graph-choice-group h4 { margin:0; font-size:12px; color:#ddd; }
   </style>
 </head>
 <body data-work-area="writing">
@@ -1423,7 +1630,7 @@
           <div class="work-area-switcher" role="group" aria-label="Tarefa atual"><button type="button" data-work-area="writing" aria-pressed="true"><img src="./assets/docs/paper.svg" alt=""><span>Escrever</span></button><button type="button" data-work-area="history" aria-pressed="false"><img src="./assets/docs/storybook.svg" alt=""><span>História</span></button><button type="button" data-work-area="translation" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 3v2m4 0c-1 6-5 9-10 11m2-8c1 3 4 6 8 8m1 5 4-11 4 11m-6.5-4h5"/></svg><span>Tradução</span></button><button type="button" data-work-area="scene" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5m8-5v5m-6 4 5 2-5 3z"/></svg><span>Cena</span></button></div>
           <span class="work-area-context" id="work-area-context">Escrever</span>
         </nav>
-        <div class="topbar-right"><span class="save-state icon-tooltip" id="save-state" tabindex="0" data-tooltip="Salvo neste dispositivo" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group work-area-utilities" role="group" aria-label="Área de trabalho"><button type="button" id="work-area-issues" title="Ver pendências do projeto">Pendências</button><button type="button" id="work-area-split" aria-pressed="false" hidden>Dividir área</button><div id="work-area-story-actions" hidden></div></div><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Produção</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
+        <div class="topbar-right"><span class="save-state icon-tooltip" id="save-state" tabindex="0" data-tooltip="Salvo neste dispositivo" title="Salvo neste dispositivo" aria-label="Salvo neste dispositivo"><span class="save-dot"></span>Salvo</span><span class="transfer-status" id="transfer-status" role="status" aria-live="polite"></span><span class="document-presence" id="document-presence" title="Pessoas neste documento"></span><span class="document-activity" id="document-activity" title="Atividade do documento"></span><details class="actions-menu" id="actions-menu"><summary aria-label="Mais ações do documento">Ações</summary><div class="actions-menu-popover"><div class="actions-menu-group work-area-utilities" role="group" aria-label="Área de trabalho"><button type="button" id="work-area-issues" title="Ver pendências do projeto">Pendências</button><button type="button" id="work-area-split" aria-pressed="false" hidden>Dividir área</button><div id="work-area-story-actions" hidden></div></div><div class="actions-menu-group" role="group" aria-label="Estrutura do documento"><button type="button" id="narrative-open">Produção</button><button type="button" id="save-template">Salvar como template</button></div><div class="actions-menu-group" role="group" aria-label="Arquivo e publicação"><button type="button" id="sync-refresh" hidden>Atualizar</button><button type="button" id="import-markdown">Importar .md</button><button type="button" id="export-markdown">Exportar .md</button><button type="button" class="publish-menu-item">Publicar no HeartSpace</button></div><div class="actions-menu-group" role="group" aria-label="Sessão"><button type="button" id="sign-out" hidden>Deslogar</button></div></div></details><input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="top-button icon-only icon-tooltip" type="button" id="clean-writing-toggle" aria-pressed="false" aria-label="Ativar escrita limpa" data-tooltip="Escrita limpa" title="Ocultar indicadores e decorações da folha"><img src="./assets/docs/writing_clean.svg" alt=""></button><button class="top-button icon-only icon-tooltip" type="button" id="focus-toggle" aria-pressed="false" aria-label="Ativar modo Zen" data-tooltip="Modo Zen"><img src="./assets/docs/fitscreen.svg" alt=""></button></div>
       </div>
     </header>
     <aside class="sidebar" id="sidebar" aria-label="Navegação do Docs">
@@ -1507,7 +1714,7 @@
         <aside class="document-outline" id="document-outline" aria-label="Estrutura do documento" hidden><header class="document-outline-header"><strong>Estrutura</strong><button class="document-outline-close" id="outline-close" type="button" aria-label="Ocultar estrutura">×</button></header><nav class="document-outline-list" id="outline-list" aria-label="Atalhos para os títulos do documento"></nav></aside>
       </section>
       <button class="narrative-panel-launcher" id="narrative-panel-launcher" type="button" aria-label="Abrir central de produção" aria-controls="narrative-dialog" aria-expanded="false" title="Abrir central de produção">‹</button>
-      <div class="zoom-control" aria-label="Zoom da página"><button class="icon-tooltip" type="button" id="zoom-out" aria-label="Diminuir zoom" data-tooltip="Diminuir zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_out.svg" alt=""></button><select id="zoom-level" aria-label="Zoom da página" title="Zoom da página"><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100%</option><option value="110">110%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button class="icon-tooltip" type="button" id="zoom-in" aria-label="Aumentar zoom" data-tooltip="Aumentar zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_in.svg" alt=""></button></div><div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span></div>
+      <div class="zoom-control" aria-label="Zoom da página"><button class="icon-tooltip" type="button" id="zoom-out" aria-label="Diminuir zoom" data-tooltip="Diminuir zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_out.svg" alt=""></button><select id="zoom-level" aria-label="Zoom da página" title="Zoom da página"><option value="auto">Auto</option><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100%</option><option value="110">110%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button class="icon-tooltip" type="button" id="zoom-in" aria-label="Aumentar zoom" data-tooltip="Aumentar zoom"><img class="narrative-section-icon" src="./assets/docs/zoom_in.svg" alt=""></button></div><div class="bottom-status"><span class="word-count" id="word-count">0 palavras</span></div>
     </main>
     <aside class="writing-inspector" id="writing-inspector" aria-labelledby="writing-inspector-title" hidden>
       <header><h2 id="writing-inspector-title">Trecho</h2><button type="button" id="writing-inspector-close" aria-label="Fechar propriedades do trecho">×</button></header>
@@ -1517,8 +1724,6 @@
       <div class="narrative-resizer" id="narrative-resizer" role="separator" aria-label="Redimensionar painel de narrativa" aria-orientation="vertical" tabindex="0"></div>
     <section class="narrative-panel">
         <div class="narrative-heading"><h2 id="narrative-title">História</h2><div><button type="button" id="scene-settings-toggle" aria-expanded="false" aria-controls="narrative-presentation-form">Ajustes da cena</button><button type="button" id="narrative-collapse" aria-label="Voltar à escrita">Escrever</button><button type="button" id="narrative-close" hidden>Fechar</button></div></div>
-        <div class="narrative-settings" id="narrative-settings"><label class="sequence-context">Sequência<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add"><img src="./assets/docs/add.svg" alt="">Nova sequência</button><details class="sequence-properties"><summary>Propriedades</summary><div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir sequência</button></div></details></div>
-        <details class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><summary>Adicionar bloco</summary><div><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="variation">Variação</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div></details>
         <div class="narrative-tabs" role="tablist" aria-label="Visualização narrativa">
           <button type="button" id="narrative-sequence-tab" data-production-view="sequence" role="tab" aria-selected="true" aria-controls="narrative-sequence">Sequência</button>
           <button type="button" id="narrative-planning-tab" data-production-view="planning" role="tab" aria-selected="false" aria-controls="narrative-planning">Planejamento</button>
@@ -1530,17 +1735,21 @@
           <button type="button" id="narrative-validation-tab" data-production-view="validation" role="tab" aria-selected="false" aria-controls="narrative-validation"><img class="narrative-tab-icon" src="./assets/docs/list.svg" alt="">Validação</button>
           <button type="button" id="narrative-glossary-tab" data-production-view="glossary" role="tab" aria-selected="false" aria-controls="narrative-glossary-view">Glossário</button>
         </div>
+        <div class="narrative-settings" id="narrative-settings"><label class="sequence-context">Sequência<select id="narrative-sequence-select" aria-label="Sequência narrativa ativa"></select></label><button type="button" id="narrative-sequence-add"><img src="./assets/docs/add.svg" alt="">Nova sequência</button><details class="sequence-properties"><summary>Propriedades</summary><div><label>Nome<input id="narrative-sequence-title" type="text" autocomplete="off" placeholder="Encontro na floresta"></label><label>ID do evento<input id="narrative-event-id" type="text" spellcheck="false" autocomplete="off" placeholder="historia.primeiro_encontro"></label><span class="narrative-summary" id="narrative-summary">0 blocos</span><button class="narrative-sequence-delete" type="button" id="narrative-sequence-delete">Excluir sequência</button></div></details></div>
+        <details class="narrative-insert-tools" id="narrative-insert-tools" aria-label="Adicionar bloco narrativo"><summary>Adicionar bloco</summary><div><button type="button" data-insert-narrative="dialogue">Diálogo</button><button type="button" data-insert-narrative="narration">Narração</button><button type="button" data-insert-narrative="choice">Escolha</button><button type="button" data-insert-narrative="variation">Variação</button><button type="button" data-insert-narrative="pause">Pausa</button><button type="button" data-insert-narrative="signal">Sinal</button></div></details>
         <div class="narrative-sequence narrative-view" id="narrative-sequence" role="tabpanel" aria-labelledby="narrative-sequence-tab" aria-label="Sequência narrativa"></div>
         <section class="narrative-view story-planning" id="narrative-planning" role="tabpanel" aria-labelledby="narrative-planning-tab" hidden></section>
         <div class="narrative-map narrative-view" id="narrative-map" role="tabpanel" aria-labelledby="narrative-map-tab" aria-label="Mapa de eventos narrativos" hidden></div>
-        <div class="narrative-presentation narrative-view" id="narrative-presentation" role="tabpanel" aria-labelledby="narrative-presentation-tab" hidden><form class="narrative-presentation-form" id="narrative-presentation-form"><label>Modelo<select id="narrative-presentation-model"><option value="panel">Painel de diálogo</option><option value="subtitle">Legenda cinematográfica</option><option value="card">Cartão central</option></select></label><label>Posição<select id="narrative-presentation-position"><option value="bottom">Embaixo</option><option value="center">Centro</option><option value="top">Em cima</option></select></label><label>Velocidade<select id="narrative-presentation-speed"><option value="0">Sem animação</option><option value="12">Rápida</option><option value="24">Normal</option><option value="42">Lenta</option></select></label><label>Cor da cena<input id="narrative-presentation-scene" type="color" value="#111923"></label><label>Destaque<input id="narrative-presentation-accent" type="color" value="#0c8ce9"></label><label>Painel<input id="narrative-presentation-surface" type="color" value="#10161d"></label><label>Texto<input id="narrative-presentation-text" type="color" value="#edf3f7"></label></form><div class="narrative-presentation-preview" id="narrative-presentation-preview"><section class="narrative-presentation-card"><strong>Personagem</strong><span>Esta é uma amostra de como a sequência aparecerá durante a prévia.</span></section></div><div class="narrative-presentation-actions"><span>Configuração exclusiva da sequência ativa.</span><button type="button" id="narrative-presentation-test">Testar sequência</button></div></div>
+        <div class="narrative-presentation narrative-view" id="narrative-presentation" role="tabpanel" aria-labelledby="narrative-presentation-tab" hidden><form class="narrative-presentation-form" id="narrative-presentation-form"><label>Modelo<select id="narrative-presentation-model"><option value="panel">Painel de diálogo</option><option value="subtitle">Legenda cinematográfica</option><option value="card">Cartão central</option></select></label><label>Posição<select id="narrative-presentation-position"><option value="bottom">Embaixo</option><option value="center">Centro</option><option value="top">Em cima</option></select></label><label>Velocidade<select id="narrative-presentation-speed"><option value="0">Sem animação</option><option value="12">Rápida</option><option value="24">Normal</option><option value="42">Lenta</option></select></label><label>Cor da cena<input id="narrative-presentation-scene" type="color" value="#111923"></label><label>Destaque<input id="narrative-presentation-accent" type="color" value="#0c8ce9"></label><label>Painel<input id="narrative-presentation-surface" type="color" value="#10161d"></label><label>Texto<input id="narrative-presentation-text" type="color" value="#edf3f7"></label></form><div class="narrative-presentation-preview" id="narrative-presentation-preview"><section class="narrative-presentation-card"><strong>Personagem</strong><span>Esta é uma amostra de como a sequência aparecerá durante a prévia.</span></section></div><div class="narrative-presentation-actions"><span>Composição da sequência ativa · formato compartilhado pelo jogo.</span><button type="button" id="narrative-presentation-test">Testar sequência</button></div></div>
         <div class="narrative-localization narrative-view" id="narrative-localization" role="tabpanel" aria-labelledby="narrative-localization-tab" hidden>
           <div class="localization-toolbar">
-            <label>Idioma de tradução<select id="localization-target-locale" aria-label="Idioma de tradução"></select></label>
-            <label>Conteúdo<select id="localization-scope" aria-label="Conteúdo exibido"><option value="all">Documento inteiro</option><option value="narrative">Somente narrativa</option><option value="common">Somente texto comum</option></select></label>
-            <button type="button" id="localization-project-toggle" aria-pressed="false">Projeto</button>
-            <button type="button" id="localization-glossary-toggle" aria-pressed="false">Glossário</button>
-            <details class="localization-settings-menu" id="localization-settings-menu"><summary>Configurar</summary><div class="localization-settings-popover">
+            <label>Idioma<select id="localization-target-locale" aria-label="Idioma de tradução"></select></label>
+            <button type="button" id="localization-preview" aria-pressed="false">Prévia</button>
+            <details class="localization-settings-menu" id="localization-settings-menu"><summary>Opções</summary><div class="localization-settings-popover">
+              <label>Conteúdo<select id="localization-scope" aria-label="Conteúdo exibido"><option value="all">Documento inteiro</option><option value="narrative">Somente narrativa</option><option value="common">Somente texto comum</option></select></label>
+              <label>Situação<select id="localization-status-filter" aria-label="Filtrar situação da tradução"><option value="all">Todas as situações</option><option value="missing">Sem tradução</option><option value="ready">Prontas</option><option value="stale">Precisam de revisão</option><option value="issue">Marcadores divergentes</option></select></label>
+              <button type="button" id="localization-project-toggle" aria-pressed="false">Projeto</button>
+              <button type="button" id="localization-glossary-toggle" aria-pressed="false">Glossário</button>
               <label>Idioma original<select id="localization-source-locale" aria-label="Idioma original"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="es-ES">Español</option><option value="es-MX">Español (México)</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="zh-CN">简体中文</option><option value="ru-RU">Русский</option></select></label>
               <label>Novo idioma<select id="localization-new-locale" aria-label="Novo idioma"></select></label>
               <button type="button" id="localization-add-locale">Adicionar idioma</button><button type="button" id="localization-remove-locale">Remover idioma atual</button>
@@ -1548,7 +1757,7 @@
             </div></details>
             <input type="file" id="localization-csv-file" accept=".csv,text/csv" hidden><input type="file" id="localization-project-csv-file" accept=".csv,text/csv" hidden>
           </div>
-          <div class="localization-review-tools"><input type="search" id="localization-search" placeholder="Buscar texto ou contexto…" aria-label="Buscar linhas de tradução"><select id="localization-status-filter" aria-label="Filtrar situação da tradução"><option value="all">Todas as situações</option><option value="missing">Sem tradução</option><option value="ready">Prontas</option><option value="stale">Precisam de revisão</option><option value="issue">Marcadores divergentes</option></select><button type="button" id="localization-preview" aria-pressed="false">Prévia do idioma</button></div>
+          <div class="localization-review-tools"><input type="search" id="localization-search" placeholder="Buscar texto ou contexto…" aria-label="Buscar linhas de tradução"></div>
           <section class="localization-project-summary" id="localization-project-summary" aria-label="Progresso de tradução do projeto" hidden></section><section class="localization-glossary" id="localization-glossary" aria-label="Glossário do projeto" hidden></section><div class="localization-progress" id="localization-progress"><span>0 de 0 linhas</span><div class="localization-progress-bar" aria-hidden="true"><span></span></div></div><div class="localization-list" id="localization-list"></div>
         </div>
         <div class="narrative-characters narrative-view" id="narrative-characters" role="tabpanel" aria-labelledby="narrative-characters-tab" hidden><form class="narrative-character-create" id="narrative-character-create"><input id="narrative-character-name" type="text" placeholder="Nome exibido" autocomplete="off" required><input id="narrative-character-id" type="text" placeholder="character.id" autocomplete="off" spellcheck="false"><button type="submit">Adicionar</button></form><div class="narrative-character-list" id="narrative-character-list"></div><div class="narrative-character-footer"><span id="narrative-character-status">Registro do projeto</span><button class="narrative-character-save" type="button" id="narrative-character-save">Salvar personagens</button></div></div>
@@ -1608,11 +1817,13 @@
   <script src="narrative-runtime.js"></script>
   <script src="image-optimizer.js"></script>
   <script src="narrative-media.js"></script>
+  <script src="scene-composer.js"></script>
   <script src="narrative-html.js"></script>
   <script src="narrative-package.js"></script>
   <script src="production-workspaces.js"></script>
   <script src="document-ambience.js"></script>
   <script src="story-planning-map.js"></script>
+  <script src="sequence-map.js"></script>
   <script src="story-planning.js"></script>
   <script>
     (() => {
@@ -1883,6 +2094,7 @@
         if (!parts.length) return '';
         return [parts[0].toLocaleLowerCase('en-US'), ...parts.slice(1).map(part => part.length === 2 ? part.toLocaleUpperCase('en-US') : part)].join('-');
       };
+      const normalizedLocalizationStates = new WeakSet();
       const normalizeLocalizationData = value => {
         const input = value && typeof value === 'object' ? value : {};
         const sourceLocale = normalizeLocaleCode(input.sourceLocale || input.source_locale) || 'pt-BR';
@@ -1898,7 +2110,9 @@
           }));
         });
         const requestedActive = normalizeLocaleCode(input.activeLocale || input.active_locale);
-        return { sourceLocale, locales, activeLocale:locales.includes(requestedActive) ? requestedActive : locales[0] || '', translations };
+        const normalized = { sourceLocale, locales, activeLocale:locales.includes(requestedActive) ? requestedActive : locales[0] || '', translations };
+        normalizedLocalizationStates.add(normalized);
+        return normalized;
       };
       const normalizeNarrativePresentation = HeartspaceNarrativeMedia.presentation;
       const makeRecord = (data = {}) => ({ id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
@@ -1959,12 +2173,14 @@
       const persistCollectionChange = folder => {
         folder.updatedAt = new Date().toISOString();
         documents.filter(record => record.folderId === folder.id).forEach(record => {
+          record.ambience = HeartspaceDocumentAmbience.refreshPlaceLinks(record.ambience,folder.id,folder.storyPlanning.worldEntries);
           record.collection = collectionSnapshot(folder); record.folderName = folder.name;
           record.savedAt = folder.updatedAt; record.editRevision = (record.editRevision || 0) + 1;
           if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
         });
         persistLibrary();
         if (currentProjectId) scheduleRevisionSync(documents.find(record => record.folderId === folder.id));
+        documentAmbience?.update();
         setSaveStatus(currentProjectId ? 'Planejamento salvo localmente; sincronização após a pausa' : 'Planejamento salvo neste dispositivo');
       };
       function openCollectionPlanning(folder) {
@@ -2021,7 +2237,9 @@
         else for (let start=0;start<count;start+=20) {
           const range = document.createElement('details'); range.open = start === 0;
           const title = document.createElement('summary'); title.textContent = `Folhas ${start + 1}–${Math.min(start + 20,count)}`; range.append(title);
-          for (let i=start;i<Math.min(start+20,count);i++) range.append(leaf(`Folha ${i + 1}`,i));
+          const leaves = document.createElement('nav'); leaves.className = 'chapter-range-leaves';
+          for (let i=start;i<Math.min(start+20,count);i++) leaves.append(leaf(`Folha ${i + 1}`,i));
+          range.append(leaves);
           container.append(range);
         }
       }
@@ -2522,22 +2740,89 @@
         subtitle.style.textAlign = ['left','center','right','justify'].includes(settings?.subtitleAlign) ? settings.subtitleAlign : 'left';
         editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
         updateLayoutSettingsVisibility(documentPage.dataset.layout);
-        documentAmbience?.update();
+        documentAmbience?.update(); scheduleAdaptiveZoom();
       };
+      const zoomArea = document.querySelector('.editor-area');
+      let requestedZoom = 100, autoFitZoom = true, fitTimer = 0;
+      let fitViewport = null;
+      function syncEditorViewportWidth() {
+        const style = getComputedStyle(zoomArea);
+        const width = Math.max(0,zoomArea.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0));
+        // Use pixels from the unzoomed editor, never percentages inside the zoomed wrapper.
+        editorWrap.style.setProperty('--editor-viewport-width',`${width}px`);
+        return width;
+      }
+      try {
+        const saved = Number(localStorage.getItem('heartspace-docs-page-zoom'));
+        if (saved >= 50 && saved <= 200) requestedZoom = saved;
+        autoFitZoom = localStorage.getItem('heartspace-docs-auto-fit-zoom') !== 'false';
+      } catch (_) { /* Preferences remain usable without storage. */ }
+      function renderZoom(value) {
+        const autoOption = zoomLevelControl.querySelector('[value="auto"]');
+        const isBook = documentPage.dataset.layout === 'book';
+        autoOption.disabled = !isBook;
+        const automatic = autoFitZoom && isBook;
+        let option = zoomLevelControl.querySelector('[data-adaptive-zoom]');
+        const standard = [...zoomLevelControl.options].some(item => !item.dataset.adaptiveZoom && Number(item.value) === value);
+        if (!automatic && !standard) {
+          if (!option) { option = new Option('',''); option.dataset.adaptiveZoom = 'true'; option.disabled = true; zoomLevelControl.append(option); }
+          option.value = String(value); option.textContent = `${value}%`;
+        } else option?.remove();
+        zoomLevelControl.value = automatic ? 'auto' : String(value);
+        zoomLevelControl.title = automatic ? `Auto · ${value}%. Encaixa no editor até ${requestedZoom}%.` : `Zoom escolhido: ${requestedZoom}%.`;
+      }
+      function applyEffectiveZoom(value,automatic = false) {
+        const previous = Number(editorWrap.style.zoom) || 1, next = value / 100;
+        renderZoom(value);
+        if (Math.abs(previous - next) < .001) return;
+        editorWrap.style.zoom = String(next);
+        editorWrap.style.setProperty('--document-zoom',String(next));
+        // Preserve the reading position proportionally; pagination retains the caret.
+        zoomArea.scrollTop *= next / previous;
+        if (automatic) zoomArea.scrollLeft = 0;
+        documentAmbience?.schedule(); scheduleBookPagination?.();
+      }
+      function updateAdaptiveZoom() {
+        fitTimer = 0;
+        const viewportWidth = syncEditorViewportWidth();
+        const visiblePage = editorWrap.querySelector('.page:not([hidden])');
+        if (!viewportWidth || !visiblePage?.getClientRects().length) return;
+        let effective = requestedZoom;
+        if (autoFitZoom && documentPage.dataset.layout === 'book') {
+          const paperWidth = parseFloat(documentPage.style.getPropertyValue('--book-page-width')) || 794;
+          const gutter = parseFloat(getComputedStyle(editorWrap).getPropertyValue('--book-gutter')) || 64;
+          const context = [zoomArea.offsetWidth,zoomArea.offsetHeight,activeDocumentId,document.body.dataset.workArea,requestedZoom,paperWidth,gutter].join(':');
+          // A scrollbar can disappear because fitting reduced the page height. Do not
+          // grow the zoom again for that reason: it would immediately bring it back.
+          // Real editor resizes, document/task changes and manual zoom reset the limit.
+          if (fitViewport?.context !== context) fitViewport = {context,width:viewportWidth};
+          else fitViewport.width = Math.min(fitViewport.width,viewportWidth);
+          const available = Math.max(0,fitViewport.width - 8);
+          effective = Math.max(10,Math.min(requestedZoom,Math.floor(available / (paperWidth + gutter * 2) * 100)));
+        }
+        applyEffectiveZoom(effective,autoFitZoom && effective < requestedZoom);
+        if (autoFitZoom && documentPage.dataset.layout === 'book') zoomArea.scrollLeft = 0;
+      }
+      function scheduleAdaptiveZoom() { clearTimeout(fitTimer); fitTimer = setTimeout(updateAdaptiveZoom,80); }
       const applyZoom = value => {
-        const numericZoom = Math.max(50, Math.min(200, Number(value) || 100));
-        zoomLevelControl.value = String(numericZoom);
-        editorWrap.style.zoom = `${numericZoom / 100}`;
-        editorWrap.style.setProperty('--document-zoom',String(numericZoom / 100));
-        documentAmbience?.schedule();
-        try { localStorage.setItem('heartspace-docs-page-zoom', String(numericZoom)); } catch (_) { /* zoom continua ativo nesta sessão */ }
-        scheduleBookPagination?.();
+        requestedZoom = Math.max(50,Math.min(200,Number(value) || 100)); autoFitZoom = false;
+        fitViewport = null;
+        clearTimeout(fitTimer);
+        try { localStorage.setItem('heartspace-docs-page-zoom',String(requestedZoom)); localStorage.setItem('heartspace-docs-auto-fit-zoom','false'); } catch (_) {}
+        syncEditorViewportWidth();
+        applyEffectiveZoom(requestedZoom);
       };
-      let initialZoom = '100';
-      try { const savedZoom = localStorage.getItem('heartspace-docs-page-zoom'); if ([...zoomLevelControl.options].some(option => option.value === savedZoom)) initialZoom = savedZoom; } catch (_) { /* usa o zoom padrão */ }
-      zoomLevelControl.value = initialZoom;
-      editorWrap.style.zoom = String(Number(initialZoom) / 100);
-      editorWrap.style.setProperty('--document-zoom',String(Number(initialZoom) / 100));
+      editorWrap.style.zoom = String(requestedZoom / 100);
+      editorWrap.style.setProperty('--document-zoom',String(requestedZoom / 100)); renderZoom(requestedZoom);
+      syncEditorViewportWidth();
+      if (window.ResizeObserver) {
+        let previousSize = '';
+        new ResizeObserver(() => {
+          const size = [zoomArea.offsetWidth,zoomArea.offsetHeight,zoomArea.clientWidth].join(':');
+          if (size !== previousSize) { previousSize = size; syncEditorViewportWidth(); scheduleAdaptiveZoom(); }
+        }).observe(zoomArea);
+      }
+      window.addEventListener('resize',scheduleAdaptiveZoom); scheduleAdaptiveZoom();
       const caretVisualRect = activeSelection => {
         if (!activeSelection?.rangeCount || !editor.contains(activeSelection.anchorNode)) return null;
         const rangeRect = activeSelection.getRangeAt(0).getBoundingClientRect();
@@ -2650,6 +2935,9 @@
       new MutationObserver(scheduleNarrativeSequenceRails).observe(editor, { childList:true, subtree:true, attributes:true, attributeFilter:['data-narrative-sequence-id'] });
       if ('ResizeObserver' in window) new ResizeObserver(scheduleNarrativeSequenceRails).observe(documentPage);
       const refreshCanonicalChoiceOptions = block => {
+        if (!block) return;
+        const prompt = block.querySelector('.narrative-choice-prompt');
+        block.dataset.choicePromptEmpty = String(!prompt?.textContent.trim());
         const options = [...(block?.querySelectorAll?.('.narrative-choice-option') || [])];
         if (!options.length) return;
         const canonical = options.find(option => option.dataset.canonical === 'true') || options[0];
@@ -2827,7 +3115,12 @@
             if (localization.textContent.trim() !== block.dataset.localizationId) localization.textContent = block.dataset.localizationId;
           } else existingLocalizationField?.remove();
           block.querySelector('.narrative-text')?.classList.add('narrative-reading');
-          block.querySelector('.narrative-choice-prompt')?.classList.add('narrative-reading');
+          const choicePrompt = block.querySelector('.narrative-choice-prompt');
+          if (choicePrompt) {
+            choicePrompt.classList.add('narrative-reading');
+            choicePrompt.dataset.placeholder = 'Pergunta ou contexto (opcional)';
+            choicePrompt.setAttribute('aria-label', 'Pergunta ou contexto da escolha (opcional)');
+          }
           block.querySelector('.narrative-choice-options')?.classList.add('narrative-reading');
           block.querySelectorAll(':scope > .narrative-variation-version').forEach(version => version.classList.add('narrative-reading'));
           block.querySelector(':scope > .narrative-choice-add')?.classList.add('authoring-decoration');
@@ -2896,6 +3189,7 @@
         editor.setAttribute('aria-readonly', String(!editable));
       };
       const applyDocumentViewMode = mode => {
+        if (document.body.dataset.workArea === 'translation') mode = 'reading';
         documentViewMode = mode === 'reading' ? 'reading' : 'writing';
         documentViewModeControl.value = documentViewMode;
         document.body.classList.toggle('reading-mode', documentViewMode === 'reading');
@@ -3003,7 +3297,7 @@
         const height = paperOrientationControl.value === 'landscape' ? paper[0] : paper[1];
         const zoom = Number(editorWrap.style.zoom) || 1;
         const editorArea = document.querySelector('.editor-area');
-        const pageScale = Math.min(1, Math.max(.3, ((editorArea?.clientWidth || width) - 24) / width));
+        const pageScale = 1; // The shared zoom controller handles fitting on mobile too.
         documentPage.style.zoom = String(pageScale);
         const pageWidth = documentPage.getBoundingClientRect().width / (zoom * pageScale);
         const sheetHeight = Math.min(height, pageWidth * (height / width));
@@ -3172,7 +3466,7 @@
       document.querySelector('.workspace').addEventListener('transitionend',positionPageSettings);
       pageSettingsToggle.addEventListener('click', () => {
         const open = pageSettingsPopover.hidden;
-        if (open) hydrateMetadataSettings();
+        if (open) { hydrateMetadataSettings(); documentAmbience?.update(); }
         pageSettingsPopover.hidden = !open;
         pageSettingsToggle.setAttribute('aria-expanded', String(open));
         if (open) positionPageSettings();
@@ -3187,10 +3481,16 @@
       documentLayoutControl.addEventListener('change', () => {
         updateLayoutSettingsVisibility(documentLayoutControl.value);
       });
-      zoomLevelControl.addEventListener('change', () => applyZoom(zoomLevelControl.value));
-      const zoomValues = [...zoomLevelControl.options].map(option => Number(option.value));
-      document.querySelector('#zoom-out').addEventListener('click', () => applyZoom([...zoomValues].reverse().find(value => value < Number(zoomLevelControl.value)) || zoomValues[0]));
-      document.querySelector('#zoom-in').addEventListener('click', () => applyZoom(zoomValues.find(value => value > Number(zoomLevelControl.value)) || zoomValues.at(-1)));
+      zoomLevelControl.addEventListener('change', () => {
+        if (zoomLevelControl.value !== 'auto') { applyZoom(zoomLevelControl.value); return; }
+        autoFitZoom = true;
+        fitViewport = null;
+        try { localStorage.setItem('heartspace-docs-auto-fit-zoom','true'); } catch (_) {}
+        updateAdaptiveZoom();
+      });
+      const zoomValues = [...zoomLevelControl.options].filter(option => !option.dataset.adaptiveZoom && option.value !== 'auto').map(option => Number(option.value));
+      document.querySelector('#zoom-out').addEventListener('click', () => applyZoom([...zoomValues].reverse().find(value => value < (Number(editorWrap.style.zoom) || 1) * 100) || zoomValues[0]));
+      document.querySelector('#zoom-in').addEventListener('click', () => applyZoom(zoomValues.find(value => value > (Number(editorWrap.style.zoom) || 1) * 100) || zoomValues.at(-1)));
       documentViewModeControl.addEventListener('change', () => applyDocumentViewMode(documentViewModeControl.value));
       narrativeProfileControl.addEventListener('change', () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -3210,6 +3510,7 @@
           else delete narrativeBlock.dataset.characterId;
         }
         refreshNarrativeReadingLabel(narrativeBlock);
+        if (narrativeBlock?.dataset.narrativeType === 'choice') refreshCanonicalChoiceOptions(narrativeBlock);
         scheduleBookPagination();
       });
       editor.addEventListener('focusout', event => {
@@ -3517,6 +3818,28 @@
       });
       document.querySelector('#undo').addEventListener('click', () => { editor.focus(); if (!undoNarrativeMutation()) document.execCommand('undo'); queueSave(); });
       document.querySelector('#redo').addEventListener('click', () => { editor.focus(); if (!redoNarrativeMutation()) document.execCommand('redo'); queueSave(); });
+      const cleanWritingToggle = document.querySelector('#clean-writing-toggle');
+      function applyCleanWriting(enabled) {
+        document.body.classList.toggle('writing-clean',enabled);
+        cleanWritingToggle.setAttribute('aria-pressed',String(enabled));
+        cleanWritingToggle.setAttribute('aria-label',enabled ? 'Desativar escrita limpa' : 'Ativar escrita limpa');
+        cleanWritingToggle.dataset.tooltip = enabled ? 'Mostrar indicadores' : 'Escrita limpa';
+        cleanWritingToggle.title = enabled ? 'Mostrar indicadores e decorações da folha' : 'Ocultar indicadores e decorações da folha';
+        scheduleBookPagination();
+        document.dispatchEvent(new Event('docs-layout-change'));
+      }
+      let cleanWritingPreference = false;
+      try { cleanWritingPreference = localStorage.getItem('heartspace-docs-clean-writing') === 'true'; } catch (_) {}
+      applyCleanWriting(cleanWritingPreference);
+      cleanWritingToggle.addEventListener('click',() => {
+        const enabled = !document.body.classList.contains('writing-clean');
+        if (enabled) {
+          productionWorkspace?.closeInspector();
+          closeNarrativeInspectors();
+        }
+        applyCleanWriting(enabled);
+        try { localStorage.setItem('heartspace-docs-clean-writing',String(enabled)); } catch (_) {}
+      });
       let desktopZen = false;
       document.querySelector('#focus-toggle').addEventListener('click', event => {
         if (window.matchMedia('(max-width: 800px)').matches) return;
@@ -3695,6 +4018,22 @@
       const narrativePresentationSurface = document.querySelector('#narrative-presentation-surface');
       const narrativePresentationText = document.querySelector('#narrative-presentation-text');
       const narrativePresentationPreview = document.querySelector('#narrative-presentation-preview');
+      document.querySelector('#narrative-presentation-form').insertAdjacentHTML('afterbegin', `
+        <fieldset class="scene-screen-settings"><legend>Tela do jogo · todas as sequências</legend>
+          <label>Formato<select id="narrative-scene-aspect"><option value="free">Livre</option><option value="16:9">16:9 · Horizontal</option><option value="4:3">4:3</option><option value="9:16">9:16 · Vertical</option><option value="1:1">1:1 · Quadrado</option><option value="custom">Personalizado</option></select></label>
+          <label class="scene-custom-size" hidden>Largura<input id="narrative-scene-width" type="number" min="320" max="4096" step="1" value="1280" required></label>
+          <label class="scene-custom-size" hidden>Altura<input id="narrative-scene-height" type="number" min="320" max="4096" step="1" value="720" required></label>
+          <output id="narrative-scene-size" aria-live="polite">Acompanha o espaço disponível</output>
+          <label class="scene-safe-toggle"><input id="narrative-scene-safe-area" type="checkbox">Mostrar área segura de 90%</label>
+        </fieldset>`);
+      const narrativeSceneAspect = document.querySelector('#narrative-scene-aspect');
+      const narrativeSceneWidth = document.querySelector('#narrative-scene-width');
+      const narrativeSceneHeight = document.querySelector('#narrative-scene-height');
+      const narrativeSceneSafeArea = document.querySelector('#narrative-scene-safe-area');
+      let sceneSafeAreaEnabled = false;
+      try { sceneSafeAreaEnabled = localStorage.getItem('heartspace-docs-scene-safe-area') === 'true'; } catch (_) {}
+      narrativeSceneSafeArea.checked = sceneSafeAreaEnabled;
+      const narrativeSampleViewport = HeartspaceNarrativeMedia.createViewport(narrativePresentationPreview,{kind:'sample'});
       document.querySelector('#narrative-presentation-form').insertAdjacentHTML('beforeend', `
         <details class="narrative-artwork"><summary>Artes e ambiente</summary><div class="narrative-artwork-fields">
           <label>Fundo<button type="button" id="narrative-background-upload">Adicionar imagem</button><input type="file" id="narrative-background-file" accept="image/png,image/jpeg,image/webp" hidden></label><button type="button" id="narrative-background-remove">Remover fundo</button><small id="narrative-background-name">Sem imagem de fundo</small>
@@ -3706,7 +4045,7 @@
         </div></details>`);
       const narrativeArtworkControls = Object.fromEntries(Object.entries({background_fit:'background-fit',background_focus:'background-focus',background_dim:'background-dim',portrait_position:'portrait-position',portrait_size:'portrait-size',transition:'scene-transition',transition_ms:'scene-transition-ms'}).map(([key,id]) => [key,document.querySelector(`#narrative-${id}`)]));
       const narrativeSampleCharacter = document.querySelector('#narrative-scene-sample-character');
-      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
+      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{characters:() => narrativeCharacters,reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
       const narrativeLocalizationTab = document.querySelector('#narrative-localization-tab');
       const narrativeLocalizationView = document.querySelector('#narrative-localization');
       const localizationSourceLocale = document.querySelector('#localization-source-locale');
@@ -3749,7 +4088,9 @@
       const narrativeSummary = document.querySelector('#narrative-summary');
       const narrativeTestDialog = document.querySelector('#narrative-test-dialog');
       const narrativeTestStage = document.querySelector('#narrative-test-stage');
+      const narrativeTestViewport = HeartspaceNarrativeMedia.createViewport(narrativeTestStage,{kind:'test'});
       const narrativeTestMedia = HeartspaceNarrativeMedia.createScene(narrativeTestStage,{
+        characters:() => narrativeCharacters,
         reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         onAudioIssue:message => statusMessage(message,'pending'),
         onImageIssue:message => statusMessage(message,'pending')
@@ -3764,6 +4105,11 @@
       let narrativeTestState = null;
       let narrativeCharacters = [];
       let narrativeVariables = [];
+      let narrativeGameViewport = null;
+      let narrativeGameSettingsRevision = 0;
+      let narrativeGameSettingsDirty = false;
+      let narrativeRegistrySaveTask = Promise.resolve();
+      let narrativeGameSettingsTimer = 0;
       let translationGlossary = [];
       let narrativeRegistryRemoteReady = false;
       let narrativeRulesOption = null;
@@ -3915,6 +4261,8 @@
         const nextId = uniqueNarrativeSequenceId(record, requestedId, previousId);
         if (nextId === previousId) return previousId;
         sequence.id = nextId;
+        if (record.ambience?.sequences) record.ambience.sequences.forEach(item => { if (item.sequenceId === previousId) item.sequenceId = nextId; });
+        documentAmbience?.update();
         libraryFolders.forEach(folder => {
           [folder.storyPlanning,...folder.legacyPlans.map(item => item.plan)].forEach(plan => plan.milestones.forEach(milestone => milestone.links.forEach(link => {
             if (link.documentId === record.id && link.sequenceId === previousId) { link.sequenceId = nextId; link.title = `${record.title} → ${sequence.title}`; }
@@ -4059,7 +4407,9 @@
       ];
       const localizationLocaleLabel = code => localizationLocaleCatalog.find(([value]) => value === code)?.[1] || code;
       const localizationDataFor = record => {
-        record.localization = normalizeLocalizationData(record.localization);
+        // Readers, form handlers and the live preview must share the same editable state.
+        // Normalize only on ingress; makeRecord still creates independent copies.
+        if (!normalizedLocalizationStates.has(record.localization)) record.localization = normalizeLocalizationData(record.localization);
         return record.localization;
       };
       const exportLocalizationBundle = record => {
@@ -4723,11 +5073,13 @@
         localizationPreviewBanner = null;
         documentPage.hidden = false;
         document.body.classList.remove('localization-preview-active');
-        localizationPreview.textContent = 'Prévia do idioma';
+        localizationPreview.textContent = 'Prévia';
         localizationPreview.setAttribute('aria-pressed', 'false');
-        documentViewModeControl.disabled = false;
+        documentViewModeControl.disabled = document.body.dataset.workArea === 'translation';
         applyDocumentViewMode(localizationPreviewPreviousViewMode);
         scheduleBookPagination();
+        scheduleAdaptiveZoom();
+        documentAmbience?.schedule();
       };
       const localizedPreviewTarget = (clone, entry) => {
         if (entry.target === title) return clone.querySelector('.doc-title');
@@ -4737,6 +5089,26 @@
         const selectors = ['.narrative-text', '.narrative-choice-prompt', '.narrative-choice-text'];
         const selector = selectors.find(candidate => entry.target?.matches?.(candidate));
         return selector ? owner.matches(selector) ? owner : owner.querySelector(selector) : owner;
+      };
+      let localizationPreviewSvgSequence = 0;
+      const isolateLocalizationPreviewSvgIds = clone => {
+        clone.querySelectorAll('svg').forEach(svg => {
+          const prefix = `localization-svg-${++localizationPreviewSvgSequence}`;
+          const elements = [svg,...svg.querySelectorAll('*')];
+          const ids = new Map(elements.filter(element => element.id).map((element,index) => [element.id,`${prefix}-${index}`]));
+          const references = value => value.replace(/url\(\s*(['"]?)#([^\s)'"(]+)\1\s*\)/g,(match,quote,id) => ids.has(id) ? `url(${quote}#${ids.get(id)}${quote})` : match);
+          elements.forEach(element => {
+            if (element.id) element.id = ids.get(element.id);
+            [...element.attributes].forEach(attribute => {
+              if (attribute.name === 'id') return;
+              let value = references(attribute.value);
+              if (['href','xlink:href'].includes(attribute.name) && value.startsWith('#') && ids.has(value.slice(1))) value = `#${ids.get(value.slice(1))}`;
+              if (['aria-labelledby','aria-describedby'].includes(attribute.name)) value = value.split(/\s+/).map(id => ids.get(id) || id).join(' ');
+              if (value !== attribute.value) element.setAttributeNS(attribute.namespaceURI,attribute.name,value);
+            });
+            if (element.localName === 'style') element.textContent = references(element.textContent).replace(/#([A-Za-z_][\w-]*)/g,(match,id) => ids.has(id) ? `#${ids.get(id)}` : match);
+          });
+        });
       };
       const renderLocalizationPreview = () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -4753,10 +5125,10 @@
         const translations = localization.translations[locale] || {};
         const clone = documentPage.cloneNode(true);
         clone.classList.add('localization-preview-page');
-        clone.querySelector('.document-ambience')?.remove();
         clone.hidden = false;
         clone.removeAttribute('id');
-        clone.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+        clone.querySelectorAll('[id]').forEach(element => { if (!element.closest('svg')) element.removeAttribute('id'); });
+        isolateLocalizationPreviewSvgIds(clone);
         let fallback = 0;
         let stale = 0;
         let issues = 0;
@@ -4796,19 +5168,22 @@
         localizationPreviewPage = clone;
         localizationPreviewBanner = banner;
         documentPage.hidden = true;
-        editorWrap.prepend(banner);
+        // Language and progress already appear in the translation toolbar.
+        if (document.body.dataset.workArea !== 'translation') editorWrap.prepend(banner);
         editorWrap.append(clone);
         document.body.classList.add('localization-preview-active');
         localizationPreview.textContent = 'Sair da prévia';
         localizationPreview.setAttribute('aria-pressed', 'true');
         documentViewModeControl.disabled = true;
+        scheduleAdaptiveZoom();
+        documentAmbience?.schedule();
       };
       let localizationPreviewRefreshFrame = 0;
       const scheduleLocalizationPreviewRefresh = () => {
         if (!isLocalizationPreviewOpen() || localizationPreviewRefreshFrame) return;
         localizationPreviewRefreshFrame = requestAnimationFrame(() => {
           localizationPreviewRefreshFrame = 0;
-          renderLocalizationPreview();
+          if (isLocalizationPreviewOpen()) renderLocalizationPreview();
         });
       };
       const updateLocalizationProgress = (entries, localization, locale) => {
@@ -4886,16 +5261,29 @@
           jump.title = `Ir para este trecho · ${node.localization_id}`;
           jump.setAttribute('aria-label', `Ir para ${label} no documento`);
           jump.addEventListener('click', () => {
-            closeLocalizationPreview();
-            productionWorkspace?.write(false);
-            block.scrollIntoView({ behavior:'smooth', block:'center' });
-            if (target === subtitle) { subtitle.focus(); subtitle.setSelectionRange(subtitle.value.length, subtitle.value.length); }
-            else if (target === title) {
-              title.focus();
-              const range = document.createRange(); range.selectNodeContents(title); range.collapse(false);
-              const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            const documentVisible = productionWorkspace?.previewDocument({ preserveArea:true }) !== false;
+            const destination = !documentVisible ? source : isLocalizationPreviewOpen() ? localizedPreviewTarget(localizationPreviewPage,{target,node}) : target || block;
+            if (!destination) { statusMessage('Este trecho não está disponível na prévia.', 'pending'); return; }
+            // Reveal only the preview copy when this line belongs to another branch/version.
+            if (localizationPreviewPage?.contains(destination)) {
+              const narrative = destination.closest('.narrative-block');
+              if (narrative) narrative.dataset.canonicalVisible = 'true';
+              const option = destination.closest('.narrative-choice-option');
+              if (option) narrative?.querySelectorAll('.narrative-choice-option').forEach(item => { item.dataset.canonical = String(item === option); });
+              const version = destination.closest('.narrative-variation-version');
+              if (version) narrative?.querySelectorAll('.narrative-variation-version').forEach(item => { item.dataset.readingActive = String(item === version); });
             }
-            else placeCaret(target || block, true);
+            updateAdaptiveZoom();
+            requestAnimationFrame(() => {
+              if (!destination.isConnected) return;
+              const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              if (documentVisible) {
+                const area = zoomArea.getBoundingClientRect(), rect = destination.getBoundingClientRect();
+                zoomArea.scrollTo({top:Math.max(0,zoomArea.scrollTop + rect.top - area.top - Math.max(24,(zoomArea.clientHeight - rect.height) / 2)),behavior:reducedMotion ? 'instant' : 'smooth'});
+              } else destination.scrollIntoView({block:'nearest',behavior:reducedMotion ? 'instant' : 'smooth'});
+              destination.classList.add('outline-jump-target');
+              setTimeout(() => destination.classList.remove('outline-jump-target'),1200);
+            });
           });
           const context = document.createElement('span');
           const contextName = kind === 'narrative' ? sequenceNames.get(node.sequence_id) || 'Sem sequência' : entryContext || 'Documento';
@@ -4907,7 +5295,8 @@
           translation.placeholder = `Tradução em ${localizationLocaleLabel(locale)}`;
           translation.setAttribute('aria-label', `Tradução de ${node.localization_id} para ${localizationLocaleLabel(locale)}`);
           const updateRowState = () => {
-            const current = localeTranslations[node.localization_id];
+            const currentRecord = documents.find(item => item.id === record.id);
+            const current = currentRecord ? localizationDataFor(currentRecord).translations[locale]?.[node.localization_id] : null;
             const state = localizationEntryState(current, node.text);
             row.dataset.state = state;
             context.textContent = `${contextName} · ${label} · ${localizationStateLabel(state)}`;
@@ -4915,10 +5304,15 @@
             translation.title = state === 'issue' ? `Preserve os marcadores: ${localizationTokens(node.text).join(', ') || 'nenhum'}` : '';
           };
           translation.addEventListener('input', () => {
-            if (translation.value) localeTranslations[node.localization_id] = { text:translation.value, source:node.text };
-            else delete localeTranslations[node.localization_id];
+            const currentRecord = documents.find(item => item.id === record.id);
+            if (!currentRecord || currentRecord.id !== activeDocumentId) return;
+            const currentLocalization = localizationDataFor(currentRecord);
+            if (!currentLocalization.locales.includes(locale)) return;
+            const currentTranslations = currentLocalization.translations[locale] || (currentLocalization.translations[locale] = {});
+            if (translation.value) currentTranslations[node.localization_id] = { text:translation.value, source:node.text };
+            else delete currentTranslations[node.localization_id];
             updateRowState();
-            updateLocalizationProgress(scopedEntries, localization, locale);
+            updateLocalizationProgress(scopedEntries, currentLocalization, locale);
             scheduleLocalizationPreviewRefresh();
             queueSave();
           });
@@ -5031,13 +5425,35 @@
       };
       const narrativeRegistryCacheKey = () => `${storageKey || 'heartspace-docs-local'}:narrative-registry`;
       const cacheNarrativeRegistry = () => {
-        try { localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 2, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary })); return true; } catch (_) { return false; }
+        try {
+          if (narrativeGameViewport) localStorage.setItem(`${narrativeRegistryCacheKey()}:scene-settings`,JSON.stringify({viewport:narrativeGameViewport,dirty:narrativeGameSettingsDirty}));
+          localStorage.setItem(narrativeRegistryCacheKey(), JSON.stringify({ version: 3, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary, scene_settings:narrativeGameViewport ? {viewport:narrativeGameViewport} : null })); return true; } catch (_) { return false; }
       };
       const readCachedNarrativeRegistry = () => {
         try {
           const cached = JSON.parse(localStorage.getItem(narrativeRegistryCacheKey()) || 'null');
-          return { characters: normalizeCharacterRegistry(cached?.characters), variables: normalizeVariableRegistry(cached?.variables), glossary:normalizeTranslationGlossary(cached?.glossary) };
-        } catch (_) { return { characters: [], variables: [], glossary:[] }; }
+          const settings = JSON.parse(localStorage.getItem(`${narrativeRegistryCacheKey()}:scene-settings`) || 'null') || cached?.scene_settings;
+          return { characters: normalizeCharacterRegistry(cached?.characters), variables: normalizeVariableRegistry(cached?.variables), glossary:normalizeTranslationGlossary(cached?.glossary), viewport:settings?.viewport ? HeartspaceNarrativeMedia.viewport(settings.viewport) : null, settingsDirty:settings?.dirty === true };
+        } catch (_) { return { characters: [], variables: [], glossary:[], viewport:null, settingsDirty:false }; }
+      };
+      const gameViewport = () => {
+        if (!narrativeGameViewport) {
+          // Adopt one old format once, in document order, never on sequence changes.
+          const legacy = documents.filter(record => !record.trashedAt).flatMap(record => record.narrativeSequences || []).map(sequence => sequence.presentation?.viewport).find(value => value && value.aspect !== 'free');
+          narrativeGameViewport = HeartspaceNarrativeMedia.viewport(legacy);
+          cacheNarrativeRegistry();
+        }
+        return narrativeGameViewport;
+      };
+      const saveGameViewport = () => {
+        narrativeGameSettingsRevision += 1;
+        narrativeGameSettingsDirty = true;
+        cacheNarrativeRegistry();
+        clearTimeout(narrativeGameSettingsTimer);
+        const context = narrativeRegistryCacheKey();
+        narrativeGameSettingsTimer = setTimeout(() => {
+          if (context === narrativeRegistryCacheKey()) void saveNarrativeRegistry(true);
+        },500);
       };
       const narrativeRoots = () => documents.filter(record => !record.trashedAt).map(record => {
         if (record.id === activeDocumentId) return { record, root: editor };
@@ -5085,7 +5501,15 @@
         }));
         return counts;
       };
-      const saveNarrativeRegistry = async (silent = false) => {
+      const saveNarrativeRegistry = (silent = false) => {
+        const context = narrativeRegistryCacheKey();
+        narrativeRegistrySaveTask = narrativeRegistrySaveTask.catch(() => {}).then(() => {
+          if (context === narrativeRegistryCacheKey()) return persistNarrativeRegistry(silent);
+        });
+        return narrativeRegistrySaveTask;
+      };
+      const persistNarrativeRegistry = async (silent = false) => {
+        const context = narrativeRegistryCacheKey(), settingsRevision = narrativeGameSettingsRevision;
         narrativeCharacters = normalizeCharacterRegistry(narrativeCharacters);
         narrativeVariables = normalizeVariableRegistry(narrativeVariables);
         translationGlossary = normalizeTranslationGlossary(translationGlossary);
@@ -5101,25 +5525,43 @@
         }
         try {
           const query = new URLSearchParams({ on_conflict: 'project_id' });
-          await apiFetch(`/rest/v1/project_narrative_registry?${query}`, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ project_id: currentProjectId, characters: narrativeCharacters, variables: narrativeVariables, glossary:translationGlossary, updated_by: currentUser?.id || null, updated_at: new Date().toISOString() }) });
+          const payload = { project_id:currentProjectId, characters:narrativeCharacters, variables:narrativeVariables, glossary:translationGlossary, scene_settings:narrativeGameViewport ? {viewport:narrativeGameViewport} : null, updated_by:currentUser?.id || null, updated_at:new Date().toISOString() };
+          try {
+            await apiFetch(`/rest/v1/project_narrative_registry?${query}`, {method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+          } catch (error) {
+            if (context !== narrativeRegistryCacheKey()) return;
+            if (!/scene_settings/.test(error.message || '')) throw error;
+            delete payload.scene_settings;
+            await apiFetch(`/rest/v1/project_narrative_registry?${query}`, {method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+            if (context === narrativeRegistryCacheKey()) statusMessage('Formato salvo neste dispositivo. A sincronização do formato requer a atualização do banco do projeto.','pending');
+          }
+          if (context !== narrativeRegistryCacheKey()) return;
+          if (payload.scene_settings && settingsRevision === narrativeGameSettingsRevision) { narrativeGameSettingsDirty = false; cacheNarrativeRegistry(); }
           narrativeRegistryRemoteReady = true;
-          if (!silent) statusMessage('Registro narrativo sincronizado com o projeto');
+          if (!silent && payload.scene_settings) statusMessage('Registro narrativo sincronizado com o projeto');
         } catch (error) {
+          if (context !== narrativeRegistryCacheKey()) return;
           narrativeRegistryRemoteReady = false;
           if (!silent) statusMessage(error.message || 'Registro salvo localmente; falta aplicar a atualização do Supabase.', 'pending');
         }
       };
       const loadNarrativeRegistry = async () => {
         const cached = readCachedNarrativeRegistry();
+        const settingsRevision = narrativeGameSettingsRevision;
+        const registryContext = narrativeRegistryCacheKey();
+        narrativeGameViewport = cached.viewport;
+        narrativeGameSettingsDirty = cached.settingsDirty;
         narrativeCharacters = cached.characters;
         narrativeVariables = cached.variables;
         translationGlossary = cached.glossary;
         narrativeRegistryRemoteReady = false;
         if (currentProjectId && currentAccessToken) {
           try {
-            const query = new URLSearchParams({ select: 'characters,variables,glossary,updated_at', project_id: `eq.${currentProjectId}`, limit: '1' });
+            const query = new URLSearchParams({ select: '*', project_id: `eq.${currentProjectId}`, limit: '1' });
             const rows = await apiFetch(`/rest/v1/project_narrative_registry?${query}`);
+            if (registryContext !== narrativeRegistryCacheKey()) return;
             if (Array.isArray(rows) && rows[0]) {
+              if (!narrativeGameSettingsDirty && settingsRevision === narrativeGameSettingsRevision && rows[0].scene_settings?.viewport) narrativeGameViewport = HeartspaceNarrativeMedia.viewport(rows[0].scene_settings.viewport);
               narrativeCharacters = normalizeCharacterRegistry(rows[0].characters);
               narrativeVariables = normalizeVariableRegistry(rows[0].variables);
               translationGlossary = normalizeTranslationGlossary(rows[0].glossary);
@@ -5127,15 +5569,17 @@
             narrativeRegistryRemoteReady = true;
           } catch (_) { /* mantém o cache enquanto a migration ainda não estiver publicada */ }
         }
+        if (registryContext !== narrativeRegistryCacheKey()) return;
         const observed = mergeObservedNarrativeCharacters();
         applyNarrativeCharactersToRoot(editor);
         cacheNarrativeRegistry();
-        if (observed.length && narrativeRegistryRemoteReady && canEditProject({ capabilities: projectCapabilities })) void saveNarrativeRegistry(true);
+        if ((observed.length || narrativeGameSettingsDirty) && narrativeRegistryRemoteReady && canEditProject({ capabilities: projectCapabilities })) void saveNarrativeRegistry(true);
         if (isNarrativePanelOpen() && !narrativeCharactersView.hidden) renderNarrativeCharacters();
         if (isNarrativePanelOpen() && !narrativeVariablesView.hidden) renderNarrativeVariables();
         if (isNarrativePanelOpen() && !document.querySelector('#narrative-glossary-view').hidden) renderLocalizationGlossary();
         if (isNarrativePanelOpen() && !narrativeLocalizationView.hidden && narrativeLocalizationView.dataset.glossaryView !== 'true') renderNarrativeLocalization();
         if (productionWorkspace) renderNarrativeValidation();
+        if (!narrativePresentationView.hidden) renderNarrativePresentation();
       };
       const bindNarrativeCharacter = block => {
         if (!block?.matches?.('.narrative-block[data-narrative-type="dialogue"]')) return;
@@ -5159,9 +5603,11 @@
         const nodes = collectNarrativeNodes().map(item => item.node);
         const current = activeNarrativeSequence(record, editor, true);
         const referencedCharacterIds = new Set(nodes.map(node => node.character_id).filter(Boolean));
+        sequences.forEach(sequence => HeartspaceNarrativeMedia.sceneStates(sequence.presentation).forEach(state => (state.elements || []).forEach(item => { if (item.character_id && (!item.type || item.type === 'character')) referencedCharacterIds.add(item.character_id); })));
         return {
           format: 'heartspace-narrative-v2',
           version: 2,
+          viewport:gameViewport(),
           event_id: current?.id || '',
           active_event_id: current?.id || '',
           reading_profile: record?.narrativeProfile || 'prose',
@@ -5184,14 +5630,20 @@
           const sequences = ensureNarrativeSequences(record, root, false);
           if (!sequences.length) return;
           const nodes = collectNarrativeNodesFromRoot(root, record.id === activeDocumentId, sequences[0]?.id || '').map(item => item.node);
+          const blocks = [...root.querySelectorAll('.narrative-block')];
           sequences.forEach(sequence => {
             const sequenceNodes = nodes.filter(node => node.sequence_id === sequence.id);
-            const routes = sequenceNodes.filter(node => node.type === 'choice').flatMap(node => (node.options || []).map(option => ({
-              label: option.text || 'Opção sem texto',
-              target: option.target_event || ''
+            const routes = sequenceNodes.filter(node => node.type === 'choice').flatMap(node => (node.options || []).map((option,optionIndex) => ({
+              label: option.text || 'Opção sem texto', target: option.target_event || '', nodeId:node.id,
+              blockId:blocks[nodes.indexOf(node)]?.dataset.narrativeId || '', blockIndex:nodes.indexOf(node), optionId:option.id, optionIndex,
+              condition:Boolean(option.condition)
             })));
             routes.forEach(route => { if (route.target) referencedTargets.add(route.target); });
-            const entry = { id:sequence.id, record, sequence, nodes:sequenceNodes, routes, provisional:false };
+            const choiceBlocks = sequenceNodes.filter(node => node.type === 'choice').map(node => ({
+              nodeId:node.id,blockId:blocks[nodes.indexOf(node)]?.dataset.narrativeId || '',blockIndex:nodes.indexOf(node),
+              prompt:node.prompt || '',optionCount:node.options.length,signature:JSON.stringify(node)
+            }));
+            const entry = { id:sequence.id, record, sequence, nodes:sequenceNodes, routes, choiceBlocks, provisional:false };
             entries.push(entry);
             const group = byIdGroups.get(sequence.id) || [];
             group.push(entry);
@@ -5353,111 +5805,178 @@
           narrativeValidationView.append(row);
         });
       };
+      let sequenceMapView = null;
+      const narrativeMapKey = entry => JSON.stringify([entry.record?.id || '',entry.id]);
       const focusNarrativeMapEvent = eventId => {
-        const target = narrativeMap.querySelector(`[data-event-id="${CSS.escape(eventId)}"]`);
-        if (!target) return;
-        target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-        target.animate([{ boxShadow: '0 0 0 1px #0c8ce922,0 10px 30px #0005' }, { boxShadow: '0 0 0 4px #0c8ce966,0 10px 30px #0005' }, { boxShadow: '0 0 0 1px #0c8ce922,0 10px 30px #0005' }], { duration: 700 });
+        const entry = buildNarrativeRegistry().byId.get(eventId);
+        if (entry) sequenceMapView?.focus(narrativeMapKey(entry));
       };
-      const createNarrativeDestination = eventId => {
-        const record = documents.find(item => item.id === activeDocumentId);
-        if (!record) return;
-        const rawName = eventId.split('.').filter(Boolean).at(-1) || 'evento';
-        const eventTitle = rawName.replace(/[_-]+/g, ' ').replace(/\b\w/g, letter => letter.toLocaleUpperCase('pt-BR'));
-        const sequences = ensureNarrativeSequences(record, editor, true);
-        if (!sequences.some(sequence => sequence.id === eventId)) sequences.push({ id:eventId, title:eventTitle, presentation:normalizeNarrativePresentation() });
-        record.narrativeSequences = sequences;
-        record.activeNarrativeSequenceId = eventId;
-        renderNarrativePanel();
-        queueSave();
-        statusMessage(`Sequência ${eventId} criada neste documento`);
+      const changeNarrativeMapDestination = (source,route,targetId,{refresh = true} = {}) => {
+        const fail = message => ({ok:false,message});
+        if (desktopBlocked || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return fail('Sua permissão não permite editar os destinos.');
+        const record = documents.find(item => item.id === source.documentId && !item.trashedAt && !item.archivedAt);
+        if (!record || record.remoteConflict) return fail('O capítulo não está disponível para edição. Resolva eventuais conflitos antes de continuar.');
+        if (record.id !== activeDocumentId && record.body !== source.sourceBody) return fail('O capítulo mudou. Reabra o mapa antes de alterar este destino.');
+        const registry = buildNarrativeRegistry();
+        const destination = registry.byId.get(targetId);
+        if (targetId && (!destination || destination.provisional || destination.record.archivedAt || registry.duplicateIds.has(targetId))) return fail('Escolha um destino existente com ID único.');
+        if (registry.duplicateIds.has(source.id)) return fail('Resolva o ID duplicado da sequência de origem antes de editar.');
+        const root = record.id === activeDocumentId ? editor : document.createElement('div');
+        if (root !== editor) root.innerHTML = record.body || '';
+        ensureNarrativeSequences(record,root,false);
+        const blocks = [...root.querySelectorAll('.narrative-block')];
+        const block = route.blockId ? blocks.find(item => item.dataset.narrativeId === route.blockId) : blocks[route.blockIndex];
+        if (!block || block.dataset.narrativeSequenceId !== source.id || block.dataset.narrativeType !== 'choice') return fail('A sequência mudou. Reabra o mapa antes de editar este destino.');
+        const choices = [...block.querySelectorAll('.narrative-choice-option')];
+        const option = route.optionId ? choices.find(item => item.dataset.choiceOptionId === route.optionId) : choices[route.optionIndex];
+        const field = option?.querySelector('.narrative-choice-target');
+        if (!field || field.textContent.trim() !== route.target || (option.querySelector('.narrative-choice-text')?.textContent.trim() || 'Opção sem texto') !== route.label) return fail('A escolha mudou. Reabra o mapa para usar a versão atual.');
+        if (field.textContent.trim() === targetId) return {ok:true,changed:false};
+        const mutation = root === editor ? rememberNarrativeMutation() : null;
+        field.textContent = targetId;
+        refreshCanonicalChoiceOptions(block);
+        if (root === editor) {
+          applyCanonicalReadingPath(); commitNarrativeMutation(mutation); queueSave(); scheduleBookPagination();
+        } else {
+          record.body = root.innerHTML; record.savedAt = new Date().toISOString();
+          record.editRevision = (record.editRevision || 0) + 1; record.dirty = Boolean(currentProjectId);
+          dirtyDocumentIds.add(record.id); persistLibrary(); renderLibrary(); scheduleRevisionSync(record); reportDesktopDocumentState();
+        }
+        if (refresh) renderNarrativeMap();
+        scheduleProductionIssueCount();
+        statusMessage('Destino da escolha salvo');
+        return {ok:true,changed:true};
+      };
+      const createNarrativeMapSequence = (data,connection,folderId,standaloneId) => {
+        const fail = message => ({ok:false,message});
+        if (desktopBlocked || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return fail('Sua permissão não permite criar sequências.');
+        const record = documents.find(item => item.id === data.documentId && !item.trashedAt && !item.archivedAt && !item.remoteConflict && (folderId ? item.folderId === folderId : item.id === standaloneId));
+        const name = String(data.title || '').trim().slice(0,120);
+        if (!record || !name) return fail('Informe o nome e escolha um capítulo disponível.');
+        const root = record.id === activeDocumentId ? editor : document.createElement('div');
+        if (root !== editor) root.innerHTML = record.body || '';
+        ensureNarrativeSequences(record,root,false);
+        // Keep the creation reversible until the originating choice has passed its stale-data checks.
+        const previous = {sequences:record.narrativeSequences,active:record.activeNarrativeSequenceId,event:record.narrativeEventId};
+        const id = uniqueNarrativeSequenceId(record,`story.${narrativeSlug(record.title) || 'chapter'}.${narrativeSlug(name) || 'sequence'}`);
+        record.narrativeSequences = [...record.narrativeSequences,{id,title:name,presentation:normalizeNarrativePresentation()}];
+        if (!record.activeNarrativeSequenceId) record.activeNarrativeSequenceId = id;
+        record.narrativeEventId = record.narrativeSequences[0]?.id || id;
+        let chapterSavedWithChoice = false;
+        if (connection) {
+          const result = changeNarrativeMapDestination(connection.source,connection.route,id,{refresh:false});
+          if (!result.ok) {
+            record.narrativeSequences = previous.sequences; record.activeNarrativeSequenceId = previous.active; record.narrativeEventId = previous.event;
+            return result;
+          }
+          chapterSavedWithChoice = result.changed && connection.source.documentId === record.id;
+        }
+        if (!chapterSavedWithChoice) {
+          if (record.id === activeDocumentId) queueSave();
+          else {
+            record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1; record.dirty = Boolean(currentProjectId);
+            dirtyDocumentIds.add(record.id); persistLibrary(); renderLibrary(); scheduleRevisionSync(record); reportDesktopDocumentState();
+          }
+        }
+        statusMessage(connection ? `Sequência ${name} criada e conectada` : `Sequência ${name} criada`);
+        scheduleProductionIssueCount();
+        return {ok:true,id,key:narrativeMapKey({record,id})};
+      };
+      const createNarrativeMapChoice = (source,data,choice = null) => {
+        const fail = message => ({ok:false,message});
+        if (desktopBlocked || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return fail('Sua permissão não permite criar escolhas ou opções.');
+        if (source.external || source.missing || source.duplicate) return fail('Abra uma sequência deste livro com ID único para editar suas escolhas.');
+        const record = documents.find(item => item.id === source.documentId && !item.trashedAt && !item.archivedAt && !item.remoteConflict);
+        if (!record) return fail('O capítulo não está disponível para edição.');
+        if (record.id !== activeDocumentId && record.body !== source.sourceBody) return fail('O capítulo mudou. Reabra o mapa antes de continuar.');
+        const registry = buildNarrativeRegistry();
+        if (registry.duplicateIds.has(source.id)) return fail('Resolva o ID duplicado da sequência antes de editar.');
+        const root = record.id === activeDocumentId ? editor : document.createElement('div');
+        if (root !== editor) root.innerHTML = record.body || '';
+        const sequences = ensureNarrativeSequences(record,root,false);
+        if (!sequences.some(item => item.id === source.id)) return fail('A sequência foi removida ou renomeada. Reabra o mapa.');
+        const additions = Array.isArray(data.options) ? data.options.map(item => ({text:typeof item?.text === 'string' ? item.text.trim() : '',targetEvent:typeof item?.targetEvent === 'string' ? item.targetEvent.trim() : ''})) : [];
+        if (!additions.length || additions.some(item => !item.text)) return fail('Preencha o texto de cada opção.');
+        if (additions.some(item => item.targetEvent && (!registry.byId.get(item.targetEvent)?.record || registry.byId.get(item.targetEvent).record.archivedAt || registry.duplicateIds.has(item.targetEvent)))) return fail('Escolha destinos existentes com IDs únicos ou deixe para conectar depois.');
+        const collected = collectNarrativeNodesFromRoot(root,false,sequences[0]?.id || '');
+        let block;
+        if (choice) {
+          const current = choice.blockId ? collected.find(item => item.block.dataset.narrativeId === choice.blockId) : collected[choice.blockIndex];
+          if (!current || current.node.type !== 'choice' || current.node.sequence_id !== source.id || JSON.stringify(current.node) !== choice.signature) return fail('A escolha mudou. Reabra o mapa antes de adicionar opções.');
+          block = current.block;
+          if (!block.querySelector(':scope > .narrative-choice-options')) return fail('Não foi possível localizar as opções desta escolha. Abra o bloco na escrita para revisá-lo.');
+        } else {
+          const current = collected.filter(item => item.node.sequence_id === source.id).map(item => item.node);
+          if (JSON.stringify(current) !== source.sourceSignature) return fail('A sequência mudou. Reabra o mapa antes de criar a escolha.');
+        }
+        const mutation = root === editor ? rememberNarrativeMutation() : null;
+        if (choice) additions.forEach(item => block.querySelector(':scope > .narrative-choice-options').append(createChoiceOption(item)));
+        else {
+          block = createNarrativeBlock('choice',{sequenceId:source.id,prompt:typeof data.prompt === 'string' ? data.prompt.trim() : '',options:additions});
+          appendNarrativeBlockToSequence(root,source.id,block);
+        }
+        normalizeNarrativeMarkup(block);
+        if (root === editor) { applyCanonicalReadingPath(); commitNarrativeMutation(mutation); queueSave(); scheduleBookPagination(); }
+        else {
+          record.body = root.innerHTML; record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1; record.dirty = Boolean(currentProjectId);
+          dirtyDocumentIds.add(record.id); persistLibrary(); renderLibrary(); scheduleRevisionSync(record); reportDesktopDocumentState();
+        }
+        scheduleProductionIssueCount(); statusMessage(choice ? 'Opções adicionadas à escolha' : 'Escolha criada na sequência');
+        return {ok:true,choiceId:block.dataset.narrativeId};
       };
       const renderNarrativeMap = () => {
+        sequenceMapView?.dispose(); sequenceMapView = null;
         const registry = buildNarrativeRegistry();
         const activeRecord = documents.find(item => item.id === activeDocumentId);
-        const activeSequenceId = activeNarrativeSequence(activeRecord, editor, true)?.id || '';
-        narrativeMap.replaceChildren();
-        if (!registry.entries.length) {
-          const empty = document.createElement('div');
-          empty.className = 'narrative-empty';
-          empty.textContent = 'Ainda não há sequências. Crie uma no painel para iniciar o mapa.';
-          narrativeMap.append(empty);
-          return;
-        }
-        registry.entries.forEach(entry => {
-          const card = document.createElement('article');
-          card.className = 'narrative-map-event';
-          card.dataset.eventId = entry.id;
-          card.dataset.current = String(entry.record?.id === activeDocumentId && entry.id === activeSequenceId);
-          card.dataset.provisional = String(entry.provisional);
-          card.dataset.duplicate = String(registry.duplicateIds.has(entry.id));
-          const heading = document.createElement('div');
-          heading.className = 'narrative-map-heading';
-          const headingCopy = document.createElement('div');
-          headingCopy.className = 'narrative-map-heading-copy';
-          const eventTitle = document.createElement('strong');
-          eventTitle.textContent = entry.sequence?.title || entry.record?.title || 'Sequência provisória';
-          const eventId = document.createElement('small');
-          eventId.textContent = entry.id;
-          headingCopy.append(eventTitle, eventId);
-          const state = document.createElement('span');
-          state.className = 'narrative-map-state';
-          state.textContent = entry.provisional ? 'Destino ausente' : registry.duplicateIds.has(entry.id) ? 'ID duplicado' : entry.record?.id === activeDocumentId && entry.id === activeSequenceId ? 'Atual' : `${entry.nodes.length} ${entry.nodes.length === 1 ? 'bloco' : 'blocos'}`;
-          heading.append(headingCopy, state);
-          card.append(heading);
-          if (entry.routes.length) {
-            const routes = document.createElement('div');
-            routes.className = 'narrative-map-routes';
-            entry.routes.forEach(route => {
-              const routeButton = document.createElement('button');
-              routeButton.type = 'button';
-              routeButton.className = 'narrative-map-route';
-              const broken = !route.target || !registry.byId.has(route.target) || registry.byId.get(route.target).provisional;
-              routeButton.dataset.broken = String(broken);
-              routeButton.title = route.target ? `Ir para ${route.target}` : 'Esta opção ainda não possui destino';
-              const routeLabel = document.createElement('span');
-              routeLabel.textContent = `${route.label} → ${route.target || 'destino não definido'}`;
-              routeButton.append(routeLabel);
-              if (route.target) routeButton.addEventListener('click', () => focusNarrativeMapEvent(route.target));
-              routes.append(routeButton);
-            });
-            card.append(routes);
-          } else {
-            const routeInfo = document.createElement('div');
-            routeInfo.className = 'narrative-map-routes';
-            routeInfo.textContent = entry.provisional ? 'Referenciado por uma escolha.' : 'Nenhuma saída por escolha.';
-            card.append(routeInfo);
-          }
-          const actions = document.createElement('div');
-          actions.className = 'narrative-map-event-actions';
-          if (entry.provisional) {
-            const createButton = document.createElement('button');
-            createButton.type = 'button';
-            createButton.textContent = 'Criar sequência';
-            createButton.addEventListener('click', () => createNarrativeDestination(entry.id));
-            actions.append(createButton);
-          } else {
-            const openButton = document.createElement('button');
-            openButton.type = 'button';
-            openButton.textContent = 'Abrir';
-            openButton.addEventListener('click', () => {
-              productionWorkspace?.remember();
-              productionWorkspace?.write(false);
-              openDocument(entry.record.id);
-              entry.record.activeNarrativeSequenceId = entry.id;
-              renderNarrativePanel();
-            });
-            const testButton = document.createElement('button');
-            testButton.type = 'button';
-            testButton.textContent = 'Testar daqui';
-            testButton.disabled = registry.duplicateIds.has(entry.id);
-            if (testButton.disabled) testButton.title = 'Resolva o ID duplicado antes de testar esta sequência';
-            testButton.addEventListener('click', () => startNarrativeTest(entry.id));
-            actions.append(openButton, testButton);
-          }
-          card.append(actions);
-          narrativeMap.append(card);
+        const folder = planningCollection();
+        const activeSequenceId = activeNarrativeSequence(activeRecord,editor,false)?.id || '';
+        const inScope = registry.entries.filter(entry => entry.record && !entry.record.archivedAt && (folder ? entry.record.folderId === folder.id : entry.record.id === activeDocumentId));
+        const visible = new Map(inScope.map(entry => [narrativeMapKey(entry),{entry,external:false}]));
+        inScope.forEach(entry => entry.routes.forEach(route => {
+          if (!route.target) return;
+          const target = registry.byId.get(route.target);
+          const ambiguous = registry.duplicateIds.has(route.target);
+          const key = ambiguous ? JSON.stringify(['ambiguous',route.target]) : target ? narrativeMapKey(target) : JSON.stringify(['',route.target]);
+          if (!visible.has(key)) visible.set(key,{entry:ambiguous ? {id:route.target,provisional:true,ambiguous:true,nodes:[],routes:[]} : target || {id:route.target,provisional:true,nodes:[],routes:[]},external:true});
+        }));
+        const entries = [...visible].map(([key,{entry,external}]) => ({
+          key,id:entry.id,documentId:entry.record?.id || '',sourceBody:entry.record?.body,title:entry.sequence?.title || entry.id,
+          chapter:entry.record?.title || '',external,missing:Boolean(entry.provisional),duplicate:registry.duplicateIds.has(entry.id),
+          current:entry.record?.id === activeDocumentId && entry.id === activeSequenceId,
+          blockCount:entry.nodes.length,sourceSignature:JSON.stringify(entry.nodes),choiceBlocks:external ? [] : entry.choiceBlocks || [],
+          preview:(entry.nodes.find(node => node.text || node.prompt)?.text || entry.nodes.find(node => node.prompt)?.prompt || '').slice(0,220),
+          warning:entry.ambiguous || registry.duplicateIds.has(entry.id) ? 'ID duplicado · destino ambíguo' : entry.provisional ? 'Destino ausente' : entry.record?.archivedAt ? 'Capítulo arquivado' : entry.routes.some(route => !route.target || registry.byId.get(route.target)?.provisional || registry.duplicateIds.has(route.target)) ? 'Saídas para revisar' : '',
+          routes:external ? [] : entry.routes.map((route,index) => {
+            const target = registry.byId.get(route.target), duplicate = registry.duplicateIds.has(route.target);
+            return {...route,key:`${route.blockId || route.blockIndex}:${route.optionId || route.optionIndex}:${index}`,
+              targetKey:duplicate ? JSON.stringify(['ambiguous',route.target]) : target ? narrativeMapKey(target) : '',
+              warning:!route.target ? 'Sem destino' : duplicate ? 'Destino ambíguo: ID duplicado' : !target || target.provisional ? 'Destino ausente' : target.record.archivedAt ? 'Destino arquivado' : ''};
+          })
+        }));
+        const targets = registry.entries.filter(entry => entry.record && !entry.record.archivedAt && !registry.duplicateIds.has(entry.id)).map(entry => ({id:entry.id,label:`${entry.record.title} → ${entry.sequence.title}${folder && entry.record.folderId !== folder.id ? ' · outro livro' : ''}`}));
+        const contextKey = narrativeRegistryCacheKey();
+        const contextValid = () => contextKey === narrativeRegistryCacheKey() && (folder?.id || '') === (planningCollection()?.id || '');
+        const chapters = documents.filter(record => !record.trashedAt && !record.archivedAt && !record.remoteConflict && (folder ? record.folderId === folder.id : record.id === activeRecord?.id)).map(record => ({id:record.id,title:record.title}));
+        sequenceMapView = HeartspaceSequenceMap.create({
+          document,entries,targets,chapters,
+          simulationStory:{variable_registry:narrativeVariables,sequences:registry.entries.filter(entry => !entry.provisional && !registry.duplicateIds.has(entry.id)).map(entry => ({event_id:entry.id,title:entry.sequence.title,chapter:entry.record.title,nodes:entry.nodes}))},
+          defaultChapterId:activeRecord?.id,scopeLabel:folder?.name || activeRecord?.title || 'Documento',
+          scopeKey:`${narrativeRegistryCacheKey()}:${folder?.id || activeRecord?.id || 'empty'}`,
+          canEdit:!desktopBlocked && (!currentProjectId || canEditProject({capabilities:projectCapabilities})),
+          onChangeDestination:(source,route,id) => contextValid() ? changeNarrativeMapDestination(source,route,id,{refresh:false}) : {ok:false,message:'O projeto ou livro mudou. Reabra o mapa.'},
+          onCreateSequence:(data,connection) => contextValid() ? createNarrativeMapSequence(data,connection,folder?.id || '',activeRecord?.id) : {ok:false,message:'O projeto ou livro mudou. Reabra o mapa.'},
+          onCreateChoice:(source,data) => contextValid() ? createNarrativeMapChoice(source,data) : {ok:false,message:'O projeto ou livro mudou. Reabra o mapa.'},
+          onAddChoiceOptions:(source,choice,data) => contextValid() ? createNarrativeMapChoice(source,data,choice) : {ok:false,message:'O projeto ou livro mudou. Reabra o mapa.'},
+          onRefresh:(key,choiceId) => { renderNarrativeMap(); if (key) sequenceMapView?.focus(key); if (choiceId) sequenceMapView?.focusChoice(choiceId); },
+          onOpen:entry => {
+            const record = documents.find(item => item.id === entry.documentId && !item.trashedAt); if (!record) return;
+            productionWorkspace?.remember(); openDocument(record.id);
+            record.activeNarrativeSequenceId = entry.id; persistLibrary();
+            setNarrativePanelView('sequence'); renderNarrativePanel();
+          },
+          onPlay:entry => startNarrativeTest(entry.id)
         });
+        narrativeMap.replaceChildren(sequenceMapView.element);
       };
       const renderNarrativeCharacters = () => {
         mergeObservedNarrativeCharacters();
@@ -5509,6 +6028,13 @@
             renderNarrativeCharacters();
           });
           row.append(name, id, count, remove);
+          const planningNotes = document.createElement('div'); planningNotes.className = 'narrative-character-notes';
+          libraryFolders.forEach(folder => folder.storyPlanning.worldEntries.filter(entry => entry.type === 'character' && entry.characterLink?.id === character.id).forEach(entry => {
+            const note = document.createElement('button'); note.type = 'button'; note.textContent = `Ficha: ${entry.title || character.name} · ${folder.name}`;
+            note.addEventListener('click',() => { openCollectionPlanning(folder); storyPlanning?.openWorld(entry.id); }); planningNotes.append(note);
+          }));
+          if (planningNotes.childElementCount) row.append(planningNotes);
+
           const artwork = document.createElement('details'); artwork.className = 'narrative-character-artwork';
           const summary = document.createElement('summary'); summary.textContent = character.portrait ? 'Retrato e posição' : 'Adicionar retrato';
           const fields = document.createElement('div'); fields.className = 'narrative-artwork-fields';
@@ -5678,9 +6204,14 @@
       };
       const applyNarrativePresentationPreview = presentation => {
         const value = normalizeNarrativePresentation(presentation);
-        const sample = characterById(narrativeSampleCharacter.value);
+        narrativeSampleViewport.update({...value,viewport:gameViewport()});
+        narrativeSampleViewport.setGuide(sceneSafeAreaEnabled);
+        document.querySelector('#narrative-scene-size').textContent = gameViewport().aspect === 'free' ? 'Acompanha o espaço disponível' : `${gameViewport().width} × ${gameViewport().height} · Reduzido sem deformar`;
+        const moment = sceneMomentContext(), node = moment.nodes[moment.index];
+        const sample = node ? HeartspaceNarrativeMedia.resolveSceneCharacter(moment.nodes,moment.index,narrativeCharacters) : characterById(narrativeSampleCharacter.value);
         narrativeSampleScene.update(value,sample);
-        narrativePresentationPreview.querySelector('.narrative-presentation-card strong').textContent = sample?.name || 'Personagem';
+        narrativePresentationPreview.querySelector('.narrative-presentation-card strong').textContent = node ? (node.type === 'dialogue' ? sample?.name || node.character || 'Personagem' : {narration:'Narração',choice:'Escolha',pause:'Pausa',variation:'Variação',signal:'Sinal'}[node.type]) : sample?.name || 'Personagem';
+        narrativePresentationPreview.querySelector('.narrative-presentation-card span').textContent = node ? (node.type === 'choice' ? node.prompt || 'Somente opções' : node.type === 'pause' ? `${node.duration_ms} ms` : node.text || node.name || '') : 'Esta é uma amostra de como a sequência aparecerá durante a prévia.';
         narrativePresentationPreview.dataset.model = value.model;
         narrativePresentationPreview.dataset.position = value.position;
         narrativePresentationPreview.style.setProperty('--preview-accent', value.accent);
@@ -5688,8 +6219,104 @@
         narrativePresentationPreview.style.setProperty('--preview-text', value.text);
         narrativePresentationPreview.style.setProperty('--preview-scene', value.scene);
       };
-      const narrativePresentationFromControls = () => normalizeNarrativePresentation({
-        ...activeNarrativeSequence()?.presentation,
+      let sceneMomentBlockId = '', sceneMomentSequenceKey = '', sceneMomentNodesKey = '', sceneMomentNodes = [], sceneMomentStateCache = null;
+      editor.addEventListener('input',() => { sceneMomentNodesKey = ''; });
+      const sceneMomentControls = document.createElement('section');
+      sceneMomentControls.className = 'scene-moment-controls scene-screen-settings';
+      sceneMomentControls.innerHTML = `<label>Momento da cena<select id="scene-moment-select" aria-describedby="scene-moment-help"></select></label>
+        <div class="scene-element-actions"><button type="button" id="scene-moment-previous" aria-label="Momento anterior">←</button><button type="button" id="scene-moment-next" aria-label="Próximo momento">→</button><button type="button" id="scene-moment-inherit">Herdar anterior</button><button type="button" id="scene-moment-reset">Restaurar início</button></div>
+        <output id="scene-moment-help" aria-live="polite"></output><button type="button" id="scene-moment-clean" hidden>Limpar referências a blocos removidos</button>`;
+      document.querySelector('.scene-screen-settings').after(sceneMomentControls);
+      const sceneMomentSelect = sceneMomentControls.querySelector('select');
+      let sceneMomentOptionsSignature = '';
+      const sceneMomentContext = (refresh = false) => {
+        const record = documents.find(item => item.id === activeDocumentId);
+        const sequence = record?.narrativeSequences?.find(item => item.id === record.activeNarrativeSequenceId) || activeNarrativeSequence();
+        const sequenceKey = JSON.stringify([narrativeRegistryCacheKey(),activeDocumentId,sequence?.id || '']);
+        if (refresh || sceneMomentNodesKey !== sequenceKey) {
+          sceneMomentNodes = collectNarrativeNodesFromRoot(editor,true,sequence?.id || '').map(entry => entry.node).filter(node => node.sequence_id === sequence?.id);
+          sceneMomentNodesKey = sequenceKey;
+        }
+        const nodes = sceneMomentNodes;
+        if (sequenceKey !== sceneMomentSequenceKey) { sceneMomentSequenceKey = sequenceKey; sceneMomentBlockId = ''; }
+        if (sceneMomentBlockId && !nodes.some(node => node.id === sceneMomentBlockId)) sceneMomentBlockId = '';
+        const index = sceneMomentBlockId ? nodes.findIndex(node => node.id === sceneMomentBlockId) : -1;
+        if (!sceneMomentStateCache || sceneMomentStateCache.source !== sequence?.presentation || sceneMomentStateCache.nodes !== nodes || sceneMomentStateCache.index !== index || sceneMomentStateCache.sequenceKey !== sequenceKey) {
+          const base = normalizeNarrativePresentation(sequence?.presentation);
+          sceneMomentStateCache = {source:sequence?.presentation,nodes,index,sequenceKey,base,presentation:HeartspaceNarrativeMedia.resolveScene(base,nodes,index)};
+        }
+        const {base,presentation} = sceneMomentStateCache;
+        return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,
+          key:JSON.stringify([sequenceKey,sceneMomentBlockId]),
+          presentation,characters:narrativeCharacters,
+          editable:Boolean(sequence) && (!currentProjectId || canEditProject({capabilities:projectCapabilities}))};
+      };
+      const renderSceneMomentControls = () => {
+        const context = sceneMomentContext(), cues = new Set(context.base.cues.map(cue => cue.block_id));
+        const labels = {dialogue:'Diálogo',narration:'Narração',choice:'Escolha',pause:'Pausa',variation:'Variação',signal:'Sinal'};
+        const options = context.nodes.map((node,index) => {
+          const copy = String(node.type === 'choice' ? node.prompt || 'Somente opções' : node.type === 'pause' ? `${node.duration_ms} ms` : node.text || node.name || '').replace(/\s+/g,' ').slice(0,65);
+          return [`${cues.has(node.id) ? '● ' : ''}${String(index + 1).padStart(2,'0')} · ${node.character || labels[node.type] || 'Bloco'}${copy ? ' · ' + copy : ''}`,node.id];
+        });
+        const signature = JSON.stringify([context.sequenceKey,options]);
+        if (signature !== sceneMomentOptionsSignature) {
+          sceneMomentOptionsSignature = signature;
+          sceneMomentSelect.replaceChildren(new Option('Início da sequência',''),...options.map(([label,id]) => new Option(label,id)));
+        }
+        sceneMomentSelect.value = context.blockId;
+        const cue = context.base.cues.find(item => item.block_id === context.blockId);
+        const orphaned = context.base.cues.filter(item => !context.nodes.some(node => node.id === item.block_id));
+        sceneMomentControls.querySelector('#scene-moment-help').textContent = (context.index < 0 ? 'Composição inicial. Os blocos herdam esta cena até receberem alterações.' : cue?.reset ? 'Restaura a composição inicial neste bloco e mantém os ajustes feitos aqui.' : cue ? 'Alterações deste bloco permanecem nos próximos, até serem modificadas novamente.' : 'Este bloco herda a composição anterior. Seus ajustes serão aplicados a partir daqui.') + (orphaned.length ? ` ${orphaned.length} referência(s) a blocos removidos não afetam a reprodução.` : '');
+        sceneMomentSelect.disabled = false;
+        sceneMomentControls.querySelector('#scene-moment-previous').disabled = context.index < 0;
+        sceneMomentControls.querySelector('#scene-moment-next').disabled = context.index >= context.nodes.length - 1;
+        sceneMomentControls.querySelector('#scene-moment-inherit').disabled = !context.editable || !cue;
+        sceneMomentControls.querySelector('#scene-moment-reset').disabled = !context.editable || context.index < 0;
+        const clean = sceneMomentControls.querySelector('#scene-moment-clean'); clean.hidden = !orphaned.length; clean.disabled = !context.editable;
+      };
+      const writeSceneComposition = (expected,presentation) => {
+        const context = sceneMomentContext();
+        if (context.key !== expected || !context.editable) return false;
+        const sequence = activeNarrativeSequence();
+        if (!sequence) return false;
+        const base = normalizeNarrativePresentation(sequence.presentation);
+        if (context.index < 0) sequence.presentation = normalizeNarrativePresentation({...presentation,cues:base.cues});
+        else {
+          const existing = base.cues.find(cue => cue.block_id === context.blockId);
+          const before = existing?.reset ? HeartspaceNarrativeMedia.sceneState(base) : HeartspaceNarrativeMedia.resolveScene(base,context.nodes,context.index - 1);
+          const patch = HeartspaceNarrativeMedia.sceneDiff(before,presentation);
+          patch.block_id = context.blockId; patch.reset = existing?.reset === true;
+          base.cues = base.cues.filter(cue => cue.block_id !== context.blockId);
+          if (patch.reset || Object.keys(patch.settings).length || patch.set.length || patch.remove.length || patch.order) {
+            if (base.cues.length >= 1000) { statusMessage('Esta sequência já possui 1000 momentos de cena. Remova alterações de um bloco antes de adicionar outro.','pending'); return false; }
+            base.cues.push(patch);
+          }
+          sequence.presentation = normalizeNarrativePresentation(base);
+        }
+        applyNarrativePresentationPreview(sceneMomentContext().presentation);
+        renderSceneMomentControls(); queueSave(); return true;
+      };
+      const sceneComposer = HeartspaceSceneComposer.create({
+        parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
+        read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition
+      });
+      sceneMomentSelect.addEventListener('change',() => { sceneMomentBlockId = sceneMomentSelect.value; renderNarrativePresentation(); });
+      ['previous','next'].forEach(direction => sceneMomentControls.querySelector(`#scene-moment-${direction}`).addEventListener('click',() => {
+        const context = sceneMomentContext(), index = context.index + (direction === 'next' ? 1 : -1);
+        sceneMomentBlockId = context.nodes[index]?.id || ''; renderNarrativePresentation();
+      }));
+      ['inherit','reset','clean'].forEach(action => sceneMomentControls.querySelector(`#scene-moment-${action}`).addEventListener('click',() => {
+        const context = sceneMomentContext(); if (!context.editable || (action !== 'clean' && context.index < 0)) return;
+        const sequence = activeNarrativeSequence(), base = normalizeNarrativePresentation(sequence.presentation);
+        base.cues = base.cues.filter(cue => action === 'clean' ? context.nodes.some(node => node.id === cue.block_id) : cue.block_id !== context.blockId);
+        if (action === 'reset') {
+          if (base.cues.length >= 1000) { statusMessage('Esta sequência já possui 1000 momentos de cena.','pending'); return; }
+          base.cues.push({block_id:context.blockId,reset:true});
+        }
+        sequence.presentation = normalizeNarrativePresentation(base); queueSave(); renderNarrativePresentation();
+      }));
+      const narrativePresentationFromControls = previousPresentation => normalizeNarrativePresentation({
+        ...previousPresentation,
         ...Object.fromEntries(Object.entries(narrativeArtworkControls).map(([key,control]) => [key,control.value])),
         model:narrativePresentationModel.value,
         position:narrativePresentationPosition.value,
@@ -5699,9 +6326,18 @@
         surface:narrativePresentationSurface.value,
         text:narrativePresentationText.value
       });
+      const syncNarrativeViewportControls = () => {
+        narrativeSceneAspect.value = gameViewport().aspect;
+        narrativeSceneWidth.value = String(gameViewport().width);
+        narrativeSceneHeight.value = String(gameViewport().height);
+        const custom = gameViewport().aspect === 'custom';
+        const editable = !currentProjectId || canEditProject({capabilities:projectCapabilities});
+        [narrativeSceneWidth,narrativeSceneHeight].forEach(control => { control.closest('label').hidden = !custom; control.disabled = !custom || !editable; });
+        document.querySelector('#narrative-scene-size').textContent = gameViewport().aspect === 'free' ? 'Acompanha o espaço disponível' : `${gameViewport().width} × ${gameViewport().height} · Reduzido sem deformar`;
+        narrativeSceneSafeArea.disabled = false;
+      };
       const renderNarrativePresentation = () => {
-        const sequence = activeNarrativeSequence();
-        const value = normalizeNarrativePresentation(sequence?.presentation);
+        const value = sceneMomentContext(true).presentation;
         narrativePresentationModel.value = value.model;
         narrativePresentationPosition.value = value.position;
         narrativePresentationSpeed.value = String(value.speed);
@@ -5717,7 +6353,12 @@
         narrativeSampleCharacter.value = narrativeCharacters.some(character => character.id === previousSample) ? previousSample : narrativeCharacters.find(character => character.portrait)?.id || '';
         const editable = !currentProjectId || canEditProject({capabilities:projectCapabilities});
         document.querySelectorAll('#narrative-presentation-form input,#narrative-presentation-form select,#narrative-presentation-form button').forEach(control => { control.disabled = !editable && control !== narrativeSampleCharacter; });
+        narrativeSampleCharacter.disabled = sceneMomentContext().index >= 0;
+        narrativeSampleCharacter.title = narrativeSampleCharacter.disabled ? 'O personagem da prévia vem do bloco selecionado.' : 'Escolha um personagem para a composição inicial.';
+        syncNarrativeViewportControls();
+        renderSceneMomentControls();
         applyNarrativePresentationPreview(value);
+        sceneComposer.render();
       };
       const setNarrativePanelView = view => {
         if (productionWorkspace && ['characters','variables','glossary'].includes(view)) { productionWorkspace.openLibrary(view); return; }
@@ -5732,6 +6373,7 @@
         narrativePlanningView.hidden = !showPlanning;
         narrativePlanningTab.setAttribute('aria-selected',String(showPlanning));
         const showMap = view === 'map';
+        if (!showMap) { sequenceMapView?.dispose(); sequenceMapView = null; narrativeMap.replaceChildren(); }
         const showPresentation = view === 'presentation';
         const showLocalization = view === 'localization';
         const showCharacters = view === 'characters';
@@ -5751,7 +6393,7 @@
         if (!productionWorkspace) narrativeCharactersTab.setAttribute('aria-selected', String(showCharacters));
         if (!productionWorkspace) narrativeVariablesTab.setAttribute('aria-selected', String(showVariables));
         narrativeValidationTab.setAttribute('aria-selected', String(showValidation));
-        const sequenceContext = !showPlanning && !showGlossary && !showLocalization && !showCharacters && !showVariables && !showValidation;
+        const sequenceContext = !showMap && !showPlanning && !showGlossary && !showLocalization && !showCharacters && !showVariables && !showValidation;
         narrativeSettings.hidden = !sequenceContext;
         narrativeInsertTools.hidden = view !== 'sequence';
         narrativeActions.hidden = view !== 'sequence' && view !== 'map';
@@ -5791,6 +6433,8 @@
       };
       const applyNarrativeTestPresentation = (presentation,character = null) => {
         const value = normalizeNarrativePresentation(presentation);
+        narrativeTestViewport.update({...value,viewport:gameViewport()});
+        narrativeTestViewport.setGuide(sceneSafeAreaEnabled);
         narrativeTestMedia.update(value,character);
         narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden);
         if (narrativeTestState) narrativeTestState.presentation = value;
@@ -5803,7 +6447,7 @@
       };
       const typeNarrativeTestText = (element, text, onComplete) => {
         const content = String(text || '');
-        const speed = Number(narrativeTestState?.presentation?.speed ?? 24);
+        const speed = narrativeTestState?.presentation?.dialogue_visible === false ? 0 : Number(narrativeTestState?.presentation?.speed ?? 24);
         if (!speed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           element.textContent = content;
           element.setAttribute('aria-label', content);
@@ -5933,7 +6577,8 @@
       };
       const renderNarrativeTest = () => {
         stopNarrativeTestPlayback();
-        [...narrativeTestStage.children].filter(child => child !== narrativeTestMedia.layer).forEach(child => child.remove());
+        narrativeTestStage.dataset.dialogueVisible = 'true';
+        [...narrativeTestStage.children].filter(child => child !== narrativeTestMedia.layer && child !== narrativeTestViewport.guide).forEach(child => child.remove());
         if (!narrativeTestState) return;
         narrativeTestState.activeChoiceIndex = 0;
         queueMicrotask(() => { if (narrativeTestDialog.open && !narrativeTestStage.contains(document.activeElement)) narrativeTestStage.focus({ preventScroll:true }); });
@@ -5958,10 +6603,11 @@
           return;
         }
         const node = entry.nodes[narrativeTestState.index];
-        applyNarrativeTestPresentation(entry.sequence?.presentation,node?.type === 'dialogue' ? characterById(node.character_id) : null);
+        applyNarrativeTestPresentation(HeartspaceNarrativeMedia.resolveScene(entry.sequence?.presentation,entry.nodes,narrativeTestState.index),HeartspaceNarrativeMedia.resolveSceneCharacter(entry.nodes,narrativeTestState.index,narrativeCharacters));
         const validationErrors = narrativeTestState.validation.filter(issue => issue.severity === 'error').length;
         narrativeTestStatus.textContent = `${entry.id} · ${Math.min(narrativeTestState.index + 1, entry.nodes.length)}/${entry.nodes.length} · ${Object.keys(narrativeTestState.variables).length} variáveis${validationErrors ? ` · ${validationErrors} erros de validação` : ''}`;
         if (!node) {
+          narrativeTestStage.dataset.dialogueVisible = 'true';
           const { box, copy } = createNarrativePlayerBox('Sequência concluída');
           copy.textContent = entry.nodes.length ? 'Fim da sequência.' : 'Esta sequência ainda não possui blocos narrativos.';
           const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = entry.record?.title || entry.id; box.append(note);
@@ -5994,7 +6640,9 @@
           const note = document.createElement('div'); note.className = 'narrative-test-note'; note.textContent = node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload); box.append(note);
           narrativeTestHint(box);
         } else if (node.type === 'choice') {
-          const { box, copy } = createNarrativePlayerBox('Escolha');
+          const prompt = (node.prompt || '').trim();
+          const { box, copy } = createNarrativePlayerBox(prompt ? 'Escolha' : '');
+          copy.hidden = !prompt;
           const choices = document.createElement('div');
           choices.className = 'narrative-test-choices';
           choices.hidden = true;
@@ -6016,12 +6664,14 @@
             choices.append(button);
           });
           box.append(choices);
-          typeNarrativeTestText(copy, node.prompt || 'Escolha uma opção', () => {
+          const showChoices = () => {
             choices.hidden = false;
             const firstChoice = choices.querySelector('button:not(:disabled)');
             if (firstChoice) { firstChoice.dataset.active = 'true'; narrativeTestState.activeChoiceIndex = [...choices.querySelectorAll('button:not(:disabled)')].indexOf(firstChoice); }
             narrativeTestHint(box, 'Setas, números ou Enter para escolher');
-          });
+          };
+          if (prompt) typeNarrativeTestText(copy, prompt, showChoices);
+          else showChoices();
         }
       };
       const startNarrativeTest = eventId => {
@@ -6110,7 +6760,7 @@
           const preview = document.createElement('small');
           preview.textContent = node.type === 'pause' ? 'A sequência aguarda antes de continuar'
             : node.type === 'signal' ? (node.payload === undefined ? 'Sem dados adicionais' : typeof node.payload === 'string' ? node.payload : JSON.stringify(node.payload))
-            : node.type === 'choice' ? node.prompt || 'Pergunta ainda não definida'
+            : node.type === 'choice' ? node.prompt || 'Somente opções'
             : node.type === 'variation' ? node.text || 'Versão ativa vazia'
             : node.text || 'Bloco vazio';
           button.title = node.localization_id || '';
@@ -6225,14 +6875,26 @@
       narrativeVariablesTab.addEventListener('click', () => setNarrativePanelView('variables'));
       narrativeValidationTab.addEventListener('click', () => setNarrativePanelView('validation'));
       document.querySelector('#narrative-glossary-tab').addEventListener('click', () => setNarrativePanelView('glossary'));
+      document.querySelector('#narrative-presentation-form').addEventListener('submit',event => event.preventDefault());
       document.querySelector('#narrative-presentation-form').addEventListener('input', event => {
-        if (event.target === narrativeSampleCharacter) { applyNarrativePresentationPreview(activeNarrativeSequence()?.presentation); return; }
+        if (event.target.closest('.scene-composer,.scene-moment-controls')) return;
+        if (event.target === narrativeSceneSafeArea) {
+          sceneSafeAreaEnabled = narrativeSceneSafeArea.checked;
+          narrativeSampleViewport.setGuide(sceneSafeAreaEnabled); narrativeTestViewport.setGuide(sceneSafeAreaEnabled);
+          try { localStorage.setItem('heartspace-docs-scene-safe-area',String(sceneSafeAreaEnabled)); } catch (_) {}
+          return;
+        }
+        if (event.target === narrativeSampleCharacter) { applyNarrativePresentationPreview(sceneMomentContext().presentation); return; }
+        if (narrativeSceneAspect.value === 'custom' && (!narrativeSceneWidth.validity.valid || !narrativeSceneHeight.validity.valid)) return;
         if (event.target.type === 'file' || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
-        const sequence = activeNarrativeSequence();
-        if (!sequence) return;
-        sequence.presentation = narrativePresentationFromControls();
-        applyNarrativePresentationPreview(sequence.presentation);
-        queueSave();
+        if ([narrativeSceneAspect,narrativeSceneWidth,narrativeSceneHeight].includes(event.target)) {
+          narrativeGameViewport = HeartspaceNarrativeMedia.viewport({aspect:narrativeSceneAspect.value,width:Number(narrativeSceneWidth.value),height:Number(narrativeSceneHeight.value)});
+          saveGameViewport(); syncNarrativeViewportControls();
+          applyNarrativePresentationPreview(sceneMomentContext().presentation);
+          return;
+        }
+        const context = sceneMomentContext();
+        writeSceneComposition(context.key,narrativePresentationFromControls(context.presentation));
       });
       document.querySelector('#narrative-presentation-test').addEventListener('click', () => {
         const record = documents.find(item => item.id === activeDocumentId);
@@ -6242,20 +6904,20 @@
         const fileInput = document.querySelector(`#narrative-${field}-file`);
         document.querySelector(`#narrative-${field}-upload`).addEventListener('click',() => fileInput.click());
         document.querySelector(`#narrative-${field}-remove`).addEventListener('click',() => {
-          const sequence = activeNarrativeSequence();
-          if (!sequence || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
-          sequence.presentation = normalizeNarrativePresentation({...sequence.presentation,[field]:null}); renderNarrativePresentation(); queueSave();
+          const context = sceneMomentContext();
+          if (writeSceneComposition(context.key,{...context.presentation,[field]:null})) renderNarrativePresentation();
         });
         fileInput.addEventListener('change',async () => {
-          const file = fileInput.files?.[0], sequenceId = activeNarrativeSequence()?.id, documentId = activeDocumentId;
+          const file = fileInput.files?.[0], sequenceId = activeNarrativeSequence()?.id, documentId = activeDocumentId, sceneContextKey = sceneMomentContext().key;
           if (!file || !sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
           const status = document.querySelector('#narrative-artwork-status'); status.textContent = 'Adicionando arquivo…';
           try {
             const asset = await HeartspaceNarrativeMedia.readFile(file,field === 'music' ? 'audio' : 'image',{purpose:'background'});
             const sequence = activeNarrativeSequence();
             if (documentId !== activeDocumentId || sequence?.id !== sequenceId || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) throw new Error('A sequência mudou durante o envio. Adicione o arquivo novamente.');
-            sequence.presentation = normalizeNarrativePresentation({...sequence.presentation,[field]:asset});
-            renderNarrativePresentation(); queueSave(); status.textContent = 'Arquivo adicionado à cena.';
+            const context = sceneMomentContext();
+            if (context.key !== sceneContextKey || !writeSceneComposition(sceneContextKey,{...context.presentation,[field]:asset})) throw new Error('O momento da cena mudou. Adicione o arquivo novamente.');
+            renderNarrativePresentation(); status.textContent = 'Arquivo adicionado à cena.';
           } catch (error) { status.textContent = error.message || 'Não foi possível adicionar o arquivo.'; }
           finally { fileInput.value = ''; }
         });
@@ -6537,6 +7199,8 @@
         const fallback = sequences.find(sequence => sequence.id !== current.id);
         editor.querySelectorAll(`.narrative-block[data-narrative-sequence-id="${CSS.escape(current.id)}"]`).forEach(block => { block.dataset.narrativeSequenceId = fallback.id; });
         record.narrativeSequences = sequences.filter(sequence => sequence.id !== current.id);
+        if (record.ambience?.sequences) record.ambience.sequences = record.ambience.sequences.filter(item => item.sequenceId !== current.id);
+        documentAmbience?.update();
         record.activeNarrativeSequenceId = fallback.id;
         record.narrativeEventId = record.narrativeSequences[0]?.id || fallback.id;
         renderNarrativePanel();
@@ -6548,6 +7212,7 @@
         const sequence = activeNarrativeSequence(record, editor, true);
         if (!sequence) return;
         sequence.title = narrativeSequenceTitle.value.trim() || 'Sequência sem nome';
+        documentAmbience?.update();
         const option = [...narrativeSequenceSelect.options].find(item => item.value === sequence.id);
         const count = collectNarrativeNodes().filter(item => item.node.sequence_id === sequence.id).length;
         if (option) option.textContent = `${sequence.title} · ${count}`;
@@ -6682,13 +7347,23 @@
         if (untranslated) issues.push({ severity:'warning', title:`${untranslated} trecho(s) sem tradução: serão usados os textos originais.` });
         if (stale) issues.push({ severity:'warning', title:`${stale} tradução(ões) precisam de revisão após mudanças no original.` });
         if (signals) issues.push({ severity:'warning', title:'Sinais destinados à engine serão ignorados nesta versão do HTML.' });
+        sequences.forEach(sequence => {
+          const blockIds = new Set(sequence.nodes.map(node => node.id));
+          const missing = sequence.presentation.cues.filter(cue => !blockIds.has(cue.block_id)).length;
+          if (missing) issues.push({severity:'warning',title:`${sequence.title}: ${missing} alteração(ões) de cena ligada(s) a blocos removidos serão ignoradas.`});
+        });
+        sequences.forEach(sequence => HeartspaceNarrativeMedia.sceneStates(sequence.presentation).forEach(state => (state.elements || []).forEach(item => {
+          if (item.character_id && (!item.type || item.type === 'character')) characterIds.add(item.character_id);
+          if (item.visible === false || item.type === 'text') return;
+          if (item.character_id && (!item.type || item.type === 'character') ? !characterById(item.character_id)?.portrait : item.type === 'image' && !item.asset) issues.push({severity:'warning',title:`${sequence.title}: o elemento “${item.name || item.id}” está sem imagem.`});
+        })));
         const source = registry.byId.get(startId)?.record;
         const story = {
           format:'heartspace-html-story-v1', version:1,
           storage_id:HeartspaceNarrativeHtml.fingerprint(JSON.stringify([source?.remoteId || source?.id || '',startId])),
           title:gameTitle.trim() || source?.title || 'História interativa',
           locale:locale || (source ? localizationDataFor(source).sourceLocale : 'pt-BR'),
-          start_event_id:startId, sequences,
+          start_event_id:startId, viewport:gameViewport(), sequences,
           character_registry:narrativeCharacters.filter(character => characterIds.has(character.id)).map(character => ({ id:character.id, name:character.name, portrait:HeartspaceNarrativeMedia.normalize(character.portrait,'image'), portrait_position:HeartspaceNarrativeMedia.position(character.portrait_position) })),
           variable_registry:narrativeVariables.filter(variable => variableIds.has(variable.id)).map(variable => ({ id:variable.id, type:variable.type, default:coerceNarrativeValue(variable.default,variable.type) }))
         };
@@ -7966,7 +8641,8 @@
               },
               themeVariables: {
                 fontFamily: '"Segoe UI", Arial, sans-serif',
-                fontSize: '14px'
+                fontSize: '14px',
+                background: 'transparent'
               },
               themeCSS: `
                 foreignObject { overflow: visible; }
@@ -8542,9 +9218,9 @@
           const prompt = document.createElement('div');
           prompt.className = 'narrative-choice-prompt narrative-reading';
           prompt.contentEditable = 'true';
-          prompt.dataset.placeholder = 'Qual decisão será apresentada?';
+          prompt.dataset.placeholder = 'Pergunta ou contexto (opcional)';
           prompt.setAttribute('role', 'textbox');
-          prompt.setAttribute('aria-label', 'Pergunta ou contexto da escolha');
+          prompt.setAttribute('aria-label', 'Pergunta ou contexto da escolha (opcional)');
           prompt.textContent = data.prompt || '';
           const options = document.createElement('div');
           options.className = 'narrative-choice-options narrative-reading';
@@ -8705,8 +9381,38 @@
       narrativeDialog.addEventListener('pointerdown', event => {
         if (event.target.closest?.('[data-insert-narrative]')) event.preventDefault();
       });
+      function appendNarrativeBlockToSequence(root,sequenceId,block) {
+        const previous = [...root.querySelectorAll('.narrative-block')].filter(item => item.dataset.narrativeSequenceId === sequenceId).at(-1);
+        if (previous) {
+          let anchor = previous;
+          while (anchor.parentElement !== root && !anchor.parentElement.matches('.book-page-content')) anchor = anchor.parentElement;
+          anchor.after(block);
+        } else (root.querySelector('.book-page-content:last-child') || root).append(block);
+      }
+      const insertNarrativeInActiveSequence = type => {
+        const sequence = activeNarrativeSequence();
+        if (!sequence) return;
+        const mutation = rememberNarrativeMutation();
+        const block = createNarrativeBlock(type, { sequenceId:sequence.id });
+        appendNarrativeBlockToSequence(editor,sequence.id,block);
+        normalizeNarrativeMarkup(editor);
+        commitNarrativeMutation(mutation);
+        savedNarrativeSelection = null;
+        scheduleBookPagination();
+        setNarrativePanelView('sequence');
+        renderNarrativePanel();
+        queueSave();
+        const row = narrativeSequence.querySelector(`[data-narrative-id="${CSS.escape(block.dataset.narrativeId)}"]`);
+        row?.focus({ preventScroll:true });
+        row?.scrollIntoView({ block:'nearest', inline:'nearest' });
+      };
       const insertNarrativeFromTools = type => {
+        if (desktopBlocked || (currentProjectId && !canEditProject({capabilities:projectCapabilities}))) return;
         narrativeInsertTools.open = false;
+        if (productionWorkspace?.area === 'history') {
+          insertNarrativeInActiveSequence(type);
+          return;
+        }
         productionWorkspace?.write(true, false);
         insertNarrativeBlock(type);
       };
@@ -9589,13 +10295,13 @@
             return `${metadata}\n*[Sinal: ${markdownEscape(name)}${payload ? ` · ${markdownEscape(payload)}` : ''}]*`;
           }
           if (type === 'choice') {
-            const prompt = node.querySelector('.narrative-choice-prompt')?.innerText.trim() || 'Escolha';
+            const prompt = node.querySelector('.narrative-choice-prompt')?.innerText.trim() || '';
             const options = [...node.querySelectorAll('.narrative-choice-option')].map(option => {
               const label = option.querySelector('.narrative-choice-text')?.textContent.trim() || 'Opção';
               const target = option.querySelector('.narrative-choice-target')?.textContent.trim() || 'destino';
               return `- ${markdownEscape(label)} → \`${target.replace(/`/g, '\\`')}\``;
             });
-            return `${metadata}\n**${markdownEscape(prompt)}**\n${options.join('\n')}`;
+            return `${metadata}\n${prompt ? `**${markdownEscape(prompt)}**\n` : ''}${options.join('\n')}`;
           }
           if (type === 'variation') {
             const versions = [...node.querySelectorAll(':scope > .narrative-variation-version')];
@@ -10371,10 +11077,12 @@
       });
       const ambienceContextKey = () => `${desktopContext?.account?.id || currentUser?.id || 'local'}:${currentProjectId || 'local'}`;
       documentAmbience = HeartspaceDocumentAmbience.mount({
-        document, page:documentPage, editorWrap, editorArea:document.querySelector('.editor-area'),panel:document.querySelector('#ambience-settings'),
+        document, page:documentPage, editorWrap, editor, editorArea:document.querySelector('.editor-area'),panel:document.querySelector('#ambience-settings'),
         getRecord:() => documents.find(record => record.id === activeDocumentId),
         canEdit:() => !desktopBlocked && (!currentProjectId || canEditProject({capabilities:projectCapabilities})),
         contextKey:ambienceContextKey,
+        collectionId:() => documents.find(record => record.id === activeDocumentId)?.folderId || '',
+        getPlaces:() => libraryFolders.find(folder => folder.id === documents.find(record => record.id === activeDocumentId)?.folderId)?.storyPlanning.worldEntries.filter(item => item.type === 'place') || [],
         onChange:record => {
           record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1;
           if (record.remoteId || currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
@@ -10401,6 +11109,22 @@
       storyPlanning = HeartspaceStoryPlanning.mount({
         document, element:narrativePlanningView,
         getRecord:planningCollection,
+        getCharacters:() => narrativeCharacters,
+        importTexture:file => documentAmbience.importTexture(file),
+        loadTexture:texture => documentAmbience.loadTexture(texture),
+        createCharacter:name => {
+          const existing = characterByName(name); if (existing) return existing;
+          const character = normalizedCharacterRecord({id:uniqueCharacterId(name),name}); if (!character) return null;
+          narrativeCharacters = normalizeCharacterRegistry([...narrativeCharacters,character]); cacheNarrativeRegistry();
+          if (currentProjectId && narrativeRegistryRemoteReady) void saveNarrativeRegistry(true);
+          return character;
+        },
+        openCharacter:id => {
+          productionWorkspace?.openLibrary('characters'); renderNarrativeCharacters();
+          const row = [...narrativeCharacterList.querySelectorAll('[data-character-id]')].find(item => item.classList.contains('narrative-character-row') && item.dataset.characterId === id);
+          row?.querySelector('input')?.focus({preventScroll:true});
+          if (row) narrativeCharacterList.scrollTop += row.getBoundingClientRect().top - narrativeCharacterList.getBoundingClientRect().top - 12;
+        },
         getSequences:collectionSequences,
         canEdit:() => !desktopBlocked && (!currentProjectId || canEditProject({capabilities:projectCapabilities})),
         onChange:persistCollectionChange,
@@ -10411,15 +11135,30 @@
           persistLibrary(); setNarrativePanelView('sequence'); renderNarrativePanel();
         }
       });
+      let modeBeforeTranslation = null;
+      const syncTranslationDocumentPreview = area => {
+        if (area === 'translation') {
+          if (modeBeforeTranslation === null) modeBeforeTranslation = documentViewMode;
+          applyDocumentViewMode('reading');
+          documentViewModeControl.disabled = true;
+          const record = documents.find(item => item.id === activeDocumentId);
+          if (record && localizationDataFor(record).activeLocale) renderLocalizationPreview();
+        } else if (modeBeforeTranslation !== null) {
+          const previous = modeBeforeTranslation; modeBeforeTranslation = null;
+          closeLocalizationPreview(); documentViewModeControl.disabled = false; applyDocumentViewMode(previous);
+        }
+      };
       productionWorkspace = HeartspaceProductionWorkspaces.mount({
         document, editor, panel:narrativeDialog,
+        onAreaChange:syncTranslationDocumentPreview,
+        onDocumentAreaChange:syncTranslationDocumentPreview,
         loadRegistry:() => { void loadNarrativeRegistry(); },
         canEdit:() => !currentProjectId || canEditProject({capabilities:projectCapabilities}),
         showView:setNarrativePanelView, setOpen:setNarrativePanelOpen, render:renderNarrativePanel,
         renderLibraryView:view => { if (view === 'characters') renderNarrativeCharacters(); else if (view === 'variables') renderNarrativeVariables(); else renderLocalizationGlossary(); },
         documentId:() => activeDocumentId,
         planningId:() => planningCollection()?.id || 'unassigned',
-        layout:() => { scheduleBookPagination(); scheduleDocumentOutlineLayout(); scheduleNarrativeSequenceRails(); },
+        layout:() => { scheduleBookPagination(); scheduleAdaptiveZoom(); scheduleDocumentOutlineLayout(); scheduleNarrativeSequenceRails(); narrativeSampleViewport.fit(); narrativeTestViewport.fit(); },
         beginMutation:rememberNarrativeMutation, endMutation:commitNarrativeMutation,
         insertBlock:insertNarrativeFromTools,
         removeBlock:removeNarrativeBlock,

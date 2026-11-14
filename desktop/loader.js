@@ -19,10 +19,12 @@
       .replace('src="narrative-runtime.js"', `src="${rootPrefix}narrative-runtime.js"`)
       .replace('src="image-optimizer.js"', `src="${rootPrefix}image-optimizer.js"`)
       .replace('src="narrative-media.js"', `src="${rootPrefix}narrative-media.js"`)
+      .replace('src="scene-composer.js"', `src="${rootPrefix}scene-composer.js"`)
       .replace('src="narrative-html.js"', `src="${rootPrefix}narrative-html.js"`)
       .replace('src="narrative-package.js"', `src="${rootPrefix}narrative-package.js"`)
       .replace('src="document-ambience.js"', `src="${rootPrefix}document-ambience.js"`)
       .replace('src="story-planning-map.js"', `src="${rootPrefix}story-planning-map.js"`)
+      .replace('src="sequence-map.js"', `src="${rootPrefix}sequence-map.js"`)
       .replace('src="story-planning.js"', `src="${rootPrefix}story-planning.js"`)
       .replace('src="production-workspaces.js"', `src="${rootPrefix}production-workspaces.js"`);
     const parsed = new DOMParser().parseFromString(html, 'text/html');

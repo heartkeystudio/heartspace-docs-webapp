@@ -195,7 +195,11 @@
       edgeHandle.hidden = !surface;
       if (!surface) return;
       const rect = surface.getBoundingClientRect();
-      const right = rect.left + surface.clientLeft + surface.clientWidth;
+      const style = win.getComputedStyle(surface);
+      const borderRight = parseFloat(style.borderRightWidth) || 0;
+      const reservedScrollbar = Math.max(0,surface.offsetWidth - surface.clientWidth - surface.clientLeft - borderRight);
+      const scrollbarWidth = surface.scrollHeight > surface.clientHeight ? reservedScrollbar : 0;
+      const right = rect.right - borderRight - scrollbarWidth;
       const viewport = win.visualViewport;
       const topEdge = viewport?.offsetTop || 0;
       const bottomEdge = topEdge + (viewport?.height || win.innerHeight);
@@ -207,9 +211,11 @@
       win.cancelAnimationFrame(edgeFrame);
       edgeFrame = win.requestAnimationFrame(positionEdgeHandle);
     }
+    let notifiedArea = null;
     function layout() {
       const effectiveSplit = Boolean(splits[area] && !narrow.matches && ['history','translation','scene'].includes(area));
       doc.body.dataset.workArea = area;
+      if (notifiedArea !== area) { notifiedArea = area; options.onAreaChange?.(area); }
       if (widths[area]) doc.documentElement.style.setProperty('--narrative-panel-width',`${widths[area]}px`);
       doc.body.classList.toggle('work-area-split', effectiveSplit);
       nav.querySelectorAll('[data-work-area]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.workArea === (area === 'library' ? 'writing' : area))));
@@ -398,7 +404,10 @@
     });
     menus.find(menu => menu.details.id === 'narrative-insert-tools')?.content.addEventListener('pointerdown',event => { if (event.target.closest('[data-insert-narrative]')) event.preventDefault(); });
     menus.find(menu => menu.details.id === 'narrative-insert-tools')?.content.addEventListener('click',event => {
-      if (event.target.closest('[data-insert-narrative]')) options.insertBlock?.(event.target.closest('[data-insert-narrative]').dataset.insertNarrative);
+      const button = event.target.closest('[data-insert-narrative]');
+      if (!button) return;
+      event.stopPropagation();
+      options.insertBlock?.(button.dataset.insertNarrative);
     });
     // Existing export/test buttons keep their listeners inside the contextual actions menu.
     doc.querySelector('#work-area-story-actions').append(doc.querySelector('#narrative-test-current'),doc.querySelector('#story-export-open'));
@@ -500,7 +509,7 @@
     if (win.ResizeObserver) {
       new win.ResizeObserver(syncSplitAccessibility).observe(panel);
       const edgeObserver = new win.ResizeObserver(scheduleEdgeHandle);
-      [editorArea,panel,...panel.querySelectorAll('.narrative-view,.localization-list,.localization-project-summary,.narrative-character-list,.narrative-variable-list,.localization-glossary')].forEach(node => edgeObserver.observe(node));
+      [editorArea,doc.querySelector('.editor-wrap'),panel,...panel.querySelectorAll('.narrative-view,.localization-list,.localization-project-summary,.narrative-character-list,.narrative-variable-list,.localization-glossary')].filter(Boolean).forEach(node => edgeObserver.observe(node));
     }
     let sidebarLayoutFrame = 0;
     const sidebarClasses = ['focus-mode','zen-sidebar-open','zen-sidebar-pinned','zen-sidebar-dismissed','library-drawer-open'];
@@ -516,8 +525,14 @@
     }).observe(doc.body,{attributes:true,attributeFilter:['class']});
     layout();
     return { select, activateView, inspect, closeInspector, write, remember, openLibrary,
-      previewDocument() { if (narrow.matches) write(false); else { splits[area] = true; layout(); } },
-      documentChanged() { closeMenus(); closeInspector(); if (!libraryDrawer.hidden) options.renderLibraryView?.(lastViews.library); savedSelection = null; currentView = null; if (area !== 'writing') showView(lastViews[area]); },
+      previewDocument({ preserveArea = false } = {}) {
+        if (narrow.matches) {
+          if (preserveArea) return false;
+          write(false);
+        } else { splits[area] = true; layout(); }
+        return true;
+      },
+      documentChanged() { closeMenus(); closeInspector(); if (!libraryDrawer.hidden) options.renderLibraryView?.(lastViews.library); savedSelection = null; currentView = null; if (area !== 'writing') showView(lastViews[area]); options.onDocumentAreaChange?.(area); },
       resizeSplit(width, save = false) {
         if (!widths[area] || !Number.isFinite(width)) return;
         widths[area] = Math.max(420,Math.min(splitMaximum(),width));
