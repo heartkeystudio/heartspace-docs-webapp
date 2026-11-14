@@ -20,6 +20,9 @@
     .scene-element-tools [data-handle=anchor]{left:var(--element-anchor-x);top:var(--element-anchor-y);width:var(--scene-handle-size,14px);height:var(--scene-handle-size,14px);background:#c69a41;cursor:crosshair}
     .scene-editing .scene-element-content{pointer-events:none}
     .scene-editing .scene-element:focus-visible{outline:3px solid #e6bd6e}
+    .scene-parallax-preview .scene-element{pointer-events:none!important;outline:none!important}
+    .scene-parallax-preview .scene-element-tools{display:none!important}
+    .scene-parallax-preview .scene-element[data-element-type=hotspot]>.scene-element-content{visibility:hidden!important}
   `;
   const create = options => {
     const {parent,surface,read,write,preview} = options;
@@ -28,6 +31,12 @@
     const panel = doc.createElement('details'); panel.className = 'scene-composer'; panel.open = true;
     panel.innerHTML = `<summary>Elementos da cena</summary><div class="scene-composer-body">
       <label class="scene-check"><input data-field="dialogue_visible" type="checkbox" checked>Mostrar caixa de diálogo</label>
+      <details><summary>Parallax da cena</summary><div class="scene-composer-body">
+        <label class="scene-check"><input data-field="parallax_enabled" type="checkbox">Ativar parallax</label>
+        <div class="scene-element-grid"><label>Intensidade (%)<input data-field="parallax_strength" type="number" min="0" max="200" step="5"></label><label>Suavização (ms)<input data-field="parallax_smoothing_ms" type="number" min="0" max="1000" step="10"></label></div>
+        <label class="scene-check"><input data-parallax-preview type="checkbox">Experimentar parallax</label>
+        <small data-parallax-help>Mova o mouse sobre a cena para experimentar. Desative a experiência para voltar a arrastar elementos. Configure o deslocamento de cada camada abaixo.</small>
+      </div></details>
       <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Camadas · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena"></select></label>
@@ -35,6 +44,11 @@
       <section data-properties hidden aria-label="Propriedades do elemento"><div class="scene-composer-body">
         <label>Nome<input data-field="name" maxlength="120"></label>
         <label class="scene-check"><input data-field="visible" type="checkbox">Visível</label>
+        <details><summary>Parallax desta camada</summary><div class="scene-composer-body">
+          <div class="scene-element-actions"><button type="button" data-parallax-preset="0,0">Fixo</button><button type="button" data-parallax-preset="0.6,0.4">Fundo</button><button type="button" data-parallax-preset="1.5,1">Meio</button><button type="button" data-parallax-preset="3,2">Frente</button></div>
+          <div class="scene-element-grid"><label>Horizontal (%)<input data-field="parallax_x" type="number" min="-15" max="15" step="0.1"></label><label>Vertical (%)<input data-field="parallax_y" type="number" min="-15" max="15" step="0.1"></label></div>
+          <small>Deslocamento em relação à tela do jogo, na intensidade de 100%. Zero mantém fixo; valores negativos invertem o movimento. Os atalhos ajustam apenas o deslocamento. Para cenários, deixe margem nas imagens para não revelar bordas. Uma região sobreposta deve usar o mesmo deslocamento da imagem.</small>
+        </div></details>
         <label data-type="character">Personagem<select data-field="character_id"></select></label>
         <label data-type="text button">Texto<textarea data-field="text" maxlength="10000"></textarea><small data-type="button">Deixe vazio para usar o texto da opção vinculada durante a apresentação.</small></label>
         <div data-type="text button" class="scene-element-grid"><label>Tamanho do texto<input data-field="font_size" type="number" min="12" max="160" step="1"></label><label>Cor<input data-field="color" type="color"></label><label>Alinhamento<select data-field="align"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label></div>
@@ -85,6 +99,18 @@
       </div></div>`;
     properties.querySelector('.scene-composer-body').append(motionEditor);
     const fields = [...panel.querySelectorAll('[data-field]')];
+    const sceneFields = new Set(['dialogue_visible','parallax_enabled','parallax_strength','parallax_smoothing_ms']);
+    const percentFields = new Set(['scale','opacity','parallax_strength']);
+    const parallaxHover = win.matchMedia('(any-hover: hover) and (any-pointer: fine)');
+    const parallaxReduced = win.matchMedia('(prefers-reduced-motion: reduce)');
+    const parallaxSupported = win.CSS?.supports?.('translate','1px 1px') === true;
+    const parallaxPreview = panel.querySelector('[data-parallax-preview]');
+    const setParallaxPreview = enabled => {
+      parallaxPreview.checked = Boolean(enabled); surface.classList.toggle('scene-parallax-preview',Boolean(enabled));
+      options.previewParallax?.(Boolean(enabled));
+    };
+    parallaxPreview.addEventListener('change',() => setParallaxPreview(parallaxPreview.checked));
+    doc.addEventListener('visibilitychange',() => { if (doc.hidden) setParallaxPreview(false); });
     let key = '', selected = '', uploadIntent = null, drag = null;
     const context = () => read();
     const getItem = state => media.presentation(state.presentation).elements.find(item => item.id === selected);
@@ -190,7 +216,7 @@
     };
     const render = (populate = true) => {
       const state = context(), value = media.presentation(state.presentation);
-      if (key !== state.key) { selected = ''; key = state.key; status.textContent = ''; }
+      if (key !== state.key) { selected = ''; key = state.key; status.textContent = ''; setParallaxPreview(false); }
       if (selected && !value.elements.some(item => item.id === selected)) selected = '';
       const active = getItem(state);
       list.replaceChildren(...value.elements.slice().reverse().map(item => new Option(`${item.visible ? '' : '◌ '}${item.name}`,item.id)));
@@ -201,9 +227,9 @@
         characters.replaceChildren(new Option('Escolha um personagem',''),...state.characters.map(character => new Option(character.name,character.id)));
         fields.forEach(field => {
           const property = field.dataset.field;
-          const val = property === 'dialogue_visible' ? value.dialogue_visible : active?.[property];
+          const val = sceneFields.has(property) ? value[property] : active?.[property];
           if (field.type === 'checkbox') field.checked = Boolean(val);
-          else field.value = val === undefined ? '' : typeof val === 'number' ? String(Math.round(val * (['scale','opacity'].includes(property) ? 10000 : 100)) / 100) : val;
+          else field.value = val === undefined ? '' : typeof val === 'number' ? String(Math.round(val * (percentFields.has(property) ? 10000 : 100)) / 100) : val;
         });
         if (active) {
           const pair = `${active.anchor_x},${active.anchor_y}`, anchor = panel.querySelector('[data-anchor]');
@@ -216,6 +242,11 @@
       ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
       renderMotionEditor(populate);
       renderInteractions();
+      const reduced = parallaxReduced.matches, hover = parallaxHover.matches;
+      const hasParallax = value.elements.some(item => item.visible && (item.parallax_x || item.parallax_y));
+      parallaxPreview.disabled = !value.parallax_enabled || !value.parallax_strength || !hasParallax || reduced || !hover || !parallaxSupported;
+      if (parallaxPreview.disabled && parallaxPreview.checked) setParallaxPreview(false);
+      panel.querySelector('[data-parallax-help]').textContent = !parallaxSupported ? 'Este navegador exibe a composição estática, sem parallax.' : reduced ? 'Movimento reduzido está ativo: o parallax permanece estático.' : !hover ? 'O parallax requer um mouse ou ponteiro com hover. Em telas somente de toque a cena permanece estática.' : !value.parallax_enabled || !hasParallax ? 'Ative o parallax e escolha um deslocamento em Parallax desta camada. Depois, experimente movendo o mouse sobre a cena.' : 'Mova o mouse sobre a cena. Desative Experimentar parallax para voltar a arrastar elementos. A experiência não altera posições salvas.';
       mark();
     };
     const commit = (value,expectedKey,populate = false) => {
@@ -248,8 +279,8 @@
       const field = event.target, property = field.dataset.field;
       if (!property || !context().editable) return;
       if (field.type === 'number' && (!field.value.trim() || !field.validity.valid)) return;
-      const value = field.type === 'checkbox' ? field.checked : field.type === 'number' ? Number(field.value) / (['scale','opacity'].includes(property) ? 100 : 1) : field.value;
-      if (property === 'dialogue_visible') { const state = context(); commit({...state.presentation,dialogue_visible:value},state.key); }
+      const value = field.type === 'checkbox' ? field.checked : field.type === 'number' ? Number(field.value) / (percentFields.has(property) ? 100 : 1) : field.value;
+      if (sceneFields.has(property)) { const state = context(); commit({...state.presentation,[property]:value},state.key); }
       else change({[property]:value});
     });
     panel.querySelector('[data-anchor]').addEventListener('change',event => {
@@ -257,6 +288,7 @@
     });
     panel.addEventListener('click',event => {
       const button = event.target.closest('button'); if (!button || button.closest('[data-motion-editor],[data-interaction-editor]') || !context().editable) return;
+      if (button.dataset.parallaxPreset !== undefined) { const [parallax_x,parallax_y] = button.dataset.parallaxPreset.split(',').map(Number); change({parallax_x,parallax_y},true); return; }
       if (button.dataset.preset) { change({x:Number(button.dataset.preset),y:100,anchor_x:50,anchor_y:100,scale:1,rotation:0},true); return; }
       const action = button.dataset.action, state = context(), value = media.presentation(state.presentation), index = value.elements.findIndex(item => item.id === selected);
       if (action === 'image' || action === 'replace') { uploadIntent = {key:state.key,id:action === 'replace' ? selected : ''}; upload.click(); return; }
@@ -290,6 +322,7 @@
       return {x:(event.clientX - rect.left) / rect.width * 100,y:(event.clientY - rect.top) / rect.height * 100};
     };
     surface.addEventListener('pointerdown',event => {
+      if (parallaxPreview.checked) return;
       const node = event.target.closest('[data-scene-element]'), state = context();
       if (!state.editable || event.button !== 0) return;
       if (!node) { if (event.target === surface || event.target.classList.contains('scene-elements-layer')) { selected = ''; render(); } return; }
@@ -336,6 +369,7 @@
     surface.addEventListener('pointercancel',event => finish(event,true));
     surface.addEventListener('lostpointercapture',event => finish(event,true));
     surface.addEventListener('keydown',event => {
+      if (parallaxPreview.checked) return;
       const node = event.target.closest('[data-scene-element]'); if (!node || !context().editable) return;
       if (event.key === 'Escape') { selected = ''; render(); return; }
       if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
@@ -343,7 +377,9 @@
       const item = getItem(context()), step = event.shiftKey ? 5 : .5;
       change({x:item.x + (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0),y:item.y + (event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0)},true);
     });
-    return {render};
+    parallaxHover.addEventListener('change',() => render(false));
+    parallaxReduced.addEventListener('change',() => render(false));
+    return {render,stopParallaxPreview:() => setParallaxPreview(false)};
   };
   root.HeartspaceSceneComposer = {create};
 })(globalThis);

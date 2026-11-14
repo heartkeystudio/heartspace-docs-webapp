@@ -62,6 +62,7 @@
         id:String(input.id || `element-${index + 1}`).replace(/[^a-z0-9_.-]/gi,'').slice(0,80) || `element-${index + 1}`,
         name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável'})[type]).slice(0,120), type,
         choice_block_id:String(input.choice_block_id || '').slice(0,160), choice_option_id:String(input.choice_option_id || '').slice(0,160),
+        parallax_x:number(input.parallax_x,0,-15,15), parallax_y:number(input.parallax_y,0,-15,15),
         asset:normalize(input.asset,'image',true), character_id:String(input.character_id || '').slice(0,160),
         text:String(input.text || '').slice(0,10000), visible:input.visible !== false,
         x:number(input.x,50,-100,200), y:number(input.y,compact ? 30 : 100,-100,200),
@@ -85,6 +86,8 @@
       return {
         viewport:viewport(input.viewport), // Legacy input only; current games override this with their global viewport.
         elements:elements(input.elements), dialogue_visible:input.dialogue_visible !== false,
+        parallax_enabled:input.parallax_enabled === true,
+        parallax_strength:number(input.parallax_strength,1,0,2), parallax_smoothing_ms:number(input.parallax_smoothing_ms,160,0,1000),
         model:['panel','subtitle','card'].includes(input.model) ? input.model : 'panel',
         position:['top','center','bottom'].includes(input.position) ? input.position : 'bottom',
         accent:color(input.accent,'#0c8ce9'),surface:color(input.surface,'#10161d'),text:color(input.text,'#edf3f7'),scene:color(input.scene,'#111923'),
@@ -276,6 +279,70 @@
       const elementNodes = new Map();
       let finalElements = new Map(), interactionNode = null, interactionOptions = [];
       const win = doc.defaultView;
+      let parallaxSettings = {enabled:false,strength:1,smoothing:160}, parallaxElements = new Map(), parallaxPreview = false;
+      let parallaxFrame = 0, parallaxTime = 0, parallaxHeld = false, parallaxDisposed = false;
+      let parallaxWidth = 0, parallaxHeight = 0;
+      const parallaxTarget = {x:0,y:0}, parallaxCurrent = {x:0,y:0};
+      const hoverPointer = win.matchMedia?.('(any-hover: hover) and (any-pointer: fine)');
+      const parallaxSupported = win.CSS?.supports?.('translate','1px 1px') === true;
+      const canParallax = () => !parallaxDisposed && parallaxSettings.enabled && parallaxSettings.strength > 0 && parallaxElements.size > 0 &&
+        (options.authoring ? parallaxPreview : active) && !doc.hidden && !options.reducedMotion?.() && hoverPointer?.matches && parallaxSupported;
+      // Independent translation composes with timeline transforms and carries the hit target too.
+      const paintParallax = () => elementNodes.forEach((node,id) => {
+        const item = parallaxElements.get(id);
+        if (!item || (!parallaxCurrent.x && !parallaxCurrent.y)) { node.style.removeProperty('translate'); return; }
+        const x = -parallaxCurrent.x * item.parallax_x * parallaxWidth * parallaxSettings.strength / 100;
+        const y = -parallaxCurrent.y * item.parallax_y * parallaxHeight * parallaxSettings.strength / 100;
+        node.style.translate = `${x}px ${y}px`;
+      });
+      const resetParallax = () => {
+        win.cancelAnimationFrame(parallaxFrame); parallaxFrame = 0; parallaxTime = 0; parallaxHeld = false;
+        parallaxTarget.x = parallaxTarget.y = parallaxCurrent.x = parallaxCurrent.y = 0; paintParallax();
+      };
+      const tickParallax = time => {
+        parallaxFrame = 0;
+        if (!canParallax()) { resetParallax(); return; }
+        if (parallaxHeld) return;
+        const elapsed = Math.max(0,Math.min(64,parallaxTime ? time - parallaxTime : 16)); parallaxTime = time;
+        const amount = parallaxSettings.smoothing ? 1 - Math.exp(-elapsed / parallaxSettings.smoothing) : 1;
+        parallaxCurrent.x += (parallaxTarget.x - parallaxCurrent.x) * amount;
+        parallaxCurrent.y += (parallaxTarget.y - parallaxCurrent.y) * amount;
+        const settled = Math.max(Math.abs(parallaxTarget.x - parallaxCurrent.x),Math.abs(parallaxTarget.y - parallaxCurrent.y)) < .0005;
+        if (settled) { parallaxCurrent.x = parallaxTarget.x; parallaxCurrent.y = parallaxTarget.y; }
+        paintParallax();
+        if (!settled) parallaxFrame = win.requestAnimationFrame(tickParallax); else parallaxTime = 0;
+      };
+      const scheduleParallax = () => {
+        if (!canParallax()) { resetParallax(); return; }
+        if (!parallaxHeld && !parallaxFrame) parallaxFrame = win.requestAnimationFrame(tickParallax);
+      };
+      const leaveParallax = () => { parallaxTarget.x = parallaxTarget.y = 0; scheduleParallax(); };
+      const moveParallax = event => {
+        if (event.pointerType === 'touch') { resetParallax(); return; }
+        if (!['mouse','pen'].includes(event.pointerType) || event.buttons || !canParallax()) return;
+        const rect = container.getBoundingClientRect();
+        if (!rect.width || !rect.height || event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) { leaveParallax(); return; }
+        parallaxTarget.x = Math.max(-1,Math.min(1,(event.clientX - rect.left) / rect.width * 2 - 1));
+        parallaxTarget.y = Math.max(-1,Math.min(1,(event.clientY - rect.top) / rect.height * 2 - 1)); scheduleParallax();
+      };
+      const holdParallax = event => {
+        if (event.pointerType === 'touch') { resetParallax(); return; }
+        if (!['mouse','pen'].includes(event.pointerType) || !canParallax()) return;
+        parallaxHeld = true; win.cancelAnimationFrame(parallaxFrame); parallaxFrame = 0; parallaxTime = 0;
+      };
+      const releaseParallax = event => { if (parallaxHeld) { parallaxHeld = false; moveParallax(event); scheduleParallax(); } };
+      const measureParallax = () => { parallaxWidth = container.clientWidth; parallaxHeight = container.clientHeight; paintParallax(); };
+      container.addEventListener('pointermove',moveParallax,{passive:true});
+      container.addEventListener('pointerleave',leaveParallax,{passive:true});
+      container.addEventListener('pointerdown',holdParallax,{passive:true});
+      container.addEventListener('pointercancel',resetParallax,{passive:true});
+      win.addEventListener('pointerup',releaseParallax,{passive:true});
+      win.addEventListener('blur',resetParallax);
+      win.addEventListener('resize',measureParallax);
+      doc.addEventListener('visibilitychange',resetParallax);
+      hoverPointer?.addEventListener?.('change',resetParallax);
+      const parallaxObserver = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(measureParallax) : null;
+      parallaxObserver?.observe(container);
       let motion = null, motionFrame = 0, motionClock = null, motionPlaying = false, motionSuspended = false, motionGeneration = 0;
       const moving = new Map();
       const transform = item => `translate(${-item.anchor_x}%,${-item.anchor_y}%) rotate(${item.rotation}deg) scale(${item.scale})`;
@@ -328,7 +395,7 @@
         moving.forEach(({animation,node,track}) => {
           animation.cancel();
           if (track.to) node.hidden = !track.to.visible;
-          else { node.remove(); elementNodes.delete(track.element_id); }
+          else { node.remove(); elementNodes.delete(track.element_id); parallaxElements.delete(track.element_id); }
         });
         moving.clear(); motion = null; motionPlaying = false; motionSuspended = false;
         refreshInteractions();
@@ -360,6 +427,7 @@
         syncMotionVisibility(value); notifyMotion();
       };
       const updateElements = list => {
+        parallaxElements = new Map(list.filter(item => item.parallax_x || item.parallax_y).map(item => [item.id,item]));
         const ids = new Set(list.map(item => item.id));
         elementNodes.forEach((node,id) => { if (!ids.has(id)) { node.remove(); elementNodes.delete(id); } });
         list.forEach((item,index) => {
@@ -390,6 +458,7 @@
           content.style.transform = `scale(${item.flip_x ? -1 : 1},${item.flip_y ? -1 : 1})`;
         });
         refreshInteractions();
+        measureParallax();
       };
       const playAnimations = plan => {
         stopAnimations(false);
@@ -446,10 +515,12 @@
         return next;
       };
       const update = (raw,character) => {
+        resetParallax();
         setInteractions();
         stopAnimations();
         if (!container.contains(layer)) container.prepend(layer);
         const value = presentation(raw);
+        parallaxSettings = {enabled:value.parallax_enabled,strength:value.parallax_strength,smoothing:value.parallax_smoothing_ms};
         finalElements = new Map(value.elements.map(item => [item.id,item]));
         const nextBackground = source(value.background,'image');
         const nextPortrait = value.elements.some(item => item.type === 'character') ? '' : source(character?.portrait,'image');
@@ -474,16 +545,25 @@
       };
       return {
         layer,update,setInteractions,playAnimations,pauseAnimations,resumeAnimations,seekAnimations,stopAnimations,
-        refreshMotion:() => { if (reduced()) stopAnimations(); },
+        setParallaxPreview:enabled => { parallaxPreview = options.authoring === true && Boolean(enabled); resetParallax(); },
+        refreshMotion:() => { resetParallax(); if (reduced()) stopAnimations(); },
         setActive:value => {
           active = Boolean(value);
+          if (!active) resetParallax();
           refreshInteractions();
           if (!active) { const wasPlaying = motionPlaying || motionSuspended; pauseAnimations(); motionSuspended = wasPlaying; }
           else if (motionSuspended) resumeAnimations();
           play();
         },
         setSound:(enabled,level = .5) => { muted = !enabled; volume = Math.max(0,Math.min(1,Number(level) || 0)); play(); },
-        dispose:() => { stopAnimations(); active = false; audio.pause(); audio.removeAttribute('src'); audio.load?.(); layer.remove(); }
+        dispose:() => {
+          parallaxDisposed = true; resetParallax(); parallaxObserver?.disconnect();
+          container.removeEventListener('pointermove',moveParallax); container.removeEventListener('pointerleave',leaveParallax);
+          container.removeEventListener('pointerdown',holdParallax); container.removeEventListener('pointercancel',resetParallax);
+          win.removeEventListener('pointerup',releaseParallax); win.removeEventListener('blur',resetParallax); win.removeEventListener('resize',measureParallax);
+          doc.removeEventListener('visibilitychange',resetParallax); hoverPointer?.removeEventListener?.('change',resetParallax);
+          stopAnimations(); active = false; audio.pause(); audio.removeAttribute('src'); audio.load?.(); layer.remove();
+        }
       };
     };
     return {limits,extensions,normalize,source,presentation,position,viewport,element,elements,sceneState,sceneCues,sceneDiff,resolveScene,sceneAnimations,sceneMotion,motionKeys,resolveSceneCharacter,sceneStates,sceneInteractionIssues,createViewport,createScene,sniff};

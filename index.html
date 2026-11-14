@@ -4047,7 +4047,7 @@
         </div></details>`);
       const narrativeArtworkControls = Object.fromEntries(Object.entries({background_fit:'background-fit',background_focus:'background-focus',background_dim:'background-dim',portrait_position:'portrait-position',portrait_size:'portrait-size',transition:'scene-transition',transition_ms:'scene-transition-ms'}).map(([key,id]) => [key,document.querySelector(`#narrative-${id}`)]));
       const narrativeSampleCharacter = document.querySelector('#narrative-scene-sample-character');
-      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{characters:() => narrativeCharacters,onAnimationState:state => updateSceneMotionUi(state),reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
+      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{authoring:true,characters:() => narrativeCharacters,onAnimationState:state => updateSceneMotionUi(state),reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
       const narrativeLocalizationTab = document.querySelector('#narrative-localization-tab');
       const narrativeLocalizationView = document.querySelector('#narrative-localization');
       const localizationSourceLocale = document.querySelector('#localization-source-locale');
@@ -6357,6 +6357,7 @@
       const sceneComposer = HeartspaceSceneComposer.create({
         parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
         read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeAnimation:writeSceneAnimation,
+        previewParallax:enabled => narrativeSampleScene.setParallaxPreview(enabled),
         previewAnimationAt:(id,at) => {
           const track = sceneMomentContext().motion.tracks.find(item => item.element_id === id); if (!track) return;
           playSceneMotion(); narrativeSampleScene.seekAnimations(track.delay_ms + track.duration_ms * at / 100);
@@ -6423,7 +6424,7 @@
         sceneComposer.render();
       };
       const setNarrativePanelView = view => {
-        if (view !== 'presentation') narrativeSampleScene.stopAnimations();
+        if (view !== 'presentation') { sceneComposer.stopParallaxPreview(); narrativeSampleScene.stopAnimations(); }
         if (productionWorkspace && ['characters','variables','glossary'].includes(view)) { productionWorkspace.openLibrary(view); return; }
         productionWorkspace?.activateView(view);
         const showGlossary = view === 'glossary';
@@ -6752,6 +6753,7 @@
         }
       };
       const startNarrativeTest = eventId => {
+        sceneComposer.stopParallaxPreview();
         narrativeSampleScene.stopAnimations();
         const registry = buildNarrativeRegistry();
         const runner = HeartspaceNarrativeRuntime.createRunner({ start_event_id:eventId, variable_registry:narrativeVariables, sequences:registry.entries.filter(entry => !entry.provisional).map(entry => ({ event_id:entry.id, nodes:entry.nodes })) });
@@ -11235,8 +11237,8 @@
       };
       productionWorkspace = HeartspaceProductionWorkspaces.mount({
         document, editor, panel:narrativeDialog,
-        onAreaChange:area => { if (area !== 'scene') narrativeSampleScene.stopAnimations(); syncTranslationDocumentPreview(area); },
-        onDocumentAreaChange:area => { if (area !== 'scene') narrativeSampleScene.stopAnimations(); syncTranslationDocumentPreview(area); },
+        onAreaChange:area => { if (area !== 'scene') { sceneComposer.stopParallaxPreview(); narrativeSampleScene.stopAnimations(); } syncTranslationDocumentPreview(area); },
+        onDocumentAreaChange:area => { if (area !== 'scene') { sceneComposer.stopParallaxPreview(); narrativeSampleScene.stopAnimations(); } syncTranslationDocumentPreview(area); },
         loadRegistry:() => { void loadNarrativeRegistry(); },
         canEdit:() => !currentProjectId || canEditProject({capabilities:projectCapabilities}),
         showView:setNarrativePanelView, setOpen:setNarrativePanelOpen, render:renderNarrativePanel,
