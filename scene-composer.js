@@ -28,7 +28,7 @@
     const panel = doc.createElement('details'); panel.className = 'scene-composer'; panel.open = true;
     panel.innerHTML = `<summary>Elementos da cena</summary><div class="scene-composer-body">
       <label class="scene-check"><input data-field="dialogue_visible" type="checkbox" checked>Mostrar caixa de diálogo</label>
-      <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button></div>
+      <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Camadas · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena"></select></label>
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
@@ -36,8 +36,13 @@
         <label>Nome<input data-field="name" maxlength="120"></label>
         <label class="scene-check"><input data-field="visible" type="checkbox">Visível</label>
         <label data-type="character">Personagem<select data-field="character_id"></select></label>
-        <label data-type="text">Texto<textarea data-field="text" maxlength="10000"></textarea></label>
-        <div data-type="text" class="scene-element-grid"><label>Tamanho do texto<input data-field="font_size" type="number" min="12" max="160" step="1"></label><label>Cor<input data-field="color" type="color"></label><label>Alinhamento<select data-field="align"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label></div>
+        <label data-type="text button">Texto<textarea data-field="text" maxlength="10000"></textarea><small data-type="button">Deixe vazio para usar o texto da opção vinculada durante a apresentação.</small></label>
+        <div data-type="text button" class="scene-element-grid"><label>Tamanho do texto<input data-field="font_size" type="number" min="12" max="160" step="1"></label><label>Cor<input data-field="color" type="color"></label><label>Alinhamento<select data-field="align"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label></div>
+        <details data-interaction-editor open><summary>Ao clicar</summary><div class="scene-composer-body">
+          <label>Escolha vinculada<select data-interaction-choice aria-label="Escolha acionada pelo elemento"></select></label>
+          <small data-interaction-help></small>
+          <small>O clique fica ativo quando a história chega ao bloco de escolha indicado. Destinos, condições e efeitos são os da opção original. As opções em texto continuam disponíveis. Regiões são transparentes na apresentação; suas bordas aparecem apenas aqui.</small>
+        </div></details>
         <div data-type="art" class="scene-element-actions"><button type="button" data-action="replace">Trocar imagem</button></div>
         <div class="scene-element-actions"><button type="button" data-preset="20">Esquerda</button><button type="button" data-preset="50">Centro</button><button type="button" data-preset="80">Direita</button></div>
         <div class="scene-element-grid">
@@ -59,11 +64,110 @@
     const screen = parent.querySelector('.scene-moment-controls') || parent.querySelector('.scene-screen-settings');
     parent.insertBefore(panel,screen ? screen.nextSibling : parent.firstChild); surface.classList.add('scene-editing');
     const list = panel.querySelector('[data-list]'), properties = panel.querySelector('[data-properties]'), status = panel.querySelector('[role=status]'), upload = panel.querySelector('[data-upload]');
+    const motionEditor = doc.createElement('details'); motionEditor.dataset.motionEditor = '';
+    motionEditor.innerHTML = `<summary>Animação neste bloco</summary><div class="scene-composer-body">
+      <small data-motion-help>Escolha um bloco em Momento da cena. A composição anterior será o início e os ajustes acima serão o estado final. Para entradas e saídas suaves, altere Visível no bloco escolhido.</small>
+      <label class="scene-check"><input type="checkbox" data-motion-enabled>Animar este elemento</label>
+      <div data-motion-settings hidden class="scene-composer-body">
+        <div class="scene-element-grid"><label>Duração (ms)<input data-motion-field="duration_ms" type="number" min="50" max="60000" step="50"></label><label>Atraso (ms)<input data-motion-field="delay_ms" type="number" min="0" max="60000" step="50"></label></div>
+        <label>Suavização<select data-motion-field="easing"><option value="linear">Velocidade constante</option><option value="ease-in-out">Entrada e saída suaves</option><option value="ease-in">Acelerar</option><option value="ease-out">Desacelerar</option><option value="ease">Suave</option><option value="back">Ultrapassar e acomodar</option></select></label>
+        <label>Quadros personalizados<select data-motion-frames><option value="">Início automático → estado final</option></select></label>
+        <div class="scene-element-grid"><label>Posição na animação (%)<input data-motion-at type="number" min="0" max="99" step="1" value="50"></label><button type="button" data-motion-action="add">Adicionar quadro</button></div>
+        <small>O quadro 0 define um início personalizado. Os demais ficam entre o início e o estado final, em 100%. Um novo quadro copia os ajustes atuais do elemento.</small>
+        <div data-motion-frame-properties hidden class="scene-composer-body">
+          <div class="scene-element-grid">
+            <label>X (%)<input data-motion-pose="x" type="number" min="-100" max="200" step="0.1"></label><label>Y (%)<input data-motion-pose="y" type="number" min="-100" max="200" step="0.1"></label>
+            <label>Largura (%)<input data-motion-pose="width" type="number" min="1" max="300" step="0.1"></label><label>Altura (%)<input data-motion-pose="height" type="number" min="1" max="300" step="0.1"></label>
+            <label>Escala (%)<input data-motion-pose="scale" type="number" min="5" max="800" step="1"></label><label>Rotação (°)<input data-motion-pose="rotation" type="number" min="-360" max="360" step="1"></label>
+            <label>Opacidade (%)<input data-motion-pose="opacity" type="number" min="0" max="100" step="1"></label>
+          </div><div class="scene-element-actions"><button type="button" data-motion-action="view">Ver quadro</button><button type="button" data-motion-action="remove">Remover quadro</button></div>
+        </div>
+      </div></div>`;
+    properties.querySelector('.scene-composer-body').append(motionEditor);
     const fields = [...panel.querySelectorAll('[data-field]')];
     let key = '', selected = '', uploadIntent = null, drag = null;
     const context = () => read();
     const getItem = state => media.presentation(state.presentation).elements.find(item => item.id === selected);
+    const interactionSelect = panel.querySelector('[data-interaction-choice]');
+    const renderInteractions = () => {
+      const state = context(), item = getItem(state), nodes = state.nodes || [];
+      interactionSelect.replaceChildren(new Option('Sem ação',''));
+      nodes.forEach((node,index) => {
+        if (node.type !== 'choice') return;
+        const group = doc.createElement('optgroup'); group.label = `${index + 1} · ${node.prompt || 'Escolha sem pergunta'}`.slice(0,140);
+        (node.options || []).forEach(option => {
+          if (!node.id || !option.id) return;
+          const field = new Option(option.text || 'Opção sem texto',JSON.stringify([node.id,option.id]));
+          field.disabled = nodes.filter(candidate => candidate.id === node.id).length !== 1 || node.options.filter(candidate => candidate.id === option.id).length !== 1;
+          group.append(field);
+        });
+        interactionSelect.append(group);
+      });
+      const linked = Boolean(item?.choice_block_id || item?.choice_option_id);
+      const value = linked ? JSON.stringify([item.choice_block_id,item.choice_option_id]) : '';
+      const field = [...interactionSelect.options].find(option => option.value === value);
+      if (linked && !field) interactionSelect.append(new Option('Vínculo ausente · escolha outra opção',value));
+      interactionSelect.value = value; interactionSelect.disabled = !state.editable || !item;
+      panel.querySelector('[data-interaction-help]').textContent = linked && (!field || field.disabled) ? 'Este vínculo está ausente ou ambíguo. Selecione uma opção válida; a posição na lista não altera o vínculo.' : linked ? 'Vinculado por identificadores estáveis: reordenar blocos ou opções preserva esta ação.' : nodes.some(node => node.type === 'choice') ? 'Selecione a opção que este elemento deve acionar.' : 'Adicione um bloco de escolha à sequência em Escrever para configurar a interação.';
+    };
     const id = () => `element-${win.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)}`;
+    let motionSelection = '', frameAt = null;
+    const motionTrack = state => (state.animations || []).find(track => track.element_id === selected);
+    const renderMotionEditor = populate => {
+      const state = context(), item = getItem(state), selection = `${state.key}:${selected}`;
+      if (selection !== motionSelection) { motionSelection = selection; frameAt = null; populate = true; }
+      const track = motionTrack(state), editable = state.editable && state.index >= 0 && Boolean(item);
+      const enabled = motionEditor.querySelector('[data-motion-enabled]'); enabled.checked = Boolean(track && track.enabled !== false); enabled.disabled = !editable;
+      motionEditor.querySelector('[data-motion-settings]').hidden = !track || track.enabled === false;
+      motionEditor.querySelector('[data-motion-help]').textContent = state.index < 0 ? 'Selecione um bloco em Momento da cena para animar este elemento.' : 'A composição anterior é o início. Os ajustes acima definem o estado final. Alterne Visível para entradas e saídas suaves; use atraso para encadear movimentos.';
+      motionEditor.querySelectorAll('input,select,button').forEach(control => { if (control !== enabled) control.disabled = !editable || !track || track.enabled === false; });
+      const frames = motionEditor.querySelector('[data-motion-frames]');
+      frames.replaceChildren(new Option('Início automático → estado final',''),...(track?.keyframes || []).map(frame => new Option(frame.at === 0 ? '0% · Início personalizado' : `${frame.at}% · Quadro intermediário`,String(frame.at))));
+      if (!track?.keyframes.some(frame => frame.at === frameAt)) frameAt = null;
+      frames.value = frameAt === null ? '' : String(frameAt);
+      const frame = track?.keyframes.find(candidate => candidate.at === frameAt);
+      motionEditor.querySelector('[data-motion-frame-properties]').hidden = !frame;
+      if (populate) {
+        motionEditor.querySelectorAll('[data-motion-field]').forEach(field => { field.value = track?.[field.dataset.motionField] ?? (field.type === 'number' ? '0' : 'ease-in-out'); });
+        motionEditor.querySelectorAll('[data-motion-pose]').forEach(field => {
+          const property = field.dataset.motionPose, value = frame?.[property] ?? item?.[property] ?? 0;
+          field.value = String(Math.round(value * (['scale','opacity'].includes(property) ? 10000 : 100)) / 100);
+        });
+      }
+    };
+    const writeMotion = (track,populate = false) => {
+      const state = context();
+      if (!state.editable || state.index < 0 || !selected || !options.writeAnimation?.(state.key,selected,track)) return false;
+      render(populate); return true;
+    };
+    motionEditor.addEventListener('input',event => {
+      const field = event.target, state = context();
+      if (field.matches('[data-motion-enabled]')) {
+        writeMotion({...(motionTrack(state) || {element_id:selected,duration_ms:700,delay_ms:0,easing:'ease-in-out',keyframes:[]}),enabled:field.checked},true); return;
+      }
+      if (!field.matches('[data-motion-field],[data-motion-pose]')) return;
+      if (field.type === 'number' && (!field.value || !field.validity.valid)) return;
+      const track = motionTrack(state); if (!track) return;
+      if (field.dataset.motionField) writeMotion({...track,[field.dataset.motionField]:field.type === 'number' ? Number(field.value) : field.value});
+      else if (frameAt !== null) {
+        const property = field.dataset.motionPose, value = Number(field.value) / (['scale','opacity'].includes(property) ? 100 : 1);
+        writeMotion({...track,keyframes:track.keyframes.map(frame => frame.at === frameAt ? {...frame,[property]:value} : frame)});
+      }
+    });
+    motionEditor.querySelector('[data-motion-frames]').addEventListener('change',event => { frameAt = event.target.value === '' ? null : Number(event.target.value); renderMotionEditor(true); });
+    motionEditor.addEventListener('click',event => {
+      const button = event.target.closest('[data-motion-action]'); if (!button) return;
+      const state = context(), track = motionTrack(state), item = getItem(state); if (!track || !item || !state.editable) return;
+      const action = button.dataset.motionAction;
+      if (action === 'view') { options.previewAnimationAt?.(selected,frameAt); return; }
+      if (action === 'remove') { writeMotion({...track,keyframes:track.keyframes.filter(frame => frame.at !== frameAt)},true); return; }
+      const at = motionEditor.querySelector('[data-motion-at]'); if (!at.value || !at.validity.valid) return;
+      const position = Number(at.value);
+      if (track.keyframes.some(frame => frame.at === position)) { frameAt = position; renderMotionEditor(true); return; }
+      if (track.keyframes.length >= 32) { status.textContent = 'Use até 32 quadros personalizados por elemento.'; return; }
+      frameAt = position;
+      writeMotion({...track,keyframes:[...track.keyframes,{at:position,...Object.fromEntries(media.motionKeys.map(property => [property,item[property]]))}]},true);
+    });
     const mark = () => {
       const state = context(), editable = state.editable;
       const items = new Map(media.presentation(state.presentation).elements.map(item => [item.id,item]));
@@ -106,10 +210,12 @@
           anchor.value = [...anchor.options].some(option => option.value === pair) ? pair : 'custom';
         }
       }
-      panel.querySelectorAll('[data-type]').forEach(node => { node.hidden = !active || (node.dataset.type === 'art' ? active.type === 'text' : node.dataset.type !== active.type); });
+      panel.querySelectorAll('[data-type]').forEach(node => { node.hidden = !active || (node.dataset.type === 'art' ? !['image','character'].includes(active.type) : !node.dataset.type.split(' ').includes(active.type)); });
       panel.querySelector('[data-action=replace]').hidden = active?.type !== 'image';
       panel.querySelectorAll('input,textarea,select,button').forEach(control => { if (control !== list) control.disabled = !state.editable; });
       ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
+      renderMotionEditor(populate);
+      renderInteractions();
       mark();
     };
     const commit = (value,expectedKey,populate = false) => {
@@ -129,10 +235,15 @@
       const character = state.characters.find(item => item.portrait) || state.characters[0];
       if (type === 'character' && !character) { status.textContent = 'Cadastre um personagem na biblioteca do projeto primeiro.'; return; }
       selected = id(); key = state.key;
-      value.elements.push(media.element({id:selected,type,asset,character_id:type === 'character' ? character?.id : '',name:asset?.name || (type === 'character' ? character?.name : 'Texto'),text:type === 'text' ? 'Seu texto aqui' : ''}));
+      value.elements.push(media.element({id:selected,type,asset,character_id:type === 'character' ? character?.id : '',name:asset?.name || (type === 'character' ? character?.name : ''),text:type === 'text' ? 'Seu texto aqui' : '',...(['button','hotspot'].includes(type) ? {font_size:24} : {})}));
       if (commit(value,state.key,true)) { status.textContent = type === 'character' && !character?.portrait ? 'Adicione um retrato a este personagem na biblioteca do projeto.' : ''; fields.find(field => field.dataset.field === 'name').focus(); }
     };
     list.addEventListener('change',() => { selected = list.value; render(); });
+    interactionSelect.addEventListener('change',() => {
+      let link = ['', ''];
+      try { if (interactionSelect.value) link = JSON.parse(interactionSelect.value); } catch (_) { return; }
+      change({choice_block_id:link[0],choice_option_id:link[1]},true);
+    });
     panel.addEventListener('input',event => {
       const field = event.target, property = field.dataset.field;
       if (!property || !context().editable) return;
@@ -145,11 +256,11 @@
       if (event.target.value !== 'custom') { const [anchor_x,anchor_y] = event.target.value.split(',').map(Number); change({anchor_x,anchor_y},true); }
     });
     panel.addEventListener('click',event => {
-      const button = event.target.closest('button'); if (!button || !context().editable) return;
+      const button = event.target.closest('button'); if (!button || button.closest('[data-motion-editor],[data-interaction-editor]') || !context().editable) return;
       if (button.dataset.preset) { change({x:Number(button.dataset.preset),y:100,anchor_x:50,anchor_y:100,scale:1,rotation:0},true); return; }
       const action = button.dataset.action, state = context(), value = media.presentation(state.presentation), index = value.elements.findIndex(item => item.id === selected);
       if (action === 'image' || action === 'replace') { uploadIntent = {key:state.key,id:action === 'replace' ? selected : ''}; upload.click(); return; }
-      if (action === 'character' || action === 'text') { add(action); return; }
+      if (['character','text','button','hotspot'].includes(action)) { add(action); return; }
       if (index < 0) return;
       if (action === 'remove') { value.elements.splice(index,1); selected = ''; }
       if (action === 'duplicate') {

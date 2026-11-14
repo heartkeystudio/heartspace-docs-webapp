@@ -10,10 +10,17 @@
     const hint = byId('hint'), next = byId('next'), announcement = byId('announcement');
     const utility = byId('utility-dialog'), historyList = byId('history-list');
     let typing = null, typingTimer = null, pauseTimer = null, selectedChoice = 0, playing = false;
+    let choiceReadyNode = null;
     let pauseDeadline = 0, pauseRemaining = null, returnFocus = null;
     let transcript = [], savedGame = null, storageAvailable = true, saveNotice = '';
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scene = media.createScene(stage,{characters:() => story.character_registry || [],
+      onInteraction:({block_id,option_id}) => {
+        const {sequence,node} = runner.current();
+        if (node?.id !== block_id || sequence.nodes.filter(candidate => candidate.id === block_id).length !== 1) return;
+        const matches = (node.options || []).map((option,index) => ({option,index})).filter(item => item.option.id === option_id);
+        if (matches.length === 1) choose(matches[0].index,node);
+      },
       reducedMotion:() => motionReduced(),
       onAudioIssue:message => { byId('media-status').textContent = message; },
       onImageIssue:message => { byId('media-status').textContent = message; }
@@ -67,6 +74,7 @@
     };
     const applyPreferences = () => {
       document.body.dataset.motion = motionReduced() ? 'reduce' : 'normal';
+      scene.refreshMotion();
       stage.style.setProperty('--text-scale',preferences.textSize);
       utility.style.setProperty('--text-scale',preferences.textSize);
       byId('preference-speed').value = preferences.speed;
@@ -108,11 +116,12 @@
         if (index >= letters.length) finishTyping();
       }, speed);
     };
-    const applyPresentation = (raw,character) => {
+    const applyPresentation = (raw,character,motion) => {
       const presentation = raw || {};
       viewport.update({...presentation,viewport:gameViewport});
       scene.update(presentation,character);
       scene.setActive(playing && !utility.open && !document.hidden);
+      if (motion && playing && !utility.open && !document.hidden) scene.playAnimations(motion);
       const color = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || '') ? value : fallback;
       stage.dataset.model = ['panel','subtitle','card'].includes(presentation.model) ? presentation.model : 'panel';
       stage.dataset.position = ['top','center','bottom'].includes(presentation.position) ? presentation.position : 'bottom';
@@ -194,8 +203,8 @@
       buttons.forEach((button, i) => { button.dataset.active = String(i === selectedChoice); });
       buttons[selectedChoice].focus({ preventScroll:true });
     };
-    const choose = index => {
-      if (!playing || typing || utility.open) return;
+    const choose = (index,expectedNode) => {
+      if (!playing || typing || utility.open || document.hidden || runner.current().node !== expectedNode || choiceReadyNode !== expectedNode) return;
       const line = currentHistoryLine(index);
       if (!runner.choose(index)) return;
       recordHistory(line);
@@ -209,14 +218,15 @@
       const line = currentHistoryLine();
       if (runner.advance()) { recordHistory(line); stop(); render(); }
     };
-    const render = () => {
+    const render = (animate = true) => {
+      choiceReadyNode = null; scene.setInteractions();
       stop();
       // Signals are integration metadata. They never execute content as code.
       while (runner.current().node?.type === 'signal') runner.advance();
       const { sequence, node, missing } = runner.current();
       persistProgress();
       sceneCharacter = media.resolveSceneCharacter(sequence?.nodes || [],runner.state.index,story.character_registry || []);
-      const speed = applyPresentation(media.resolveScene(sequence?.presentation,sequence?.nodes || [],runner.state.index),sceneCharacter);
+      const speed = applyPresentation(media.resolveScene(sequence?.presentation,sequence?.nodes || [],runner.state.index),sceneCharacter,animate && node ? media.sceneMotion(sequence?.presentation,sequence?.nodes || [],runner.state.index) : null);
       if (node?.type === 'pause') {
         choices.replaceChildren(); choices.hidden = true; selectedChoice = 0;
         if (!copy.textContent) { copy.hidden = false; copy.textContent = '…'; }
@@ -253,13 +263,15 @@
           button.dataset.choiceIndex = String(index);
           button.disabled = !runtime.conditionMatches(option.condition, runner.state.variables);
           if (button.disabled) button.title = 'Esta opção não está disponível neste caminho';
-          button.addEventListener('click', () => choose(index));
+          button.addEventListener('click', () => choose(index,node));
           choices.append(button);
         });
       }
       typeText(text, speed, () => {
         if (node.type === 'choice') {
           choices.hidden = false;
+          choiceReadyNode = node;
+          scene.setInteractions(node,(node.options || []).map((option,index) => ({id:option.id,text:option.text,enabled:!choices.children[index].disabled})));
           const buttons = enabledChoices();
           if (buttons.length) { buttons[0].dataset.active = 'true'; hint.textContent = 'Escolha uma opção · ↑ ↓ e Enter, ou clique'; }
           else {
@@ -287,7 +299,7 @@
       stop(); transcript = savedGame.history.slice(); playing = true;
       menu.hidden = true; stage.hidden = false;
       byId('history-open').hidden = false; byId('home').hidden = false;
-      copy.textContent = ''; render();
+      copy.textContent = ''; render(false);
     });
     byId('home').addEventListener('click', () => showMenu());
     byId('history-open').addEventListener('click', () => openUtility('history'));
@@ -305,7 +317,11 @@
       writeStorage('preferences',preferences); applyPreferences(); updateProgressUi();
     }));
     next.addEventListener('click', advance);
-    stage.addEventListener('click', event => { if (!event.target.closest('button,a')) advance(); });
+    stage.addEventListener('click', event => {
+      if (event.target.closest('button,a')) return;
+      if (runner.current().node?.type === 'choice') { finishTyping(); return; }
+      advance();
+    });
     document.addEventListener('keydown', event => {
       if (utility.open) return;
       if (!playing || event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;

@@ -1490,6 +1490,8 @@
     .scene-moment-controls button { min-height:30px; padding:5px 8px; border:1px solid #ffffff20; border-radius:5px; background:#ffffff08; color:#ccc; font:inherit; font-size:11px; cursor:pointer; }
     .scene-moment-controls button:disabled { opacity:.4; cursor:default; }
     .scene-moment-controls output { line-height:1.5; }
+    .scene-motion-preview .scene-element { pointer-events:none!important; outline:none!important; }
+    .scene-motion-preview .scene-element-tools { display:none!important; }
     .scene-screen-settings legend { padding:0 4px; color:#bcbcbc; font-size:12px; }
     .scene-screen-settings > label:first-of-type,.scene-screen-settings output,.scene-screen-settings .scene-safe-toggle { grid-column:1 / -1; }
     .scene-screen-settings output { color:#929292; font-size:11px; }
@@ -4045,7 +4047,7 @@
         </div></details>`);
       const narrativeArtworkControls = Object.fromEntries(Object.entries({background_fit:'background-fit',background_focus:'background-focus',background_dim:'background-dim',portrait_position:'portrait-position',portrait_size:'portrait-size',transition:'scene-transition',transition_ms:'scene-transition-ms'}).map(([key,id]) => [key,document.querySelector(`#narrative-${id}`)]));
       const narrativeSampleCharacter = document.querySelector('#narrative-scene-sample-character');
-      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{characters:() => narrativeCharacters,reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
+      const narrativeSampleScene = HeartspaceNarrativeMedia.createScene(narrativePresentationPreview,{characters:() => narrativeCharacters,onAnimationState:state => updateSceneMotionUi(state),reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches});
       const narrativeLocalizationTab = document.querySelector('#narrative-localization-tab');
       const narrativeLocalizationView = document.querySelector('#narrative-localization');
       const localizationSourceLocale = document.querySelector('#localization-source-locale');
@@ -4091,6 +4093,13 @@
       const narrativeTestViewport = HeartspaceNarrativeMedia.createViewport(narrativeTestStage,{kind:'test'});
       const narrativeTestMedia = HeartspaceNarrativeMedia.createScene(narrativeTestStage,{
         characters:() => narrativeCharacters,
+        onInteraction:({block_id,option_id}) => {
+          const entry = narrativeTestState?.registry.byId.get(narrativeTestState.eventId);
+          const node = entry?.nodes[narrativeTestState.index];
+          if (node?.id !== block_id || entry.nodes.filter(candidate => candidate.id === block_id).length !== 1) return;
+          const matches = (node.options || []).map((option,index) => ({option,index})).filter(item => item.option.id === option_id);
+          if (matches.length === 1) chooseNarrativeTestOption(matches[0].index,node);
+        },
         reducedMotion:() => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         onAudioIssue:message => statusMessage(message,'pending'),
         onImageIssue:message => statusMessage(message,'pending')
@@ -4321,6 +4330,7 @@
         if (type === 'choice') {
           node.prompt = block.querySelector('.narrative-choice-prompt')?.innerText.trim() || '';
           node.options = [...block.querySelectorAll('.narrative-choice-option')].map(option => {
+            if (assignIds && !option.dataset.choiceOptionId) option.dataset.choiceOptionId = makeChoiceOptionId();
             const condition = parseNarrativeRuleData(option.dataset.condition);
             const effect = parseNarrativeRuleData(option.dataset.effect);
             return {
@@ -5674,6 +5684,10 @@
         const localizationOwners = new Map();
         registry.entries.filter(entry => !entry.provisional).forEach(entry => {
           if (!entry.nodes.length) add('warning', `Sequência vazia: ${entry.id}`, 'A sequência existe, mas ainda não possui blocos narrativos.', entry.id);
+          HeartspaceNarrativeMedia.sceneInteractionIssues(entry.sequence?.presentation,entry.nodes).forEach(issue => {
+            if (issue.reason === 'unlinked') add('warning', `Elemento sem escolha: ${issue.name}`, `${entry.id}. Vincule uma opção em Cena → Ao clicar para ativar este botão ou região.`, entry.id);
+            else add('error', `Interação ${issue.reason === 'ambiguous' ? 'ambígua' : 'sem vínculo válido'}: ${issue.name}`, `${entry.id}. Selecione novamente a escolha deste elemento em Cena → Ao clicar.`, entry.id);
+          });
           entry.nodes.forEach((node, nodeIndex) => {
             if (node.localization_id) {
               const owner = localizationOwners.get(node.localization_id);
@@ -6225,7 +6239,9 @@
       sceneMomentControls.className = 'scene-moment-controls scene-screen-settings';
       sceneMomentControls.innerHTML = `<label>Momento da cena<select id="scene-moment-select" aria-describedby="scene-moment-help"></select></label>
         <div class="scene-element-actions"><button type="button" id="scene-moment-previous" aria-label="Momento anterior">←</button><button type="button" id="scene-moment-next" aria-label="Próximo momento">→</button><button type="button" id="scene-moment-inherit">Herdar anterior</button><button type="button" id="scene-moment-reset">Restaurar início</button></div>
-        <output id="scene-moment-help" aria-live="polite"></output><button type="button" id="scene-moment-clean" hidden>Limpar referências a blocos removidos</button>`;
+        <output id="scene-moment-help" aria-live="polite"></output>
+        <div class="scene-motion-player"><button type="button" id="scene-motion-play">Reproduzir animações</button><button type="button" id="scene-motion-pause" disabled>Pausar</button><button type="button" id="scene-motion-stop" disabled>Estado final</button></div>
+        <label>Linha do tempo<input id="scene-motion-seek" type="range" min="0" max="1" step="1" value="1" disabled aria-label="Instante da animação em milissegundos"></label><output id="scene-motion-time">Sem animações neste bloco</output><button type="button" id="scene-moment-clean" hidden>Limpar referências a blocos removidos</button>`;
       document.querySelector('.scene-screen-settings').after(sceneMomentControls);
       const sceneMomentSelect = sceneMomentControls.querySelector('select');
       let sceneMomentOptionsSignature = '';
@@ -6243,14 +6259,39 @@
         const index = sceneMomentBlockId ? nodes.findIndex(node => node.id === sceneMomentBlockId) : -1;
         if (!sceneMomentStateCache || sceneMomentStateCache.source !== sequence?.presentation || sceneMomentStateCache.nodes !== nodes || sceneMomentStateCache.index !== index || sceneMomentStateCache.sequenceKey !== sequenceKey) {
           const base = normalizeNarrativePresentation(sequence?.presentation);
-          sceneMomentStateCache = {source:sequence?.presentation,nodes,index,sequenceKey,base,presentation:HeartspaceNarrativeMedia.resolveScene(base,nodes,index)};
+          sceneMomentStateCache = {source:sequence?.presentation,nodes,index,sequenceKey,base,presentation:HeartspaceNarrativeMedia.resolveScene(base,nodes,index),motion:HeartspaceNarrativeMedia.sceneMotion(base,nodes,index)};
         }
         const {base,presentation} = sceneMomentStateCache;
         return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,
           key:JSON.stringify([sequenceKey,sceneMomentBlockId]),
-          presentation,characters:narrativeCharacters,
+          presentation,motion:sceneMomentStateCache.motion,animations:base.cues.find(cue => cue.block_id === sceneMomentBlockId)?.animations || [],characters:narrativeCharacters,
           editable:Boolean(sequence) && (!currentProjectId || canEditProject({capabilities:projectCapabilities}))};
       };
+      let sceneMotionPlayback = {active:false,playing:false,time:0,duration:0};
+      const updateSceneMotionUi = state => {
+        sceneMotionPlayback = state;
+        const range = sceneMomentControls.querySelector('#scene-motion-seek'), duration = state.active ? state.duration : sceneMomentContext().motion.duration;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        range.max = String(duration || 1); range.value = String(state.active ? state.time : duration || 1); range.disabled = !duration || reduced;
+        sceneMomentControls.querySelector('#scene-motion-play').disabled = !duration || reduced;
+        const pause = sceneMomentControls.querySelector('#scene-motion-pause'); pause.textContent = state.playing ? 'Pausar' : 'Continuar'; pause.disabled = !state.active || state.time >= state.duration;
+        sceneMomentControls.querySelector('#scene-motion-stop').disabled = !state.active;
+        sceneMomentControls.querySelector('#scene-motion-time').textContent = !duration ? 'Sem animações neste bloco' : reduced ? 'Movimento reduzido: exibindo o estado final.' : state.active ? `${(state.time / 1000).toFixed(2)} / ${(duration / 1000).toFixed(2)} s` : `Estado final · ${(duration / 1000).toFixed(2)} s`;
+        narrativePresentationPreview.classList.toggle('scene-motion-preview',state.active);
+      };
+      const playSceneMotion = () => {
+        const context = sceneMomentContext();
+        applyNarrativePresentationPreview(context.presentation);
+        narrativeSampleScene.playAnimations(context.motion);
+      };
+      sceneMomentControls.querySelector('#scene-motion-play').addEventListener('click',playSceneMotion);
+      sceneMomentControls.querySelector('#scene-motion-pause').addEventListener('click',() => { if (sceneMotionPlayback.playing) narrativeSampleScene.pauseAnimations(); else narrativeSampleScene.resumeAnimations(); });
+      sceneMomentControls.querySelector('#scene-motion-stop').addEventListener('click',() => narrativeSampleScene.stopAnimations());
+      sceneMomentControls.querySelector('#scene-motion-seek').addEventListener('input',event => {
+        const time = Number(event.target.value);
+        if (!sceneMotionPlayback.active) playSceneMotion();
+        narrativeSampleScene.seekAnimations(time);
+      });
       const renderSceneMomentControls = () => {
         const context = sceneMomentContext(), cues = new Set(context.base.cues.map(cue => cue.block_id));
         const labels = {dialogue:'Diálogo',narration:'Narração',choice:'Escolha',pause:'Pausa',variation:'Variação',signal:'Sinal'};
@@ -6273,6 +6314,7 @@
         sceneMomentControls.querySelector('#scene-moment-inherit').disabled = !context.editable || !cue;
         sceneMomentControls.querySelector('#scene-moment-reset').disabled = !context.editable || context.index < 0;
         const clean = sceneMomentControls.querySelector('#scene-moment-clean'); clean.hidden = !orphaned.length; clean.disabled = !context.editable;
+        updateSceneMotionUi(sceneMotionPlayback);
       };
       const writeSceneComposition = (expected,presentation) => {
         const context = sceneMomentContext();
@@ -6285,9 +6327,9 @@
           const existing = base.cues.find(cue => cue.block_id === context.blockId);
           const before = existing?.reset ? HeartspaceNarrativeMedia.sceneState(base) : HeartspaceNarrativeMedia.resolveScene(base,context.nodes,context.index - 1);
           const patch = HeartspaceNarrativeMedia.sceneDiff(before,presentation);
-          patch.block_id = context.blockId; patch.reset = existing?.reset === true;
+          patch.block_id = context.blockId; patch.reset = existing?.reset === true; patch.animations = existing?.animations || [];
           base.cues = base.cues.filter(cue => cue.block_id !== context.blockId);
-          if (patch.reset || Object.keys(patch.settings).length || patch.set.length || patch.remove.length || patch.order) {
+          if (patch.reset || patch.animations.length || Object.keys(patch.settings).length || patch.set.length || patch.remove.length || patch.order) {
             if (base.cues.length >= 1000) { statusMessage('Esta sequência já possui 1000 momentos de cena. Remova alterações de um bloco antes de adicionar outro.','pending'); return false; }
             base.cues.push(patch);
           }
@@ -6296,9 +6338,29 @@
         applyNarrativePresentationPreview(sceneMomentContext().presentation);
         renderSceneMomentControls(); queueSave(); return true;
       };
+      const writeSceneAnimation = (expected,elementId,animation) => {
+        const context = sceneMomentContext();
+        if (context.key !== expected || !context.editable || context.index < 0 || !context.presentation.elements.some(item => item.id === elementId)) return false;
+        const sequence = activeNarrativeSequence(), base = normalizeNarrativePresentation(sequence.presentation);
+        const existing = base.cues.find(cue => cue.block_id === context.blockId);
+        const cue = existing || {block_id:context.blockId,...HeartspaceNarrativeMedia.sceneDiff(context.presentation,context.presentation)};
+        cue.animations = (cue.animations || []).filter(track => track.element_id !== elementId);
+        if (animation) cue.animations.push(...HeartspaceNarrativeMedia.sceneAnimations([{...animation,element_id:elementId}]));
+        base.cues = base.cues.filter(item => item.block_id !== context.blockId);
+        if (cue.reset || cue.animations.length || Object.keys(cue.settings).length || cue.set.length || cue.remove.length || cue.order) {
+          if (base.cues.length >= 1000) { statusMessage('Esta sequência já possui 1000 momentos de cena.','pending'); return false; }
+          base.cues.push(cue);
+        }
+        sequence.presentation = normalizeNarrativePresentation(base);
+        applyNarrativePresentationPreview(sceneMomentContext().presentation); renderSceneMomentControls(); queueSave(); return true;
+      };
       const sceneComposer = HeartspaceSceneComposer.create({
         parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
-        read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition
+        read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeAnimation:writeSceneAnimation,
+        previewAnimationAt:(id,at) => {
+          const track = sceneMomentContext().motion.tracks.find(item => item.element_id === id); if (!track) return;
+          playSceneMotion(); narrativeSampleScene.seekAnimations(track.delay_ms + track.duration_ms * at / 100);
+        }
       });
       sceneMomentSelect.addEventListener('change',() => { sceneMomentBlockId = sceneMomentSelect.value; renderNarrativePresentation(); });
       ['previous','next'].forEach(direction => sceneMomentControls.querySelector(`#scene-moment-${direction}`).addEventListener('click',() => {
@@ -6361,6 +6423,7 @@
         sceneComposer.render();
       };
       const setNarrativePanelView = view => {
+        if (view !== 'presentation') narrativeSampleScene.stopAnimations();
         if (productionWorkspace && ['characters','variables','glossary'].includes(view)) { productionWorkspace.openLibrary(view); return; }
         productionWorkspace?.activateView(view);
         const showGlossary = view === 'glossary';
@@ -6431,12 +6494,13 @@
         typing.onComplete?.();
         return true;
       };
-      const applyNarrativeTestPresentation = (presentation,character = null) => {
+      const applyNarrativeTestPresentation = (presentation,character = null,motion = null) => {
         const value = normalizeNarrativePresentation(presentation);
         narrativeTestViewport.update({...value,viewport:gameViewport()});
         narrativeTestViewport.setGuide(sceneSafeAreaEnabled);
         narrativeTestMedia.update(value,character);
         narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden);
+        if (motion && narrativeTestDialog.open && !document.hidden) narrativeTestMedia.playAnimations(motion);
         if (narrativeTestState) narrativeTestState.presentation = value;
         narrativeTestStage.dataset.model = value.model;
         narrativeTestStage.dataset.position = value.position;
@@ -6509,6 +6573,7 @@
       const restoreNarrativeTestSnapshot = snapshot => {
         if (!narrativeTestState || !snapshot) return;
         narrativeTestState.runner.restore(snapshot);
+        narrativeTestState.skipSceneAnimation = true;
       };
       const renderNarrativeTestInspectors = () => {
         narrativeTestVariables.replaceChildren();
@@ -6575,8 +6640,22 @@
         narrativeTestState.runner.advance();
         renderNarrativeTest();
       };
-      const renderNarrativeTest = () => {
+      const chooseNarrativeTestOption = (optionIndex,expectedNode) => {
+        if (!narrativeTestState || !narrativeTestDialog.open || document.hidden) return;
+        const entry = narrativeTestState.registry.byId.get(narrativeTestState.eventId), node = entry?.nodes[narrativeTestState.index];
+        if (node !== expectedNode || node?.type !== 'choice' || narrativeTestState.choiceReadyNode !== node) return;
+        const option = node.options?.[optionIndex], target = option?.target_event, destination = narrativeTestState.registry.byId.get(target);
+        if (!option || !narrativeConditionMatches(option.condition,narrativeTestState.variables) || !destination || destination.provisional || narrativeTestState.registry.duplicateIds.has(target)) return;
         stopNarrativeTestPlayback();
+        captureNarrativeTestSnapshot(`Escolha: ${option.text || target}`);
+        if (!narrativeTestState.runner.choose(optionIndex)) { narrativeTestState.history.pop(); return; }
+        renderNarrativeTest();
+      };
+      const renderNarrativeTest = () => {
+        narrativeTestMedia.setInteractions();
+        if (narrativeTestState) narrativeTestState.choiceReadyNode = null;
+        stopNarrativeTestPlayback();
+        narrativeTestMedia.stopAnimations();
         narrativeTestStage.dataset.dialogueVisible = 'true';
         [...narrativeTestStage.children].filter(child => child !== narrativeTestMedia.layer && child !== narrativeTestViewport.guide).forEach(child => child.remove());
         if (!narrativeTestState) return;
@@ -6603,7 +6682,8 @@
           return;
         }
         const node = entry.nodes[narrativeTestState.index];
-        applyNarrativeTestPresentation(HeartspaceNarrativeMedia.resolveScene(entry.sequence?.presentation,entry.nodes,narrativeTestState.index),HeartspaceNarrativeMedia.resolveSceneCharacter(entry.nodes,narrativeTestState.index,narrativeCharacters));
+        applyNarrativeTestPresentation(HeartspaceNarrativeMedia.resolveScene(entry.sequence?.presentation,entry.nodes,narrativeTestState.index),HeartspaceNarrativeMedia.resolveSceneCharacter(entry.nodes,narrativeTestState.index,narrativeCharacters),!narrativeTestState.skipSceneAnimation && node ? HeartspaceNarrativeMedia.sceneMotion(entry.sequence?.presentation,entry.nodes,narrativeTestState.index) : null);
+        narrativeTestState.skipSceneAnimation = false;
         const validationErrors = narrativeTestState.validation.filter(issue => issue.severity === 'error').length;
         narrativeTestStatus.textContent = `${entry.id} · ${Math.min(narrativeTestState.index + 1, entry.nodes.length)}/${entry.nodes.length} · ${Object.keys(narrativeTestState.variables).length} variáveis${validationErrors ? ` · ${validationErrors} erros de validação` : ''}`;
         if (!node) {
@@ -6655,17 +6735,14 @@
             const conditionAvailable = narrativeConditionMatches(option.condition, narrativeTestState.variables);
             button.textContent = `${optionIndex + 1}. ${option.text || 'Opção sem texto'}${!conditionAvailable ? ' · condição não atendida' : target && (!targetEntry || targetEntry.provisional) ? ' · destino ausente' : duplicateTarget ? ' · destino ambíguo' : ''}`;
             button.disabled = !conditionAvailable || !target || !targetEntry || targetEntry.provisional || duplicateTarget;
-            if (!button.disabled) button.addEventListener('click', () => {
-              stopNarrativeTestPlayback();
-              captureNarrativeTestSnapshot(`Escolha: ${option.text || target}`);
-              narrativeTestState.runner.choose(optionIndex);
-              renderNarrativeTest();
-            });
+            if (!button.disabled) button.addEventListener('click', () => chooseNarrativeTestOption(optionIndex,node));
             choices.append(button);
           });
           box.append(choices);
           const showChoices = () => {
             choices.hidden = false;
+            narrativeTestState.choiceReadyNode = node;
+            narrativeTestMedia.setInteractions(node,(node.options || []).map((option,index) => ({id:option.id,text:option.text,enabled:!choices.children[index].disabled})));
             const firstChoice = choices.querySelector('button:not(:disabled)');
             if (firstChoice) { firstChoice.dataset.active = 'true'; narrativeTestState.activeChoiceIndex = [...choices.querySelectorAll('button:not(:disabled)')].indexOf(firstChoice); }
             narrativeTestHint(box, 'Setas, números ou Enter para escolher');
@@ -6675,6 +6752,7 @@
         }
       };
       const startNarrativeTest = eventId => {
+        narrativeSampleScene.stopAnimations();
         const registry = buildNarrativeRegistry();
         const runner = HeartspaceNarrativeRuntime.createRunner({ start_event_id:eventId, variable_registry:narrativeVariables, sequences:registry.entries.filter(entry => !entry.provisional).map(entry => ({ event_id:entry.id, nodes:entry.nodes })) });
         narrativeTestState = { registry, runner, startEventId:eventId, history:[], validation:validateNarrativeRegistry(registry,eventId), activeChoiceIndex:0, typing:null, typingTimer:null, pauseTimer:null };
@@ -7244,12 +7322,18 @@
       const closeNarrativeTest = () => { stopNarrativeTestPlayback(); narrativeTestMedia.setActive(false); narrativeTestDialog.close(); };
       document.querySelector('#narrative-test-close').addEventListener('click', closeNarrativeTest);
       narrativeTestDialog.addEventListener('close', () => { stopNarrativeTestPlayback(); narrativeTestMedia.setActive(false); });
-      document.addEventListener('visibilitychange',() => narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden));
+      document.addEventListener('visibilitychange',() => {
+        narrativeTestMedia.setActive(narrativeTestDialog.open && !document.hidden);
+        if (document.hidden && sceneMotionPlayback.playing) narrativeSampleScene.pauseAnimations();
+      });
+      const sceneReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      sceneReducedMotion.addEventListener('change',() => { narrativeSampleScene.refreshMotion(); narrativeTestMedia.refreshMotion(); });
       narrativeTestDialog.addEventListener('cancel', event => { event.preventDefault(); closeNarrativeTest(); });
       document.querySelector('#narrative-test-restart').addEventListener('click', () => {
         if (!narrativeTestState) return;
         stopNarrativeTestPlayback();
         narrativeTestState.runner.restart();
+        narrativeTestState.skipSceneAnimation = false;
         narrativeTestState.history = [];
         renderNarrativeTest();
       });
@@ -7262,6 +7346,7 @@
       narrativeTestNext.addEventListener('click', advanceNarrativeTest);
       narrativeTestStage.addEventListener('click', event => {
         if (event.target.closest('button')) return;
+        if (narrativeTestState?.runner.current().node?.type === 'choice') { finishNarrativeTestTyping(); return; }
         advanceNarrativeTest();
       });
       narrativeTestDialog.addEventListener('keydown', event => {
@@ -7337,7 +7422,7 @@
                 if (!option.target_event) issues.push({ severity:'error', title:`Defina o destino de “${option.text || 'Opção sem texto'}” em “${entry.sequence.title}”.` });
                 registerCondition(option.condition);
                 (option.effects || []).forEach(effect => variableIds.add(effect.variable));
-                return { text:translated(entry.record,option.localization_id,option.text), target_event:option.target_event, ...(option.condition ? { condition:option.condition } : {}), ...(option.effects ? { effects:option.effects } : {}) };
+                return { id:option.id, text:translated(entry.record,option.localization_id,option.text), target_event:option.target_event, ...(option.condition ? { condition:option.condition } : {}), ...(option.effects ? { effects:option.effects } : {}) };
               }) };
             }
             issues.push({ severity:'error', title:`Bloco não suportado: ${node.type}` });
@@ -11150,8 +11235,8 @@
       };
       productionWorkspace = HeartspaceProductionWorkspaces.mount({
         document, editor, panel:narrativeDialog,
-        onAreaChange:syncTranslationDocumentPreview,
-        onDocumentAreaChange:syncTranslationDocumentPreview,
+        onAreaChange:area => { if (area !== 'scene') narrativeSampleScene.stopAnimations(); syncTranslationDocumentPreview(area); },
+        onDocumentAreaChange:area => { if (area !== 'scene') narrativeSampleScene.stopAnimations(); syncTranslationDocumentPreview(area); },
         loadRegistry:() => { void loadNarrativeRegistry(); },
         canEdit:() => !currentProjectId || canEditProject({capabilities:projectCapabilities}),
         showView:setNarrativePanelView, setOpen:setNarrativePanelOpen, render:renderNarrativePanel,
