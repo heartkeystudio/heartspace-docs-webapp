@@ -4,6 +4,19 @@
     const limits = { image:4 * 1024 * 1024, audio:8 * 1024 * 1024 };
     const extensions = { 'image/png':'png','image/jpeg':'jpg','image/webp':'webp','audio/mpeg':'mp3','audio/ogg':'ogg','audio/wav':'wav','audio/webm':'webm','audio/mp4':'m4a' };
     const validated = new Map();
+    // Authoring provenance only. Playback always uses the included data/src snapshot.
+    const projectRef = value => {
+      if (!value || value.schema_version !== 1 || !['file','artifact'].includes(value.kind) || value.policy !== 'pinned') return null;
+      const identity = text => typeof text === 'string' && text.length > 0 && text.length <= 200 && !/[\x00-\x1f\x7f]/.test(text);
+      const path = value.path;
+      if (!identity(value.project_id) || typeof path !== 'string' || !path || path.length > 1024 || /[\\:%?#\x00-\x1f\x7f]/.test(path) || path.split('/').some(part => !part || part === '.' || part === '..') || !/^[a-f0-9]{64}$/.test(value.sha256 || '')) return null;
+      const ref = {schema_version:1,kind:value.kind,project_id:value.project_id,path,sha256:value.sha256,policy:'pinned'};
+      if (value.kind === 'artifact') {
+        if (!identity(value.artifact_id) || !identity(value.type) || !/^[a-z][a-z0-9_-]{0,79}$/.test(value.source_app_id || '') || !Number.isSafeInteger(value.revision) || value.revision < 1) return null;
+        Object.assign(ref,{artifact_id:value.artifact_id,type:value.type,source_app_id:value.source_app_id,revision:value.revision});
+      }
+      return ref;
+    };
     const sniff = bytes => {
       const ascii = (offset,text) => [...text].every((letter,index) => bytes[offset + index] === letter.charCodeAt(0));
       if (bytes[0] === 137 && ascii(1,'PNG\r\n\x1a\n')) return 'image/png';
@@ -19,14 +32,17 @@
     const normalize = (value,kind,packaged = false) => {
       if (!value || typeof value !== 'object') return null;
       const name = String(value.name || '').replace(/[\x00-\x1f]/g,'').slice(0,160);
+      const ref = value.project_ref === undefined ? null : projectRef(value.project_ref);
+      if (value.project_ref !== undefined && !ref) return null;
+      const provenance = ref ? {project_ref:ref} : {};
       if (packaged && typeof value.src === 'string' && /^assets\/[a-z0-9_-]+\.(png|jpg|webp|mp3|ogg|wav|webm|m4a)$/.test(value.src)) {
         if (!extensions[value.mime] || !value.mime.startsWith(kind + '/') || !value.src.endsWith('.' + extensions[value.mime])) return null;
-        return { name,mime:value.mime,src:value.src };
+        return { name,mime:value.mime,src:value.src,...provenance };
       }
       if (typeof value.data !== 'string' || value.data.length > Math.ceil(limits[kind] * 4 / 3) + 100) return null;
       if (validated.has(value.data)) {
         const mime = validated.get(value.data);
-        return mime.startsWith(kind + '/') ? {name,mime,data:value.data} : null;
+        return mime.startsWith(kind + '/') ? {name,mime,data:value.data,...provenance} : null;
       }
       const match = value.data.match(/^data:([a-z]+\/[a-z0-9.+-]+);base64,([a-z0-9+/]+={0,2})$/i);
       if (!match || !extensions[match[1]] || !match[1].startsWith(kind + '/') || match[2].length % 4) return null;
@@ -38,7 +54,7 @@
       if (mime !== match[1]) return null;
       if (validated.size >= 24) validated.delete(validated.keys().next().value);
       validated.set(value.data,mime);
-      return {name,mime,data:value.data};
+      return {name,mime,data:value.data,...provenance};
     };
     const source = (value,kind) => {
       const asset = normalize(value,kind,true);
@@ -230,30 +246,112 @@
       nodes.forEach(node => { const cue = cues.get(node.id); if (cue) state = applySceneCue(state,cue,base); inspect(state); });
       return issues;
     };
+    const orientation = value => ['landscape','landscape-left','portrait'].includes(value) ? value : 'auto';
+    const listenMedia = (query,listener) => {
+      if (query?.addEventListener) { query.addEventListener('change',listener); return () => query.removeEventListener('change',listener); }
+      query?.addListener?.(listener); return () => query?.removeListener?.(listener);
+    };
+    const frameClock = win => ({
+      request:win.requestAnimationFrame ? callback => win.requestAnimationFrame(callback) : callback => win.setTimeout(() => callback(Date.now()),16),
+      cancel:win.cancelAnimationFrame ? id => win.cancelAnimationFrame(id) : id => win.clearTimeout(id)
+    });
+    // Rotate the application frame, never the authored scene or the operating system.
+    const createOrientation = (frame,options = {}) => {
+      const doc = frame.ownerDocument, win = doc.defaultView, clock = frameClock(win);
+      const host = doc.createElement('div'); host.className = 'player-orientation-host';
+      frame.before(host); host.append(frame); frame.classList.add('player-orientation-frame');
+      let mode = orientation(options.mode), pending = 0;
+      const fit = () => {
+        const width = host.clientWidth, height = host.clientHeight;
+        if (!width || !height) return;
+        const sideways = mode.startsWith('landscape') && height > width || mode === 'portrait' && width > height;
+        const angle = sideways ? mode === 'landscape-left' ? -90 : 90 : 0;
+        frame.dataset.playerRotation = String(angle); host.dataset.orientation = mode;
+        frame.style.width = `${sideways ? height : width}px`; frame.style.height = `${sideways ? width : height}px`;
+        frame.style.transform = angle === 90 ? `translateX(${width}px) rotate(90deg)` : angle === -90 ? `translateY(${height}px) rotate(-90deg)` : 'translate(0,0)';
+        frame.style.setProperty('--player-width',`${sideways ? height : width}px`);
+        frame.style.setProperty('--player-height',`${sideways ? width : height}px`);
+        options.onResize?.();
+      };
+      const schedule = () => { clock.cancel(pending); pending = clock.request(fit); };
+      const observer = win.ResizeObserver ? new win.ResizeObserver(schedule) : null; observer?.observe(host);
+      win.addEventListener('resize',schedule); win.addEventListener('orientationchange',schedule);
+      win.visualViewport?.addEventListener('resize',schedule);
+      fit(); schedule();
+      return {host,fit:schedule,set:value => { mode = orientation(value); fit(); schedule(); },
+        dispose:() => { clock.cancel(pending); observer?.disconnect(); win.removeEventListener('resize',schedule); win.removeEventListener('orientationchange',schedule); win.visualViewport?.removeEventListener('resize',schedule); frame.classList.remove('player-orientation-frame'); ['width','height','transform','--player-width','--player-height'].forEach(name => frame.style.removeProperty(name)); delete frame.dataset.playerRotation; host.replaceWith(frame); }};
+    };
+    // An in-frame modal also rotates with the player. It works without HTMLDialogElement.
+    const createPlayerDialog = (dialog,background) => {
+      const doc = dialog.ownerDocument;
+      const previousAriaHidden = background.getAttribute('aria-hidden'), previousInert = Boolean(background.inert);
+      const overlay = doc.createElement('div'); overlay.className = 'player-modal-overlay'; overlay.hidden = true;
+      dialog.before(overlay); overlay.append(dialog); dialog.hidden = true;
+      dialog.setAttribute('role','dialog'); dialog.setAttribute('aria-modal','true');
+      let opened = false;
+      const controls = () => [...dialog.querySelectorAll('button,input,select,textarea,a[href],[tabindex]')].filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
+      const focusFirst = () => (controls()[0] || dialog).focus({preventScroll:true});
+      const keydown = event => {
+        if (!opened) return;
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); api.close(); }
+        else if (event.key === 'Tab') {
+          const items = controls(), first = items[0], last = items[items.length - 1];
+          if (!items.length) { event.preventDefault(); dialog.focus(); }
+          else if (event.shiftKey && (doc.activeElement === first || !dialog.contains(doc.activeElement))) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && (doc.activeElement === last || !dialog.contains(doc.activeElement))) { event.preventDefault(); first.focus(); }
+        }
+      };
+      const focusin = event => { if (opened && !dialog.contains(event.target)) focusFirst(); };
+      const blockBackground = event => { if (opened && background.contains(event.target)) { event.preventDefault(); event.stopPropagation(); focusFirst(); } };
+      doc.addEventListener('keydown',keydown,true); doc.addEventListener('focusin',focusin); background.addEventListener('click',blockBackground,true);
+      dialog.tabIndex = -1;
+      const api = {get open() { return opened; },showModal:() => { opened = true; overlay.hidden = dialog.hidden = false; dialog.setAttribute('open',''); focusFirst(); background.setAttribute('aria-hidden','true'); background.inert = true; },
+        close:() => { if (!opened) return; opened = false; overlay.hidden = dialog.hidden = true; dialog.removeAttribute('open'); if (previousAriaHidden === null) background.removeAttribute('aria-hidden'); else background.setAttribute('aria-hidden',previousAriaHidden); background.inert = previousInert; dialog.dispatchEvent(new doc.defaultView.Event('close')); }};
+      return api;
+    };
+    const playerProfile = value => value === 'eink' ? 'eink' : 'standard';
     const createViewport = (surface,options = {}) => {
-      const doc = surface.ownerDocument, win = doc.defaultView;
+      const doc = surface.ownerDocument, win = doc.defaultView, clock = frameClock(win);
       const host = doc.createElement('div'); host.className = 'scene-viewport'; host.dataset.sceneHost = options.kind || 'player';
       surface.before(host); host.append(surface); surface.classList.add('scene-canvas');
       const guide = doc.createElement('div'); guide.className = 'scene-safe-area'; guide.setAttribute('aria-hidden','true'); guide.hidden = true; surface.append(guide);
-      let value = presentation(), frame = 0;
+      const readerArt = doc.createElement('div'); readerArt.className = 'scene-reader-art';
+      let value = presentation(), frame = 0, profile = 'standard', readingPanel = options.panel || null;
+      const layout = () => {
+        host.dataset.sceneProfile = surface.dataset.sceneProfile = profile;
+        const fixed = profile === 'eink' || value.viewport.aspect !== 'free';
+        host.dataset.sceneFixed = surface.dataset.sceneFixed = String(fixed);
+        if (profile === 'eink') {
+          if (readerArt.parentElement !== host) host.prepend(readerArt);
+          if (surface.parentElement !== readerArt) readerArt.append(surface);
+          if (readingPanel && readingPanel.parentElement !== host) host.append(readingPanel);
+          readerArt.style.aspectRatio = `${value.viewport.width} / ${value.viewport.height}`;
+        } else {
+          if (surface.parentElement !== host) host.prepend(surface);
+          if (readingPanel && readingPanel.parentElement !== surface) surface.append(readingPanel);
+          readerArt.remove();
+        }
+      };
       const fit = () => {
         host.hidden = surface.hidden;
-        if (surface.hidden || value.viewport.aspect === 'free') return;
-        const width = host.clientWidth, height = host.clientHeight;
+        if (profile === 'eink') readerArt.hidden = surface.dataset.sceneArtwork === 'false';
+        if (surface.hidden || profile !== 'eink' && value.viewport.aspect === 'free') return;
+        if (profile === 'eink') readerArt.style.height = `${Math.max(120,Math.min(host.clientWidth * value.viewport.height / value.viewport.width,host.clientHeight / 2))}px`;
+        const frameHost = profile === 'eink' ? readerArt : host;
+        const width = frameHost.clientWidth, height = frameHost.clientHeight;
         if (!width || !height) return;
         const scale = Math.min(width / value.viewport.width,height / value.viewport.height);
         surface.style.setProperty('--frame-scale',String(scale));
         surface.style.setProperty('--frame-left',`${Math.max(0,(width - value.viewport.width * scale) / 2)}px`);
         surface.style.setProperty('--frame-top',`${Math.max(0,(height - value.viewport.height * scale) / 2)}px`);
       };
-      const schedule = () => { win.cancelAnimationFrame(frame); frame = win.requestAnimationFrame(fit); };
-      const observer = win.ResizeObserver ? new win.ResizeObserver(schedule) : null; observer?.observe(host);
-      const visibilityObserver = new win.MutationObserver(schedule); visibilityObserver.observe(surface,{attributes:true,attributeFilter:['hidden']});
+      const schedule = () => { clock.cancel(frame); frame = clock.request(fit); };
+      const observer = win.ResizeObserver ? new win.ResizeObserver(schedule) : null; observer?.observe(host); observer?.observe(readerArt);
+      const visibilityObserver = win.MutationObserver ? new win.MutationObserver(schedule) : null; visibilityObserver?.observe(surface,{attributes:true,attributeFilter:['hidden','data-scene-artwork']});
       win.addEventListener('resize',schedule);
       const update = raw => {
         value = presentation(raw);
-        const fixed = value.viewport.aspect !== 'free';
-        host.dataset.sceneFixed = surface.dataset.sceneFixed = String(fixed);
+        layout();
         surface.dataset.model = value.model; surface.dataset.position = value.position;
         surface.style.setProperty('--frame-width',`${value.viewport.width}px`);
         surface.style.setProperty('--frame-height',`${value.viewport.height}px`);
@@ -261,7 +359,85 @@
         fit(); schedule();
       };
       update(value);
-      return {host,guide,update,fit:schedule,setGuide:enabled => { guide.hidden = !Boolean(enabled); },dispose:() => { win.cancelAnimationFrame(frame); observer?.disconnect(); visibilityObserver.disconnect(); win.removeEventListener('resize',schedule); guide.remove(); host.replaceWith(surface); surface.classList.remove('scene-canvas'); delete surface.dataset.sceneFixed; }};
+      return {host,guide,update,fit:schedule,get panel() { return readingPanel; },
+        setProfile:raw => { profile = playerProfile(raw); layout(); fit(); schedule(); },
+        setReadingPanel:panel => { if (readingPanel !== panel && readingPanel?.parentElement === host) readingPanel.remove(); readingPanel = panel || null; layout(); schedule(); },
+        setGuide:enabled => { guide.hidden = !Boolean(enabled); },
+        dispose:() => { profile = 'standard'; layout(); clock.cancel(frame); observer?.disconnect(); visibilityObserver?.disconnect(); win.removeEventListener('resize',schedule); guide.remove(); host.replaceWith(surface); surface.classList.remove('scene-canvas'); delete surface.dataset.sceneFixed; delete surface.dataset.sceneProfile; }};
+    };
+    const createPlayerShell = (container,options = {}) => {
+      const doc = container.ownerDocument, win = doc.defaultView, fullscreenRoot = options.fullscreenRoot || doc.documentElement;
+      container.classList.add('narrative-player-shell');
+      const reveal = doc.createElement('button'); reveal.type = 'button'; reveal.className = 'player-interface-reveal'; reveal.textContent = 'Mostrar interface'; reveal.hidden = true;
+      reveal.setAttribute('aria-label','Mostrar interface · H ou Esc');
+      reveal.setAttribute('aria-keyshortcuts','H Escape');
+      const notice = doc.createElement('div'); notice.className = 'player-shell-notice'; notice.setAttribute('role','status'); notice.hidden = true;
+      (options.overlayHost || container).append(reveal,notice);
+      let hidden = false, noticeTimer = 0, enteredFullscreen = false, busy = false;
+      const active = () => options.isActive?.() !== false;
+      const tell = message => {
+        win.clearTimeout(noticeTimer); notice.textContent = message; notice.hidden = false;
+        if (container.dataset.playerProfile !== 'eink') noticeTimer = win.setTimeout(() => { notice.hidden = true; },5500);
+      };
+      const sync = () => {
+        const full = doc.fullscreenElement === fullscreenRoot;
+        container.querySelectorAll('[data-player-fullscreen]').forEach(button => {
+          button.textContent = full ? 'Sair da tela cheia' : 'Tela cheia'; button.setAttribute('aria-pressed',String(full));
+          button.setAttribute('aria-keyshortcuts','F');
+          button.disabled = busy || typeof fullscreenRoot.requestFullscreen !== 'function' || doc.fullscreenEnabled === false;
+          button.title = button.disabled ? 'Tela cheia indisponível neste navegador ou incorporação. Use Ocultar interface.' : 'Tela cheia · F';
+        });
+        container.querySelectorAll('[data-player-chrome]').forEach(button => { button.textContent = hidden ? 'Mostrar interface' : 'Ocultar interface'; button.setAttribute('aria-pressed',String(hidden)); button.setAttribute('aria-keyshortcuts','H'); button.title = 'Alternar interface · H'; });
+      };
+      const setChromeHidden = (value,announce = false) => {
+        const focused = doc.activeElement;
+        hidden = Boolean(value); container.dataset.playerChromeHidden = String(hidden); reveal.hidden = !hidden; reveal.classList.remove('player-reveal-visible');
+        if (!hidden) { win.clearTimeout(noticeTimer); notice.hidden = true; }
+        sync(); options.onResize?.(); options.onChromeChange?.(hidden);
+        if (!options.isModalOpen?.() && (hidden && focused?.closest('[data-player-chrome-ui],[data-player-minimal-control],[data-player-chrome],[data-player-fullscreen]') || focused === reveal && !hidden)) options.focusTarget?.()?.focus({preventScroll:true});
+        if (announce && hidden) tell('Interface oculta. Pressione H ou Esc, ou toque no canto superior direito, para mostrar os controles.');
+      };
+      const toggleFullscreen = async () => {
+        if (!active() || busy) return;
+        if (doc.fullscreenElement === fullscreenRoot) { try { await doc.exitFullscreen(); } catch (_) { tell('Use Esc ou o controle do navegador para sair da tela cheia.'); } return; }
+        if (typeof fullscreenRoot.requestFullscreen !== 'function' || doc.fullscreenEnabled === false) { setChromeHidden(true); tell('Tela cheia indisponível. A interface está oculta; use H, Esc ou o canto superior direito para mostrar.'); return; }
+        busy = true; setChromeHidden(true);
+        try {
+          await fullscreenRoot.requestFullscreen({navigationUI:'hide'}); enteredFullscreen = doc.fullscreenElement === fullscreenRoot;
+          if (!active()) { await doc.exitFullscreen(); enteredFullscreen = false; }
+          else tell('H mostra a interface. Esc sai da tela cheia. No toque, use o canto superior direito.');
+        } catch (_) { if (active()) tell('O navegador não permitiu tela cheia. A interface está oculta; use H, Esc ou o canto superior direito para mostrar.'); }
+        finally { busy = false; sync(); }
+      };
+      const fullscreenChanged = () => {
+        if (doc.fullscreenElement !== fullscreenRoot) { if (enteredFullscreen && active()) setChromeHidden(false); enteredFullscreen = false; }
+        sync(); options.onResize?.();
+      };
+      const click = event => {
+        if (event.target.closest('[data-player-fullscreen]')) { event.preventDefault(); event.stopPropagation(); void toggleFullscreen(); }
+        else if (event.target.closest('[data-player-chrome]') || event.target === reveal) { event.preventDefault(); event.stopPropagation(); setChromeHidden(!hidden,true); }
+        else if (container.dataset.playerProfile === 'eink' && event.target.closest('button')) notice.hidden = true;
+      };
+      const handleKey = event => {
+        if (!active() || event.altKey || event.ctrlKey || event.metaKey || event.repeat || event.target.closest?.('input,textarea,select,[contenteditable=true]')) return false;
+        const key = event.key.toLowerCase();
+        const consume = () => { event.preventDefault(); event.stopPropagation(); };
+        if (key === 'f') { consume(); void toggleFullscreen(); return true; }
+        if (key === 'h') { consume(); setChromeHidden(!hidden,true); return true; }
+        if (key === 'escape' && doc.fullscreenElement === fullscreenRoot) { consume(); void toggleFullscreen(); return true; }
+        if (key === 'escape' && hidden) { consume(); setChromeHidden(false); return true; }
+        return false;
+      };
+      const close = () => {
+        win.clearTimeout(noticeTimer); notice.hidden = true; setChromeHidden(false);
+        if (enteredFullscreen && doc.fullscreenElement === fullscreenRoot) void doc.exitFullscreen().catch(() => {});
+        enteredFullscreen = false;
+      };
+      reveal.addEventListener('pointerenter',() => reveal.classList.add('player-reveal-visible'));
+      reveal.addEventListener('pointerleave',() => reveal.classList.remove('player-reveal-visible'));
+      container.addEventListener('click',click); doc.addEventListener('fullscreenchange',fullscreenChanged); sync();
+      return {setChromeHidden,toggleFullscreen,handleKey,tell,close,
+        dispose:() => { close(); container.removeEventListener('click',click); doc.removeEventListener('fullscreenchange',fullscreenChanged); reveal.remove(); notice.remove(); container.classList.remove('narrative-player-shell'); delete container.dataset.playerChromeHidden; }};
     };
     const createScene = (container,options = {}) => {
       const doc = container.ownerDocument || document;
@@ -278,7 +454,7 @@
       layer.append(background,shade,portrait,objects,audio); container.prepend(layer);
       const elementNodes = new Map();
       let finalElements = new Map(), interactionNode = null, interactionOptions = [];
-      const win = doc.defaultView;
+      const win = doc.defaultView, clock = frameClock(win);
       let parallaxSettings = {enabled:false,strength:1,smoothing:160}, parallaxElements = new Map(), parallaxPreview = false;
       let parallaxFrame = 0, parallaxTime = 0, parallaxHeld = false, parallaxDisposed = false;
       let parallaxWidth = 0, parallaxHeight = 0;
@@ -296,7 +472,7 @@
         node.style.translate = `${x}px ${y}px`;
       });
       const resetParallax = () => {
-        win.cancelAnimationFrame(parallaxFrame); parallaxFrame = 0; parallaxTime = 0; parallaxHeld = false;
+        clock.cancel(parallaxFrame); parallaxFrame = 0; parallaxTime = 0; parallaxHeld = false;
         parallaxTarget.x = parallaxTarget.y = parallaxCurrent.x = parallaxCurrent.y = 0; paintParallax();
       };
       const tickParallax = time => {
@@ -310,11 +486,11 @@
         const settled = Math.max(Math.abs(parallaxTarget.x - parallaxCurrent.x),Math.abs(parallaxTarget.y - parallaxCurrent.y)) < .0005;
         if (settled) { parallaxCurrent.x = parallaxTarget.x; parallaxCurrent.y = parallaxTarget.y; }
         paintParallax();
-        if (!settled) parallaxFrame = win.requestAnimationFrame(tickParallax); else parallaxTime = 0;
+        if (!settled) parallaxFrame = clock.request(tickParallax); else parallaxTime = 0;
       };
       const scheduleParallax = () => {
         if (!canParallax()) { resetParallax(); return; }
-        if (!parallaxHeld && !parallaxFrame) parallaxFrame = win.requestAnimationFrame(tickParallax);
+        if (!parallaxHeld && !parallaxFrame) parallaxFrame = clock.request(tickParallax);
       };
       const leaveParallax = () => { parallaxTarget.x = parallaxTarget.y = 0; scheduleParallax(); };
       const moveParallax = event => {
@@ -322,13 +498,18 @@
         if (!['mouse','pen'].includes(event.pointerType) || event.buttons || !canParallax()) return;
         const rect = container.getBoundingClientRect();
         if (!rect.width || !rect.height || event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) { leaveParallax(); return; }
-        parallaxTarget.x = Math.max(-1,Math.min(1,(event.clientX - rect.left) / rect.width * 2 - 1));
-        parallaxTarget.y = Math.max(-1,Math.min(1,(event.clientY - rect.top) / rect.height * 2 - 1)); scheduleParallax();
+        parallaxWidth = container.clientWidth; parallaxHeight = container.clientHeight;
+        const x = (event.clientX - rect.left) / rect.width, y = (event.clientY - rect.top) / rect.height;
+        const rotation = Number(container.closest('.player-orientation-frame')?.dataset.playerRotation) || 0;
+        const localX = rotation === 90 ? y : rotation === -90 ? 1 - y : x;
+        const localY = rotation === 90 ? 1 - x : rotation === -90 ? x : y;
+        parallaxTarget.x = Math.max(-1,Math.min(1,localX * 2 - 1));
+        parallaxTarget.y = Math.max(-1,Math.min(1,localY * 2 - 1)); scheduleParallax();
       };
       const holdParallax = event => {
         if (event.pointerType === 'touch') { resetParallax(); return; }
         if (!['mouse','pen'].includes(event.pointerType) || !canParallax()) return;
-        parallaxHeld = true; win.cancelAnimationFrame(parallaxFrame); parallaxFrame = 0; parallaxTime = 0;
+        parallaxHeld = true; clock.cancel(parallaxFrame); parallaxFrame = 0; parallaxTime = 0;
       };
       const releaseParallax = event => { if (parallaxHeld) { parallaxHeld = false; moveParallax(event); scheduleParallax(); } };
       const measureParallax = () => { parallaxWidth = container.clientWidth; parallaxHeight = container.clientHeight; paintParallax(); };
@@ -340,7 +521,7 @@
       win.addEventListener('blur',resetParallax);
       win.addEventListener('resize',measureParallax);
       doc.addEventListener('visibilitychange',resetParallax);
-      hoverPointer?.addEventListener?.('change',resetParallax);
+      const unlistenHover = listenMedia(hoverPointer,resetParallax);
       const parallaxObserver = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(measureParallax) : null;
       parallaxObserver?.observe(container);
       let motion = null, motionFrame = 0, motionClock = null, motionPlaying = false, motionSuspended = false, motionGeneration = 0;
@@ -388,10 +569,10 @@
       const tickMotion = () => {
         if (!motion || !motionPlaying) return;
         syncMotionVisibility(motionTime()); notifyMotion();
-        motionFrame = win.requestAnimationFrame(tickMotion);
+        motionFrame = clock.request(tickMotion);
       };
       const stopAnimations = (notify = true) => {
-        motionGeneration += 1; win.cancelAnimationFrame(motionFrame); motionClock?.cancel(); motionClock = null;
+        motionGeneration += 1; clock.cancel(motionFrame); motionClock?.cancel(); motionClock = null;
         moving.forEach(({animation,node,track}) => {
           animation.cancel();
           if (track.to) node.hidden = !track.to.visible;
@@ -404,7 +585,7 @@
       const pauseAnimations = () => {
         const time = motionTime();
         motionClock?.pause(); if (motionClock) motionClock.currentTime = time; moving.forEach(({animation}) => { animation.pause(); animation.currentTime = time; }); motionPlaying = false; motionSuspended = false;
-        win.cancelAnimationFrame(motionFrame); notifyMotion();
+        clock.cancel(motionFrame); notifyMotion();
       };
       const resumeAnimations = () => {
         if (!motion || options.reducedMotion?.()) { stopAnimations(); return; }
@@ -417,7 +598,7 @@
           // Completed tracks stay settled when a longer track is resumed.
           if (time < track.delay_ms + track.duration_ms) { animation.play(); if (Number.isFinite(start)) animation.startTime = start - time; }
         });
-        win.cancelAnimationFrame(motionFrame); tickMotion();
+        clock.cancel(motionFrame); tickMotion();
       };
       const seekAnimations = time => {
         if (!motion) return;
@@ -481,7 +662,7 @@
           motionClock = objects.animate([{opacity:1},{opacity:1}],{duration:plan.duration,fill:'both'});
           motionClock.onfinish = () => {
             if (generation !== motionGeneration || !motion) return;
-            motionPlaying = false; win.cancelAnimationFrame(motionFrame); syncMotionVisibility(plan.duration); notifyMotion();
+            motionPlaying = false; clock.cancel(motionFrame); syncMotionVisibility(plan.duration); notifyMotion();
           };
           const start = doc.timeline?.currentTime;
           if (Number.isFinite(start)) { motionClock.startTime = start; moving.forEach(({animation}) => { animation.startTime = start; }); }
@@ -524,6 +705,7 @@
         finalElements = new Map(value.elements.map(item => [item.id,item]));
         const nextBackground = source(value.background,'image');
         const nextPortrait = value.elements.some(item => item.type === 'character') ? '' : source(character?.portrait,'image');
+        container.dataset.sceneArtwork = String(Boolean(nextBackground || nextPortrait || value.elements.some(item => item.visible && item.opacity > 0 && (item.type === 'button' || item.type === 'text' && item.text || item.type === 'image' && source(item.asset,'image') || item.type === 'character' && source(options.characters?.().find(candidate => candidate.id === item.character_id)?.portrait,'image')))));
         container.dataset.dialogueVisible = String(value.dialogue_visible);
         updateElements(value.elements);
         const nextMusic = source(value.music,'audio');
@@ -561,12 +743,12 @@
           container.removeEventListener('pointermove',moveParallax); container.removeEventListener('pointerleave',leaveParallax);
           container.removeEventListener('pointerdown',holdParallax); container.removeEventListener('pointercancel',resetParallax);
           win.removeEventListener('pointerup',releaseParallax); win.removeEventListener('blur',resetParallax); win.removeEventListener('resize',measureParallax);
-          doc.removeEventListener('visibilitychange',resetParallax); hoverPointer?.removeEventListener?.('change',resetParallax);
+          doc.removeEventListener('visibilitychange',resetParallax); unlistenHover();
           stopAnimations(); active = false; audio.pause(); audio.removeAttribute('src'); audio.load?.(); layer.remove();
         }
       };
     };
-    return {limits,extensions,normalize,source,presentation,position,viewport,element,elements,sceneState,sceneCues,sceneDiff,resolveScene,sceneAnimations,sceneMotion,motionKeys,resolveSceneCharacter,sceneStates,sceneInteractionIssues,createViewport,createScene,sniff};
+    return {limits,extensions,normalize,projectRef,source,presentation,position,viewport,element,elements,sceneState,sceneCues,sceneDiff,resolveScene,sceneAnimations,sceneMotion,motionKeys,resolveSceneCharacter,sceneStates,sceneInteractionIssues,playerProfile,orientation,listenMedia,createOrientation,createPlayerDialog,createViewport,createPlayerShell,createScene,sniff};
   }
   const media = createNarrativeMedia();
   media.sourceCode = createNarrativeMedia.toString();
@@ -588,6 +770,24 @@
     throw new Error(kind === 'image' ? 'Formato não reconhecido. Use PNG, JPEG ou WebP.' : 'Formato de áudio não reconhecido.');
   };
   media.styles = `
+    .player-orientation-host{position:relative;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;isolation:isolate}
+    .player-orientation-frame{position:absolute!important;left:0;top:0;min-width:0;min-height:0;max-width:none;max-height:none;transform-origin:0 0;overflow:hidden}
+    .player-orientation-frame>.shell{height:100%;min-height:0}
+    .player-modal-overlay{position:absolute;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:12px;background:#03070dcc}
+    .player-modal-overlay[hidden],.player-modal-overlay dialog[hidden]{display:none!important}
+    .player-modal-overlay>.player-dialog{display:block;position:relative;inset:auto;width:100%;max-width:640px;max-height:100%;margin:0}
+    .player-orientation-frame .scene-reader-art{max-height:none!important}
+    .player-orientation-frame .utility-layout{max-height:calc(var(--player-height) - 28px)}
+    .player-orientation-frame .history-list{max-height:calc(var(--player-height) * .6)}
+    [data-player-profile=eink] .player-modal-overlay{background:#fff}
+
+    .narrative-player-shell[data-player-chrome-hidden=true] [data-player-chrome-ui],.narrative-player-shell[data-player-chrome-hidden=true] .scene-safe-area{display:none!important}
+    .narrative-player-shell[data-player-chrome-hidden=true] [data-player-controls]{display:contents}
+    .narrative-player-shell[data-player-chrome-hidden=true] [data-player-minimal-control]{position:fixed!important;top:auto!important;left:auto!important;right:16px!important;bottom:16px!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;pointer-events:none!important}
+    .narrative-player-shell[data-player-chrome-hidden=true] [data-player-minimal-control]:focus-visible{width:auto!important;height:auto!important;min-height:44px!important;padding:10px 16px!important;clip-path:none!important;opacity:1!important;pointer-events:auto!important;z-index:30}
+    .narrative-player-shell .player-interface-reveal{position:fixed;z-index:100;top:max(6px,env(safe-area-inset-top));right:max(6px,env(safe-area-inset-right));width:48px;height:48px;min-height:44px;border:1px solid #ffffff50;border-radius:8px;background:#10161de6;color:#fff;padding:4px;font:11px/1.3 system-ui;opacity:0;cursor:pointer;touch-action:manipulation}
+    .narrative-player-shell .player-interface-reveal:focus-visible,.narrative-player-shell .player-reveal-visible{opacity:1;outline:2px solid #81cfff;outline-offset:2px}
+    .narrative-player-shell .player-shell-notice{position:fixed;z-index:101;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:10px 14px;border:1px solid #ffffff30;border-radius:8px;color:#edf3f7;background:#10161df5;font:13px/1.5 system-ui;text-align:center;pointer-events:none}
     .narrative-scene-media{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;border-radius:inherit}.scene-background{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.scene-shade{position:absolute;inset:0;background:#000;opacity:var(--scene-dim,.3)}.scene-portrait{position:absolute;bottom:0;left:2%;width:40%;max-width:480px;height:var(--portrait-size,65%);object-fit:contain;object-position:bottom center}.narrative-scene-media[data-portrait-position=right] .scene-portrait{left:auto;right:2%}.narrative-scene-media[data-portrait-position=center] .scene-portrait{left:25%;width:50%;max-width:none}.scene-background[data-transition=fade],.scene-background[data-transition=slide]{animation:scene-fade var(--scene-transition,400ms) ease-out}.scene-portrait[data-transition=fade]{animation:scene-fade var(--scene-transition,400ms) ease-out}.scene-portrait[data-transition=slide]{animation:scene-slide var(--scene-transition,400ms) ease-out}.narrative-scene-media[data-motion=reduce] img{animation:none!important}@keyframes scene-fade{from{opacity:0}to{opacity:1}}@keyframes scene-slide{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}@media(prefers-reduced-motion:reduce){.narrative-scene-media img{animation:none!important}}@media(max-width:480px){.scene-portrait{width:58%;left:0}.narrative-scene-media[data-portrait-position=right] .scene-portrait{right:0}.narrative-scene-media[data-portrait-position=center] .scene-portrait{left:15%;width:70%}}
   `;
   media.styles += `
@@ -595,7 +795,7 @@
     .scene-viewport[data-scene-fixed=true]{display:block;position:relative;isolation:isolate;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;background:#090909}
     .scene-viewport[data-scene-host=player][data-scene-fixed=true]{flex:1;height:auto}
     .scene-safe-area{position:absolute;z-index:4;inset:5%;border:2px dashed #fff9;box-shadow:0 0 0 1px #0008;pointer-events:none}
-    .scene-viewport[data-scene-fixed=true]>.scene-canvas{position:absolute!important;inset:auto!important;left:var(--frame-left,0px)!important;top:var(--frame-top,0px)!important;width:var(--frame-width)!important;height:var(--frame-height)!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;box-sizing:border-box;transform:scale(var(--frame-scale,0));transform-origin:top left;display:flex;flex-direction:column;align-items:center!important;justify-content:flex-end;padding:48px 64px;border:0;border-radius:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--frame-scene) 70%,#506070),var(--frame-scene) 75%);box-shadow:none;isolation:isolate}
+    .scene-viewport[data-scene-fixed=true]>.scene-canvas,.scene-viewport[data-scene-profile=eink]>.scene-reader-art>.scene-canvas{position:absolute!important;inset:auto!important;left:var(--frame-left,0px)!important;top:var(--frame-top,0px)!important;width:var(--frame-width)!important;height:var(--frame-height)!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;box-sizing:border-box;transform:scale(var(--frame-scale,0));transform-origin:top left;display:flex;flex-direction:column;align-items:center!important;justify-content:flex-end;padding:48px 64px;border:0;border-radius:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--frame-scene) 70%,#506070),var(--frame-scene) 75%);box-shadow:none;isolation:isolate}
     .scene-canvas[data-scene-fixed=true][data-position=top]{justify-content:flex-start}.scene-canvas[data-scene-fixed=true][data-position=center]{justify-content:center}
     .scene-canvas[data-scene-fixed=true]>:is(.narrative-presentation-card,.narrative-player-box,.card){position:relative;z-index:2;display:grid;gap:12px;flex:0 1 auto;width:min(980px,100%);min-height:0;max-height:100%;margin:0;padding:28px;overflow:auto;border:1px solid #ffffff30;border-left:3px solid var(--frame-accent);border-radius:12px;color:var(--frame-text);background:var(--frame-surface);box-shadow:0 18px 70px #0008;backdrop-filter:none;text-align:left;font-size:23px}
     .scene-canvas[data-scene-fixed=true][data-model=subtitle]>:is(.narrative-presentation-card,.narrative-player-box,.card){border:0;background:transparent;box-shadow:none;text-align:center;text-shadow:0 2px 8px #000}
@@ -623,6 +823,40 @@
     .scene-canvas[data-dialogue-visible=false]>.narrative-presentation-card{display:none!important}
     .scene-canvas[data-dialogue-visible=false]>:is(.narrative-player-box,.card){background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
     .scene-canvas[data-dialogue-visible=false]>:is(.narrative-player-box,.card)>:is(.speaker,.copy,.narrative-test-speaker,.narrative-test-copy){display:none!important}
+  `;
+  media.styles += `
+    .scene-viewport[data-scene-profile=eink]{display:flex!important;flex-direction:column;flex:1;min-width:0;min-height:0;height:100%;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-gutter:stable;background:#fff;color:#000;color-scheme:light;scroll-behavior:auto!important}
+    @supports not (scrollbar-gutter:stable){.scene-viewport[data-scene-profile=eink]{overflow-y:scroll!important}}
+    .scene-viewport[data-scene-profile=eink] [hidden]{display:none!important}
+    .scene-viewport[data-scene-profile=eink]>.scene-reader-art{position:relative;flex:0 0 auto;width:100%;min-height:120px;max-height:50vh;max-height:50dvh;overflow:hidden;background:#fff}
+    .scene-viewport[data-scene-profile=eink]>.scene-reader-art>.scene-canvas{filter:grayscale(1)}
+    .scene-viewport[data-scene-profile=eink]>.scene-reader-art[hidden]{display:none!important}
+    .scene-viewport[data-scene-profile=eink]>.scene-safe-area,.scene-viewport[data-scene-profile=eink] .scene-safe-area{display:none!important}
+    .scene-viewport[data-scene-profile=eink]>:is(.card,.narrative-player-box,.narrative-presentation-card){position:relative!important;display:grid!important;flex:0 0 auto;width:100%!important;min-width:0;max-width:none;min-height:0;max-height:none;margin:0!important;padding:20px!important;gap:14px;overflow:visible;border:0!important;border-top:1px solid #000!important;border-radius:0!important;background:#fff!important;color:#000!important;box-shadow:none!important;backdrop-filter:none!important;text-shadow:none!important;text-align:left!important;transform:none!important;font-size:20px;line-height:1.7;outline:0}
+    .scene-viewport[data-scene-profile=eink] :is(.speaker,.narrative-test-speaker,.narrative-presentation-card>strong){color:#000!important;font-size:16px!important;letter-spacing:normal;text-transform:none}
+    .scene-viewport[data-scene-profile=eink] :is(.copy,.narrative-test-copy,.narrative-presentation-card>span){color:#000!important;font-size:calc(20px * var(--text-scale,1))!important;line-height:1.7!important;min-height:0;overflow-wrap:anywhere;white-space:pre-wrap}
+    .scene-viewport[data-scene-profile=eink] :is(.choices,.narrative-test-choices){display:grid;gap:12px}
+    .scene-viewport[data-scene-profile=eink] :is(.choices,.narrative-test-choices) button{min-height:48px;padding:12px 16px!important;border:2px solid #000!important;border-radius:0!important;background:#fff!important;color:#000!important;font-size:20px!important;line-height:1.5;text-align:left;opacity:1!important;box-shadow:none!important;transform:none!important}
+    .scene-viewport[data-scene-profile=eink] :is(.choices,.narrative-test-choices) button:disabled{border-style:dashed!important;color:#555!important}
+    .scene-viewport[data-scene-profile=eink] :is(.choices,.narrative-test-choices) button:disabled::after{content:' · indisponível'}
+    .scene-viewport[data-scene-profile=eink] :is(.hint,.narrative-test-advance-hint,.narrative-test-note){color:#333!important;font-size:16px!important;line-height:1.5;letter-spacing:normal}
+    .scene-viewport[data-scene-profile=eink] .narrative-test-advance-hint::after{content:none}
+    [data-player-profile=eink]{color-scheme:light!important;background:#fff!important;color:#000!important}
+    [data-player-profile=eink] :is(.shell,.menu,.topbar,.player-dialog,.utility-heading,.utility-view,.narrative-test-panel,.narrative-test-heading){background:#fff!important;color:#000!important;border-color:#000!important;box-shadow:none!important;backdrop-filter:none!important;text-shadow:none!important}
+    [data-player-profile=eink] :is(.topbar button,.menu button,.utility-view button,.utility-heading button,.narrative-test-heading button,select,.share-url){min-height:44px;border:1px solid #000!important;border-radius:0!important;background:#fff!important;color:#000!important;box-shadow:none!important;font-size:16px}
+    [data-player-profile=eink] :is(.title,.menu p,.utility-view p,.history-list p,.history-list strong,.eyebrow,.narrative-test-status,.narrative-test-shortcuts){color:#000!important;opacity:1}
+    [data-player-profile=eink] .player-dialog::backdrop{background:#fff;backdrop-filter:none}
+    .narrative-test-dialog[data-player-profile=eink]::backdrop{background:#fff;backdrop-filter:none}
+    [data-player-profile=eink] :is(.utility-view p,.menu p){font-size:16px!important;line-height:1.6}
+    [data-player-profile=eink] .history-list li{border-color:#000}
+    [data-player-profile=eink] :focus-visible{outline:2px solid #000!important;outline-offset:3px}
+    .narrative-player-shell[data-player-profile=eink] [data-player-controls]{display:flex!important;flex-wrap:wrap;gap:12px}
+    .narrative-player-shell[data-player-profile=eink] [data-player-minimal-control]{position:static!important;width:auto!important;height:auto!important;min-width:44px!important;min-height:48px!important;padding:12px 16px!important;margin:0!important;overflow:visible!important;clip-path:none!important;opacity:1!important;pointer-events:auto!important;color:#000!important;background:#fff!important;border:2px solid #000!important;border-radius:0!important;font-size:20px!important}
+    .narrative-player-shell[data-player-profile=eink] .player-interface-reveal{opacity:1!important;color:#000!important;background:#fff!important;border:2px solid #000!important;border-radius:0!important}
+    .narrative-player-shell[data-player-profile=eink] .player-shell-notice{color:#000;background:#fff;border:2px solid #000;border-radius:0;box-shadow:none}
+    .narrative-test-dialog[data-player-profile=eink] .narrative-test-panel{grid-template-rows:auto minmax(0,1fr) auto;gap:8px}
+    .narrative-test-dialog[data-player-profile=eink][data-player-chrome-hidden=true] .narrative-test-panel{grid-template-rows:minmax(0,1fr) auto}
+    .scene-viewport[data-scene-profile=eink] *,.scene-viewport[data-scene-profile=eink] *::before,.scene-viewport[data-scene-profile=eink] *::after,[data-player-profile=eink] *,[data-player-profile=eink] *::before,[data-player-profile=eink] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important;caret-color:transparent}
   `;
   root.HeartspaceNarrativeMedia = media;
 })(globalThis);

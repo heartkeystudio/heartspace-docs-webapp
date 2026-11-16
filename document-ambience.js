@@ -10,11 +10,12 @@
   function normalizeBase(value) {
     const source = value && typeof value === 'object' ? value : {}, texture = source.texture;
     const localId = typeof texture?.localId === 'string' && /^ambience-[a-zA-Z0-9-]{1,120}$/.test(texture.localId) ? texture.localId : '';
-    const remotePath = typeof texture?.remotePath === 'string' && /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.(png|webp)$/.test(texture.remotePath) ? texture.remotePath : '';
+    const remotePath = typeof texture?.remotePath === 'string' && /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.(png|webp|jpg|jpeg)$/.test(texture.remotePath) ? texture.remotePath : '';
+    const projectRef = root.HeartspaceNarrativeMedia?.projectRef(texture?.project_ref);
     return {enabled:source.enabled === true,mode:source.mode === 'texture' ? 'texture' : 'color',preset:Object.hasOwn(presets,source.preset) ? source.preset : 'custom',
       label:typeof source.label === 'string' ? source.label.slice(0,80) : '',color:typeof source.color === 'string' && /^#[0-9a-f]{6}$/i.test(source.color) ? source.color : '#626262',
       width:bounded(source.width,16,96,48),opacity:bounded(source.opacity,.15,1,.7),tileSize:bounded(source.tileSize,32,256,128),
-      texture:localId || remotePath ? {localId,remotePath,name:typeof texture.name === 'string' ? texture.name.slice(0,150) : 'Textura'} : null};
+      texture:(localId || remotePath) && (texture?.project_ref === undefined || projectRef) ? {localId,remotePath,name:typeof texture.name === 'string' ? texture.name.slice(0,150) : 'Textura',...(projectRef ? {project_ref:projectRef} : {})} : null};
   }
   function normalizeStyle(value) {
     const link = value?.placeLink;
@@ -28,7 +29,7 @@
     }); return ambience;
   }
   function styleEditor(options) {
-    const {document:doc,onChange,importTexture,isCurrent,loadTexture} = options, section = doc.createElement('details'); section.className = 'place-ambience-editor';
+    const {document:doc,onChange,importTexture,pickTexture,isCurrent,loadTexture} = options, section = doc.createElement('details'); section.className = 'place-ambience-editor';
     const summary = doc.createElement('summary'); summary.textContent = 'Ambiente deste lugar'; section.append(summary);
     let value = normalizeBase(options.value), ticket = 0, textureTicket = 0, textureSource = '', textureUrl = '';
     const controls = new Map(), preview = doc.createElement('div'); preview.className = 'ambience-preview'; preview.setAttribute('aria-hidden','true');
@@ -46,6 +47,7 @@
     const upload = doc.createElement('button'), clear = doc.createElement('button'), file = doc.createElement('input'), status = doc.createElement('p');
     upload.type = clear.type = 'button'; upload.textContent = 'Importar textura'; clear.textContent = 'Remover textura'; file.type = 'file'; file.accept = 'image/png,image/jpeg,image/webp'; file.hidden = true; status.setAttribute('role','status');
     section.append(upload,clear,file,preview,status);
+    const linked = doc.createElement('button'); linked.type = 'button'; linked.textContent = 'Recurso do projeto…'; linked.hidden = !pickTexture; upload.after(linked);
     function paint() {
       controls.forEach((control,key) => { if (key === 'enabled') control.checked = value.enabled; else control.value = value[key]; });
       preview.style.backgroundColor = value.color; preview.style.opacity = value.opacity; preview.textContent = value.label;
@@ -58,7 +60,7 @@
           textureUrl = URL.createObjectURL(blob); preview.style.backgroundImage = `url("${textureUrl}")`;
         }).catch(() => { if (operation === textureTicket && section.isConnected) status.textContent = 'Textura indisponível. A cor foi preservada.'; });
       }
-      upload.disabled = clear.disabled = !options.canEdit; status.textContent = value.texture ? `Textura: ${value.texture.name}` : 'A cor e a textura deste lugar podem ser reutilizadas em qualquer capítulo da biblioteca.';
+      upload.disabled = clear.disabled = linked.disabled = !options.canEdit; status.textContent = value.texture ? `Textura: ${value.texture.name}${value.texture.project_ref ? ' · versão fixada do projeto' : ''}` : 'A cor e a textura deste lugar podem ser reutilizadas em qualquer capítulo da biblioteca.';
     }
     function save() { if (!isCurrent()) return false; try { onChange(normalizeBase(value)); paint(); return true; } catch (error) { status.textContent = error.message || 'Não foi possível salvar o ambiente.'; return false; } }
     section.addEventListener('input',event => {
@@ -72,6 +74,13 @@
       ticket += 1; save();
     });
     upload.addEventListener('click',() => { if (isCurrent()) file.click(); });
+    linked.addEventListener('click',async () => {
+      if (!isCurrent() || !pickTexture) return;
+      const operation = ++ticket; linked.disabled = true;
+      try { const texture = await pickTexture(value.texture); if (!texture || operation !== ticket || !section.isConnected || !isCurrent()) return; value.texture = texture; value.mode = 'texture'; save(); }
+      catch (error) { if (operation === ticket && section.isConnected) status.textContent = error.message || 'Não foi possível vincular a textura.'; }
+      finally { if (operation === ticket && section.isConnected) linked.disabled = !options.canEdit; }
+    });
     clear.addEventListener('click',() => { if (!isCurrent()) return; ticket += 1; value.texture = null; value.mode = 'color'; save(); });
     file.addEventListener('change',async () => {
       const selected = file.files?.[0]; file.value = ''; if (!selected || !isCurrent()) return;
@@ -89,7 +98,7 @@
     }).map(item => ({sequenceId:item.sequenceId,inherit:item.inherit === true,style:normalizeStyle(item.style)}))};
   }
   function mount(options) {
-    const {document:doc,page,editorWrap,editorArea,editor,panel,getRecord,canEdit,onChange,importTexture,loadTexture,contextKey,getPlaces = () => [],collectionId = () => ''} = options;
+    const {document:doc,page,editorWrap,editorArea,editor,panel,getRecord,canEdit,onChange,importTexture,pickTexture,loadTexture,contextKey,getPlaces = () => [],collectionId = () => ''} = options;
     const win = doc.defaultView, controls = new Map();
     const node = (tag,text) => { const item = doc.createElement(tag); if (text !== undefined) item.textContent = text; return item; };
     const rail = node('aside'); rail.className = 'document-ambience'; rail.setAttribute('aria-hidden','true'); rail.hidden = true;
@@ -115,6 +124,7 @@
     const textureActions = node('div'); textureActions.className = 'ambience-texture-actions';
     const upload = node('button','Importar textura'), clear = node('button','Remover textura'), file = node('input');
     upload.type = clear.type = 'button'; file.type = 'file'; file.accept = 'image/png,image/jpeg,image/webp'; file.hidden = true; textureActions.append(upload,clear,file); details.append(textureActions);
+    const linked = node('button','Recurso do projeto…'); linked.type = 'button'; linked.hidden = !pickTexture; upload.after(linked);
     const width = field('Largura','width','range'); width.min = 16; width.max = 96; width.step = 4;
     const opacity = field('Intensidade','opacity','range'); opacity.min = .15; opacity.max = 1; opacity.step = .05;
     const tile = field('Tamanho da textura','tileSize','range'); tile.min = 32; tile.max = 256; tile.step = 8;
@@ -192,7 +202,7 @@
       resolveTextures([value,...(visible ? segments.map(item => item.value) : [])]);
       paint(preview,value); preview.textContent = value.label;
       const errors = [...textures.values()].filter(item => item.error);
-      status.textContent = message || (errors.length ? `${errors.length} ${errors.length === 1 ? 'textura indisponível' : 'texturas indisponíveis'}. A cor será usada nos trechos afetados.` : value.texture ? `Textura: ${value.texture.name}` : 'PNG, JPEG ou WebP. Use uma textura seamless para uma repetição contínua.');
+      status.textContent = message || (errors.length ? `${errors.length} ${errors.length === 1 ? 'textura indisponível' : 'texturas indisponíveis'}. A cor será usada nos trechos afetados.` : value.texture ? `Textura: ${value.texture.name}${value.texture.project_ref ? ' · versão fixada do projeto' : ''}` : 'PNG, JPEG ou WebP. Use uma textura seamless para uma repetição contínua.');
       const nextDrawing = visible ? JSON.stringify(segments.map(item => [item.top,item.height,item.width,item.value,textures.get(textureKey(item.value))?.url || ''])) : '';
       if (nextDrawing === drawingKey && drawingRail === displayRail) return; drawingKey = nextDrawing; drawingRail = displayRail;
       displayRail.replaceChildren(); if (!visible) return;
@@ -234,6 +244,7 @@
       controls.get('tileSize').setAttribute('aria-valuetext',`${value.tileSize} pixels`);
       controls.get('tileSize').parentElement.hidden = value.mode !== 'texture'; textureActions.hidden = value.mode !== 'texture';
       upload.disabled = !editable || inherited || Boolean(raw.placeLink) || busy; clear.disabled = !editable || inherited || Boolean(raw.placeLink) || !value.texture; file.disabled = !editable || inherited || Boolean(raw.placeLink) || busy;
+      linked.disabled = upload.disabled;
       schedule();
     }
     function commit(mutator) {
@@ -279,13 +290,14 @@
     });
     upload.addEventListener('click',() => { if (canEdit()) file.click(); });
     clear.addEventListener('click',() => commit(value => { value.texture = null; value.mode = 'color'; }));
-    file.addEventListener('change',async () => {
-      const selected = file.files?.[0], record = getRecord(), context = currentContext, sequenceId = selectedSequence; file.value = '';
-      if (!selected || !record || !canEdit() || target().inherited) return;
+    const applyTexture = async loader => {
+      const record = getRecord(), context = currentContext, sequenceId = selectedSequence;
+      if (!record || !canEdit() || target().inherited || target().raw.placeLink) return;
       const ticket = ++importTicket; busy = true; message = 'Preparando textura…'; update();
       try {
-        const texture = await importTexture(selected);
-        if (ticket !== importTicket || context !== currentContext || sequenceId !== selectedSequence || record.id !== getRecord()?.id || !canEdit() || target().inherited) return;
+        const texture = await loader();
+        if (!texture) return;
+        if (ticket !== importTicket || context !== currentContext || sequenceId !== selectedSequence || record.id !== getRecord()?.id || !canEdit() || target().inherited || target().raw.placeLink) return;
         // Resolve the current record again: a remote refresh can replace its object.
         const current = getRecord(), previous = current.ambience, ambience = normalize(previous);
         const override = ambience.sequences.find(item => item.sequenceId === sequenceId && !item.inherit);
@@ -296,14 +308,16 @@
         message = (override?.style || current.ambience).enabled ? 'Textura adicionada.' : 'Textura adicionada. Ative Mostrar faixa para vê-la na folha.';
       } catch (error) { if (ticket === importTicket && context === currentContext) message = error.message || 'Não foi possível importar a textura.'; }
       finally { if (ticket === importTicket && context === currentContext) { busy = false; update(); } }
-    });
+    };
+    file.addEventListener('change',() => { const selected = file.files?.[0]; file.value = ''; if (selected) void applyTexture(() => importTexture(selected)); });
+    linked.addEventListener('click',() => { if (pickTexture) void applyTexture(() => pickTexture(target().value.texture)); });
     if (win.ResizeObserver) { const observer = new win.ResizeObserver(schedule); [page,editorWrap,editorArea].forEach(item => observer.observe(item)); }
     win.addEventListener('resize',schedule);
     editorArea.addEventListener('scroll',schedule,{passive:true});
     editor.addEventListener('input',schedule);
     new win.MutationObserver(schedule).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['data-narrative-sequence-id','data-canonical-visible']});
     win.addEventListener('beforeunload',releaseTextures);
-    update(); return {update,schedule,importTexture,loadTexture};
+    update(); return {update,schedule,importTexture,pickTexture,loadTexture};
   }
   root.HeartspaceDocumentAmbience = {normalize,mount,style:normalizeBase,styleEditor,refreshPlaceLinks};
 })(globalThis);

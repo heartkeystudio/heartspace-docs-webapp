@@ -89,7 +89,7 @@
       })};
   }
   function mount(options) {
-    const {element,document:doc,getRecord,getSequences,canEdit,onChange,openSequence,getCharacters = () => [],openCharacter,createCharacter,importTexture,loadTexture} = options;
+    const {element,document:doc,getRecord,getSequences,canEdit,onChange,openSequence,getCharacters = () => [],openCharacter,createCharacter,importTexture,pickTexture,loadTexture} = options;
     const win = doc.defaultView;
     let removed = null, templateBatch = null, removedWorld = null, pendingWorld = '';
     const selectedModels = new Map(), uiStates = new Map();
@@ -171,7 +171,7 @@
             }
             if (entry.type === 'place') {
               const collectionId = getRecord()?.id;
-              const editor = HeartspaceDocumentAmbience.styleEditor({document:doc,value:entry.ambience,canEdit:canEdit(),importTexture,loadTexture,
+              const editor = HeartspaceDocumentAmbience.styleEditor({document:doc,value:entry.ambience,canEdit:canEdit(),importTexture,pickTexture,loadTexture,
                 isCurrent:() => getRecord()?.id === collectionId && Boolean(getRecord()?.storyPlanning.worldEntries.some(item => item.id === entry.id)) && canEdit(),
                 onChange:value => {
                   const record = getRecord(); if (record?.id !== collectionId || !canEdit()) return;

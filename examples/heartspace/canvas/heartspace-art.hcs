@@ -1,0 +1,165 @@
+{
+	"active_canvas_id": "paper-world",
+	"active_face_animation_id": "face_clip_467141",
+	"assembly_orbit_scope": "part",
+	"assembly_size": [
+		1280,
+		720
+	],
+	"author_name": "HeartSpace",
+	"background_color": "ffffff00",
+	"canvases": [
+		{
+			"canvas_id": "backdrop",
+			"display_name": "01 · Noite de criação",
+			"layers": [
+				{
+					"alpha_locked": false,
+					"blend_mode": 0,
+					"channel": 0,
+					"display_name": "01 · Noite de criação",
+					"image_path": "canvases/backdrop/layers/base.png",
+					"layer_id": "base",
+					"locked": false,
+					"opacity": 1.0,
+					"studio": {},
+					"visible": true
+				}
+			],
+			"lighting_method": 0,
+			"normal_height_strength": 2.0,
+			"normal_source_recipe": {},
+			"pivot": [
+				0.5,
+				0.5
+			],
+			"pixel_size": [
+				1280,
+				720
+			]
+		},
+		{
+			"canvas_id": "paper-world",
+			"display_name": "02 · Mundo de papel",
+			"layers": [
+				{
+					"alpha_locked": false,
+					"blend_mode": 0,
+					"channel": 0,
+					"display_name": "02 · Mundo de papel",
+					"image_path": "canvases/paper-world/layers/base.png",
+					"layer_id": "base",
+					"locked": false,
+					"opacity": 1.0,
+					"studio": {},
+					"visible": true
+				}
+			],
+			"lighting_method": 0,
+			"normal_height_strength": 2.0,
+			"normal_source_recipe": {},
+			"pivot": [
+				0.5,
+				0.5
+			],
+			"pixel_size": [
+				1280,
+				720
+			]
+		},
+		{
+			"canvas_id": "constellation",
+			"display_name": "03 · Caminhos e encontros",
+			"layers": [
+				{
+					"alpha_locked": false,
+					"blend_mode": 0,
+					"channel": 0,
+					"display_name": "03 · Caminhos e encontros",
+					"image_path": "canvases/constellation/layers/base.png",
+					"layer_id": "base",
+					"locked": false,
+					"opacity": 1.0,
+					"studio": {},
+					"visible": true
+				}
+			],
+			"lighting_method": 0,
+			"normal_height_strength": 2.0,
+			"normal_source_recipe": {},
+			"pivot": [
+				0.5,
+				0.5
+			],
+			"pixel_size": [
+				1280,
+				720
+			]
+		}
+	],
+	"color_mode": "rgba",
+	"created_unix": 1794666605,
+	"default_fps": 12.0,
+	"display_name": "HeartSpace — uma ideia ganha mundo",
+	"face_animation_clips": [
+		{
+			"clip_id": "face_clip_467141",
+			"display_name": "Artes da apresentação",
+			"keys": [
+				{
+					"duration_ms": 83,
+					"key_id": "face_key_467131"
+				}
+			],
+			"loop": true,
+			"ping_pong": false,
+			"tracks": [
+				{
+					"cels": [
+						{
+							"canvas_id": "backdrop",
+							"cel_id": "face_cel_467159",
+							"key_id": "face_key_467131",
+							"linked": true
+						}
+					],
+					"horizontal_offset": 0,
+					"locked": false,
+					"muted": false,
+					"part_id": "",
+					"standalone_canvas_id": "backdrop",
+					"track_id": "canvas_track_467156",
+					"track_name": "01 · Noite de criação",
+					"vertical_offset": 0
+				}
+			]
+		}
+	],
+	"frames": [
+		{
+			"canvas_id": "backdrop",
+			"duration_ms": 100,
+			"frame_id": "frame_backdrop"
+		},
+		{
+			"canvas_id": "paper-world",
+			"duration_ms": 100,
+			"frame_id": "frame_paper-world"
+		},
+		{
+			"canvas_id": "constellation",
+			"duration_ms": 100,
+			"frame_id": "frame_constellation"
+		}
+	],
+	"modified_unix": 1794666605,
+	"notes": "Arte editorial original para a apresentação do Docs. Cada Canvas é uma camada exportada separadamente para composição/parallax. Sem trilha de áudio.",
+	"palettes": [],
+	"parts": [],
+	"project_id": "heartspace_showcase_art_v1",
+	"reference_art": {},
+	"schema_version": 12,
+	"slices": [],
+	"studio": {},
+	"tags": []
+}

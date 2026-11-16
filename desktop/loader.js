@@ -19,13 +19,21 @@
       .replace('src="narrative-runtime.js"', `src="${rootPrefix}narrative-runtime.js"`)
       .replace('src="image-optimizer.js"', `src="${rootPrefix}image-optimizer.js"`)
       .replace('src="narrative-media.js"', `src="${rootPrefix}narrative-media.js"`)
+      .replace('src="project-assets.js"', `src="${rootPrefix}project-assets.js"`)
       .replace('src="scene-composer.js"', `src="${rootPrefix}scene-composer.js"`)
       .replace('src="narrative-html.js"', `src="${rootPrefix}narrative-html.js"`)
       .replace('src="narrative-package.js"', `src="${rootPrefix}narrative-package.js"`)
+      .replace('src="heartspace-showcase.js"', `src="${rootPrefix}heartspace-showcase.js"`)
       .replace('src="document-ambience.js"', `src="${rootPrefix}document-ambience.js"`)
       .replace('src="story-planning-map.js"', `src="${rootPrefix}story-planning-map.js"`)
       .replace('src="sequence-map.js"', `src="${rootPrefix}sequence-map.js"`)
       .replace('src="story-planning.js"', `src="${rootPrefix}story-planning.js"`)
+      .replace('src="authoring-project.js"', `src="${rootPrefix}authoring-project.js"`)
+      .replace('src="sync-state.js"', `src="${rootPrefix}sync-state.js"`)
+      .replace('src="sync-review.js"', `src="${rootPrefix}sync-review.js"`)
+      .replace('src="project-storage.js"', `src="${rootPrefix}project-storage.js"`)
+      .replace('src="project-files.js"', `src="${rootPrefix}project-files.js"`)
+      .replace('src="local-projects.js"', `src="${rootPrefix}local-projects.js"`)
       .replace('src="production-workspaces.js"', `src="${rootPrefix}production-workspaces.js"`);
     const parsed = new DOMParser().parseFromString(html, 'text/html');
     const scripts = [...parsed.querySelectorAll('script')].map(original => {

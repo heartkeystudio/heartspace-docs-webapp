@@ -1,0 +1,33 @@
+{
+	"fps": 12.0,
+	"frames": [
+		{
+			"duration_ms": 100.0,
+			"file": "backdrop.png",
+			"frame_id": "frame_backdrop",
+			"pivot": [
+				0.5,
+				0.5
+			]
+		},
+		{
+			"duration_ms": 100.0,
+			"file": "paper-world.png",
+			"frame_id": "frame_paper-world",
+			"pivot": [
+				0.5,
+				0.5
+			]
+		},
+		{
+			"duration_ms": 100.0,
+			"file": "constellation.png",
+			"frame_id": "frame_constellation",
+			"pivot": [
+				0.5,
+				0.5
+			]
+		}
+	],
+	"schema_version": 1.0
+}

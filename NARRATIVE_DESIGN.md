@@ -8,6 +8,30 @@ O documento é a fonte narrativa. Texto, diálogos, escolhas e ações formam um
 
 A divulgação pública do Docs prioriza o modo local, com edição, narrativa, tradução e exportação utilizáveis sem conta. O online fica em beta fechado para a equipe e pessoas liberadas pelo responsável do produto. Medir consumo e comportamento da sincronização nesse grupo antes de definir franquias públicas, monetização e capacidade de nuvem. As hipóteses de cotas não autorizam bloqueios comerciais no modo local. Detalhes em [FREE_PLAN_DESIGN.md](FREE_PLAN_DESIGN.md).
 
+## Base autoral de projeto — fatia 1
+
+O modelo `heartspace.docs.authoring` v1 consolida projeto, livros/pranchetas e
+capítulos/seções. O planejamento pertence ao agrupador; folhas são projeções de
+paginação. Recursos narrativos e configurações de cena pertencem ao projeto.
+O cache v3 separa fonte, interface e sincronização, migrando as bibliotecas
+anteriores sem renumerar o conteúdo. O primeiro envio à nuvem conserva o ID
+autoral e associa o ID remoto separadamente. A sincronização remota ainda usa
+seu contrato legado; o salvamento do projeto completo em arquivos foi acrescentado
+na fatia 2 abaixo. Contrato e limitações em [AUTHORING_FORMAT.md](AUTHORING_FORMAT.md).
+
+### Arquivos locais e recuperação — fatia 2
+
+O projeto pode ser salvo/reaberto como `.hdocs`, com a fonte autoral e as mídias
+referenciadas numa tabela deduplicada. Novo projeto, abrir, salvar como e
+recuperação ficam em Ações; os ícones de abrir/salvar e Ctrl/Cmd+O/S estão
+conectados. As cópias de trabalho passam a IndexedDB com retomada entre sessões;
+localStorage mantém ponteiros e a alternativa reduzida. Abrir/recuperar cria
+uma área local separada, preservando a anterior e os IDs autorais, sem enviar
+o conteúdo para a nuvem. O navegador pode atualizar um arquivo autorizado ou
+iniciar download, conforme sua capacidade. A janela desktop v1 ainda requer
+um contrato de lançamento/arquivos standalone. Detalhes e aceite pendente em
+[LOCAL_PROJECT_FILES.md](LOCAL_PROJECT_FILES.md).
+
 ## Regra de leitura e paginação
 
 1. A projeção de leitura é a referência para quebra de linhas, altura do conteúdo e paginação.
@@ -546,7 +570,7 @@ A gravação foi inspecionada por quadros para identificar o ciclo. Conferência
 
 ## Evolução da Cena — fatias acordadas
 
-A composição pertence à sequência e evolui conforme os blocos avançam. A ordem acordada é: (1) proporções/enquadramento; (2) elementos e posicionamento livre; (3) evolução por blocos; (4) animações; (5) regiões e objetos interativos; (6) parallax; (7) acabamento e compartilhamento do player; (8) perfil e-ink; (9) orientação e compatibilidade Kindle validada em aparelho; (10) apresentação real do HeartSpace usando as ferramentas. As fatias 1, 2, 3, 4, 5 e 6 estão aplicadas abaixo; as seguintes continuam pendentes.
+A composição pertence à sequência e evolui conforme os blocos avançam. A ordem acordada é: (1) proporções/enquadramento; (2) elementos e posicionamento livre; (3) evolução por blocos; (4) animações; (5) regiões e objetos interativos; (6) parallax; (7) acabamento e compartilhamento do player; (8) perfil e-ink; (9) orientação e compatibilidade Kindle validada em aparelho; (10) apresentação real do HeartSpace usando as ferramentas. As fatias 1–8 estão aplicadas abaixo. A implementação de orientação e alternativas de compatibilidade da fatia 9 está aplicada; sua validação em Kindle físico continua pendente. A fatia 10 está aplicada com apresentação, fontes e cópia editável; a revisão visual/funcional continua pendente.
 
 ### Fatia 1 — tela de apresentação e proporções
 
@@ -558,7 +582,7 @@ A composição pertence à sequência e evolui conforme os blocos avançam. A or
 - Redimensionamentos e mudanças de sequência atualizam a escala; o observador acompanha também mostrar/ocultar o player, evitando deixar uma tela vazia ao retornar ao menu. O pacote exportado preserva o formato e usa o mesmo módulo portátil, sem dependências externas novas.
 - Corrigido também o caminho de gravação dos controles da Cena: a leitura de controles recebia a apresentação diretamente, evitando uma segunda normalização da lista de sequências que desconectava o objeto a ser alterado. Isso permite persistir o formato e os demais ajustes existentes da cena.
 
-Conferência de sintaxe JavaScript dos arquivos alterados, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual pendente: a política do navegador bloqueia o acesso à página local file:. As fatias 7–10 continuam pendentes.
+Conferência de sintaxe JavaScript dos arquivos alterados, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual pendente: a política do navegador bloqueia o acesso à página local file:. A validação em Kindle da fatia 9 continua pendente; a fatia 10 está documentada abaixo.
 
 
 ### Fatia 2 — composição e posicionamento livre
@@ -629,3 +653,82 @@ Conferência de sintaxe JavaScript dos módulos alterados e do script do editor,
 - HTML e ZIP usam o mesmo renderizador, incluindo os ajustes das camadas e dos momentos. O recorte da cena contém o movimento, sem criar área extra de rolagem. Para imagens que cobrem o cenário, o produtor deve deixar margem além dos limites da tela para evitar revelar as bordas quando a camada se deslocar; o efeito não amplia ou recorta a arte automaticamente.
 
 Conferência de sintaxe JavaScript dos módulos alterados e do script do editor, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual não realizada; o acesso à página local file: permanece bloqueado pela política do navegador.
+
+
+### Fatia 7 — player, apresentação limpa e compartilhamento
+
+- createPlayerShell reúne tela cheia, alternância de interface, atalhos, mensagens e recuperação dos controles. O mesmo controlador está na prévia do Docs e no HTML/ZIP exportado. F solicita tela cheia por uma ação do usuário; H mostra/oculta a interface. A solicitação pede navegação do navegador oculta quando suportado. Negativa ou ausência da API mantém a apresentação na área disponível, com aviso, sem simular sucesso ou tentar novamente automaticamente.
+- Tela cheia oculta a interface de sistema do player. O modo sem interface também funciona sem tela cheia. Diálogos, texto narrativo, escolhas e objetos clicáveis continuam disponíveis. As guias de área segura, cabeçalho, dicas de avanço e ferramentas de inspeção ficam ocultos. Continuar permanece acessível ao teclado e aparece ao receber foco, mesmo na apresentação limpa.
+- Um controle de recuperação de 48 × 48 fica no canto superior direito, sem desenho permanente; aparece ao passar o ponteiro ou receber foco. Tocar nesse canto recupera a interface. Uma mensagem temporária ensina o gesto ao ocultar os controles. Esc sai da tela cheia ou recupera a interface antes de voltar ao menu/fechar a prévia. O foco retorna para a cena quando os controles que o tinham são ocultados. Nenhum desses atalhos escolhe uma opção ou avança um bloco.
+- Na prévia, a apresentação limpa expande a cena e oculta os inspetores sem alterar sua configuração. A tela cheia usa o painel de apresentação e mantém os controles de recuperação dentro dele. Fechar a prévia encerra uma tela cheia iniciada por esse controlador; voltar aos controles restaura a geometria normal. Mudanças de tamanho são repassadas ao viewport, preservando a proporção global e as composições existentes.
+- O player exportado concentra histórico, leitura, som, retorno ao início e compartilhamento em Menu. A barra principal reúne apenas o nome, Tela cheia, Ocultar interface e Menu. As telas do menu têm retorno explícito e restauração de foco; consultar histórico/opções/compartilhamento continua suspendendo a reprodução. Salvamento, retomada, condições, efeitos, animações e parallax usam os mecanismos anteriores.
+- A exportação oferece Interface ao iniciar a partida: controles visíveis ou interface oculta. A opção é global no arquivo em player_settings.hide_interface e vale ao começar/retomar; o menu inicial continua acessível. O leitor pode alternar a interface durante a partida. O parâmetro ui=hidden também inicia a partida limpa ao incorporar. Tela cheia nunca é solicitada automaticamente. As opções do formulário são da exportação corrente, sem nova configuração remota ou migration.
+- Compartilhar no menu oferece cópia do endereço HTTP(S) atual e o compartilhamento nativo quando disponível, mediante clique. Os parâmetros embed/ui e credenciais de URL são removidos do endereço compartilhado. Sem área de transferência, o campo permite selecionar/copiar manualmente. Em file:/blob:, explica o envio do HTML único ou ZIP completo; não oferece um link local como se estivesse publicado. A implementação não cria hospedagem nem envia a história automaticamente.
+- Compartilhar e incorporar, no formulário de exportação, aceita um endereço publicado opcional HTTP(S), rejeita credenciais/esquemas executáveis e gera um iframe com título escapado, permissão de tela cheia e dimensões responsivas. Proporções fixas usam o formato global; Livre usa altura adaptável limitada. Sem endereço, gera o caminho relativo ao arquivo exportado. Copiar código tem alternativa de seleção manual. A orientação do ZIP foi atualizada com os atalhos e requisitos de incorporação.
+
+Conferência de sintaxe JavaScript dos módulos alterados e do script do editor, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual e teste em navegadores/dispositivos permanecem pendentes; o acesso à página local file: continua bloqueado pela política do navegador. A disponibilidade de tela cheia e compartilhamento depende das APIs e permissões do navegador/hospedagem.
+
+
+### Fatia 8 — perfil e-ink e leitura estática
+
+- A prévia da aba Cena e o teste narrativo oferecem Padrão / E-ink. Essa escolha é pessoal, guardada neste dispositivo e disponível para quem só pode visualizar, sem gravar mudanças na história. Exportar oferece Perfil inicial, guardado em player_settings.profile no HTML/ZIP. O leitor pode seguir a exportação ou escolher um perfil em Menu → Opções de leitura e som; sua preferência fica no navegador. O parâmetro profile=eink também permite abrir/incorporar nesse perfil, com opção de troca explícita no menu.
+- Em e-ink, textos são instantâneos, imagens e composições ficam estáticas, música é silenciada, transições/animações/parallax são desativados e pausas passam a aguardar Continuar. As preferências anteriores de velocidade, movimento e som são preservadas para voltar ao modo padrão. Trocar de perfil não reinicia o runner, não reaplica efeitos nem altera variáveis ou histórico. No teste, a troca recompõe a mesma etapa e mostra seu estado final; voltar ao padrão em uma pausa retoma o tempo configurado para aquele bloco.
+- O viewport conserva a composição e o formato da ilustração, em tons de cinza, e move o painel de texto/escolhas para uma área de leitura independente, sem a escala da tela lógica. Assim, um jogo horizontal em uma janela estreita mantém as opções legíveis. A ilustração usa no máximo metade da altura da janela, com rolagem para o texto; sem arte, a área de ilustração é omitida. Em Livre, a amostra da ilustração usa as dimensões lógicas de referência, sem mudar a configuração global do jogo.
+- O painel tem fundo branco, texto preto, tipografia de 20 px ajustável pela preferência de tamanho do player, espaçamento amplo e opções com bordas de alto contraste e alvos de pelo menos 48 px. Opções indisponíveis recebem borda tracejada e indicação textual. O texto narrativo aparece também nas cenas em que a caixa visual original estava oculta. Objetos clicáveis continuam vinculados às mesmas opções e a lista textual fica disponível como alternativa.
+- O perfil remove gradientes/sombras/desfoque da interface de leitura, animações de indicadores, transições e mudanças visuais dependentes apenas de hover. Continuar permanece visível mesmo com a interface oculta; o controle de recuperação também é visível, sem depender de hover. Avisos do shell não desaparecem por um temporizador no perfil e-ink; o próximo comando explícito os dispensa. Não há atualização contínua de cena, digitação letra a letra ou avanço automático das pausas.
+- O painel de leitura é movido, sem duplicar nós narrativos ou controles. Seleção por teclado, condições, destinos, efeitos, histórico e salvamento continuam usando o mesmo runner. A movimentação dos elementos e os alvos na ilustração permanecem nas coordenadas da composição. A volta ao perfil padrão recoloca o mesmo painel na cena. O tamanho de texto é aplicado também ao contêiner de leitura.
+- A prévia de composição usa o mesmo layout, mantém a edição dos elementos e desabilita a inspeção de animações/parallax durante a visualização e-ink. O teste tem perfil no cabeçalho e oferece avanço manual. HTML e ZIP incluem os mesmos estilos e controlador; o código de incorporação usa altura de leitura adaptável e adiciona profile=eink quando escolhido. Esse perfil começa com controles visíveis, preservando a opção original de interface para o modo padrão.
+- A implementação é um perfil de apresentação para navegadores com os recursos já usados pelo player. Não detecta Kindle pelo user agent, não controla o refresh físico ou ghosting do dispositivo e não faz rotação automática. Compatibilidade com navegadores Kindle antigos, orientação e validação em aparelho pertencem à fatia 9. Não há nova migration nem dependência externa.
+
+Conferência de sintaxe JavaScript dos módulos alterados e do script do editor, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual e validação em dispositivo e-ink/Kindle não realizadas; o acesso à página local file: continua bloqueado pela política do navegador.
+
+
+### Fatia 9 — orientação de leitura e alternativas de compatibilidade
+
+- Orientação é uma preferência de exibição: Automática, Paisagem para a direita, Paisagem para a esquerda e Retrato. Se a área física já tiver a orientação pedida, não há rotação adicional. A implementação gira o quadro completo do player com dimensões lógicas trocadas, incluindo texto e escolhas e os menus. Não muda o viewport global, composições, momentos, vínculos ou dados narrativos. Não solicita nem depende de screen.orientation.lock ou tela cheia. Voltar a Automática remove a rotação.
+- O teste da sequência oferece o mesmo controle no cabeçalho, guardado como preferência local do Docs. A composição na aba Cena permanece nas coordenadas originais de edição. Exportar oferece Orientação inicial em player_settings.orientation, preservada no HTML e ZIP; o leitor pode seguir a exportação ou escolher outra orientação em Menu → Opções de leitura e som. A escolha é salva no mesmo conjunto de preferências da partida. Trocar orientação não reinicia a história, não avança blocos nem reaplica efeitos.
+- O parâmetro orientation=landscape, landscape-left ou portrait também pode definir a orientação inicial; uma preferência explícita do leitor prevalece. O código de incorporação inclui a orientação escolhida e usa altura adaptável para essas leituras. As dimensões são recalculadas ao abrir, redimensionar, alterar a orientação física, entrar/sair de tela cheia e mudar a opção. A rolagem fica nas áreas internas de leitura/menu, sem uma página vazia extra. O tamanho da ilustração e do menu usa a área lógica girada.
+- O contêiner físico é o alvo da tela cheia na prévia, e o conteúdo interno é que gira. A transformação visual também carrega os botões e alvos clicáveis. As coordenadas do parallax são convertidas para os eixos locais da orientação. O perfil e-ink continua estático, com texto legível fora da ilustração e avanço manual.
+- O menu exportado usa uma camada modal dentro do quadro girado, com função de diálogo, foco contido, Escape/Voltar e isolamento da área de jogo. Não exige HTMLDialogElement.showModal, cujo topo de renderização não acompanharia a rotação do quadro. O botão de recuperação da interface acompanha o mesmo quadro.
+- Recursos opcionais têm alternativas: ResizeObserver e MutationObserver podem estar ausentes; ajuste explícito e eventos de janela continuam funcionando. O relógio de quadros pode usar um agendamento pontual quando requestAnimationFrame não existe. Consultas de mídia aceitam addListener quando addEventListener não está disponível. Sem matchMedia, o perfil e-ink continua sendo selecionável. Sem animação/parallax/tela cheia/compartilhamento/armazenamento, preservam-se as alternativas já previstas; ausência de armazenamento mantém a partida na aba.
+- A exportação inclui uma abertura independente em sintaxe ES5 e uma tela de falha legível com tentativa de reabertura. Ela permanece disponível com JavaScript desativado, recursos essenciais ausentes, erro de análise de sintaxe ou falha de inicialização do player moderno. Não executa eval, não modifica protótipos e não tenta fingir compatibilidade com JavaScript antigo. O runner continua compartilhado com o editor; não foi criada uma segunda implementação das regras da história.
+- Menu → Sobre este navegador mostra perfil, orientação, tamanho disponível, armazenamento, tela cheia, animações, observador de tamanho e identificação informada pelo navegador. O diagnóstico é local, sem envio ou detecção de Kindle para mudar o comportamento. Não certifica o dispositivo. A interface e o LEIA-ME orientam abrir o endereço publicado no navegador do Kindle; este HTML interativo não é um livro interativo para a biblioteca/Send to Kindle.
+- Fontes de referência: [Screen Orientation — W3C](https://www.w3.org/TR/screen-orientation/) descreve restrições possíveis para bloqueio de orientação; [ScreenOrientation.lock — MDN](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock) registra disponibilidade limitada; [Top layer — MDN](https://developer.mozilla.org/en-US/docs/Glossary/Top_layer) explica a camada especial dos diálogos modais; o [guia oficial do Kindle](https://d1ergij2b6wmg5.cloudfront.net/kug/kindle_2026/v1/en-GB/html/kug.html) distingue o navegador do dispositivo e a orientação de leitura. Esses documentos não certificam a execução deste player em um modelo específico.
+
+Conferência de sintaxe JavaScript, diff e atualização da CSP desktop. Não foram adicionados nem executados testes funcionais. Revisão visual indisponível pela restrição já registrada ao acesso à página local. **Validação em Kindle físico continua pendente**: o usuário informou Kindle de 11ª geração como alvo, mas a versão de firmware e a execução no aparelho ainda não estão disponíveis nesta sessão. A fatia 9 não está certificada em hardware; abertura por endereço publicado, rotação/toque, leitura/escolhas, retorno ao menu e retomada após reabrir precisam ser conferidos no modelo escolhido. Não há controle do refresh físico/ghosting nem garantia para navegadores Kindle antigos.
+
+
+### Fatia 10 — apresentação real do HeartSpace
+
+- “HeartSpace · Uma ideia ganha mundo” é uma história em português com oito sequências: ideia, planejamento, Canvas, composição, caminhos, compartilhamento, futuro e créditos. O percurso guiado tem escolha canônica até o encerramento; os ramos de exploração permitem revisitar os temas. A apresentação usa narração, escolhas, objetos clicáveis vinculados às mesmas opções, momentos de cena, animação curta e parallax. Não foi criada uma área ou engine de slides.
+- O exemplo está em `examples/heartspace`: HTML único, ZIP do player, JSON narrativo, planejamento e instruções. HTML e ZIP foram gerados pelos exportadores reais do Docs e incluem as artes; não exigem uma conta para serem enviados ou apresentados. As opções do player, incluindo leitura e-ink e orientação, vêm da implementação compartilhada.
+- As três imagens foram compostas por um script de produção usando `PixelCanvasDocument`, camadas Draw, `PixelPainterFileService.save_project` e `PixelPainterExporter.export_png_frames` do Canvas. A execução headless produziu os PNGs e a fonte editável `canvas/heartspace-art.hcs`, com seus arquivos de camada. Os SVGs e o gerador preservam as formas de origem. Não houve autoria manual na UI do Canvas, nem geração ou atribuição de áudio ao Beats. Os créditos identificam Docs e exportação Canvas; Beats aparece como direção futura.
+- Novo documento oferece “Apresentação HeartSpace · exemplo editável”. A criação produz um livro independente com roteiro e notas de produção; o planejamento pertence ao livro e tem marcos ligados às sequências do roteiro. As composições e os blocos usam os mecanismos nativos existentes, sem DOM ou runner específicos do exemplo. Cada cópia recebe IDs próprios e não substitui documentos existentes.
+- A criação exige permissão de edição, confere novamente o contexto após o carregamento assíncrono das artes e guarda a cópia completa no armazenamento antes de incorporá-la à biblioteca em memória. Falta de quota informa o problema. Projetos conectados usam a sincronização normal dos dois documentos. O template pequeno carrega com o editor; o módulo de PNGs é carregado apenas ao solicitar o exemplo, a partir da mesma origem. A entrada desktop resolve esse módulo pelo caminho do script, respeitando a CSP existente.
+- A exportação distribuída é 16:9. Criar uma cópia no editor mantém o formato global atual do projeto, sem alterar as sequências existentes. As notas recomendam projeto dedicado em 16:9 para reproduzir o enquadramento da peça. A documentação explica a edição, a apresentação e a reconstrução dos artefatos, além dos limites de autoria das fontes raster.
+
+Geração de produção: salvamento/exportação Canvas e construção HTML/ZIP realizados. Inspeção local de uma camada de arte e conferência de sintaxe JavaScript/diff/CSP. Não foram adicionados nem executados testes funcionais, nem revisão visual do player no browser, cujo acesso local segue bloqueado. A validação Kindle da fatia 9 continua pendente. A apresentação foi preparada para revisão e compartilhamento; publicação e envio externo não foram realizados.
+
+
+## Arquitetura Docs — fatia 3: recursos compartilhados (16/11/2026)
+
+- Seleção explícita de pasta e consumo de catálogos públicos compatíveis, com identidade/revisão quando disponíveis; arquivos comuns usam caminho e assinatura sem inventar identidade estável.
+- Vínculos fixados com atualização explícita e cópia offline em fundos, áudio, camadas, retratos, imagens da folha e texturas de capítulos/lugares. Fontes editáveis continuam no app de origem.
+- Arquivos `.hdocs` preservam os vínculos e conferem suas cópias. HTML/ZIP jogáveis materializam a versão escolhida e não dependem do catálogo.
+- O Canvas atual publica animações `.hrig` e folhas de sprites; esses formatos não são tratados como imagens de cena. Imagens exportadas comuns já podem ser selecionadas.
+- A ponte Core v1 não tem acesso a catálogos/arquivos; esta entrega usa autorização de pasta no navegador. Transporte remoto legado e caches incorporados ainda exigem as próximas fatias de integração.
+
+Contrato, uso e limites em `PROJECT_ASSETS.md`. Conferência de sintaxe/diff/CSP; validação funcional e visual permanecem pendentes.
+
+
+## Arquitetura Docs — fatia 4: sincronização e revisão (16/11/2026)
+
+- Documentos e recursos narrativos usam base esperada e uma operação congelada persistida antes do envio. Recibos por usuário/operação permitem repetir confirmações perdidas sem duplicar gravações.
+- Título e conteúdo passam por uma transação. O registro narrativo tem comparação de versão e relógio do servidor. Não há fallback para PATCH/upsert cego se faltarem as RPCs v2.
+- Atualização remota preserva registros em edição, rascunhos e documentos ausentes do resultado. Índices de versões evitam baixar conteúdo/mídias sem mudança; respostas antigas/contextos anteriores são ignorados.
+- Revisão oferece comparação, escolha e restauração. Versões anteriores ficam fora do registro narrativo ativo e podem ser exportadas como `.hdocs`, sem criar cópias de capítulos com IDs de sequência duplicados.
+- Cópias online são separadas por conta/projeto/janela. Recuperações antigas continuam disponíveis para exportação; sair encerra contexto/timers e conserva os envios locais.
+- A migration `20261116000100_docs_recoverable_sync.sql` precisa acompanhar o cliente. Esta tarefa não a executou nem verificou o ambiente remoto.
+- Livro/prancheta remoto independente, extração de mídias e transportes/publicação continuam como próximas integrações. Não há merge simultâneo de texto nem revisão atômica de todo o livro nesta fatia.
+
+Detalhes em `SYNC_REVISIONS.md`. Conferência estática de JavaScript/diff/CSP; testes e validação funcional/SQL não executados.

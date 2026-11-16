@@ -37,7 +37,7 @@
         <label class="scene-check"><input data-parallax-preview type="checkbox">Experimentar parallax</label>
         <small data-parallax-help>Mova o mouse sobre a cena para experimentar. Desative a experiência para voltar a arrastar elementos. Configure o deslocamento de cada camada abaixo.</small>
       </div></details>
-      <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
+      <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="project-image">+ Recurso do projeto</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Camadas · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena"></select></label>
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
@@ -57,7 +57,7 @@
           <small data-interaction-help></small>
           <small>O clique fica ativo quando a história chega ao bloco de escolha indicado. Destinos, condições e efeitos são os da opção original. As opções em texto continuam disponíveis. Regiões são transparentes na apresentação; suas bordas aparecem apenas aqui.</small>
         </div></details>
-        <div data-type="art" class="scene-element-actions"><button type="button" data-action="replace">Trocar imagem</button></div>
+        <div data-type="art" class="scene-element-actions"><button type="button" data-action="replace">Trocar imagem</button><button type="button" data-action="project-replace">Recurso do projeto…</button></div><small data-type="art" data-asset-description></small>
         <div class="scene-element-actions"><button type="button" data-preset="20">Esquerda</button><button type="button" data-preset="50">Centro</button><button type="button" data-preset="80">Direita</button></div>
         <div class="scene-element-grid">
           <label>X (%)<input data-field="x" type="number" min="-100" max="200" step="0.1"></label><label>Y (%)<input data-field="y" type="number" min="-100" max="200" step="0.1"></label>
@@ -75,6 +75,7 @@
         <small>Arraste o elemento para mover. O quadrado altera a escala, o círculo acima gira e o ponto dourado ajusta a âncora. As posições e dimensões são relativas à tela do jogo. Use as setas para mover o elemento selecionado; Shift move em passos maiores.</small>
       </div></section><p class="scene-composer-status" role="status"></p>
     </div>`;
+    panel.querySelectorAll('[data-action="project-image"],[data-action="project-replace"]').forEach(button => { button.hidden = !options.pickAsset; });
     const screen = parent.querySelector('.scene-moment-controls') || parent.querySelector('.scene-screen-settings');
     parent.insertBefore(panel,screen ? screen.nextSibling : parent.firstChild); surface.classList.add('scene-editing');
     const list = panel.querySelector('[data-list]'), properties = panel.querySelector('[data-properties]'), status = panel.querySelector('[role=status]'), upload = panel.querySelector('[data-upload]');
@@ -153,6 +154,7 @@
       frames.value = frameAt === null ? '' : String(frameAt);
       const frame = track?.keyframes.find(candidate => candidate.at === frameAt);
       motionEditor.querySelector('[data-motion-frame-properties]').hidden = !frame;
+      motionEditor.querySelector('[data-motion-action=view]').disabled = !editable || !track || !frame || state.displayProfile === 'eink' || parallaxReduced.matches;
       if (populate) {
         motionEditor.querySelectorAll('[data-motion-field]').forEach(field => { field.value = track?.[field.dataset.motionField] ?? (field.type === 'number' ? '0' : 'ease-in-out'); });
         motionEditor.querySelectorAll('[data-motion-pose]').forEach(field => {
@@ -219,6 +221,7 @@
       if (key !== state.key) { selected = ''; key = state.key; status.textContent = ''; setParallaxPreview(false); }
       if (selected && !value.elements.some(item => item.id === selected)) selected = '';
       const active = getItem(state);
+      panel.querySelector('[data-asset-description]').textContent = active?.asset ? options.describeAsset?.(active.asset) || active.asset.name : '';
       list.replaceChildren(...value.elements.slice().reverse().map(item => new Option(`${item.visible ? '' : '◌ '}${item.name}`,item.id)));
       list.value = selected; list.disabled = !value.elements.length;
       properties.hidden = !active;
@@ -242,7 +245,7 @@
       ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
       renderMotionEditor(populate);
       renderInteractions();
-      const reduced = parallaxReduced.matches, hover = parallaxHover.matches;
+      const reduced = parallaxReduced.matches || state.displayProfile === 'eink', hover = parallaxHover.matches;
       const hasParallax = value.elements.some(item => item.visible && (item.parallax_x || item.parallax_y));
       parallaxPreview.disabled = !value.parallax_enabled || !value.parallax_strength || !hasParallax || reduced || !hover || !parallaxSupported;
       if (parallaxPreview.disabled && parallaxPreview.checked) setParallaxPreview(false);
@@ -291,6 +294,21 @@
       if (button.dataset.parallaxPreset !== undefined) { const [parallax_x,parallax_y] = button.dataset.parallaxPreset.split(',').map(Number); change({parallax_x,parallax_y},true); return; }
       if (button.dataset.preset) { change({x:Number(button.dataset.preset),y:100,anchor_x:50,anchor_y:100,scale:1,rotation:0},true); return; }
       const action = button.dataset.action, state = context(), value = media.presentation(state.presentation), index = value.elements.findIndex(item => item.id === selected);
+      if (action === 'project-image' || action === 'project-replace') {
+        const target = action === 'project-replace' ? selected : '', expected = state.key;
+        void (async () => {
+          try {
+            const asset = await options.pickAsset('image',{current:target ? getItem(state)?.asset : null});
+            if (!asset || context().key !== expected || !context().editable) return;
+            if (target) {
+              if (!media.presentation(context().presentation).elements.some(item => item.id === target)) return;
+              selected = target; change({asset},true);
+            } else add('image',asset);
+            status.textContent = asset.project_ref ? 'Recurso vinculado com cópia offline.' : 'Cópia independente aplicada.';
+          } catch (error) { if (context().key === expected) status.textContent = error.message || 'Não foi possível vincular o recurso.'; }
+        })();
+        return;
+      }
       if (action === 'image' || action === 'replace') { uploadIntent = {key:state.key,id:action === 'replace' ? selected : ''}; upload.click(); return; }
       if (['character','text','button','hotspot'].includes(action)) { add(action); return; }
       if (index < 0) return;

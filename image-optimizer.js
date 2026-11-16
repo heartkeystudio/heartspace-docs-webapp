@@ -133,5 +133,16 @@
     }
     return requests.get(purpose);
   }
-  root.HeartspaceImageOptimizer = {prepare,profiles,inputLimit,info:file => prepared.get(file) || null};
+  async function validateOriginal(file) {
+    if (!file?.size || file.size > inputLimit) throw new Error('A imagem do projeto ultrapassa o tamanho de processamento suportado.');
+    const header = inspect(new Uint8Array(await file.arrayBuffer()));
+    checkDimensions(header.width,header.height);
+    const decoded = await decode(file);
+    try {
+      checkDimensions(decoded.width,decoded.height);
+      if (!decoded.width || !decoded.height) throw new Error('A imagem do projeto não possui dimensões válidas.');
+      return {mime:header.mime,width:decoded.width,height:decoded.height};
+    } finally { decoded.close(); }
+  }
+  root.HeartspaceImageOptimizer = {prepare,validateOriginal,profiles,inputLimit,info:file => prepared.get(file) || null};
 })(globalThis);
