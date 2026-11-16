@@ -1817,6 +1817,7 @@
       <p>Acesse com sua conta Heartspace. O projeto e as permissões são conferidos antes de carregar os documentos.</p>
       <label for="auth-email">E-mail da conta</label><input id="auth-email" type="email" autocomplete="email" required placeholder="voce@equipe.com">
       <button type="submit" id="auth-submit">Enviar link de acesso</button>
+      <button type="button" id="dashboard-session-retry" hidden>Tentar conexão com o HeartSpace novamente</button>
       <button type="button" id="local-mode" style="margin:10px 0 0;color:#d4cadb;background:transparent;border:1px solid #ffffff20">Continuar no modo local</button>
       <p class="auth-status" id="auth-status" role="status" aria-live="polite"></p>
     </form>
@@ -8776,7 +8777,7 @@
           try { currentAccessToken = await obtainAccessToken(); }
           catch (error) { authStatus.textContent = error.message || 'Não foi possível renovar a sessão.'; }
           if (initialEpoch !== projectContextEpoch) return;
-          if (!currentAccessToken) { authGate.hidden = false; return; }
+          if (!currentAccessToken) { authGate.hidden = false; if (!authStatus.textContent.trim()) authStatus.textContent = 'Entre com sua conta HeartSpace para abrir o projeto.'; return; }
           try { currentUser = await apiFetch('/auth/v1/user'); }
           catch (error) {
             if (initialEpoch !== projectContextEpoch) return;
@@ -8859,34 +8860,95 @@
         }
         setProjectLoading(false);
       };
+      let cancelDashboardSession = null;
+      const dashboardSessionRetry = document.querySelector('#dashboard-session-retry');
       const requestDashboardSession = () => new Promise(resolve => {
+        cancelDashboardSession?.();
         const source = new URLSearchParams(location.search).get('source');
-        let dashboardOrigin = '';
-        try { dashboardOrigin = new URL(docsConfig.dashboardUrl).origin; } catch (_) {}
-        if (source !== 'dashboard' || !window.opener || !dashboardOrigin) { resolve(false); return; }
+        // A magic-link callback is already an explicit login; do not replace it
+        // with another account's session from an opener.
+        if (source !== 'dashboard' || new URLSearchParams(location.hash.slice(1)).has('access_token')) { resolve(false); return; }
+        const origins = new Set();
+        for (const value of [docsConfig.dashboardUrl,...(Array.isArray(docsConfig.dashboardOrigins) ? docsConfig.dashboardOrigins : [])]) {
+          try { const url = new URL(value); if (url.protocol === 'https:' || url.origin === location.origin) origins.add(url.origin); } catch (_) {}
+        }
+        let targetOrigin = '';
+        for (const hint of [new URLSearchParams(location.search).get('dashboard_origin'),document.referrer,docsConfig.dashboardUrl]) {
+          try { const origin = new URL(hint).origin; if (origins.has(origin)) { targetOrigin = origin; break; } } catch (_) {}
+        }
+        let opener;
+        try { opener = window.opener; if (opener?.closed) opener = null; } catch (_) { opener = null; }
+        dashboardSessionRetry.hidden = !opener;
+        if (!opener || !targetOrigin) {
+          authStatus.textContent = 'Não foi possível receber a sessão da página do HeartSpace. Entre abaixo ou reabra o Docs pelo projeto no site.';
+          resolve(false); return;
+        }
+        const epoch = projectContextEpoch;
+        const requestId = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         authGate.hidden = true;
         authStatus.textContent = 'Conectando à sessão do Dashboard…';
-        let finished = false;
-        let timeout;
-        const finish = received => {
+        let finished = false, timeout, retry;
+        const finish = (received,message = '') => {
           if (finished) return;
           finished = true;
-          clearTimeout(timeout);
+          clearTimeout(timeout); clearInterval(retry);
           window.removeEventListener('message', receiveSession);
+          if (cancelDashboardSession === cancel) cancelDashboardSession = null;
+          if (epoch === projectContextEpoch) {
+            authStatus.textContent = received ? '' : message;
+            dashboardSessionRetry.hidden = received;
+          }
           resolve(received);
         };
+        const cancel = () => finish(false);
+        cancelDashboardSession = cancel;
         const receiveSession = event => {
-          if (event.origin !== dashboardOrigin || event.source !== window.opener || event.data?.type !== 'heartspace-docs-session') return;
-          if (!event.data.accessToken) { finish(false); return; }
-          clearStoredAuthSession();
-          saveAuthSession({ access_token: event.data.accessToken, expires_at: event.data.expiresAt });
-          finish(true);
+          if (epoch !== projectContextEpoch) { finish(false); return; }
+          if (!origins.has(event.origin) || event.source !== opener || event.data?.type !== 'heartspace-docs-session') return;
+          // Older Dashboard versions do not echo requestId; origin and WindowProxy
+          // checks remain mandatory for both protocol versions.
+          if (event.data.requestId !== undefined && event.data.requestId !== requestId) return;
+          if (typeof event.data.accessToken !== 'string' || !event.data.accessToken) {
+            finish(false,'A sessão do HeartSpace não está disponível. Entre no site e tente novamente, ou use o acesso por e-mail abaixo.'); return;
+          }
+          try {
+            clearStoredAuthSession();
+            saveAuthSession({ access_token:event.data.accessToken, expires_at:event.data.expiresAt });
+            finish(true);
+          } catch (_) {
+            currentAccessToken = '';
+            finish(false,'O navegador não permitiu guardar a sessão. Libere o armazenamento deste site e tente novamente.');
+          }
+        };
+        const send = () => {
+          if (epoch !== projectContextEpoch) { finish(false); return; }
+          try {
+            if (opener.closed) { finish(false,'A página do HeartSpace foi fechada. Reabra o Docs pelo projeto no site ou entre abaixo.'); return; }
+            // Hints select among configured origins; they never add trust.
+            opener.postMessage({type:'heartspace-docs-session-request',requestId},targetOrigin);
+          } catch (_) { finish(false,'O navegador bloqueou a conexão com a página do HeartSpace. Reabra o Docs pelo site ou entre abaixo.'); }
         };
         window.addEventListener('message', receiveSession);
-        timeout = setTimeout(() => finish(false), 6000);
-        try { window.opener.postMessage({ type: 'heartspace-docs-session-request' }, dashboardOrigin); }
-        catch (_) { finish(false); }
+        timeout = setTimeout(() => finish(false,'O HeartSpace não respondeu a tempo. Mantenha a página do projeto aberta e tente novamente, ou entre por e-mail abaixo.'),8000);
+        retry = setInterval(send,1000);
+        send();
       });
+      let onlineStartup = null, onlineStartupEpoch = -1;
+      const connectOnlineDocs = () => {
+        if (onlineStartup && onlineStartupEpoch === projectContextEpoch) return onlineStartup;
+        const epoch = projectContextEpoch;
+        onlineStartupEpoch = epoch;
+        const task = requestDashboardSession().then(() => {
+          if (epoch === projectContextEpoch) return startOnlineDocs();
+        }).catch(error => {
+          if (epoch !== projectContextEpoch) return;
+          setProjectLoading(false); authGate.hidden = false;
+          authStatus.textContent = error.message || 'Não foi possível conectar ao HeartSpace. Tente novamente.';
+        }).finally(() => { if (onlineStartup === task) onlineStartup = null; });
+        onlineStartup = task;
+        return task;
+      };
+      dashboardSessionRetry.addEventListener('click',() => { void connectOnlineDocs(); });
       document.querySelector('#auth-form').addEventListener('submit', async event => {
         event.preventDefault();
         const button = document.querySelector('#auth-submit'); button.disabled = true; authStatus.textContent = 'Enviando link de acesso…';
@@ -9014,11 +9076,10 @@
         app.inert = false;
         if (token) void fetch(`${docsConfig.supabaseUrl.replace(/\/$/,'')}/auth/v1/logout`,{method:'POST',headers:{apikey:docsConfig.publishableKey,Authorization:`Bearer ${token}`},keepalive:true}).catch(() => {});
       });
-      document.querySelector('#connect-heartspace').addEventListener('click',() => { if (!desktopMode) void startOnlineDocs(); });
+      document.querySelector('#connect-heartspace').addEventListener('click',() => { if (!desktopMode) void connectOnlineDocs(); });
       if (desktopMode) startDesktopDocs();
       else if (requestedProjectId || new URLSearchParams(location.search).get('source') === 'dashboard' || new URLSearchParams(location.hash.slice(1)).has('access_token')) {
-        const initialEpoch = projectContextEpoch;
-        requestDashboardSession().finally(() => { if (initialEpoch === projectContextEpoch) return startOnlineDocs(); });
+        void connectOnlineDocs();
       } else authGate.hidden = true;
       document.addEventListener('visibilitychange',() => { if (document.visibilityState === 'hidden' && pendingEditorSave) flushSave({remote:false}); });
       window.addEventListener('pagehide', () => { if (pendingEditorSave) flushSave({remote:false}); if (desktopMode) desktopAdapter.destroy(); }, { once: true });
