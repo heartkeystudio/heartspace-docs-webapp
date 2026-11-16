@@ -79,5 +79,25 @@
       request.onerror = () => reject(request.error || new Error('Não foi possível listar as cópias deste projeto.'));
     });
   }
-  root.HeartspaceDocsProjectStorage = Object.freeze({read,write,listLocal,listScope});
+  // One confirmed publication per account/project/document, shared by windows.
+  // Compare-and-set happens inside IndexedDB, so two tabs cannot overwrite intent.
+  async function publicationWrite(key,value,expectedOperationId) {
+    if (!key.startsWith('heartspace-docs-publication:')) throw new Error('Contexto de publicação inválido.');
+    const db = await open();
+    return new Promise((resolve,reject) => {
+      const tx = db.transaction('projects','readwrite'), store = tx.objectStore('projects');
+      let failure = null;
+      const get = store.get(key);
+      get.onsuccess = () => {
+        const current = get.result?.current?.cache || null;
+        if (current?.operation_id !== (expectedOperationId || undefined) && !(value === null && current === null)) {
+          failure = new Error('O pedido foi alterado em outra janela. Feche e abra a publicação para retomar o pedido protegido.'); tx.abort(); return;
+        }
+        store.put({key,session,current:{cache:value,savedAt:new Date().toISOString()},previous:null,legacy:''});
+      };
+      tx.oncomplete = resolve;
+      tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Não foi possível proteger o pedido de publicação.'));
+    });
+  }
+  root.HeartspaceDocsProjectStorage = Object.freeze({read,write,listLocal,listScope,publicationWrite});
 })(globalThis);

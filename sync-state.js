@@ -43,8 +43,8 @@
   function workspace(value = {}) {
     if (value.schema_version !== undefined && value.schema_version !== 1) throw new Error('O estado de sincronização usa uma versão desconhecida.');
     if (value.recovery !== undefined && !Array.isArray(value.recovery)) throw new Error('As versões protegidas estão em formato inválido.');
-    if ((value.recovery || []).some(item => !object(item) || typeof item.id !== 'string' || typeof item.label !== 'string' || typeof item.savedAt !== 'string' || !['document','registry'].includes(item.kind) || !object(item.resources) || item.kind === 'document' && !object(item.record))) throw new Error('Uma versão protegida não pôde ser reconhecida; o armazenamento foi preservado.');
-    return {schema_version:1,registry:registryState(value.registry),recovery:clone(value.recovery || [])};
+    if ((value.recovery || []).some(item => !object(item) || typeof item.id !== 'string' || typeof item.label !== 'string' || typeof item.savedAt !== 'string' || !['document','registry','book'].includes(item.kind) || !object(item.resources) || item.kind === 'document' && !object(item.record) || item.kind === 'book' && (!object(item.book) || !Array.isArray(item.records)))) throw new Error('Uma versão protegida não pôde ser reconhecida; o armazenamento foi preservado.');
+    return {schema_version:1,registry:registryState(value.registry),books:clone(value.books || {}),recovery:clone(value.recovery || [])};
   }
   function observe(local,remote,{focused = false} = {}) {
     if (!local) return remote;

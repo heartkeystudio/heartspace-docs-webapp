@@ -91,12 +91,13 @@ arquivos, 10 mil mídias, 20 catálogos de até 2 MiB. Requer Web Crypto para SH
   recusado. Editores antigos podem descartar o campo e não devem editar esses
   projetos novos.
 
-**Fronteira remota:** cenas/retratos ainda podem levar cópias incorporadas nas
-linhas legadas do Supabase; imagens/texturas usam o storage existente. Extrair
-caches desse transporte, resolver recursos entre membros da equipe, ampliar
-Core e integrar publicação continuam nas próximas fatias. A fila e a reconciliação
-de documentos/recursos foram acrescentadas na fatia 4; ver `SYNC_REVISIONS.md`.
-Não há sincronização automática entre apps nem mudança de provedor nesta entrega.
+**Transporte remoto (fatia 5B):** cenas/retratos e imagens inline novas são
+extraídos para objetos privados por hash antes da gravação colaborativa. A fonte
+local e os exports continuam completos; `project_ref` conserva a origem fixada.
+Imagens/texturas já compartilhadas em `docs-assets` mantêm seu contrato. Ver
+`MEDIA_TRANSPORT.md`. A migração não foi aplicada; linhas/históricos legados não
+foram reescritos em massa. Resolver recursos nativamente entre apps, ampliar Core
+e integrar publicação continuam nas próximas integrações.
 
 Conferência: sintaxe JavaScript, leitura estática da persistência/exportação e
 atualização da CSP. Validação funcional no navegador, reabertura de `.hdocs` e

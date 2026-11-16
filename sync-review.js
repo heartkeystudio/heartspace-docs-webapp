@@ -40,6 +40,7 @@
       nav.replaceChildren(); body.replaceChildren();
       const entries = [];
       state.documents.forEach(item => entries.push({key:`document:${item.id}`,title:item.title,item,kind:'document'}));
+      (state.books || []).forEach(item => entries.push({key:`book:${item.id}`,title:item.title,item,kind:'book'}));
       if (state.registry) entries.push({key:'registry',title:'Recursos compartilhados',item:state.registry,kind:'registry'});
       state.recovery.slice().reverse().forEach(item => entries.push({key:`backup:${item.id}`,title:`Guardada · ${item.label} · ${date(item.savedAt)}`,item,kind:'backup'}));
       sessions.forEach(item => entries.push({key:`session:${item.key}`,title:`${item.legacy ? 'Editor anterior' : 'Outra janela/sessão'} · ${date(item.savedAt)}`,item,kind:'session'}));
@@ -48,13 +49,15 @@
       entries.forEach(entry => { const button = node('button',entry.title); button.type = 'button'; button.onclick = () => { selected = entry.key; render(); }; button.setAttribute('aria-pressed',String(selected === entry.key)); nav.append(button); });
       const entry = entries.find(entry => entry.key === selected);
       if (!entry) { body.append(node('p','Não há envios ou versões protegidas para revisar nesta área.')); return; }
-      if (entry.kind === 'document' || entry.kind === 'registry') {
+      if (entry.kind === 'document' || entry.kind === 'registry' || entry.kind === 'book') {
         const item = entry.item;
         body.append(node('h3',entry.title),node('p',item.message));
         const columns = doc.createElement('div'); columns.className = 'sync-review-columns';
         columns.append(showVersion('Neste dispositivo',item.local),showVersion('No projeto',item.remote)); body.append(columns);
         const actions = doc.createElement('div'); actions.className = 'sync-review-actions';
         actions.append(action('Usar meu rascunho',() => options.resolve(entry.kind,item.id,'local'),item.canLocal),action('Usar versão do projeto',() => options.resolve(entry.kind,item.id,'remote'),item.canRemote));
+        if (entry.kind === 'book') actions.append(action('Salvar livro em arquivo',() => options.downloadBook(item.id)));
+        if (entry.kind === 'book' && item.canHistory) actions.append(action('Histórico do livro',() => options.bookHistory(item.id)));
         if (entry.kind === 'document') actions.append(action('Salvar rascunho em arquivo',() => options.downloadDocument(item.id)));
         if (entry.kind === 'document' && item.canHide) actions.append(action('Guardar fora da biblioteca ativa',() => options.hideLocal(item.id)));
         body.append(actions,node('small','Ao escolher uma versão, a cópia anterior é guardada fora da história ativa. A escolha local entra na fila com a versão remota esperada; uma mudança posterior volta para revisão.'));
@@ -75,7 +78,7 @@
     };
     dialog.querySelector('[data-close]').onclick = () => dialog.close();
     dialog.querySelector('[data-refresh]').onclick = () => void run(async () => { await options.retry(); await loadSessions(); });
-    return {open:(kind = '',id = '') => { const scope = options.state().scope; if (scope !== context) sessions = []; if (!dialog.open) dialog.showModal(); context = scope; selected = kind === 'document' ? `document:${id}` : kind; render(); void loadSessions(); },refresh:render,close:() => dialog.close()};
+    return {open:(kind = '',id = '') => { const scope = options.state().scope; if (scope !== context) sessions = []; if (!dialog.open) dialog.showModal(); context = scope; selected = ['document','book'].includes(kind) ? `${kind}:${id}` : kind; render(); void loadSessions(); },refresh:render,close:() => dialog.close()};
   }
   root.HeartspaceDocsSyncReview = Object.freeze({create});
 })(globalThis);

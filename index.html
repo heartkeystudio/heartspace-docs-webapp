@@ -1639,6 +1639,8 @@
     .sequence-graph-choice-create textarea { width:100%; min-height:76px; resize:vertical; padding:8px; border:1px solid #ffffff26; border-radius:5px; background:#161616; color:#ddd; font:inherit; font-size:13px; }
     .sequence-graph-choice-group { margin-top:18px; padding-top:14px; border-top:1px solid #ffffff20; }
     .sequence-graph-choice-group h4 { margin:0; font-size:12px; color:#ddd; }
+    .docs-publication-dialog{width:min(900px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:24px;color:var(--text,#ddd);background:#191919;border:1px solid #444;border-radius:12px}
+    .docs-publication-dialog::backdrop{background:#0009}.docs-publication-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:16px}.docs-publication-dialog h2{margin:0}.docs-publication-dialog>div{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.docs-publication-dialog label{display:grid;gap:5px;flex:1 1 250px}.docs-publication-dialog input,.docs-publication-dialog select{min-width:0;width:100%}.docs-publication-preview{padding-top:16px;border-top:1px solid #444;white-space:pre-wrap}.docs-publication-preview:empty{display:none}.docs-publication-preview img{display:block;max-width:100%;height:auto}.docs-publication-preview figure{margin:16px 0}.docs-publication-preview aside{color:#ccc;font-size:.9em}.docs-publication-dialog a{color:#75c8ff}
   </style>
 </head>
 <body data-work-area="writing">
@@ -1856,6 +1858,9 @@
   <script src="authoring-project.js"></script>
   <script src="sync-state.js"></script>
   <script src="sync-review.js"></script>
+  <script src="book-sync.js"></script>
+  <script src="media-transport.js"></script>
+  <script src="publication.js"></script>
   <script src="project-storage.js"></script>
   <script src="project-files.js"></script>
   <script src="local-projects.js"></script>
@@ -2129,9 +2134,11 @@
       let authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
       let authoringRegistrySettingsDirty = false;
       let registrySync = HeartspaceDocsSync.registryState();
+      let bookSyncState = HeartspaceDocsBooks.read(), bookTransport = null, mediaTransport = null;
+      const trackedBook = id => bookTransport ? bookTransport.tracked(id) : bookSyncState.entries.some(item => item.id === id);
       let syncRecovery = [];
       let registrySending = false;
-      let syncReview = null;
+      let syncReview = null, publicationUI = null;
       let legacyProjectCacheKey = '';
       let cloudWindowId = '';
       let cloudWindowClaim = null;
@@ -2166,7 +2173,7 @@
       const expandedChapters = new Set();
       const chapterPageCounts = new Map();
       let editingFolderId = '';
-      let deletingFolderId = '';
+      let deletingFolderId = '', folderRemovalBusy = false;
       let activeDocumentId = '';
       let expandedSidebarTag = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
@@ -2215,7 +2222,7 @@
       const mergeFoldersFromDocuments = () => {
         const known = new Map(libraryFolders.map(folder => [folder.id,folder]));
         documents.forEach(record => {
-          if (!record.folderId) return;
+          if (!record.folderId || trackedBook(record.folderId)) return;
           const incoming = record.collection?.id === record.folderId ? record.collection : null;
           const existing = known.get(record.folderId);
           if (!existing) known.set(record.folderId,normalizeFolder(incoming || {id:record.folderId,name:record.folderName || 'Livro',layout:record.layout}));
@@ -2226,6 +2233,7 @@
         libraryFolders = [...known.values()];
         // Preserve each old chapter plan, and only adopt a single unambiguous source.
         libraryFolders.forEach(folder => {
+          if (trackedBook(folder.id)) return;
           const sources = documents.filter(record => record.folderId === folder.id && hasStoryPlan(record.storyPlanning) && !folder.migratedDocuments.includes(record.id));
           sources.forEach(record => {
             folder.legacyPlans.push({documentId:record.id,title:record.title,plan:qualifyStoryPlan(record.storyPlanning,record.id)});
@@ -2254,13 +2262,17 @@
       const persistCollectionChange = folder => {
         folder.updatedAt = new Date().toISOString();
         documents.filter(record => record.folderId === folder.id).forEach(record => {
-          record.ambience = HeartspaceDocumentAmbience.refreshPlaceLinks(record.ambience,folder.id,folder.storyPlanning.worldEntries);
-          record.collection = collectionSnapshot(folder); record.folderName = folder.name;
-          record.savedAt = folder.updatedAt; record.editRevision = (record.editRevision || 0) + 1;
-          if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+          const appearance = HeartspaceDocumentAmbience.refreshPlaceLinks(record.ambience,folder.id,folder.storyPlanning.worldEntries);
+          const changed = !HeartspaceDocsSync.equal(appearance,record.ambience);
+          record.ambience = appearance; record.collection = collectionSnapshot(folder); record.folderName = folder.name;
+          if (changed) {
+            record.savedAt = folder.updatedAt; record.editRevision = (record.editRevision || 0) + 1;
+            if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
+          }
         });
+        if (currentProjectId) bookTransport?.mark(folder.id);
         persistLibrary();
-        if (currentProjectId) scheduleRevisionSync(documents.find(record => record.folderId === folder.id));
+        if (currentProjectId) { scheduleSyncRetry(); scheduleRevisionSync(documents.find(record => record.folderId === folder.id)); }
         documentAmbience?.update();
         setSaveStatus(currentProjectId ? 'Planejamento salvo localmente; sincronização após a pausa' : 'Planejamento salvo neste dispositivo');
       };
@@ -2791,7 +2803,7 @@
       });
       const authoringCache = (overrides = {}) => HeartspaceDocsAuthoring.cacheFromEditor({
         project:authoringProject, documents, libraryFolders, activeDocumentId, selectedCollectionId,
-        registry:authoringRegistry, registrySettingsDirty:authoringRegistrySettingsDirty, syncWorkspace:{schema_version:1,registry:registrySync,recovery:syncRecovery}, ...overrides
+        registry:authoringRegistry, registrySettingsDirty:authoringRegistrySettingsDirty, syncWorkspace:{schema_version:1,registry:registrySync,books:bookTransport?.serialize() || bookSyncState,recovery:syncRecovery}, ...overrides
       });
       const writeLibraryCache = cache => {
         if (!storageKey) return Promise.resolve();
@@ -2858,11 +2870,12 @@
         return restored;
       };
       const restoreLibrary = saved => {
+        const sync = HeartspaceDocsSync.workspace(saved.syncWorkspace), nextBookSync = HeartspaceDocsBooks.read(sync.books);
         const nextDocuments = saved.documents.map(makeRecord), nextFolders = saved.libraryFolders.map(normalizeFolder);
         authoringProject = saved.project; authoringRegistry = saved.registry;
         authoringRegistrySettingsDirty = saved.registrySettingsDirty;
-        const sync = HeartspaceDocsSync.workspace(saved.syncWorkspace);
         registrySync = sync.registry; syncRecovery = sync.recovery;
+        bookSyncState = nextBookSync; bookTransport?.reset(bookSyncState);
         documents = nextDocuments; libraryFolders = nextFolders; dirtyDocumentIds = new Set(documents.filter(record => record.dirty).map(record => record.id));
         activeDocumentId = saved.activeDocumentId; selectedCollectionId = saved.selectedCollectionId || '';
         mergeFoldersFromDocuments();
@@ -3794,7 +3807,7 @@
         return snapshot.innerHTML;
       };
       const setSaveStatus = (message, state = '') => {
-        if (currentProjectId && /^(Sincronizado com|Recursos sincronizados)/.test(message) && (documents.some(record => record.dirty || record.remoteConflict || record.syncAttempt) || registrySync.dirty || registrySync.conflict || registrySync.attempt)) { message = 'Há alterações locais ou versões para revisar antes de concluir a sincronização.'; state = 'pending'; }
+        if (currentProjectId && /^(Sincronizado com|Recursos sincronizados)/.test(message) && (documents.some(record => record.dirty || record.remoteConflict || record.syncAttempt) || registrySync.dirty || registrySync.conflict || registrySync.attempt || bookTransport?.pending())) { message = 'Há alterações locais ou versões para revisar antes de concluir a sincronização.'; state = 'pending'; }
         const pendingLocalWrite = [...localWriteTasks.values()].includes(storageKey);
         if (pendingLocalWrite) state = 'pending';
         if (/^(Salvo neste|Rascunho salvo|Registro narrativo salvo|Planejamento salvo)/.test(message)) {
@@ -3819,7 +3832,7 @@
       if (authoringStorageError) setSaveStatus(authoringStorageError,'pending');
       const reportDesktopDocumentState = () => {
         if (!desktopMode || !desktopContext) return;
-        const pendingRecords = documents.filter(record => record.dirty || record.remoteConflict || record.syncAttempt).length + Number(Boolean(registrySync.dirty || registrySync.conflict || registrySync.attempt));
+        const pendingRecords = documents.filter(record => record.dirty || record.remoteConflict || record.syncAttempt).length + Number(Boolean(registrySync.dirty || registrySync.conflict || registrySync.attempt)) + (bookTransport?.pending() || 0);
         desktopAdapter.reportDocumentState({
           dirty: pendingRecords > 0 || pendingEditorSave || [...localWriteTasks.values()].includes(storageKey),
           pending_writes: Math.min(1024, pendingRecords + [...remoteSaveInProgress].filter(key => key.startsWith(`${storageKey}:`)).length + Number(registrySending) + [...localWriteTasks.values()].filter(key => key === storageKey).length + Number(pendingEditorSave)),
@@ -5732,12 +5745,12 @@
         if (context !== syncContextKey() || !registrySync.known || registrySync.conflict || !registrySync.dirty && !registrySync.attempt) return;
         const state = registrySync; registrySending = true; reportDesktopDocumentState();
         try {
-          if (!state.attempt) state.attempt = {schema_version:1,operationId:HeartspaceDocsSync.uuid(),projectId:currentProjectId,expectedToken:state.token || null,content:HeartspaceDocsSync.clone(registryValue()),editRevision:state.editRevision,createdAt:new Date().toISOString()};
+          if (!state.attempt) state.attempt = {schema_version:1,transportVersion:1,operationId:HeartspaceDocsSync.uuid(),projectId:currentProjectId,expectedToken:state.token || null,content:HeartspaceDocsSync.clone(registryValue()),editRevision:state.editRevision,createdAt:new Date().toISOString()};
           const attempt = state.attempt;
           await persistLibrary(); await waitForLocalWrites();
           if (context !== syncContextKey() || state !== registrySync || !ownsCloudWorkspace() || desktopBlocked || !canEditProject({capabilities:projectCapabilities})) return;
           if (localWriteFailed) throw new Error('A cópia local dos recursos não pôde ser protegida. Salve um arquivo .hdocs.');
-          const result = await apiFetch('/rest/v1/rpc/heartspace_save_narrative_registry_v2',{method:'POST',desktopSafeRetry:true,body:JSON.stringify({p_project_id:attempt.projectId,p_operation_id:attempt.operationId,p_resources:attempt.content,p_expected_updated_at:attempt.expectedToken})});
+          const result = await mediaTransport.commit('registry','registry',attempt);
           if (context !== syncContextKey() || state !== registrySync) return;
           if (result?.conflict) { state.attempt = null; state.conflict = true; state.remote = {resources:registryFromRow(result.remote_registry),token:result.remote_registry?.updated_at || ''}; throw new Error('Os recursos foram alterados no projeto. Abra Revisão para comparar; suas alterações foram preservadas.'); }
           if (!result?.success) {
@@ -8152,28 +8165,38 @@
         document.querySelector('#folder-delete-message').textContent = count
           ? `${count === 1 ? '1 documento voltará' : `${count} documentos voltarão`} para a Caixa de entrada. Nenhum documento será apagado.`
           : 'A biblioteca está vazia. Nenhum documento será apagado.';
-        if (hasStoryPlan(folder.storyPlanning) || folder.legacyPlans.length) document.querySelector('#folder-delete-message').textContent += ' O planejamento desta biblioteca será excluído junto com ela.';
+        if (hasStoryPlan(folder.storyPlanning) || folder.legacyPlans.length) document.querySelector('#folder-delete-message').textContent += ' O planejamento será guardado em Revisão antes da remoção.';
         if (document.body.classList.contains('focus-mode')) document.body.classList.add('zen-sidebar-pinned', 'zen-sidebar-open');
         if (!folderDeleteDialog.open) folderDeleteDialog.showModal();
       };
       document.querySelector('#folder-delete-cancel').addEventListener('click', () => folderDeleteDialog.close());
       folderDeleteDialog.addEventListener('close', () => { deletingFolderId = ''; document.body.classList.remove('zen-sidebar-pinned'); });
-      folderDeleteForm.addEventListener('submit', event => {
+      folderDeleteForm.addEventListener('submit', async event => {
         event.preventDefault();
+        if (folderRemovalBusy) return;
+        if (desktopBlocked || authoringStorageError || currentProjectId && !canEditProject({capabilities:projectCapabilities})) return;
         const folder = libraryFolders.find(item => item.id === deletingFolderId);
         if (!folder) { folderDeleteDialog.close(); return; }
+        const context = syncContextKey(), snapshot = HeartspaceDocsSync.clone(bookValue(folder));
+        if (pendingEditorSave) flushSave({remote:false});
+        folderRemovalBusy = true;
+        try { await protectVersions([bookBackup(snapshot,`${folder.name} · antes da remoção`)]); }
+        catch (error) { statusMessage(error.message,'pending'); return; }
+        finally { folderRemovalBusy = false; }
+        if (context !== syncContextKey() || !libraryFolders.includes(folder) || !HeartspaceDocsSync.equal(snapshot,bookValue(folder)) || desktopBlocked || currentProjectId && !canEditProject({capabilities:projectCapabilities})) { statusMessage('A biblioteca mudou. Abra a remoção novamente.','pending'); return; }
         const affected = documents.filter(record => record.folderId === folder.id);
-        if (affected.some(record => record.id === activeDocumentId)) flushSave();
+        if (currentProjectId) bookTransport?.mark(folder.id,true,snapshot);
         affected.forEach(record => {
           record.folderId = '';
           record.folderName = '';
           record.collection = null;
           record.editRevision = (record.editRevision || 0) + 1;
-          if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); void syncRecord(record); }
+          if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
         });
         libraryFolders = libraryFolders.filter(item => item.id !== folder.id);
         persistLibrary(); renderLibrary(); folderDeleteDialog.close();
-        statusMessage('Biblioteca excluída; documentos movidos para a Caixa de entrada');
+        if (currentProjectId) void drainSyncQueue();
+        statusMessage('Biblioteca removida; documentos na Caixa de entrada e planejamento guardado em Revisão');
       });
       const docKindDialog = document.querySelector('#doc-kind-dialog');
       const syncShowcaseTemplate = () => {
@@ -8220,7 +8243,7 @@
         const assertRequestContext = () => { if (requestEpoch !== projectContextEpoch || requestAccount !== (currentUser?.id || '')) throw new Error('O contexto mudou; a resposta anterior foi ignorada.'); };
 
         if (!docsConfig.supabaseUrl || !docsConfig.publishableKey) throw new Error('A conexão do Docs ainda não está configurada.');
-        const { desktopSafeRetry = false, ...requestOptions } = options;
+        const { desktopSafeRetry = false, responseKind = 'json', maximumBytes = 8*1024*1024, skipMedia = false, ...requestOptions } = options;
         const makeRequest = requestToken => {
           assertRequestContext();
           const headers = new Headers(requestOptions.headers || {});
@@ -8249,6 +8272,19 @@
           } else if (refresh.status === 400 || refresh.status === 401) { assertRequestContext(); clearStoredAuthSession(); }
         }
         assertRequestContext();
+        if (response.ok && responseKind === 'blob') {
+          const declared = Number(response.headers.get('Content-Length'));
+          if (declared > maximumBytes) { void response.body?.cancel(); throw new Error('A mídia remota excede o tamanho declarado.'); }
+          const reader = response.body?.getReader(); let blob;
+          if (reader) {
+            const chunks = []; let bytes = 0;
+            try {
+              for (;;) { const chunk = await reader.read(); assertRequestContext(); if (chunk.done) break; bytes += chunk.value.byteLength; if (bytes > maximumBytes) throw new Error('A mídia excedeu o tamanho declarado.'); chunks.push(chunk.value); }
+              blob = new Blob(chunks,{type:response.headers.get('Content-Type') || ''});
+            } catch (error) { try { await reader.cancel(); } catch (_) {} throw error; }
+          } else { blob = await response.blob(); if (blob.size > maximumBytes) throw new Error('A mídia excedeu o tamanho declarado.'); }
+          assertRequestContext(); return blob;
+        }
         const raw = await response.text();
         assertRequestContext();
         let data = null; try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
@@ -8258,8 +8294,17 @@
           error.code = data?.code || data?.error_code || '';
           throw error;
         }
+        if (!skipMedia && mediaTransport && currentProjectId && /^\/rest\/v1\/(?:docs(?:[?]|$)|doc_revisions(?:[?]|$)|project_narrative_registry(?:[?]|$)|docs_books(?:[?]|$)|docs_book_revisions(?:[?]|$)|rpc\/heartspace_(?:save_|delete_doc_))/.test(path) && data && typeof data === 'object') {
+          data = await mediaTransport.receive(data); assertRequestContext();
+        }
         return data;
       };
+      mediaTransport = HeartspaceDocsMediaTransport.create({
+        document,context:() => `${storageKey}:${projectContextEpoch}:${currentUser?.id || ''}`,scope:() => cloudCacheBase,project:() => currentProjectId.toLowerCase(),
+        request:apiFetch,persist:persistLibrary,durable:async () => { await waitForLocalWrites(); if (localWriteFailed) throw new Error('Não foi possível proteger o envio de mídia neste dispositivo. Salve um arquivo .hdocs.'); },
+        editable:() => !desktopBlocked && !authoringStorageError && Boolean(currentAccessToken) && canEditProject({capabilities:projectCapabilities}),
+        author:() => currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro'
+      });
       const storageObjectUrl = path => `${docsConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/docs-assets/${path.split('/').map(encodeURIComponent).join('/')}`;
       const uploadSharedImage = async (file,{preserveOriginal = false} = {}) => {
         if (!currentProjectId || !currentAccessToken) return '';
@@ -8488,7 +8533,7 @@
         return request;
       };
       const loadCloudProject = async (projectId, knownProject = null) => {
-        const contextEpoch = ++projectContextEpoch;
+        publicationUI?.close(); const contextEpoch = ++projectContextEpoch;
         setProjectLoading(true);
         try {
           if (storageKey && !authoringStorageError) {
@@ -8515,7 +8560,7 @@
           storageKey = `${cloudCacheBase}:window:${cloudWindowId}`;
           authoringProject = HeartspaceDocsAuthoring.createProject({id:projectId,name:projectName || 'Projeto'});
           authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
-          authoringRegistrySettingsDirty = false; registrySync = HeartspaceDocsSync.registryState(); syncRecovery = []; legacyProjectCacheKey = desktopMode ? '' : `heartspace-docs-project-${projectId}`; syncProtocolUnavailable = false; clearTimeout(syncRetryTimer); syncRetryTimer = 0; authoringStorageError = ''; legacyLibraryBackup = '';
+          authoringRegistrySettingsDirty = false; registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; legacyProjectCacheKey = desktopMode ? '' : `heartspace-docs-project-${projectId}`; syncProtocolUnavailable = false; clearTimeout(syncRetryTimer); syncRetryTimer = 0; authoringStorageError = ''; legacyLibraryBackup = '';
           documents = []; libraryFolders = []; activeDocumentId = ''; selectedCollectionId = '';
           let cached;
           try {
@@ -8544,13 +8589,16 @@
             setSaveStatus('Atualizando projeto…', 'pending');
             setProjectLoading(false);
           }
+          await bookTransport?.refresh();
+          if (contextEpoch !== projectContextEpoch) return;
           await Promise.all([requestProjectDocsRefresh(true), loadNarrativeRegistry()]);
+          await bookTransport?.refresh();
           if (contextEpoch !== projectContextEpoch) return;
           mergeObservedNarrativeCharacters();
           applyNarrativeCharactersToRoot(editor);
           document.querySelector('#sync-refresh').hidden = false;
           await persistLibrary();
-          statusMessage(documents.some(record => record.remoteConflict) || registrySync.conflict ? 'Projeto aberto; há versões protegidas para revisar.' : 'Conectado ao projeto');
+          statusMessage(syncProtocolUnavailable ? 'Projeto aberto localmente; a sincronização espera a atualização do servidor.' : documents.some(record => record.remoteConflict) || registrySync.conflict || bookTransport?.items().some(item => item.conflict) ? 'Projeto aberto; há versões protegidas para revisar.' : 'Conectado ao projeto');
           void drainSyncQueue();
           remotePollTimer = setInterval(() => refreshVisibleProject(),7000);
           refreshDocumentPresence();
@@ -8559,7 +8607,7 @@
       };
       const contentForRecord = (record,book = undefined) => {
         const captured = {title:record.title || 'Sem título',subtitle:record.subtitle || '',body:record.body || '<p><br></p>'};
-        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { collection:collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
       };
       const syncContextKey = () => `${storageKey}:${projectContextEpoch}:${currentUser?.id || ''}`;
       const ownsCloudWorkspace = () => Boolean(currentUser?.id && currentProjectId && cloudCacheBase === (desktopMode ? `heartspace-docs-desktop-v1:${currentUser.id}:docs:${currentProjectId}` : `heartspace-docs-web-v2:${currentUser.id}:docs:${currentProjectId}`) && storageKey.startsWith(`${cloudCacheBase}:window:`));
@@ -8567,7 +8615,7 @@
       const isRecordSyncing = record => remoteSaveInProgress.has(recordSyncKey(record));
       let syncProtocolUnavailable = false, syncRetryTimer = 0, syncRetryDelay = 1500;
       const syncFailureMessage = error => {
-        if (error?.code === 'PGRST202' || error?.status === 404 && /heartspace_save_(doc|narrative_registry)_v2/.test(error.message || '')) {
+        if (['PGRST202','PGRST205','42P01'].includes(error?.code) || error?.status === 404 && /heartspace_(?:save_(?:(?:doc|narrative_registry)_v[23]|book_v[12])|register_docs_media|resume_docs_sync)/.test(error.message || '') || /bucket.*not found/i.test(error?.message || '')) {
           syncProtocolUnavailable = true;
           return 'A sincronização segura requer a atualização do servidor. Seu trabalho permanece salvo neste dispositivo.';
         }
@@ -8579,6 +8627,45 @@
         syncRetryTimer = setTimeout(() => { syncRetryTimer = 0; if (context === syncContextKey()) void drainSyncQueue(); },syncRetryDelay);
         syncRetryDelay = Math.min(60000,syncRetryDelay*2);
       };
+      const bookValue = folder => {
+        const book = normalizeFolder(folder);
+        book.migratedDocuments = [...new Set(book.migratedDocuments)];
+        book.legacyPlans = [...new Map(book.legacyPlans.map(item => { const plan = qualifyStoryPlan(item.plan,item.documentId); return [`${item.documentId}:${JSON.stringify(plan)}`,{...item,plan}]; })).values()];
+        return {schema_version:1,id:book.id,name:book.name,layout:book.layout,storyPlanning:book.storyPlanning,migratedDocuments:book.migratedDocuments,legacyPlans:book.legacyPlans};
+      };
+      const applyBook = (value,deleted) => {
+        const folder = libraryFolders.find(item => item.id === value.id);
+        const affected = documents.filter(record => record.folderId === value.id);
+        const changed = deleted ? Boolean(folder || affected.length) : !folder || !HeartspaceDocsSync.equal(bookValue(folder),value) || affected.some(record => record.folderName !== value.name);
+        if (deleted) {
+          affected.forEach(record => {
+            record.folderId = ''; record.folderName = ''; record.collection = null;
+            if (record.dirty || record.syncAttempt) { record.editRevision++; record.dirty = true; dirtyDocumentIds.add(record.id); }
+          });
+          libraryFolders = libraryFolders.filter(item => item.id !== value.id);
+          if (selectedCollectionId === value.id) selectedCollectionId = '';
+        } else {
+          const incoming = normalizeFolder({...value,updatedAt:new Date().toISOString(),expanded:folder?.expanded});
+          if (folder) Object.assign(folder,incoming); else libraryFolders.push(incoming);
+          affected.forEach(record => { record.folderName = value.name; record.collection = collectionSnapshot(incoming); });
+        }
+        return changed;
+      };
+      bookTransport = HeartspaceDocsBooks.create({
+        document,context:syncContextKey,project:() => currentProjectId,connected:() => Boolean(currentProjectId && currentAccessToken && ownsCloudWorkspace()),
+        editable:() => !desktopBlocked && !authoringStorageError && canEditProject({capabilities:projectCapabilities}),unavailable:() => syncProtocolUnavailable,
+        api:apiFetch,send:(attempt,id) => mediaTransport.commit('book',id,attempt),normalize:bookValue,books:() => libraryFolders.map(bookValue),value:id => { const folder = libraryFolders.find(item => item.id === id); return folder ? bookValue(folder) : null; },
+        focused:id => editingFolderId === id || deletingFolderId === id || planningCollectionId() === id && Boolean(document.activeElement?.closest('#narrative-planning')),
+        childrenPending:id => documents.some(record => record.folderId === id && (record.dirty || record.syncAttempt || record.remoteConflict || record.id === activeDocumentId && pendingEditorSave)),
+        apply:applyBook,persist:persistLibrary,durable:async () => { await waitForLocalWrites(); if (localWriteFailed) throw new Error('O envio do livro não pôde ser protegido localmente. Salve um arquivo .hdocs.'); },
+        changed:() => { renderLibrary(); reportDesktopDocumentState(); syncReview?.refresh(); if (!document.activeElement?.closest('#narrative-planning')) storyPlanning?.render(); },
+        error:error => { const message = syncFailureMessage(error); statusMessage(message,'pending'); return message; },schedule:scheduleSyncRetry,
+        accepted:deleted => { if (deleted) void requestProjectDocsRefresh(false); },
+        protect:async (local,remote,id) => { await protectVersions([...(local ? [bookBackup(local,`${local.name} · versão local anterior`)] : []),bookBackup(remote,`${remote.name} · versão do projeto comparada`)]); },
+        recoverHistory:async (book,label) => { await protectVersions([bookBackup(book,label)]); syncReview?.refresh(); }
+      });
+      bookTransport.reset(bookSyncState);
+      function planningCollectionId() { return selectedCollectionId || documents.find(record => record.id === activeDocumentId)?.folderId || ''; }
       const syncRecord = async record => {
         const targetProjectId = currentProjectId, context = syncContextKey();
         const current = () => context === syncContextKey() && ownsCloudWorkspace() && documents.includes(record) && !desktopBlocked && !authoringStorageError && canEditProject({capabilities:projectCapabilities});
@@ -8588,8 +8675,12 @@
         try {
           if (record.id === activeDocumentId && pendingEditorSave) flushSave({remote:false});
           if (!record.syncAttempt) {
+            if (record.folderId && !await bookTransport?.parentReady(record.folderId)) {
+              record.syncError = 'O livro precisa ser sincronizado ou revisado antes dos capítulos.'; await persistLibrary(); return;
+            }
+            if (!current()) return;
             if (!record.remoteId && !record.remoteCreateId) record.remoteCreateId = HeartspaceDocsSync.uuid();
-            record.syncAttempt = {schema_version:1,operationId:HeartspaceDocsSync.uuid(),projectId:targetProjectId,docId:record.remoteId || record.remoteCreateId,
+            record.syncAttempt = {schema_version:1,transportVersion:1,operationId:HeartspaceDocsSync.uuid(),projectId:targetProjectId,docId:record.remoteId || record.remoteCreateId,
               expectedToken:record.remoteId ? record.remoteUpdatedAt || null : null,content:HeartspaceDocsSync.clone(contentForRecord(record)),editRevision:record.editRevision,createdAt:new Date().toISOString()};
           }
           record.dirty = true; dirtyDocumentIds.add(record.id);
@@ -8598,10 +8689,7 @@
           await persistLibrary(); await waitForLocalWrites();
           if (!current() || localWriteFailed) throw new Error('Não foi possível proteger o envio neste dispositivo. Salve um arquivo .hdocs antes de sincronizar.');
           statusMessage('Sincronizando a versão protegida…','pending');
-          const result = await apiFetch('/rest/v1/rpc/heartspace_save_doc_v2',{method:'POST',desktopSafeRetry:true,body:JSON.stringify({
-            p_project_id:attempt.projectId,p_doc_id:attempt.docId,p_operation_id:attempt.operationId,p_content:attempt.content,
-            p_expected_updated_at:attempt.expectedToken,p_author_name:currentUser?.user_metadata?.full_name || currentUser?.email || 'Membro'
-          })});
+          const result = await mediaTransport.commit('document',attempt.docId,attempt);
           if (!current()) return;
           if (result?.conflict) {
             record.syncAttempt = null; record.remoteConflict = true;
@@ -8609,6 +8697,7 @@
             throw new Error('Outra versão chegou ao projeto. Compare as versões; seu rascunho foi preservado.');
           }
           if (!result?.success) {
+            if (result?.reason === 'book_unavailable') { record.syncAttempt = null; await bookTransport?.refresh(); throw new Error('O livro de destino não está disponível. Revise o livro ou mova o documento para outra biblioteca.'); }
             if (result?.reason === 'not_found') { record.remoteMissing = true; record.remoteConflict = true; }
             if (result?.reason === 'forbidden') throw new Error('Sua permissão de edição mudou. O envio foi mantido neste dispositivo.');
             throw new Error(result?.reason === 'not_found' ? 'O documento não está disponível no projeto. Seu rascunho continua protegido.' : 'O servidor não confirmou este envio. A operação foi mantida para recuperação.');
@@ -8639,16 +8728,18 @@
       const drainSyncQueue = async () => {
         if (!currentProjectId || !currentAccessToken || !ownsCloudWorkspace() || desktopBlocked || syncProtocolUnavailable || navigator.onLine === false) return;
         const context = syncContextKey();
+        await bookTransport?.drain(false);
         for (const record of documents.filter(item => item.dirty || item.syncAttempt)) {
           if (context !== syncContextKey()) return;
           await syncRecord(record);
         }
+        if (context === syncContextKey()) await bookTransport?.drain(true);
         if (context === syncContextKey() && registrySync.dirty && !registrySync.conflict) await saveNarrativeRegistry(true);
       };
       const refreshVisibleProject = () => {
         if (document.visibilityState !== 'visible' || !currentProjectId || !currentAccessToken) return Promise.resolve();
         const context = syncContextKey();
-        return Promise.all([requestProjectDocsRefresh(false),loadNarrativeRegistry()]).then(() => { if (context === syncContextKey()) syncReview?.refresh(); })
+        return Promise.all([requestProjectDocsRefresh(false),loadNarrativeRegistry()]).then(async () => { if (context === syncContextKey()) { await bookTransport?.refresh(); syncReview?.refresh(); } })
           .catch(() => { if (context === syncContextKey()) statusMessage('Sem conexão; a cópia local e os envios pendentes foram mantidos.','pending'); });
       };
       document.addEventListener('visibilitychange',refreshVisibleProject);
@@ -8705,7 +8796,7 @@
         manage_publications: permissions.includes('publish'),
       });
       const showDesktopRecovery = message => {
-        desktopBlocked = true;
+        desktopBlocked = true; bookTransport?.close();
         currentAccessToken = '';
         clearInterval(remotePollTimer);
         clearInterval(presenceTimer);
@@ -8750,8 +8841,7 @@
         document.querySelector('#sign-out').hidden = true;
         document.querySelector('#export-markdown').disabled = true;
         document.querySelector('#export-markdown').title = 'A exportação estará disponível em uma versão futura do app desktop.';
-        document.querySelector('.publish-menu-item').disabled = true;
-        document.querySelector('.publish-menu-item').title = 'A publicação será integrada ao app desktop em uma etapa futura.';
+        document.querySelector('.publish-menu-item').disabled = false;
         try {
           const started = await desktopAdapter.start(handleDesktopEvent);
           desktopBlocked = false;
@@ -8816,7 +8906,7 @@
       document.querySelector('#local-mode').addEventListener('click', () => {
         authGate.hidden = true;
         if (currentProjectId || !storageKey) { localProjects?.newProject(); return; }
-        projectContextEpoch++; setProjectLoading(false); statusMessage('Modo local — este projeto não está compartilhado');
+        publicationUI?.close(); projectContextEpoch++; setProjectLoading(false); statusMessage('Modo local — este projeto não está compartilhado');
       });
       projectPicker.addEventListener('change', async () => {
         const previousProject = currentProjectId;
@@ -8887,6 +8977,7 @@
           const restored = remoteToRecord({id:active.remoteId,project_id:currentProjectId,title:source?.title || active.title,content:source,updated_at:token},active.id);
           const binding = {id:active.id,remoteId:active.remoteId,projectId:currentProjectId,remoteUpdatedAt:token,dirty:true,editRevision:active.editRevision+1,savedAt:new Date().toISOString()};
           Object.assign(active,makeRecord({...restored,...binding})); dirtyDocumentIds.add(active.id);
+          if (active.folderId && !libraryFolders.some(folder => folder.id === active.folderId)) { active.folderId = ''; active.folderName = ''; active.collection = null; }
           await persistLibrary(); if (context !== syncContextKey()) return;
           refreshActiveSnapshot(active); historyDialog.close(); statusMessage(`Versão ${revision.revision_number} recuperada como rascunho; envio protegido na fila.`,'pending');
           void syncRecord(active);
@@ -8900,16 +8991,16 @@
       document.querySelector('#sign-out').addEventListener('click',async () => {
         const token = currentAccessToken, app = document.querySelector('.app'); app.inert = true;
         clearInterval(remotePollTimer); clearInterval(presenceTimer); clearTimeout(revisionTimer); clearTimeout(syncRetryTimer); syncRetryTimer = 0; clearTimeout(narrativeGameSettingsTimer);
-        syncReview?.close(); historyDialog.close(); closeLocalizationPreview(); closeNarrativeTest();
+        syncReview?.close(); bookTransport?.close(); historyDialog.close(); closeLocalizationPreview(); closeNarrativeTest();
         try { flushSave({remote:false}); await waitForLocalWrites(); } catch (_) { localWriteFailed = true; }
-        projectContextEpoch++;
+        publicationUI?.close(); projectContextEpoch++;
         try { [authTokenKey,authRefreshKey,authExpiresKey].forEach(key => localStorage.removeItem(key)); } catch (_) {}
         currentAccessToken = ''; currentUser = null; projectCapabilities = {}; projectPicker.hidden = true;
         try { sessionStorage.removeItem('heartspace-docs-active-project'); } catch (_) {}
         if (!localWriteFailed) {
           currentProjectId = ''; storageKey = ''; cloudCacheBase = ''; legacyProjectCacheKey = ''; authoringProject = HeartspaceDocsAuthoring.createProject();
           documents = []; libraryFolders = []; dirtyDocumentIds.clear(); activeDocumentId = ''; selectedCollectionId = '';
-          registrySync = HeartspaceDocsSync.registryState(); syncRecovery = []; authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
+          registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
           authoringRegistrySettingsDirty = false; narrativeCharacters = []; narrativeVariables = []; translationGlossary = []; narrativeGameViewport = null; narrativeGameSettingsDirty = false;
           title.textContent = 'Sem projeto aberto'; subtitle.value = ''; setEditorBody('<p><br></p>','book'); renderLibrary(); updateDocumentLabel(); updateCount();
           authStatus.textContent = 'Sessão encerrada. Seus rascunhos continuam nas recuperações da conta e do projeto.';
@@ -11825,7 +11916,7 @@
         const key = `heartspace-docs-local:${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
         const cache = HeartspaceDocsAuthoring.cacheFromEditor(next);
         const app = document.querySelector('.app'); app.inert = true;
-        const epoch = ++projectContextEpoch;
+        publicationUI?.close(); const epoch = ++projectContextEpoch;
         try {
           if (!authoringStorageError) { flushSave({remote:false}); await waitForLocalWrites(); }
           if (prepared.images?.size) {
@@ -11840,7 +11931,7 @@
           await HeartspaceDocsProjectStorage.write(key,cache);
           if (epoch !== projectContextEpoch) throw new Error('O projeto mudou durante a abertura. A cópia preparada está na recuperação local.');
           closeLocalizationPreview(); closeNarrativeTest(); narrativeSampleScene.stopAnimations(); sceneComposer.stopParallaxPreview();
-          clearInterval(remotePollTimer); clearInterval(presenceTimer); clearTimeout(saveTimer); clearTimeout(revisionTimer); clearTimeout(narrativeGameSettingsTimer); clearTimeout(syncRetryTimer); syncRetryTimer = 0; cloudCacheBase = ''; legacyProjectCacheKey = ''; syncReview?.close();
+          clearInterval(remotePollTimer); clearInterval(presenceTimer); clearTimeout(saveTimer); clearTimeout(revisionTimer); clearTimeout(narrativeGameSettingsTimer); clearTimeout(syncRetryTimer); syncRetryTimer = 0; cloudCacheBase = ''; legacyProjectCacheKey = ''; syncReview?.close(); bookTransport?.close();
           storageKey = key; currentProjectId = ''; currentAccessToken = ''; currentUser = null; projectCapabilities = {}; desktopBlocked = false;
           authoringStorageError = ''; localPersistenceWarning = ''; localWriteFailed = false; legacyLibraryBackup = ''; pendingEditorSave = false;
           dirtyDocumentIds = new Set(); selectedCollectionId = ''; expandedChapters.clear(); chapterPageCounts.clear();
@@ -11873,6 +11964,7 @@
         return value;
       };
       const documentBackup = (record,label = record.title) => ({kind:'document',label,record:snapshotRecord(record),book:HeartspaceDocsSync.clone(libraryFolders.find(folder => folder.id === record.folderId) || record.collection || null),resources:HeartspaceDocsSync.clone(registryValue())});
+      const bookBackup = (book,label) => ({kind:'book',label,book:HeartspaceDocsSync.clone(book),records:documents.filter(record => record.folderId === book.id).map(snapshotRecord),resources:HeartspaceDocsSync.clone(registryValue())});
       const registryBackup = (resources,label) => ({kind:'registry',label,resources:HeartspaceDocsSync.clone(resources)});
       const protectVersions = async entries => {
         if (syncRecovery.length + entries.length > 100) throw new Error('Há 100 versões protegidas nesta área. Salve as que deseja guardar em arquivo e remova cópias locais antes de continuar.');
@@ -11891,6 +11983,7 @@
         if (pendingEditorSave) flushSave({remote:false});
         const context = syncContextKey();
         const editable = () => context === syncContextKey() && !desktopBlocked && !authoringStorageError && (!currentProjectId || canEditProject({capabilities:projectCapabilities}));
+        if (kind === 'book') { await bookTransport.resolve(id,choice); return; }
         if (kind === 'registry') {
           const state = registrySync, remote = state.remote;
           if (!state.conflict || !remote || registrySending || choice === 'local' && !editable()) throw new Error('A comparação mudou ou o envio ainda está em andamento. Atualize a revisão.');
@@ -11927,7 +12020,8 @@
         template.content.querySelectorAll('script,style,template').forEach(node => node.remove());
         return {text:[value.title,value.subtitle,template.content.textContent].filter(Boolean).join('\n\n'),details};
       };
-      const sourceForBackup = backup => HeartspaceDocsAuthoring.fromEditor({project:authoringProject,documents:backup.kind === 'document' ? [backup.record] : [],libraryFolders:backup.kind === 'document' && backup.book ? [normalizeFolder(backup.book)] : [],registry:backup.resources});
+      const bookReviewPreview = (book,deleted = false) => book ? {text:`${book.name}${deleted ? ' · removido' : ''}\n\n${[book.storyPlanning?.beginning,book.storyPlanning?.middle,book.storyPlanning?.ending].filter(Boolean).join('\n\n')}`,details:JSON.stringify(book,(key,item) => typeof item === 'string' && item.startsWith('data:') ? '[Mídia incorporada]' : item,2)} : null;
+      const sourceForBackup = backup => HeartspaceDocsAuthoring.fromEditor({project:authoringProject,documents:backup.kind === 'document' ? [backup.record] : backup.kind === 'book' ? backup.records || [] : [],libraryFolders:backup.book ? [normalizeFolder(backup.book)] : [],registry:backup.resources});
       const downloadSyncSource = async (source,name,context = syncContextKey()) => {
         const blob = await HeartspaceDocsProjectFiles.build(source,{document,resolveImage:resolveProjectFileImage});
         if (context !== syncContextKey()) throw new Error('O projeto mudou antes da exportação. Abra a recuperação novamente.');
@@ -11938,7 +12032,14 @@
         const backup = syncRecovery.find(item => item.id === id), context = syncContextKey();
         if (!backup || desktopBlocked || authoringStorageError || currentProjectId && !canEditProject({capabilities:projectCapabilities})) throw new Error('A restauração não está disponível neste contexto. Você pode salvar a versão em arquivo.');
         if (pendingEditorSave) flushSave({remote:false});
-        if (backup.kind === 'registry') {
+        if (backup.kind === 'book') {
+          const current = libraryFolders.find(item => item.id === backup.book.id), signature = current ? bookValue(current) : null;
+          await protectVersions([bookBackup(signature || backup.book,`${backup.book.name} · antes da restauração`)]);
+          const next = libraryFolders.find(item => item.id === backup.book.id);
+          if (context !== syncContextKey() || !HeartspaceDocsSync.equal(signature,next ? bookValue(next) : null) || desktopBlocked || currentProjectId && !canEditProject({capabilities:projectCapabilities})) throw new Error('O livro mudou; abra a recuperação novamente.');
+          bookTransport.restore(bookValue(backup.book));
+          await persistLibrary(); renderLibrary(); if (currentProjectId) void drainSyncQueue();
+        } else if (backup.kind === 'registry') {
           if (registrySending) throw new Error('Aguarde o envio dos recursos terminar.');
           const revision = registrySync.editRevision;
           await protectVersions([registryBackup(registryValue(),'Recursos · antes da restauração')]);
@@ -11955,6 +12056,7 @@
           if (context !== syncContextKey() || !documents.includes(current) || token !== current.remoteUpdatedAt || isRecordSyncing(current) || desktopBlocked || currentProjectId && !canEditProject({capabilities:projectCapabilities}) || !HeartspaceDocsSync.equal(before,contentForRecord(current))) throw new Error('O documento mudou. Abra a versão novamente.');
           const binding = {id:current.id,remoteId:current.remoteId,projectId:current.projectId,remoteUpdatedAt:current.remoteUpdatedAt,remoteConflict:current.remoteConflict,remoteVersion:current.remoteVersion,...HeartspaceDocsSync.recordState(current),editRevision:current.editRevision+1};
           Object.assign(current,makeRecord({...backup.record,...binding,body:HeartspaceDocsProjectFiles.sanitizeBody(backup.record.body,document),dirty:Boolean(currentProjectId),savedAt:new Date().toISOString()}));
+          if (current.folderId && !libraryFolders.some(folder => folder.id === current.folderId)) { current.folderId = ''; current.folderName = ''; current.collection = null; }
           if (current.dirty) dirtyDocumentIds.add(current.id);
           await persistLibrary(); if (context !== syncContextKey()) return; refreshActiveSnapshot(current);
           if (currentProjectId && !current.remoteConflict) void syncRecord(current);
@@ -11968,6 +12070,10 @@
             message:record.syncError || (record.remoteConflict ? 'Há outra versão para comparar.' : record.syncAttempt ? 'Envio protegido e aguardando confirmação.' : 'Alterações aguardam envio.'),
             local:reviewPreview(contentForRecord(record)),remote:record.remoteVersion ? reviewPreview(contentForRecord(record.remoteVersion)) : null,canHide:Boolean(record.remoteMissing && !isRecordSyncing(record)),
             canLocal:Boolean(record.remoteConflict && record.remoteVersion && !isRecordSyncing(record) && !desktopBlocked && canEditProject({capabilities:projectCapabilities})),canRemote:Boolean(record.remoteConflict && record.remoteVersion && !isRecordSyncing(record))})),
+          books:currentProjectId ? bookTransport.items().map(item => ({id:item.id,title:`${item.deleted && !item.dirty ? 'Livro removido' : 'Livro'} · ${item.local?.name || item.remote?.book.name || item.id}`,
+            message:item.error || (item.deleted ? item.dirty ? 'Remoção aguardando confirmação.' : 'Livro removido; histórico preservado no projeto.' : item.dirty ? 'Planejamento aguardando envio.' : 'Livro sincronizado. O histórico guarda as versões anteriores.'),
+            local:bookReviewPreview(item.local,item.deleted),remote:item.remote ? bookReviewPreview(item.remote.book,item.remote.deleted) : item.known && !item.dirty && !item.conflict ? bookReviewPreview(item.local,item.deleted) : null,
+            canLocal:Boolean(item.conflict && item.remote && !item.sending && !desktopBlocked && canEditProject({capabilities:projectCapabilities})),canRemote:Boolean(item.conflict && item.remote && !item.sending),canHistory:Boolean(item.known || item.remote)})) : [],
           registry:currentProjectId && (registrySync.dirty || registrySync.conflict || registrySync.attempt) ? {id:'registry',message:registrySync.error || 'Recursos protegidos neste dispositivo.',local:reviewPreview(registryValue(),true),remote:registrySync.remote ? reviewPreview(registrySync.remote.resources,true) : null,
             canLocal:Boolean(registrySync.conflict && registrySync.remote && !registrySending && !desktopBlocked && canEditProject({capabilities:projectCapabilities})),canRemote:Boolean(registrySync.conflict && registrySync.remote && !registrySending)} : null,
           recovery:syncRecovery}),
@@ -11988,8 +12094,10 @@
           await persistLibrary(); renderLibrary(); reportDesktopDocumentState();
         },
         resolve:resolveSyncConflict,retry:async () => { syncProtocolUnavailable = false; await refreshVisibleProject(); await drainSyncQueue(); },
-        previewBackup:backup => reviewPreview(backup.kind === 'document' ? contentForRecord(backup.record,backup.book) : backup.resources,backup.kind === 'registry'),
-        canRestore:backup => !desktopBlocked && !authoringStorageError && (!currentProjectId || canEditProject({capabilities:projectCapabilities})) && (backup.kind === 'registry' ? !registrySending : documents.some(record => record.id === backup.record.id && !isRecordSyncing(record))),
+        bookHistory:id => bookTransport.history(id),
+        downloadBook:async id => { if (pendingEditorSave) flushSave({remote:false}); const item = bookTransport.items().find(item => item.id === id); if (!item?.local) throw new Error('A fonte local não está disponível.'); await downloadSyncSource(sourceForBackup(bookBackup(item.local,item.local.name)),item.local.name); },
+        previewBackup:backup => backup.kind === 'book' ? bookReviewPreview(backup.book) : reviewPreview(backup.kind === 'document' ? contentForRecord(backup.record,backup.book) : backup.resources,backup.kind === 'registry'),
+        canRestore:backup => !desktopBlocked && !authoringStorageError && (!currentProjectId || canEditProject({capabilities:projectCapabilities})) && (backup.kind === 'book' ? !bookTransport.items().some(item => item.id === backup.book.id && item.sending) : backup.kind === 'registry' ? !registrySending : documents.some(record => record.id === backup.record.id && !isRecordSyncing(record))),
         restoreBackup:restoreProtectedVersion,
         downloadDocument:async id => { if (pendingEditorSave) flushSave({remote:false}); const record = documents.find(item => item.id === id); if (!record) throw new Error('O documento não está mais disponível.'); await downloadSyncSource(sourceForBackup(documentBackup(record)),record.title); },
         downloadBackup:async id => { const backup = syncRecovery.find(item => item.id === id); if (!backup) throw new Error('A cópia não está disponível.'); await downloadSyncSource(sourceForBackup(backup),backup.label); },
@@ -12012,6 +12120,22 @@
           if (context !== syncContextKey() || !saved) throw new Error('A recuperação não está disponível neste contexto.');
           await downloadSyncSource(HeartspaceDocsAuthoring.fromEditor(saved),'recuperacao-projeto',context);
         }
+      });
+      publicationUI = HeartspaceDocsPublication.mount({
+        button:document.querySelector('.publish-menu-item'),storage:HeartspaceDocsProjectStorage,
+        context:() => {
+          const active=documents.find(record=>record.id===activeDocumentId);
+          if(!currentUser || !currentProjectId || !active?.remoteId || desktopBlocked || !projectLoading.hidden || !(projectCapabilities.manage_publications || projectCapabilities.manage_workspace))return null;
+          return {key:`${syncContextKey()}:${active.remoteId}`,storeKey:`${currentUser.id}:${currentProjectId}:${active.remoteId}`,projectId:currentProjectId,documentId:active.remoteId,dirty:active.dirty || Boolean(pendingEditorSave)};
+        },
+        unavailable:() => !currentProjectId ? 'Conecte o Docs a um projeto do HeartSpace para publicar. A criação local e as exportações continuam disponíveis.' : 'Este documento precisa estar sincronizado e sua conta precisa ter permissão de publicação no projeto.',
+        flush:async()=>{flushSave({remote:false});await waitForLocalWrites();if(localWriteFailed)throw new Error('Proteja o trabalho local antes de publicar.');},
+        request:(payload,blob=false) => {
+          const endpoint=new URL(docsConfig.studioFunctionUrl || `${docsConfig.supabaseUrl}/functions/v1/heartspace-studio`);
+          if(endpoint.origin!==new URL(docsConfig.supabaseUrl).origin || endpoint.protocol!=='https:')throw new Error('O serviço de publicações não pertence à conexão configurada.');
+          return apiFetch(endpoint.pathname,{method:'POST',body:JSON.stringify(payload),desktopSafeRetry:true,skipMedia:true,...(blob?{responseKind:'blob',maximumBytes:4*1024*1024}:{})});
+        },
+        approve:revisionId=>apiFetch('/rest/v1/rpc/heartspace_approve_doc_revision',{method:'POST',desktopSafeRetry:true,body:JSON.stringify({p_revision_id:revisionId})}),
       });
       localProjects = HeartspaceDocsLocalProjects.mount({
         document, desktopMode,

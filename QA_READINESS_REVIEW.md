@@ -1,3 +1,22 @@
+> Atualização 16/11/2026 — fatia 5C: publicação de revisão escolhida, aprovação
+> explícita após conferência, projeção no servidor, imagens distribuíveis privadas,
+> recibos e comparação de versão da página; leitor público e contrato da fila Hub
+> atualizados. Ver `PUBLICATION_TRANSPORT.md`. Somente conferência estática; SQL,
+> deploy, permissões e comportamento real permanecem pendentes de QA.
+
+> Atualização 16/11/2026 — fatia 5B: transporte de mídia por arquivos privados/hash,
+> materialização antes do editor, cache por conta/projeto e pedido final durável.
+> A migração nova não foi aplicada. Conferência estática apenas; upload, RLS, cache,
+> retomada de operações antigas, mídia ausente e exports precisam de QA funcional.
+> Ver `MEDIA_TRANSPORT.md` e `MIGRATION_ROLLOUT.md`.
+
+> Atualização 16/11/2026 — fatia 5A: livros remotos independentes, inclusive vazios,
+> receberam fonte, CAS/fila, histórico e remoção com movimento transacional dos
+> capítulos. QA de estrutura compartilhada (incluindo QA11 abaixo) precisa considerar
+> o novo contrato descrito em `BOOK_SYNC.md`. Migrations não aplicadas; nenhuma
+> validação funcional foi executada nesta etapa. `MIGRATION_ROLLOUT.md` acompanha
+> a relação de aplicação ainda pendente.
+
 # Revisão antes do QA — HeartSpace Docs
 
 Data: 14/11/2026. Escopo: implementação atual do editor web/desktop, persistência, sincronização, permissões, ações da interface, exportação e SQL/Functions relacionados ao Docs.

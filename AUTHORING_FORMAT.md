@@ -184,3 +184,25 @@ Conferência estática realizada: leitura das mudanças, sintaxe dos scripts e
 `git diff --check`; a CSP desktop foi regenerada. Não há testes funcionais novos
 nem execução de cenários no navegador.
 Migração com dados reais, retomada offline e colaboração ficam para validação.
+
+## Integração de livros (fatia 5A)
+
+O adaptador remoto agora persiste livros/pranchetas em entidade própria, inclusive
+vazios. `source.books` permanece a fonte autoral; `workspace.sync.books` v1 guarda
+CAS, fila, conflitos e remoções pendentes. O `.hdocs` normal não inclui esse estado
+privado. Detalhes: `BOOK_SYNC.md`; aplicação SQL pendente: `MIGRATION_ROLLOUT.md`.
+
+## Mídias no transporte (fatia 5B)
+
+O esquema autoral não muda: objetos de mídia locais conservam os bytes. Somente
+`attempt.wireContent` usa `storage_ref`/manifesto v1 para a gravação na nuvem;
+leituras materializam e verificam esses bytes antes do editor. `transportVersion`
+identifica o codec da fila e mantém as repetições do pedido final estáveis.
+Detalhes e limites em `MEDIA_TRANSPORT.md`.
+
+## Publicação (fatia 5C)
+
+O snapshot público v2 é uma projeção estática de uma revisão conferida/aprovada,
+com imagens distribuíveis próprias. Não substitui `.hdocs`, a fonte colaborativa
+ou a exportação interativa. Não contém referências privadas de autoria. Contrato
+e limites: `PUBLICATION_TRANSPORT.md`.

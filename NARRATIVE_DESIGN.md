@@ -732,3 +732,24 @@ Contrato, uso e limites em `PROJECT_ASSETS.md`. Conferência de sintaxe/diff/CSP
 - Livro/prancheta remoto independente, extração de mídias e transportes/publicação continuam como próximas integrações. Não há merge simultâneo de texto nem revisão atômica de todo o livro nesta fatia.
 
 Detalhes em `SYNC_REVISIONS.md`. Conferência estática de JavaScript/diff/CSP; testes e validação funcional/SQL não executados.
+
+## Integração de livros — fatia 5A (16/11/2026)
+
+Livros/pranchetas ganharam fonte remota independente dos capítulos, incluindo os
+vazios, com fila durável, CAS, recibos, histórico e marcas de remoção. Planejamento
+novo não é replicado em cada documento. Remoção remota move os vínculos na mesma
+transação, preservando o texto e criando revisões; fontes legadas do planejamento
+ficam no histórico do livro. Revisão oferece comparação, histórico e recuperação
+em arquivo. Ver `BOOK_SYNC.md`. Mídias/providers/publicação seguem na integração
+seguinte; nenhuma migração foi aplicada. A ordem está sendo registrada em
+`MIGRATION_ROLLOUT.md` para entrega final ao usuário. Conferência estática apenas.
+
+## Transporte de mídias — fatia 5B (16/11/2026)
+
+Cenas, retratos e imagens inline novas usam arquivos privados por projeto/hash
+no transporte colaborativo. A fonte local e as exportações continuam completas;
+referências são materializadas/verificadas antes da normalização de Cena. A fila
+protege também o pedido final, preserva confirmações de operações legadas e não
+usa gravação inline antiga como fallback. Ver `MEDIA_TRANSPORT.md` e a migração
+pendente `20261116000300_docs_media_transport.sql`. Conferência estática apenas;
+providers nativos e publicação/wiki seguem para a próxima integração.

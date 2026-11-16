@@ -137,14 +137,16 @@ Não foi verificado se outra operação já aplicou o SQL ao Supabase.
 
 ## Limites e próximas fronteiras
 
-- Livros/pranchetas ainda têm fonte independente local, mas o adaptador remoto
-  legado replica planejamento nos capítulos. Persistência/versionamento remoto
-  próprio de livros, inclusive vazios, ainda pertence à próxima integração;
-  o CAS de documento não é uma revisão atômica do livro inteiro.
+- A fatia 5A acrescentou fonte/versionamento remoto próprio de livros e pranchetas,
+  inclusive vazios, histórico e marcas de remoção. Ver `BOOK_SYNC.md`. O cliente
+  deixa de replicar planejamento novo nos capítulos; a migração conserva fontes
+  legadas. O CAS de documento continua distinto da versão do livro.
 - Ordenação compartilhada usa o contrato separado existente. Não há merge
   simultâneo de texto, CRDT ou reconciliação automática de campos.
-- Cenas/retratos ainda podem conter mídia incorporada no transporte antigo;
-  extração desses caches e resolução compartilhada entre apps continuam pendentes.
+- A fatia 5B extrai mídia incorporada das novas gravações e protege o pedido de
+  transporte por referências privadas antes do envio (`MEDIA_TRANSPORT.md`).
+  Fontes/históricos antigos continuam legíveis. A integração nativa entre apps
+  e providers ainda está pendente.
 - Recibos e slots antigos não são apagados automaticamente. Retenção/limpeza
   precisam respeitar operações ainda repetíveis e recuperações do usuário.
 - Fila Hub, providers, publicação/wiki e contratos nativos Core seguem como
@@ -154,3 +156,18 @@ Conferência realizada: sintaxe JavaScript, leitura estática dos fluxos e do SQ
 diff e CSP desktop. Não foram adicionados nem executados testes. Aplicação SQL,
 concorrência em duas sessões, retomada após falha, restauração e revisão visual
 permanecem para validação funcional.
+
+Aplicação pendente: consultar `MIGRATION_ROLLOUT.md`. O usuário informou que ainda
+não aplicou as migrations; nenhuma foi executada nesta tarefa.
+
+O complemento 5B acrescenta documentos/registro v3, livros v2, registro de mídia
+e retomada das confirmações legadas. Os endpoints antigos de escrita tornam-se
+internos. A lista original de RPCs acima descreve a fatia 4, não o protocolo
+externo final após `20261116000300_docs_media_transport.sql`.
+
+## Complemento da fatia 5C
+
+Publicações agora têm preparação a partir da revisão aprovada, conferência,
+recibo próprio e comparação da versão da página antes de substituí-la. A fila
+autoral não publica rascunhos automaticamente. Ver `PUBLICATION_TRANSPORT.md` para
+imagens distribuíveis e os limites da ponte Hub/Core ainda pendentes.
