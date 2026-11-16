@@ -71,6 +71,16 @@ utilizado pelo editor. Não há uma segunda cópia de texto para mapa, leitura,
 tradução ou cena. `narrative.sequences` conserva as apresentações e os IDs das
 sequências; as traduções ficam em `narrative.localization`.
 
+`documents[].typography.introSpacing` é opcional: `null` ou ausente preserva o
+espaçamento padrão; um número de 0 a 200 define a distância, em pixels sem zoom,
+entre o cabeçalho (título/subtítulo) e o primeiro bloco do texto. O controle fica
+em **Configurações da página → Distância até o texto**, aplica durante a edição
+e recalcula a paginação. O espaço superior do primeiro bloco é removido apenas
+quando esse ajuste está ativo, para não somar duas margens ao valor escolhido.
+O campo acompanha `.hdocs`, cache, cópias e modelos; no transporte remoto usa
+`content.page.intro_spacing`, e no Markdown, `intro_spacing` nos metadados.
+A adição mantém a fonte v1 e não requer migração SQL.
+
 Exemplo de projeto com um livro vazio e independente:
 
 ```json

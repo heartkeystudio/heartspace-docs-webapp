@@ -15,6 +15,7 @@
       --paper: #202020;
       --line: rgba(255,255,255,.09);
       --text: #eeeeee;
+      --document-ink: #ffffff;
       --muted: #a7a7a7;
       --quiet: #747474;
       --accent: #0c8ce9;
@@ -247,7 +248,7 @@
     .page-settings-popover[hidden] { display:none; }
     .page-settings-popover h2 { margin:0; font-size:14px; }
     .page-settings-popover label { display:grid; gap:5px; color:#b9b9b9; font-size:11px; }
-    .page-settings-popover select { width:100%; height:34px; padding:0 8px; border:1px solid var(--line); border-radius:6px; color:#e2e2e2; background:#111111; }
+    .page-settings-popover select,.page-settings-popover input[type="number"] { width:100%; height:34px; padding:0 8px; border:1px solid var(--line); border-radius:6px; color:#e2e2e2; background:#111111; }
     .page-settings-group { display:grid; gap:10px; }
     .page-settings-group + .page-settings-group { padding-top:13px; border-top:1px solid var(--line); }
     .page-settings-group h3 { margin:0; color:#8b8b8b; font-size:10px; letter-spacing:.09em; text-transform:uppercase; }
@@ -308,14 +309,14 @@
     .content .book-page-content { box-sizing:border-box; width:100%; min-width:0; flex:0 0 auto; min-height:0; overflow:hidden; outline:none; overflow-wrap:anywhere; }
     .content .book-page-content:not(:first-child) { height:var(--book-sheet-display-height); padding:var(--book-margin-y,72px) 0; }
     .page[data-layout="book"] .content .book-page-content { overflow:visible; }
-    .doc-title { margin:0 0 12px; color:#f0f0f0; font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
+    .doc-title { margin:0 0 12px; color:var(--document-ink); font-size:34px; line-height:1.2; letter-spacing:-.04em; font-weight:700; }
     .doc-title[data-align="center"] { text-align:center; }
     .doc-title[data-align="right"] { text-align:right; }
     .doc-title[data-align="justify"] { text-align:justify; }
-    .doc-subtitle { display:block; box-sizing:border-box; width:100%; min-height:1.5em; margin:0 0 36px; padding:0; border:0; border-radius:3px; outline:none; overflow:hidden; resize:none; background:transparent; color:#a6a6a6; font:inherit; font-size:15px; line-height:1.5; }
+    .doc-subtitle { display:block; box-sizing:border-box; width:100%; min-height:1.5em; margin:0 0 36px; padding:0; border:0; border-radius:3px; outline:none; overflow:hidden; resize:none; background:transparent; color:var(--document-ink); font:inherit; font-size:15px; line-height:1.5; }
     .doc-subtitle:focus { box-shadow:0 1px 0 var(--accent); }
     .doc-subtitle::placeholder { color:#737373; }
-    .content { min-width:0; min-height:400px; outline:none; color:#dadada; font-size:16px; line-height:1.5; overflow-wrap:anywhere; white-space:normal; }
+    .content { min-width:0; min-height:400px; outline:none; color:var(--document-ink); font-size:16px; line-height:1.5; overflow-wrap:anywhere; white-space:normal; }
     .content p { margin:0 0 8px; }
     .content hr { height:1px; margin:24px 0; border:0; background:#ffffff26; }
     .content [data-page-break="true"] { position:relative; height:25px; margin:18px 0; border-top:1px dashed #0c8ce977; color:#75bdf1; user-select:none; }
@@ -326,12 +327,12 @@
     .content [data-block-margin="narrow"] { margin-inline:24px; }
     .content [data-block-margin="medium"] { margin-inline:48px; }
     .content [data-block-margin="wide"] { margin-inline:72px; }
-    .content h2 { margin:34px 0 12px; color:#ededed; font-size:23px; line-height:1.35; letter-spacing:-.025em; }
+    .content h2 { margin:34px 0 12px; color:inherit; font-size:23px; line-height:1.35; letter-spacing:-.025em; }
     .content h1 { margin:26px 0 12px; font-size:30px; line-height:1.25; }
-    .content h3 { margin:24px 0 10px; color:#eaeaea; font-size:20px; line-height:1.35; }
-    .content h4 { margin:20px 0 8px; color:#e4e4e4; font-size:18px; line-height:1.4; }
-    .content h5 { margin:16px 0 6px; color:#dedede; font-size:16px; line-height:1.45; }
-    .content h6 { margin:14px 0 6px; color:#d3d3d3; font-size:15px; line-height:1.45; }
+    .content h3 { margin:24px 0 10px; color:inherit; font-size:20px; line-height:1.35; }
+    .content h4 { margin:20px 0 8px; color:inherit; font-size:18px; line-height:1.4; }
+    .content h5 { margin:16px 0 6px; color:inherit; font-size:16px; line-height:1.45; }
+    .content h6 { margin:14px 0 6px; color:inherit; font-size:15px; line-height:1.45; }
     .content figure[data-docs-image] { display:flex; flex-direction:column; width:min(100%,760px); margin:28px auto; }
     .content figure[data-docs-image] img { display:block; width:100%; max-height:680px; border-radius:8px; object-fit:contain; }
     .content figure[data-docs-image] figcaption { min-height:1.4em; margin-top:9px; color:#a6a6a6; font-size:13px; text-align:center; outline:none; }
@@ -1209,6 +1210,10 @@
     body[data-work-area] .work-area-popover[data-menu-kind="toolbar"] { width:230px; gap:3px; padding:7px; }
     .work-area-popover[data-menu-kind="toolbar"] button { border-color:transparent; background:transparent; text-align:left; }
     .page:has(.doc-subtitle[hidden]) .doc-title { margin-bottom:36px; }
+    .page[data-custom-intro-spacing]:has(.doc-subtitle[hidden]) .doc-title,
+    .page[data-custom-intro-spacing] .doc-subtitle { margin-bottom:var(--intro-spacing); }
+    .page[data-custom-intro-spacing] .content>:first-child,
+    .page[data-custom-intro-spacing] .content>.book-page-content:first-child>:first-child { margin-top:0; }
     @media(min-width:801px) {
       body.focus-mode:is(.zen-sidebar-open,.zen-sidebar-pinned):not(.zen-sidebar-dismissed) { --zen-sidebar-space:252px; }
     }
@@ -1716,7 +1721,7 @@
         <button class="tool" type="button" data-command="bold" title="Negrito (Ctrl+B)" aria-label="Negrito" aria-keyshortcuts="Control+B Meta+B"><b>B</b></button><button class="tool" type="button" data-command="italic" title="Itálico (Ctrl+I)" aria-label="Itálico" aria-keyshortcuts="Control+I Meta+I"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
         <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><select class="document-view-select block-margin-select" id="block-margin" aria-label="Margem do trecho" title="Aplicar margem ao trecho selecionado"><option value="none">Sem margem</option><option value="narrow">Margem estreita</option><option value="medium">Margem média</option><option value="wide">Margem larga</option></select><span class="tool-separator"></span>
         <details class="toolbar-menu" id="toolbar-lists"><summary class="tool">Listas <span aria-hidden="true">⌄</span></summary><div aria-label="Tipos de lista"><button type="button" data-command="insertUnorderedList">Com marcadores</button><button type="button" data-command="insertOrderedList">Numerada</button><button type="button" data-toolbar-kind="tasks">Lista de tarefas</button></div></details><details class="toolbar-menu" id="toolbar-callouts"><summary class="tool">Callouts <span aria-hidden="true">⌄</span></summary><div aria-label="Callouts e blocos de destaque"><button type="button" data-command="formatBlock" data-value="pre">Bloco de código</button><button type="button" data-command="formatBlock" data-value="blockquote">Citação</button><button type="button" data-toolbar-kind="callout" data-value="callout_info">Informação</button><button type="button" data-toolbar-kind="callout" data-value="callout_warning">Atenção</button><button type="button" data-toolbar-kind="callout" data-value="callout_idea">Ideia</button><button type="button" data-toolbar-kind="callout" data-value="callout_decision">Decisão</button><button type="button" data-toolbar-kind="callout" data-value="callout_open">Em aberto</button><button type="button" data-toolbar-kind="callout" data-value="callout_review">Revisão</button><button type="button" data-toolbar-kind="callout" data-value="callout_risk">Risco</button><button type="button" data-toolbar-kind="callout" data-value="callout_reference">Referência</button></div></details><span class="tool-separator"></span>
-        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label></div><section class="page-settings-group" id="ambience-settings"></section><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><button class="page-settings-save" id="edit-subtitle" type="button">Adicionar subtítulo (opcional)</button><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
+        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label><label>Distância até o texto (px)<input id="intro-spacing" type="number" min="0" max="200" step="1" placeholder="Padrão" aria-label="Distância entre o título ou subtítulo e o início do texto, em pixels"></label><button type="button" class="page-settings-save" id="intro-spacing-reset">Restaurar distância padrão</button></div><section class="page-settings-group" id="ambience-settings"></section><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><button class="page-settings-save" id="edit-subtitle" type="button">Adicionar subtítulo (opcional)</button><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
@@ -1888,6 +1893,8 @@
       const paperSizeControl = document.querySelector('#paper-size');
       const paperOrientationControl = document.querySelector('#paper-orientation');
       const pageMarginControl = document.querySelector('#page-margin');
+      const introSpacingControl = document.querySelector('#intro-spacing');
+      const introSpacingReset = document.querySelector('#intro-spacing-reset');
       const documentLayoutControl = document.querySelector('#document-layout');
       const zoomLevelControl = document.querySelector('#zoom-level');
       const documentViewModeControl = document.querySelector('#document-view-mode');
@@ -2205,7 +2212,8 @@
         return normalized;
       };
       const normalizeNarrativePresentation = HeartspaceNarrativeMedia.presentation;
-      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], marginNotes:HeartspaceDocsMarginNotes.normalize(data.marginNotes), storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const normalizeIntroSpacing = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 200 ? value : null;
+      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], marginNotes:HeartspaceDocsMarginNotes.normalize(data.marginNotes), storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', introSpacing:normalizeIntroSpacing(data.introSpacing), titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const normalizeFolder = folder => ({
         id:String(folder?.id || `folder-${makeId()}`), name:String(folder?.name || 'Novo livro').trim() || 'Novo livro',
         layout:folder?.layout === 'canvas' ? 'canvas' : 'book', expanded:folder?.expanded !== false,
@@ -2898,6 +2906,11 @@
         paperSizeControl.value = size;
         paperOrientationControl.value = orientation;
         pageMarginControl.value = margin;
+        const introSpacing = normalizeIntroSpacing(record.introSpacing);
+        introSpacingControl.value = introSpacing === null ? '' : String(introSpacing);
+        documentPage.toggleAttribute('data-custom-intro-spacing',introSpacing !== null);
+        if (introSpacing === null) documentPage.style.removeProperty('--intro-spacing');
+        else documentPage.style.setProperty('--intro-spacing',`${introSpacing}px`);
         documentLayoutControl.value = record.layout === 'canvas' ? 'canvas' : 'book';
         const [baseWidth, baseHeight] = paperSpecs[size];
         const width = orientation === 'landscape' ? baseHeight : baseWidth;
@@ -3350,6 +3363,7 @@
       const applyDocumentEditingState = () => {
         const active = documents.find(record => record.id === activeDocumentId);
         const editable = Boolean(active && !active.trashedAt && !active.archivedAt && storageKey) && documentViewMode === 'writing' && !authoringStorageError && !desktopBlocked && (!currentProjectId || Boolean(projectCapabilities.docs_edit));
+        introSpacingControl.disabled = !editable; introSpacingReset.disabled = !editable;
         title.contentEditable = String(editable);
         subtitle.disabled = false;
         subtitle.readOnly = !editable;
@@ -3622,6 +3636,16 @@
         persistLibrary();
         if (record.dirty) void syncRecord(record);
       };
+      const commitIntroSpacing = () => {
+        if (introSpacingControl.disabled || !introSpacingControl.validity.valid || documentViewMode !== 'writing') return;
+        if (desktopBlocked || authoringStorageError || currentProjectId && !canEditProject({capabilities:projectCapabilities})) return;
+        const record = documents.find(item => item.id === activeDocumentId);
+        if (!record || record.trashedAt || record.archivedAt || !storageKey) return;
+        record.introSpacing = introSpacingControl.value === '' ? null : normalizeIntroSpacing(introSpacingControl.valueAsNumber);
+        applyPageSettings(record); scheduleBookPagination(); queueSave();
+      };
+      introSpacingControl.addEventListener('input',commitIntroSpacing);
+      introSpacingReset.addEventListener('click',() => { introSpacingControl.value = ''; commitIntroSpacing(); });
       const positionPageSettings = () => {
         if (pageSettingsPopover.hidden) return;
         const viewport = window.visualViewport;
@@ -4146,6 +4170,7 @@
         const knownTags = [...new Set(documents.flatMap(item => item.tags))].sort();
         document.querySelector('#known-tags').replaceChildren(...knownTags.map(tag => { const option=document.createElement('option'); option.value=tag; return option; }));
         metadataStatus.value = record.status;
+        introSpacingControl.value = normalizeIntroSpacing(record.introSpacing) ?? '';
         documentLayoutControl.value = record.layout === 'canvas' ? 'canvas' : 'book';
         updateLayoutSettingsVisibility(documentLayoutControl.value);
         narrativeProfileControl.value = record.narrativeProfile === 'script' ? 'script' : 'prose';
@@ -7991,7 +8016,7 @@
         const templateName = customTemplate?.title || templateHeading?.textContent.trim() || '';
         templateHeading?.remove();
         const collection = libraryFolders.find(folder => folder.id === collectionId);
-        const record = makeRecord({ folderId:collection?.id || '', folderName:collection?.name || '', collection:collectionSnapshot(collection), title: templateName || (collection ? (collection.layout === 'book' ? 'Novo capítulo' : 'Nova seção') : isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, narrativeProfile: customTemplate?.narrativeProfile, titleAlign: customTemplate?.titleAlign, subtitleAlign: customTemplate?.subtitleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin, ambience:customTemplate?.ambience });
+        const record = makeRecord({ folderId:collection?.id || '', folderName:collection?.name || '', collection:collectionSnapshot(collection), title: templateName || (collection ? (collection.layout === 'book' ? 'Novo capítulo' : 'Nova seção') : isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, narrativeProfile: customTemplate?.narrativeProfile, introSpacing:customTemplate?.introSpacing, titleAlign: customTemplate?.titleAlign, subtitleAlign: customTemplate?.subtitleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin, ambience:customTemplate?.ambience });
         documents.unshift(record); activeDocumentId = record.id; selectedCollectionId = record.folderId;
         updateDocumentOrderIndices();
         applyDocumentViewMode('writing');
@@ -8382,6 +8407,7 @@
       const canEditProject = access => Boolean(access?.capabilities?.docs_edit);
       const updateEditorPermissions = () => {
         const editable = !desktopBlocked && (!currentProjectId || canEditProject({ capabilities: projectCapabilities }));
+        introSpacingControl.disabled = !editable; introSpacingReset.disabled = !editable;
         title.contentEditable = String(editable); subtitle.disabled = !editable; editor.contentEditable = String(editable);
         document.querySelector('#add-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
@@ -8395,7 +8421,7 @@
       };
       const remoteToRecord = (row, existingId = '') => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, marginNotes:HeartspaceDocsMarginNotes.fromWire(content.authoring_notes), storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, marginNotes:HeartspaceDocsMarginNotes.fromWire(content.authoring_notes), storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, introSpacing:content.page?.intro_spacing, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
       };
       const persistDocumentOrder = async () => {
         if (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities })) return;
@@ -8612,7 +8638,7 @@
       };
       const contentForRecord = (record,book = undefined) => {
         const captured = {title:record.title || 'Sem título',subtitle:record.subtitle || '',body:record.body || '<p><br></p>'};
-        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, authoring_notes:HeartspaceDocsMarginNotes.toWire(record.marginNotes), is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, authoring_notes:HeartspaceDocsMarginNotes.toWire(record.marginNotes), is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin, intro_spacing:record.introSpacing }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
       };
       const syncContextKey = () => `${storageKey}:${projectContextEpoch}:${currentUser?.id || ''}`;
       const ownsCloudWorkspace = () => Boolean(currentUser?.id && currentProjectId && cloudCacheBase === (desktopMode ? `heartspace-docs-desktop-v1:${currentUser.id}:docs:${currentProjectId}` : `heartspace-docs-web-v2:${currentUser.id}:docs:${currentProjectId}`) && storageKey.startsWith(`${cloudCacheBase}:window:`));
@@ -9522,7 +9548,7 @@
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
         const templates = readDocumentTemplates();
-        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, narrativeProfile: record.narrativeProfile, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, ambience:HeartspaceDocumentAmbience.normalize(record.ambience), body: serializeEditorBody() });
+        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, narrativeProfile: record.narrativeProfile, introSpacing:record.introSpacing, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, ambience:HeartspaceDocumentAmbience.normalize(record.ambience), body: serializeEditorBody() });
         try { if (!templatesStorageKey) throw new Error('Contexto local indisponível'); localStorage.setItem(templatesStorageKey, JSON.stringify(templates)); statusMessage(`Template “${name.trim()}” salvo neste dispositivo`); }
         catch (_) { statusMessage('Não foi possível salvar este template neste dispositivo', 'pending'); }
       });
@@ -11246,7 +11272,7 @@
           const documentTitle = title.textContent.trim() || 'Documento sem título';
           const documentSubtitle = subtitle.value.trim();
           const activeRecord = documents.find(record => record.id === activeDocumentId) || { status:'draft', tags:[], titleAlign:'left', isNotebook:false };
-          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\nnarrative_profile: ${activeRecord.narrativeProfile || 'prose'}\ntitle_align: ${activeRecord.titleAlign}\nsubtitle_align: ${activeRecord.subtitleAlign || 'left'}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
+          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\nnarrative_profile: ${activeRecord.narrativeProfile || 'prose'}\ntitle_align: ${activeRecord.titleAlign}\nsubtitle_align: ${activeRecord.subtitleAlign || 'left'}\nintro_spacing: ${activeRecord.introSpacing ?? 'null'}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
           const exportRoot = editor.cloneNode(true);
           exportRoot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
           for (const image of exportRoot.querySelectorAll('img[data-local-image]')) {
@@ -11287,6 +11313,7 @@
         let importedTags = [];
         let importedTitleAlign = 'left';
         let importedSubtitleAlign = 'left';
+        let importedIntroSpacing = null;
         let importedNotebook = false;
         const firstMetadataLine = lines.findIndex(line => line.trim());
         if (firstMetadataLine >= 0 && lines[firstMetadataLine].trim() === '---') {
@@ -11303,7 +11330,7 @@
               catch (_) { importedSubtitle = rawSubtitle.replace(/^['"]|['"]$/g, ''); }
             }
             for (const line of metadataLines) {
-              const match = line.match(/^(status|tags|narrative_profile|title_align|subtitle_align|is_notebook):\s*(.*)$/i);
+              const match = line.match(/^(status|tags|narrative_profile|title_align|subtitle_align|intro_spacing|is_notebook):\s*(.*)$/i);
               if (!match) continue;
               try {
                 if (match[1].toLowerCase() === 'status' && ['draft','production','final'].includes(match[2].trim())) importedStatus = match[2].trim();
@@ -11311,6 +11338,7 @@
                 if (match[1].toLowerCase() === 'tags') { const value = JSON.parse(match[2]); if (Array.isArray(value)) importedTags = [...new Set(value.filter(tag => typeof tag === 'string').map(tag => tag.trim().toLocaleLowerCase('pt-BR')).filter(Boolean))]; }
                 if (match[1].toLowerCase() === 'title_align' && ['left','center','right','justify'].includes(match[2].trim())) importedTitleAlign = match[2].trim();
                 if (match[1].toLowerCase() === 'subtitle_align' && ['left','center','right','justify'].includes(match[2].trim())) importedSubtitleAlign = match[2].trim();
+                if (match[1].toLowerCase() === 'intro_spacing') importedIntroSpacing = normalizeIntroSpacing(JSON.parse(match[2]));
                 if (match[1].toLowerCase() === 'is_notebook') importedNotebook = JSON.parse(match[2]) === true;
               } catch (_) { /* metadado inválido é ignorado sem interromper a importação */ }
             }
@@ -11326,7 +11354,8 @@
         title.textContent = importedTitle || file.name.replace(/\.(md|markdown)$/i, '') || 'Documento importado';
         subtitle.value = importedSubtitle;
         const activeRecord = documents.find(record => record.id === activeDocumentId);
-        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.narrativeProfile = importedNarrativeProfile; activeRecord.titleAlign = importedTitleAlign; activeRecord.subtitleAlign = importedSubtitleAlign; activeRecord.isNotebook = importedNotebook; }
+        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.narrativeProfile = importedNarrativeProfile; activeRecord.titleAlign = importedTitleAlign; activeRecord.subtitleAlign = importedSubtitleAlign; activeRecord.introSpacing = importedIntroSpacing; activeRecord.isNotebook = importedNotebook; }
+        applyPageSettings(activeRecord);
         title.dataset.align = importedTitleAlign;
         subtitle.style.textAlign = importedSubtitleAlign;
         resizeSubtitle();
