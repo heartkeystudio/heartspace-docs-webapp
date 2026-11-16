@@ -22,6 +22,17 @@
     return {characters:list(value?.characters), variables:list(value?.variables), glossary:list(value?.glossary), sceneSettings:data(value?.sceneSettings || value?.scene_settings)};
   }
 
+  function validateMarginNotes(value) {
+    if (value === undefined) return; // Sources written before margin notes remain valid.
+    const colors=['amber','blue','rose','sage'], ids=new Set(), finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
+    if (!Array.isArray(value) || value.length>200) fail('notas de margem inválidas.');
+    for (const note of value) {
+      if (!object(note)||!id(note.id)||note.id.length>100||ids.has(note.id)||typeof note.text!=='string'||note.text.length>4000||!colors.includes(note.color)||typeof note.resolved!=='boolean'||!['left','right'].includes(note.side)||!finite(note.offset,0,4000)||!finite(note.y,0,1000000)||typeof note.updatedAt!=='string') fail('nota de margem inválida.');
+      ids.add(note.id);const a=note.anchor;
+      if (a!==null && (!object(a)||typeof a.quote!=='string'||!a.quote||a.quote.length>800||typeof a.prefix!=='string'||a.prefix.length>40||typeof a.suffix!=='string'||a.suffix.length>40||!Number.isSafeInteger(a.start)||a.start<0||(a.textVersion!==undefined&&(typeof a.textVersion!=='string'||a.textVersion.length>40)))) fail('vínculo de nota inválido.');
+    }
+  }
+
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
@@ -47,6 +58,7 @@
       if (!['book','canvas'].includes(document.page.layout)) fail('layout de documento inválido.');
       if (!['a4','letter','a5'].includes(document.page.size) || !['portrait','landscape'].includes(document.page.orientation) || !['narrow','normal','wide'].includes(document.page.margin)) fail('configuração de página inválida.');
       if (![document.typography.titleAlign,document.typography.subtitleAlign].every(value => ['left','center','right','justify'].includes(value))) fail('alinhamento de documento inválido.');
+      validateMarginNotes(document.editorial.marginNotes);
       if (!['draft','production','final'].includes(document.editorial.status) || !Array.isArray(document.editorial.tags) || document.editorial.tags.some(value => typeof value !== 'string') || typeof document.editorial.notebook !== 'boolean') fail('estado editorial inválido.');
       if (![document.editorial.archivedAt,document.editorial.trashedAt,document.editorial.trashedBy,document.updatedAt].every(value => typeof value === 'string') || !Number.isFinite(document.order)) fail('metadados editoriais inválidos.');
       if (!['prose','script'].includes(document.narrative.readingProfile) || typeof document.narrative.entrySequenceId !== 'string' || !object(document.narrative.localization)) fail('configuração narrativa inválida.');
@@ -91,7 +103,7 @@
         page:{layout:record.layout === 'canvas' ? 'canvas' : 'book', size:string(record.paperSize) || 'a4', orientation:string(record.pageOrientation) || 'portrait', margin:string(record.pageMargin) || 'normal'},
         typography:{titleAlign:string(record.titleAlign) || 'left', subtitleAlign:string(record.subtitleAlign) || 'left'},
         appearance:{ambience:data(record.ambience)},
-        editorial:{status:string(record.status) || 'draft', tags:list(record.tags), notebook:record.isNotebook === true, archivedAt:string(record.archivedAt), trashedAt:string(record.trashedAt), trashedBy:string(record.trashedBy)},
+        editorial:{marginNotes:list(record.marginNotes),status:string(record.status) || 'draft', tags:list(record.tags), notebook:record.isNotebook === true, archivedAt:string(record.archivedAt), trashedAt:string(record.trashedAt), trashedBy:string(record.trashedBy)},
         order:Number.isFinite(record.sortOrder) ? record.sortOrder : 0, updatedAt:string(record.savedAt)
       };
     });
@@ -109,7 +121,7 @@
       narrativeProfile:document.narrative.readingProfile, localization:document.narrative.localization,
       layout:document.page.layout, paperSize:document.page.size, pageOrientation:document.page.orientation, pageMargin:document.page.margin,
       titleAlign:document.typography.titleAlign, subtitleAlign:document.typography.subtitleAlign, ambience:document.appearance.ambience,
-      status:document.editorial.status, tags:document.editorial.tags, archivedAt:document.editorial.archivedAt, trashedAt:document.editorial.trashedAt, trashedBy:document.editorial.trashedBy,
+      marginNotes:list(document.editorial.marginNotes), status:document.editorial.status, tags:document.editorial.tags, archivedAt:document.editorial.archivedAt, trashedAt:document.editorial.trashedAt, trashedBy:document.editorial.trashedBy,
       sortOrder:document.order, savedAt:document.updatedAt
     }));
     return {project:source.project, documents, libraryFolders, registry:source.resources};

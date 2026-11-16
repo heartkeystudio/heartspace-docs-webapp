@@ -1167,7 +1167,7 @@
     .work-area-utilities,#work-area-story-actions { display:grid; width:100%; gap:2px; }
     .work-area-utilities #work-area-split[aria-pressed="true"] { background:#ffffff0c; color:#ebebeb; }
     /* Keep both outside annotations and the paper inside the scrollable footprint. */
-    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max(calc(var(--editor-viewport-width,0px) / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-gutter) + var(--book-gutter))); min-width:0; max-width:none; margin-inline:0; padding-inline:var(--book-gutter); }
+    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max(calc(var(--editor-viewport-width,0px) / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-left-gutter,var(--book-gutter)) + var(--book-right-gutter,var(--book-gutter)))); min-width:0; max-width:none; margin-inline:0; padding-inline-start:var(--book-left-gutter,var(--book-gutter)); padding-inline-end:var(--book-right-gutter,var(--book-gutter)); }
     @media(max-width:1200px) {
       .topbar-content { grid-template-columns:minmax(0,1fr) auto auto; gap:10px; padding-inline:12px; }
       .topbar-left .crumb:not(:last-child) { display:none; }
@@ -1856,6 +1856,7 @@
   <script src="story-planning-map.js"></script>
   <script src="sequence-map.js"></script>
   <script src="story-planning.js"></script>
+  <script src="margin-notes.js"></script>
   <script src="authoring-project.js"></script>
   <script src="sync-state.js"></script>
   <script src="sync-review.js"></script>
@@ -2139,7 +2140,7 @@
       const trackedBook = id => bookTransport ? bookTransport.tracked(id) : bookSyncState.entries.some(item => item.id === id);
       let syncRecovery = [];
       let registrySending = false;
-      let syncReview = null, publicationUI = null;
+      let syncReview = null, publicationUI = null, marginNotes = null;
       let legacyProjectCacheKey = '';
       let cloudWindowId = '';
       let cloudWindowClaim = null;
@@ -2204,7 +2205,7 @@
         return normalized;
       };
       const normalizeNarrativePresentation = HeartspaceNarrativeMedia.presentation;
-      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], marginNotes:HeartspaceDocsMarginNotes.normalize(data.marginNotes), storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const normalizeFolder = folder => ({
         id:String(folder?.id || `folder-${makeId()}`), name:String(folder?.name || 'Novo livro').trim() || 'Novo livro',
         layout:folder?.layout === 'canvas' ? 'canvas' : 'book', expanded:folder?.expanded !== false,
@@ -2507,6 +2508,7 @@
         }));
         renderConflictBanner();
         renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
+        marginNotes?.schedule();
       };
       let draggedDocumentId = '';
       let draggedDocumentCanReorder = false;
@@ -2947,6 +2949,7 @@
       function applyEffectiveZoom(value,automatic = false) {
         const previous = Number(editorWrap.style.zoom) || 1, next = value / 100;
         renderZoom(value);
+        marginNotes?.schedule();
         if (Math.abs(previous - next) < .001) return;
         editorWrap.style.zoom = String(next);
         editorWrap.style.setProperty('--document-zoom',String(next));
@@ -2964,13 +2967,14 @@
         if (autoFitZoom && documentPage.dataset.layout === 'book') {
           const paperWidth = parseFloat(documentPage.style.getPropertyValue('--book-page-width')) || 794;
           const gutter = parseFloat(getComputedStyle(editorWrap).getPropertyValue('--book-gutter')) || 64;
-          const context = [zoomArea.offsetWidth,zoomArea.offsetHeight,activeDocumentId,document.body.dataset.workArea,requestedZoom,paperWidth,gutter].join(':');
+          const notesSpace = marginNotes?.space() || {left:0,right:0};
+          const context = [zoomArea.offsetWidth,zoomArea.offsetHeight,activeDocumentId,document.body.dataset.workArea,requestedZoom,paperWidth,gutter,notesSpace.left,notesSpace.right].join(':');
           // A scrollbar can disappear because fitting reduced the page height. Do not
           // grow the zoom again for that reason: it would immediately bring it back.
           // Real editor resizes, document/task changes and manual zoom reset the limit.
           if (fitViewport?.context !== context) fitViewport = {context,width:viewportWidth};
           else fitViewport.width = Math.min(fitViewport.width,viewportWidth);
-          const available = Math.max(0,fitViewport.width - 8);
+          const available = Math.max(0,fitViewport.width - 8 - notesSpace.left - notesSpace.right);
           effective = Math.max(10,Math.min(requestedZoom,Math.floor(available / (paperWidth + gutter * 2) * 100)));
         }
         applyEffectiveZoom(effective,autoFitZoom && effective < requestedZoom);
@@ -8384,6 +8388,7 @@
         document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#add-notebook').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#add-folder').disabled = Boolean(currentProjectId && !editable);
+        marginNotes?.schedule();
       };
       const parseRemoteContent = content => {
         if (typeof content === 'string') { try { content = JSON.parse(content); } catch (_) { content = {}; } }
@@ -8391,7 +8396,7 @@
       };
       const remoteToRecord = (row, existingId = '') => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, marginNotes:HeartspaceDocsMarginNotes.fromWire(content.authoring_notes), storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
       };
       const persistDocumentOrder = async () => {
         if (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities })) return;
@@ -8487,7 +8492,7 @@
             // A recovered authoring identity already exists remotely. Compare before binding.
             old.remoteConflict = true; old.remoteVersion = remote; return old;
           }
-          return HeartspaceDocsSync.observe(old,remote,{focused:old.id === activeDocumentId && (editorFocused || Boolean(pendingImageMarker?.isConnected))});
+          return HeartspaceDocsSync.observe(old,remote,{focused:old.id === activeDocumentId && (editorFocused || Boolean(document.activeElement?.closest('.margin-note')) || Boolean(pendingImageMarker?.isConnected))});
         }).filter(Boolean);
         const nextIds = new Set(next.map(record => record.id));
         const retained = oldRecords.filter(record => !nextIds.has(record.id) && (!record.projectId || record.projectId === targetProjectId));
@@ -8608,7 +8613,7 @@
       };
       const contentForRecord = (record,book = undefined) => {
         const captured = {title:record.title || 'Sem título',subtitle:record.subtitle || '',body:record.body || '<p><br></p>'};
-        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, authoring_notes:HeartspaceDocsMarginNotes.toWire(record.marginNotes), is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
       };
       const syncContextKey = () => `${storageKey}:${projectContextEpoch}:${currentUser?.id || ''}`;
       const ownsCloudWorkspace = () => Boolean(currentUser?.id && currentProjectId && cloudCacheBase === (desktopMode ? `heartspace-docs-desktop-v1:${currentUser.id}:docs:${currentProjectId}` : `heartspace-docs-web-v2:${currentUser.id}:docs:${currentProjectId}`) && storageKey.startsWith(`${cloudCacheBase}:window:`));
@@ -12181,6 +12186,21 @@
           if (context !== syncContextKey() || !saved) throw new Error('A recuperação não está disponível neste contexto.');
           await downloadSyncSource(HeartspaceDocsAuthoring.fromEditor(saved),'recuperacao-projeto',context);
         }
+      });
+      marginNotes = HeartspaceDocsMarginNotes.mount({
+        editor,area:zoomArea,wrap:editorWrap,page:documentPage,toolbar:document.querySelector('.toolbar'),
+        state:() => {
+          const record=documents.find(item=>item.id===activeDocumentId);
+          return {scope:`${storageKey}:${projectContextEpoch}:${record?.id || ''}`,notes:record?.marginNotes || [],
+            enabled:Boolean(record && record.layout==='book' && documentViewMode==='writing' && !document.body.classList.contains('writing-clean') && documentPage.getClientRects().length),
+            editable:!desktopBlocked && !authoringStorageError && (!currentProjectId || canEditProject({capabilities:projectCapabilities}))};
+        },
+        change:(notes,scope) => {
+          const record=documents.find(item=>item.id===activeDocumentId);
+          if(!record || scope!==`${storageKey}:${projectContextEpoch}:${record.id}` || desktopBlocked || authoringStorageError || currentProjectId && !canEditProject({capabilities:projectCapabilities}))throw new Error('O documento ou sua permissão mudou. Abra as notas novamente.');
+          record.marginNotes=HeartspaceDocsMarginNotes.normalize(notes);queueSave();
+        },
+        layout:scheduleAdaptiveZoom,status:message=>statusMessage(message,'pending'),
       });
       publicationUI = HeartspaceDocsPublication.mount({
         button:document.querySelector('.publish-menu-item'),storage:HeartspaceDocsProjectStorage,

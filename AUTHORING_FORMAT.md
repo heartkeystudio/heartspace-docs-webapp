@@ -206,3 +206,12 @@ O snapshot público v2 é uma projeção estática de uma revisão conferida/apr
 com imagens distribuíveis próprias. Não substitui `.hdocs`, a fonte colaborativa
 ou a exportação interativa. Não contém referências privadas de autoria. Contrato
 e limites: `PUBLICATION_TRANSPORT.md`.
+
+## Notas autorais na margem
+
+`documents[].editorial.marginNotes` é um campo opcional aditivo do esquema 1.
+Fontes anteriores sem esse campo equivalem a uma lista vazia. Cada nota contém
+ID, texto, cor, estado resolvido, margem, afastamento, altura, data e uma ligação
+opcional por citação/contexto. O transporte de edição usa `authoring_notes` v1.
+As notas pertencem à fonte, não ao HTML de leitura ou ao runtime exportado.
+Ver `MARGIN_NOTES.md` para formato, uso e limites da ligação ao texto.
