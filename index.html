@@ -1166,8 +1166,8 @@
     .actions-menu-popover { max-height:calc(100dvh - var(--topbar-height) - 20px); overflow:auto; }
     .work-area-utilities,#work-area-story-actions { display:grid; width:100%; gap:2px; }
     .work-area-utilities #work-area-split[aria-pressed="true"] { background:#ffffff0c; color:#ebebeb; }
-    /* Keep both outside annotations and the paper inside the scrollable footprint. */
-    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max(calc(var(--editor-viewport-width,0px) / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-left-gutter,var(--book-gutter)) + var(--book-right-gutter,var(--book-gutter)))); min-width:0; max-width:none; margin-inline:0; padding-inline-start:var(--book-left-gutter,var(--book-gutter)); padding-inline-end:var(--book-right-gutter,var(--book-gutter)); }
+    /* Center the paper with symmetric gutters; notes only use the space left over. */
+    .editor-wrap:not(.is-canvas) { --book-gutter:64px; width:max(calc(var(--editor-viewport-width,0px) / var(--document-zoom,1)),calc(var(--book-page-width,794px) + var(--book-gutter) * 2)); min-width:0; max-width:none; margin-inline:0; padding-inline:var(--book-gutter); }
     @media(max-width:1200px) {
       .topbar-content { grid-template-columns:minmax(0,1fr) auto auto; gap:10px; padding-inline:12px; }
       .topbar-left .crumb:not(:last-child) { display:none; }
@@ -2967,14 +2967,13 @@
         if (autoFitZoom && documentPage.dataset.layout === 'book') {
           const paperWidth = parseFloat(documentPage.style.getPropertyValue('--book-page-width')) || 794;
           const gutter = parseFloat(getComputedStyle(editorWrap).getPropertyValue('--book-gutter')) || 64;
-          const notesSpace = marginNotes?.space() || {left:0,right:0};
-          const context = [zoomArea.offsetWidth,zoomArea.offsetHeight,activeDocumentId,document.body.dataset.workArea,requestedZoom,paperWidth,gutter,notesSpace.left,notesSpace.right].join(':');
+          const context = [zoomArea.offsetWidth,zoomArea.offsetHeight,activeDocumentId,document.body.dataset.workArea,requestedZoom,paperWidth,gutter].join(':');
           // A scrollbar can disappear because fitting reduced the page height. Do not
           // grow the zoom again for that reason: it would immediately bring it back.
           // Real editor resizes, document/task changes and manual zoom reset the limit.
           if (fitViewport?.context !== context) fitViewport = {context,width:viewportWidth};
           else fitViewport.width = Math.min(fitViewport.width,viewportWidth);
-          const available = Math.max(0,fitViewport.width - 8 - notesSpace.left - notesSpace.right);
+          const available = Math.max(0,fitViewport.width - 8);
           effective = Math.max(10,Math.min(requestedZoom,Math.floor(available / (paperWidth + gutter * 2) * 100)));
         }
         applyEffectiveZoom(effective,autoFitZoom && effective < requestedZoom);
@@ -12200,7 +12199,7 @@
           if(!record || scope!==`${storageKey}:${projectContextEpoch}:${record.id}` || desktopBlocked || authoringStorageError || currentProjectId && !canEditProject({capabilities:projectCapabilities}))throw new Error('O documento ou sua permissão mudou. Abra as notas novamente.');
           record.marginNotes=HeartspaceDocsMarginNotes.normalize(notes);queueSave();
         },
-        layout:scheduleAdaptiveZoom,status:message=>statusMessage(message,'pending'),
+        status:message=>statusMessage(message,'pending'),
       });
       publicationUI = HeartspaceDocsPublication.mount({
         button:document.querySelector('.publish-menu-item'),storage:HeartspaceDocsProjectStorage,

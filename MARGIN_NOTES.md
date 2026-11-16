@@ -9,8 +9,13 @@ capítulo. Para ligar uma seta, selecione um trecho do corpo do documento e use
 - Há quatro cores, texto, resolver/reabrir e exclusão com desfazer da última nota.
 - O menu lista todas as notas do capítulo para encontrá-las mesmo longe da parte
   visível. Notas resolvidas podem ser mostradas novamente.
+- As notas começam recolhidas em pequenos marcadores numerados. Clique para abrir
+  e use **Recolher nota** no cartão, ou **Notas → Recolher todas**. Uma nova nota
+  abre para digitação. A abertura é uma preferência da sessão, sem alterar a fonte
+  compartilhada; ao alternar capítulos, a sessão lembra os cartões abertos.
 - **Vincular seleção**, **Soltar seta** e **Ir ao trecho** permitem rever a ligação.
-  As setas seguem a geometria atual do texto sem inserir marcações na história.
+  As setas acompanham a altura do trecho e terminam na borda da folha, sem
+  atravessar o manuscrito nem inserir marcações na história.
 
 ## Fonte, salvamento e circulação
 
@@ -38,12 +43,20 @@ disponível para a escrita em layout livro.
 ## Posicionamento e zoom
 
 A nota usa margem, afastamento horizontal e altura em coordenadas da folha.
-A altura acompanha o zoom; o cartão conserva tamanho legível. O espaço lateral
-reservado considera apenas as margens que contêm notas visíveis. O Auto considera
-esse espaço, e o zoom manual mantém a escolha do usuário. Ocultar/resolver as
-notas libera o espaço. Com os trilhos narrativos ativos, há um intervalo maior à
-direita para não cobrir seus controles. Em áreas muito estreitas ou com notas
-muito distantes, a rolagem continua necessária para alcançar o conteúdo real.
+A altura acompanha o zoom; o cartão conserva tamanho legível. A folha fica
+centralizada em margens simétricas. As notas não entram no cálculo do Auto nem
+reservam largura, alteram o zoom ou aumentam a área de rolagem do documento.
+Os cartões abertos adaptam a largura ao espaço lateral disponível (180–220 px);
+o afastamento salvo é limitado visualmente ao que cabe nessa margem.
+Com os trilhos narrativos ativos, há um intervalo maior à direita para não cobrir
+seus controles. Sem largura para o cartão, resta um marcador de 26 px; clicar
+abre um editor flutuante temporário, que pode ser recolhido ou fechado com Escape
+ou ao voltar a escrever. Sem espaço nem para o marcador, a nota continua acessível
+pelo menu **Notas**. Não há deslocamento da folha para acomodar essas situações.
+As setas aparecem apenas para notas abertas, marcadores sob o ponteiro ou com
+foco, e permanecem fora da folha. A camada de notas é recortada à área visível do
+editor para não criar rolagem adicional. Marcadores próximos são separados
+verticalmente na exibição, sem mudar as posições salvas.
 
 Uma nota com ligação usa citação, contexto anterior/posterior, posição original e
 um identificador leve do texto para distinguir repetições enquanto ele não muda.
@@ -53,9 +66,9 @@ Se a citação não for encontrada ou não puder ser diferenciada, a nota perman
 com aviso para vincular novamente. Não há reconstrução semântica de trechos
 reescritos nem vínculo obrigatório a números físicos de página.
 
-O posicionamento dos cartões é manual; esta versão não reorganiza notas que o
-autor sobrepôs. Outros painéis flutuantes, como a estrutura do documento, continuam
-sob controle do usuário e podem disputar espaço lateral.
+O posicionamento dos cartões abertos é manual; esta versão não reorganiza cartões
+que o autor sobrepôs. Outros painéis flutuantes, como a estrutura do documento,
+continuam sob controle do usuário e podem disputar espaço lateral.
 
 Limites de formato: 200 notas por documento, 4.000 caracteres por nota, seleção de
 até 800 caracteres, contexto de 40 caracteres de cada lado. São limites de
