@@ -29,6 +29,8 @@
       .replace('src="sequence-map.js"', `src="${rootPrefix}sequence-map.js"`)
       .replace('src="story-planning.js"', `src="${rootPrefix}story-planning.js"`)
       .replace('src="margin-notes.js"', `src="${rootPrefix}margin-notes.js"`)
+      .replace('src="book-pagination.js"', `src="${rootPrefix}book-pagination.js"`)
+      .replace('src="book-typography.js"', `src="${rootPrefix}book-typography.js"`)
       .replace('src="authoring-project.js"', `src="${rootPrefix}authoring-project.js"`)
       .replace('src="sync-state.js"', `src="${rootPrefix}sync-state.js"`)
       .replace('src="sync-review.js"', `src="${rootPrefix}sync-review.js"`)

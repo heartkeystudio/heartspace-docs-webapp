@@ -71,6 +71,12 @@ utilizado pelo editor. Não há uma segunda cópia de texto para mapa, leitura,
 tradução ou cena. `narrative.sequences` conserva as apresentações e os IDs das
 sequências; as traduções ficam em `narrative.localization`.
 
+A paginação por linhas é uma projeção do editor: fragmentos visuais de um
+parágrafo são reunidos antes de salvar ou exportar. Envoltórios de folha,
+marcadores `data-book-fragment`/`data-book-continuation` e ajustes temporários de
+altura não pertencem ao HTML autoral. Um parágrafo que ocupa várias folhas
+continua sendo um único parágrafo na fonte, inclusive para as traduções.
+
 `documents[].typography.introSpacing` é opcional: `null` ou ausente preserva o
 espaçamento padrão; um número de 0 a 200 define a distância, em pixels sem zoom,
 entre o cabeçalho (título/subtítulo) e o primeiro bloco do texto. O controle fica
@@ -225,3 +231,13 @@ ID, texto, cor, estado resolvido, margem, afastamento, altura, data e uma ligaç
 opcional por citação/contexto. O transporte de edição usa `authoring_notes` v1.
 As notas pertencem à fonte, não ao HTML de leitura ou ao runtime exportado.
 Ver `MARGIN_NOTES.md` para formato, uso e limites da ligação ao texto.
+
+## Estilos compartilhados e abertura de capítulos
+
+A fatia 1 do projeto gráfico acrescenta os campos opcionais `books[].bookStyle`,
+`documents[].typography.bookStyle` (avulso) e
+`documents[].typography.chapterHeading`. O estilo pertence ao livro e a abertura
+pertence ao capítulo. Número automático é calculado pela ordem, sem alterar o
+texto do título. Fonte v1 e contratos de sincronização atuais são mantidos.
+Detalhes de uso, precedência, transporte e etapas seguintes em
+[BOOK_TYPOGRAPHY.md](BOOK_TYPOGRAPHY.md).

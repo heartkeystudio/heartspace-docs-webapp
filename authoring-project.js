@@ -33,6 +33,21 @@
     }
   }
 
+  function validateBookStyle(value) {
+    if (value == null) return;
+    if (!object(value) || value.schema_version !== 1) fail('versão dos estilos do livro incompatível.');
+    const ranges={fontSize:[12,28],lineHeight:[1,2.5],paragraphSpace:[0,40],firstIndent:[0,4],headingSize:[18,64],openingSpace:[0,200],numberSize:[10,32],numberGap:[0,120],textGap:[0,200]};
+    for (const [key,[min,max]] of Object.entries(ranges)) if (value[key] !== undefined && (typeof value[key] !== 'number' || !Number.isFinite(value[key]) || value[key]<min || value[key]>max)) fail('medida do estilo do livro inválida.');
+    const enums={font:['serif','classic','sans'],headingFont:['serif','classic','sans'],align:['left','justify'],headingAlign:['left','center','right'],language:['pt-BR','pt-PT','en','es','fr','de'],numberFormat:['label','arabic','roman']};
+    for (const [key,values] of Object.entries(enums)) if (value[key] !== undefined && !values.includes(value[key])) fail('opção do estilo do livro inválida.');
+    for (const key of ['enabled','skipFirstIndent','hyphenate','smallCaps']) if (value[key] !== undefined && typeof value[key] !== 'boolean') fail('opção do estilo do livro inválida.');
+    if (value.numberLabel !== undefined && (typeof value.numberLabel !== 'string' || value.numberLabel.length>40)) fail('nome da numeração inválido.');
+  }
+  function validateChapterHeading(value) {
+    if (value == null) return;
+    if (!object(value) || value.schema_version !== 1 || typeof value.enabled !== 'boolean' || value.alignment != null && !['left','center','right','justify'].includes(value.alignment) || !['auto','custom','none'].includes(value.numbering) || !Number.isInteger(value.number) || value.number<1 || value.number>9999) fail('abertura do capítulo inválida.');
+  }
+
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
@@ -44,6 +59,7 @@
       if (!object(book) || !id(book.id) || books.has(book.id) || typeof book.name !== 'string' || !['book','board'].includes(book.kind)) fail('livro/prancheta inválido ou com ID repetido.');
       if (!object(book.planning) || !Array.isArray(book.preservedChapterPlans) || !Array.isArray(book.migratedChapterIds)) fail('planejamento de livro inválido.');
       if (typeof book.updatedAt !== 'string' || book.migratedChapterIds.some(value => !id(value)) || book.preservedChapterPlans.some(value => !object(value) || !id(value.documentId) || typeof value.title !== 'string' || !object(value.plan))) fail('fontes preservadas do planejamento inválidas.');
+      validateBookStyle(book.bookStyle);
       books.set(book.id, book);
     }
     for (const document of source.documents) {
@@ -59,6 +75,7 @@
       if (!['a4','letter','a5'].includes(document.page.size) || !['portrait','landscape'].includes(document.page.orientation) || !['narrow','normal','wide'].includes(document.page.margin)) fail('configuração de página inválida.');
       if (![document.typography.titleAlign,document.typography.subtitleAlign].every(value => ['left','center','right','justify'].includes(value))) fail('alinhamento de documento inválido.');
       if (document.typography.introSpacing != null && (typeof document.typography.introSpacing !== 'number' || !Number.isFinite(document.typography.introSpacing) || document.typography.introSpacing < 0 || document.typography.introSpacing > 200)) fail('distância até o texto inválida.');
+      validateBookStyle(document.typography.bookStyle); validateChapterHeading(document.typography.chapterHeading);
       validateMarginNotes(document.editorial.marginNotes);
       if (!['draft','production','final'].includes(document.editorial.status) || !Array.isArray(document.editorial.tags) || document.editorial.tags.some(value => typeof value !== 'string') || typeof document.editorial.notebook !== 'boolean') fail('estado editorial inválido.');
       if (![document.editorial.archivedAt,document.editorial.trashedAt,document.editorial.trashedBy,document.updatedAt].every(value => typeof value === 'string') || !Number.isFinite(document.order)) fail('metadados editoriais inválidos.');
@@ -88,7 +105,7 @@
       folders.set(record.folderId, candidates[0]?.collection || {id:record.folderId, name:record.folderName || 'Livro', layout:record.layout});
     }
     const books = [...folders.values()].map(folder => ({
-      id:folder.id, name:string(folder.name) || 'Livro', kind:folder.layout === 'canvas' ? 'board' : 'book',
+      id:folder.id, name:string(folder.name) || 'Livro', kind:folder.layout === 'canvas' ? 'board' : 'book',bookStyle:folder.bookStyle == null ? null : data(folder.bookStyle),
       planning:data(folder.storyPlanning), preservedChapterPlans:list(folder.legacyPlans).map(value => ({documentId:string(value?.documentId),title:string(value?.title) || 'Capítulo',plan:data(value?.plan)})), migratedChapterIds:list(folder.migratedDocuments), updatedAt:string(folder.updatedAt)
     }));
     const documents = (state.documents || []).map(record => {
@@ -102,7 +119,7 @@
         legacyPlanning:data(record.storyPlanning),
         narrative:{entrySequenceId:string(record.narrativeEventId), sequences:list(record.narrativeSequences).map((sequence,index) => ({id:string(sequence?.id || sequence?.event_id),title:string(sequence?.title) || `Sequência ${index + 1}`,presentation:data(sequence?.presentation || sequence?.preview || sequence?.player)})), readingProfile:['script','game'].includes(record.narrativeProfile) ? 'script' : 'prose', localization:data(record.localization)},
         page:{layout:record.layout === 'canvas' ? 'canvas' : 'book', size:string(record.paperSize) || 'a4', orientation:string(record.pageOrientation) || 'portrait', margin:string(record.pageMargin) || 'normal'},
-        typography:{introSpacing:record.introSpacing ?? null,titleAlign:string(record.titleAlign) || 'left', subtitleAlign:string(record.subtitleAlign) || 'left'},
+        typography:{bookStyle:record.bookStyle == null ? null : data(record.bookStyle),chapterHeading:record.chapterHeading == null ? null : data(record.chapterHeading),introSpacing:record.introSpacing ?? null,titleAlign:string(record.titleAlign) || 'left', subtitleAlign:string(record.subtitleAlign) || 'left'},
         appearance:{ambience:data(record.ambience)},
         editorial:{marginNotes:list(record.marginNotes),status:string(record.status) || 'draft', tags:list(record.tags), notebook:record.isNotebook === true, archivedAt:string(record.archivedAt), trashedAt:string(record.trashedAt), trashedBy:string(record.trashedBy)},
         order:Number.isFinite(record.sortOrder) ? record.sortOrder : 0, updatedAt:string(record.savedAt)
@@ -113,7 +130,7 @@
 
   function toEditor(value) {
     const source = clone(validate(value));
-    const libraryFolders = source.books.map(book => ({id:book.id, name:book.name, layout:book.kind === 'board' ? 'canvas' : 'book', updatedAt:book.updatedAt, storyPlanning:book.planning, legacyPlans:book.preservedChapterPlans, migratedDocuments:book.migratedChapterIds}));
+    const libraryFolders = source.books.map(book => ({id:book.id, name:book.name, layout:book.kind === 'board' ? 'canvas' : 'book', bookStyle:book.bookStyle ?? null, updatedAt:book.updatedAt, storyPlanning:book.planning, legacyPlans:book.preservedChapterPlans, migratedDocuments:book.migratedChapterIds}));
     const folders = new Map(libraryFolders.map(folder => [folder.id, folder]));
     const documents = source.documents.map(document => ({
       id:document.id, folderId:document.bookId || '', folderName:folders.get(document.bookId)?.name || '', collection:null,
@@ -121,7 +138,7 @@
       storyPlanning:document.legacyPlanning, narrativeEventId:document.narrative.entrySequenceId, narrativeSequences:document.narrative.sequences,
       narrativeProfile:document.narrative.readingProfile, localization:document.narrative.localization,
       layout:document.page.layout, paperSize:document.page.size, pageOrientation:document.page.orientation, pageMargin:document.page.margin,
-      introSpacing:document.typography.introSpacing ?? null, titleAlign:document.typography.titleAlign, subtitleAlign:document.typography.subtitleAlign, ambience:document.appearance.ambience,
+      bookStyle:document.typography.bookStyle ?? null, chapterHeading:document.typography.chapterHeading ?? null, introSpacing:document.typography.introSpacing ?? null, titleAlign:document.typography.titleAlign, subtitleAlign:document.typography.subtitleAlign, ambience:document.appearance.ambience,
       marginNotes:list(document.editorial.marginNotes), status:document.editorial.status, tags:document.editorial.tags, archivedAt:document.editorial.archivedAt, trashedAt:document.editorial.trashedAt, trashedBy:document.editorial.trashedBy,
       sortOrder:document.order, savedAt:document.updatedAt
     }));

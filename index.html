@@ -1721,13 +1721,14 @@
         <button class="tool" type="button" data-command="bold" title="Negrito (Ctrl+B)" aria-label="Negrito" aria-keyshortcuts="Control+B Meta+B"><b>B</b></button><button class="tool" type="button" data-command="italic" title="Itálico (Ctrl+I)" aria-label="Itálico" aria-keyshortcuts="Control+I Meta+I"><i>I</i></button><button class="tool" type="button" data-command="formatBlock" data-value="h2" title="Título de seção">Títulos</button><span class="tool-separator"></span>
         <button class="tool icon-only" type="button" data-command="justifyLeft" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">⇤</button><button class="tool icon-only" type="button" data-command="justifyCenter" title="Centralizar" aria-label="Centralizar">↔</button><button class="tool icon-only" type="button" data-command="justifyRight" title="Alinhar à direita" aria-label="Alinhar à direita">⇥</button><button class="tool icon-only" type="button" data-command="justifyFull" title="Justificar" aria-label="Justificar">☷</button><select class="document-view-select block-margin-select" id="block-margin" aria-label="Margem do trecho" title="Aplicar margem ao trecho selecionado"><option value="none">Sem margem</option><option value="narrow">Margem estreita</option><option value="medium">Margem média</option><option value="wide">Margem larga</option></select><span class="tool-separator"></span>
         <details class="toolbar-menu" id="toolbar-lists"><summary class="tool">Listas <span aria-hidden="true">⌄</span></summary><div aria-label="Tipos de lista"><button type="button" data-command="insertUnorderedList">Com marcadores</button><button type="button" data-command="insertOrderedList">Numerada</button><button type="button" data-toolbar-kind="tasks">Lista de tarefas</button></div></details><details class="toolbar-menu" id="toolbar-callouts"><summary class="tool">Callouts <span aria-hidden="true">⌄</span></summary><div aria-label="Callouts e blocos de destaque"><button type="button" data-command="formatBlock" data-value="pre">Bloco de código</button><button type="button" data-command="formatBlock" data-value="blockquote">Citação</button><button type="button" data-toolbar-kind="callout" data-value="callout_info">Informação</button><button type="button" data-toolbar-kind="callout" data-value="callout_warning">Atenção</button><button type="button" data-toolbar-kind="callout" data-value="callout_idea">Ideia</button><button type="button" data-toolbar-kind="callout" data-value="callout_decision">Decisão</button><button type="button" data-toolbar-kind="callout" data-value="callout_open">Em aberto</button><button type="button" data-toolbar-kind="callout" data-value="callout_review">Revisão</button><button type="button" data-toolbar-kind="callout" data-value="callout_risk">Risco</button><button type="button" data-toolbar-kind="callout" data-value="callout_reference">Referência</button></div></details><span class="tool-separator"></span>
-        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label><label>Distância até o texto (px)<input id="intro-spacing" type="number" min="0" max="200" step="1" placeholder="Padrão" aria-label="Distância entre o título ou subtítulo e o início do texto, em pixels"></label><button type="button" class="page-settings-save" id="intro-spacing-reset">Restaurar distância padrão</button></div><section class="page-settings-group" id="ambience-settings"></section><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><button class="page-settings-save" id="edit-subtitle" type="button">Adicionar subtítulo (opcional)</button><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
+        <button class="tool icon-only icon-tooltip" type="button" id="insert-diagram" aria-label="Inserir diagrama" data-tooltip="Diagrama"><img src="./assets/docs/add_flowchart.svg" alt=""></button><div class="toolbar-spacer"></div><div class="document-view-controls" role="group" aria-label="Modo de visualização"><select class="document-view-select" id="document-view-mode" aria-label="Modo do documento" title="Alternar entre escrita e leitura"><option value="writing">Escrita</option><option value="reading">Leitura</option></select></div><div class="page-settings"><button class="tool icon-only icon-tooltip" type="button" id="page-settings-toggle" aria-expanded="false" aria-controls="page-settings-popover" aria-label="Configurações da página" data-tooltip="Página"><img src="./assets/docs/settings.svg" alt=""></button><section class="page-settings-popover" id="page-settings-popover" aria-label="Configurações da página" hidden><h2>Configurações da página</h2><div class="page-settings-group" id="paper-settings-group"><h3 id="page-spacing-title">Folha</h3><label data-book-setting>Tamanho<select id="paper-size"><option value="a4">A4</option><option value="letter">Carta</option><option value="a5">A5</option></select></label><label data-book-setting>Orientação<select id="paper-orientation"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label><label>Margens<select id="page-margin"><option value="narrow">Estreitas</option><option value="normal">Normais</option><option value="wide">Largas</option></select></label><label>Distância até o texto (px)<input id="intro-spacing" type="number" min="0" max="200" step="1" placeholder="Padrão" aria-label="Distância entre o título ou subtítulo e o início do texto, em pixels"></label><button type="button" class="page-settings-save" id="intro-spacing-reset">Restaurar distância padrão</button></div><section class="page-settings-group" id="book-typography-settings"></section><section class="page-settings-group" id="ambience-settings"></section><form class="page-settings-group" id="metadata-form"><h3>Documento</h3><button class="page-settings-save" id="edit-subtitle" type="button">Adicionar subtítulo (opcional)</button><label>Modelo da página<select id="document-layout"><option value="book">Livro</option><option value="canvas">Prancheta</option></select></label><label>Status<select id="metadata-status"><option value="draft">Rascunho</option><option value="production">Em produção</option><option value="final">Finalizado</option></select></label><label>Formato de leitura<select id="narrative-profile"><option value="prose">Prosa</option><option value="script">Roteiro</option></select></label><label>Tags<div class="tag-editor" id="metadata-tag-editor" role="group" aria-label="Tags do documento"><div class="tag-chips" id="metadata-tag-chips"></div><input class="tag-entry" id="metadata-tag-entry" type="text" list="known-tags" placeholder="Digite uma tag…" autocomplete="off" aria-label="Adicionar tag"></div><input id="metadata-tags" type="hidden"><datalist id="known-tags"></datalist><span class="metadata-tags-help">Use vírgula ou Enter para criar uma etiqueta.</span></label><button class="page-settings-save" type="submit">Aplicar configurações</button></form></section></div><button class="tool icon-only icon-tooltip" type="button" id="outline-toggle" aria-label="Mostrar estrutura" aria-controls="document-outline" aria-expanded="false" data-tooltip="Estrutura"><img src="./assets/docs/list.svg" alt=""></button>
       </nav>
       <div class="slash-menu" id="slash-menu" role="listbox" aria-label="Inserir bloco" aria-activedescendant="" aria-hidden="true"><div class="slash-menu-heading">Inserir bloco</div><div id="slash-options"></div></div>
       <section class="editor-area" aria-label="Área do documento">
         <div class="conflict-banner" id="conflict-banner" role="alert" hidden><div class="conflict-copy"><strong>Outra pessoa salvou uma versão mais recente.</strong><span>Seu rascunho está protegido neste navegador. Escolha como continuar.</span></div><div class="conflict-actions"><button type="button" id="conflict-keep-copy" class="conflict-primary">Criar cópia na equipe</button><button type="button" id="conflict-load-remote">Usar versão da equipe</button></div></div>
         <div class="editor-wrap">
           <article class="page">
+            <div class="chapter-heading-number" id="chapter-heading-number" hidden></div>
             <h1 class="doc-title" id="doc-title" contenteditable="true" spellcheck="false" data-align="left">Guia de produção</h1>
             <textarea class="doc-subtitle" id="doc-subtitle" rows="1" aria-label="Subtítulo do documento" placeholder="Subtítulo (opcional)…">Um espaço para organizar ideias, decisões e o trabalho que vem pela frente.</textarea>
             <div class="content" id="editor" contenteditable="true" role="textbox" aria-label="Conteúdo do documento. Digite barra para abrir o menu de blocos." aria-multiline="true" aria-haspopup="listbox" aria-expanded="false" aria-controls="slash-menu">
@@ -1862,6 +1863,8 @@
   <script src="sequence-map.js"></script>
   <script src="story-planning.js"></script>
   <script src="margin-notes.js"></script>
+  <script src="book-pagination.js"></script>
+  <script src="book-typography.js"></script>
   <script src="authoring-project.js"></script>
   <script src="sync-state.js"></script>
   <script src="sync-review.js"></script>
@@ -1873,6 +1876,7 @@
   <script src="local-projects.js"></script>
   <script>
     (async () => {
+      const paginationStyles = document.createElement('style'); paginationStyles.textContent=HeartspaceDocsBookPagination.styles;document.head.append(paginationStyles);
       const narrativeMediaStyles = document.createElement('style');
       narrativeMediaStyles.textContent = HeartspaceNarrativeMedia.styles;
       document.head.append(narrativeMediaStyles);
@@ -2147,7 +2151,7 @@
       const trackedBook = id => bookTransport ? bookTransport.tracked(id) : bookSyncState.entries.some(item => item.id === id);
       let syncRecovery = [];
       let registrySending = false;
-      let syncReview = null, publicationUI = null, marginNotes = null;
+      let syncReview = null, publicationUI = null, marginNotes = null, bookTypography = null;
       let legacyProjectCacheKey = '';
       let cloudWindowId = '';
       let cloudWindowClaim = null;
@@ -2213,10 +2217,10 @@
       };
       const normalizeNarrativePresentation = HeartspaceNarrativeMedia.presentation;
       const normalizeIntroSpacing = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 200 ? value : null;
-      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], marginNotes:HeartspaceDocsMarginNotes.normalize(data.marginNotes), storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', introSpacing:normalizeIntroSpacing(data.introSpacing), titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
+      const makeRecord = (data = {}) => ({ ...HeartspaceDocsSync.recordState(data), id: data.id || makeId(), remoteId: data.remoteId || '', projectId: data.projectId || '', remoteUpdatedAt: data.remoteUpdatedAt || '', remoteConflict: Boolean(data.remoteConflict), remoteVersion: data.remoteVersion || null, lastEditor: data.lastEditor || '', lastEditedAt: data.lastEditedAt || '', dirty: Boolean(data.dirty), editRevision: Number(data.editRevision) || 0, trashedAt: data.trashedAt || '', trashedBy: data.trashedBy || '', archivedAt: data.archivedAt || '', favorite: Boolean(data.favorite), folderId: typeof data.folderId === 'string' ? data.folderId : '', folderName: typeof data.folderName === 'string' ? data.folderName.trim() : '', collection:data.collection ? normalizeFolder(data.collection) : null, isNotebook: Boolean(data.isNotebook), status: ['draft','production','final'].includes(data.status) ? data.status : 'draft', tags: Array.isArray(data.tags) ? [...new Set(data.tags.map(tag => String(tag).trim().toLocaleLowerCase('pt-BR')).filter(Boolean))] : [], marginNotes:HeartspaceDocsMarginNotes.normalize(data.marginNotes), storyPlanning: HeartspaceStoryPlanning.normalize(data.storyPlanning), localization: normalizeLocalizationData(data.localization), narrativeEventId: typeof data.narrativeEventId === 'string' ? data.narrativeEventId.trim() : '', narrativeSequences: Array.isArray(data.narrativeSequences) ? data.narrativeSequences.map((sequence, index) => ({ id:String(sequence?.id || sequence?.event_id || '').trim(), title:String(sequence?.title || `Sequência ${index + 1}`).trim() || `Sequência ${index + 1}`, presentation:normalizeNarrativePresentation(sequence?.presentation || sequence?.preview || sequence?.player) })).filter(sequence => sequence.id) : [], activeNarrativeSequenceId: typeof data.activeNarrativeSequenceId === 'string' ? data.activeNarrativeSequenceId.trim() : '', narrativeProfile: data.narrativeProfile === 'game' ? 'script' : ['prose','script'].includes(data.narrativeProfile) ? data.narrativeProfile : 'prose', introSpacing:normalizeIntroSpacing(data.introSpacing), bookStyle:HeartspaceDocsBookTypography.normalizeStyle(data.bookStyle), chapterHeading:HeartspaceDocsBookTypography.normalizeChapter(data.chapterHeading), titleAlign: ['left','center','right','justify'].includes(data.titleAlign) ? data.titleAlign : 'left', subtitleAlign: ['left','center','right','justify'].includes(data.subtitleAlign) ? data.subtitleAlign : 'left', layout: data.layout === 'canvas' ? 'canvas' : 'book', paperSize: ['a4', 'letter', 'a5'].includes(data.paperSize) ? data.paperSize : 'a4', pageOrientation: data.pageOrientation === 'landscape' ? data.pageOrientation : 'portrait', pageMargin: ['narrow', 'normal', 'wide'].includes(data.pageMargin) ? data.pageMargin : 'normal', ambience:HeartspaceDocumentAmbience.normalize(data.ambience), sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0, title: data.title || 'Sem título', subtitle: data.subtitle || '', body: typeof data.body === 'string' ? data.body : '<p><br></p>', savedAt: data.savedAt || new Date().toISOString() });
       const normalizeFolder = folder => ({
         id:String(folder?.id || `folder-${makeId()}`), name:String(folder?.name || 'Novo livro').trim() || 'Novo livro',
-        layout:folder?.layout === 'canvas' ? 'canvas' : 'book', expanded:folder?.expanded !== false,
+        bookStyle:HeartspaceDocsBookTypography.normalizeStyle(folder?.bookStyle), layout:folder?.layout === 'canvas' ? 'canvas' : 'book', expanded:folder?.expanded !== false,
         updatedAt:typeof folder?.updatedAt === 'string' ? folder.updatedAt : '',
         storyPlanning:HeartspaceStoryPlanning.normalize(folder?.storyPlanning),
         migratedDocuments:Array.isArray(folder?.migratedDocuments) ? folder.migratedDocuments.filter(id => typeof id === 'string') : [],
@@ -2373,7 +2377,7 @@
           if (!recent) button.title = `${record.title || 'Sem título'} · ${canReorder ? 'Arraste para reorganizar ou mencionar' : 'Arraste para mencionar'}`;
           if (!recent) button.setAttribute('aria-haspopup', 'menu');
           button.innerHTML = `<span class="doc-icon"><img src="./assets/docs/paper.svg" alt=""></span>`;
-          const label = document.createElement('span'); label.textContent = record.title || 'Sem título'; button.append(label);
+          const label = document.createElement('span'); const number=HeartspaceDocsBookTypography.chapterNumber(record,documents); label.textContent = number === null ? record.title || 'Sem título' : `${number} · ${record.title || 'Sem título'}`; button.append(label);
           button.addEventListener('click', () => openDocument(record.id));
           if (recent) {
             button.hidden = Boolean(query && !`${record.title} ${record.subtitle} ${record.tags.join(' ')} ${record.folderName}`.toLocaleLowerCase('pt-BR').includes(query));
@@ -2516,7 +2520,7 @@
         }));
         renderConflictBanner();
         renderDocumentActivity(documents.find(record => record.id === activeDocumentId));
-        marginNotes?.schedule();
+        marginNotes?.schedule(); bookTypography?.refresh();
       };
       let draggedDocumentId = '';
       let draggedDocumentCanReorder = false;
@@ -2928,7 +2932,7 @@
         subtitle.style.textAlign = ['left','center','right','justify'].includes(settings?.subtitleAlign) ? settings.subtitleAlign : 'left';
         editorWrap.classList.toggle('is-canvas', documentPage.dataset.layout === 'canvas');
         updateLayoutSettingsVisibility(documentPage.dataset.layout);
-        documentAmbience?.update(); scheduleAdaptiveZoom();
+        documentAmbience?.update(); bookTypography?.refresh(); scheduleAdaptiveZoom();
       };
       const zoomArea = document.querySelector('.editor-area');
       let requestedZoom = 100, autoFitZoom = true, fitTimer = 0;
@@ -2962,7 +2966,7 @@
       function applyEffectiveZoom(value,automatic = false) {
         const previous = Number(editorWrap.style.zoom) || 1, next = value / 100;
         renderZoom(value);
-        marginNotes?.schedule();
+        marginNotes?.schedule(); bookTypography?.refresh();
         if (Math.abs(previous - next) < .001) return;
         editorWrap.style.zoom = String(next);
         editorWrap.style.setProperty('--document-zoom',String(next));
@@ -3367,6 +3371,7 @@
         title.contentEditable = String(editable);
         subtitle.disabled = false;
         subtitle.readOnly = !editable;
+        bookTypography?.refresh();
         editor.contentEditable = String(editable);
         editor.querySelectorAll('.book-page-content').forEach(page => { page.contentEditable = String(editable); });
         editor.querySelectorAll('[contenteditable]').forEach(element => {
@@ -3403,12 +3408,6 @@
         documentPage.dataset.narrativeProfile = normalized;
         normalizeNarrativeMarkup(editor);
         scheduleBookPagination?.();
-      };
-      const pageHasReadingOverflow = page => {
-        page.classList.add('measuring-reading');
-        const overflowing = page.scrollHeight > page.clientHeight + 1;
-        page.classList.remove('measuring-reading');
-        return overflowing;
       };
       const bookAuthoringExtraForPage = page => [...page.querySelectorAll('.narrative-block[data-reading-empty="true"]')].reduce((total, block) => {
         const style = getComputedStyle(block);
@@ -3454,35 +3453,10 @@
         const top = caretVisualRect(selection)?.top;
         if (Number.isFinite(top)) anchor.editorArea.scrollTop += top - anchor.top;
       };
-      const rebuildBookPageFlow = (pages, makePage) => {
-        const flow = pages.length
-          ? pages.flatMap(page => [...page.childNodes])
-          : [...editor.childNodes];
-        if (!flow.length) flow.push(Object.assign(document.createElement('p'), { innerHTML:'<br>' }));
-        editor.replaceChildren();
-        pages.length = 0;
-        let page = makePage(0);
-        flow.forEach(block => {
-          page.append(block);
-          if (block.nodeType === Node.ELEMENT_NODE && block.matches('[data-page-break="true"]')) {
-            page = makePage(pages.length);
-            return;
-          }
-          if (pageHasReadingOverflow(page) && page.childNodes.length > 1) {
-            block.remove();
-            page = makePage(pages.length);
-            page.append(block);
-          }
-        });
-        if (!page.childNodes.length) page.append(Object.assign(document.createElement('p'), { innerHTML:'<br>' }));
-        return pages;
-      };
+      const rebuildBookPageFlow = (pages, makePage) => HeartspaceDocsBookPagination.reflow({editor,pages,makePage});
       const paginateBookForMobile = () => {
         const selection = window.getSelection();
         const scrollAnchor = captureCaretScrollAnchor(selection);
-        const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode)
-          ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset }
-          : null;
         let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
         const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
@@ -3513,38 +3487,22 @@
           pages.push(page);
           return page;
         };
-        const restoreCaret = () => {
-          if (!savedSelection?.anchorNode.isConnected || !savedSelection.focusNode?.isConnected) return;
-          try {
-            selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset);
-          } catch (_) {
-            const offsetFor = (node, offset) => Math.min(offset, node.nodeType === Node.TEXT_NODE ? node.textContent.length : node.childNodes.length);
-            try {
-              const range = document.createRange();
-              range.setStart(savedSelection.anchorNode, offsetFor(savedSelection.anchorNode, savedSelection.anchorOffset));
-              range.collapse(true);
-              selection.removeAllRanges();
-              selection.addRange(range);
-            } catch (_) { /* o navegador pode substituir o nó durante o Enter */ }
-          }
-          restoreCaretScrollAnchor(scrollAnchor, selection);
-          keepCaretAboveZoom(selection);
-        };
         editor.classList.add('book-paginated');
         pages = rebuildBookPageFlow(pages, makePage);
         setPageHeight();
         applyBookAuthoringExpansion(pages);
         keepNarrativeControlsInsidePages(pages, makePage);
         applyBookAuthoringExpansion(pages);
-        restoreCaret();
+        restoreCaretScrollAnchor(scrollAnchor, selection); keepCaretAboveZoom(selection);
         refreshChapterNavigation(); documentAmbience?.schedule();
       };
       const paginateBook = () => {
-        if (documentPage.hidden) return;
+        if(HeartspaceDocsBookPagination.composing(editor))return;
+        if (documentPage.hidden) { paginatePreview(); return; }
         if (document.body.dataset.workArea && !['writing','library'].includes(document.body.dataset.workArea) && !document.body.classList.contains('work-area-split')) return;
         const existingPages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         if (documentPage.dataset.layout !== 'book') {
-          if (existingPages.length) editor.replaceChildren(...[...editor.childNodes].flatMap(node => node.nodeType === Node.ELEMENT_NODE && node.classList.contains('book-page-content') ? [...node.childNodes] : [node]));
+          if (existingPages.length) HeartspaceDocsBookPagination.canonicalize(editor,{preserve:true});
           editor.classList.remove('book-paginated');
           documentPage.style.setProperty('--book-authoring-extra', '0px');
           refreshChapterNavigation(); documentAmbience?.schedule();
@@ -3557,7 +3515,6 @@
         documentPage.style.zoom = '';
         const selection = window.getSelection();
         const scrollAnchor = captureCaretScrollAnchor(selection);
-        const savedSelection = selection?.rangeCount && editor.contains(selection.anchorNode) ? { anchorNode: selection.anchorNode, anchorOffset: selection.anchorOffset, focusNode: selection.focusNode, focusOffset: selection.focusOffset } : null;
         let pages = [...editor.children].filter(child => child.classList.contains('book-page-content'));
         const paper = paperSpecs[paperSizeControl.value] || paperSpecs.a4;
         const width = paperOrientationControl.value === 'landscape' ? paper[1] : paper[0];
@@ -3590,9 +3547,6 @@
         applyBookAuthoringExpansion(pages);
         keepNarrativeControlsInsidePages(pages, makePage);
         applyBookAuthoringExpansion(pages);
-        if (savedSelection?.anchorNode.isConnected && savedSelection.focusNode?.isConnected) {
-          try { selection.setBaseAndExtent(savedSelection.anchorNode, savedSelection.anchorOffset, savedSelection.focusNode, savedSelection.focusOffset); } catch (_) { /* keep the browser's nearest caret if offsets shifted */ }
-        }
         restoreCaretScrollAnchor(scrollAnchor, selection);
         keepCaretAboveZoom(selection);
         refreshChapterNavigation(); documentAmbience?.schedule();
@@ -3614,6 +3568,7 @@
         queueMicrotask(() => hydrateMermaidBlocks(editor));
       };
       let paginationFrame = 0;
+      let paginatePreview = () => {};
       const scheduleBookPagination = () => {
         if (documentPage.dataset.layout !== 'book') return;
         cancelAnimationFrame(paginationFrame);
@@ -3668,7 +3623,7 @@
       document.querySelector('.workspace').addEventListener('transitionend',positionPageSettings);
       pageSettingsToggle.addEventListener('click', () => {
         const open = pageSettingsPopover.hidden;
-        if (open) { hydrateMetadataSettings(); documentAmbience?.update(); }
+        if (open) { hydrateMetadataSettings(); documentAmbience?.update(); bookTypography?.refresh(true); }
         pageSettingsPopover.hidden = !open;
         pageSettingsToggle.setAttribute('aria-expanded', String(open));
         if (open) positionPageSettings();
@@ -3791,7 +3746,7 @@
       paginateBook();
       const readingTextContent = () => {
         const snapshot = editor.cloneNode(true);
-        snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
+        HeartspaceDocsBookPagination.canonicalize(snapshot);
         snapshot.querySelectorAll('[data-page-break="true"]').forEach(pageBreak => pageBreak.remove());
         snapshot.querySelectorAll('.authoring-decoration,.narrative-block[data-reading-empty="true"]').forEach(element => element.remove());
         snapshot.querySelectorAll('.narrative-variation-version').forEach(version => {
@@ -3807,7 +3762,7 @@
       };
       const serializeEditorBody = () => {
         const snapshot = editor.cloneNode(true);
-        snapshot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
+        HeartspaceDocsBookPagination.canonicalize(snapshot);
         snapshot.querySelectorAll('[data-writing-editable="true"]').forEach(element => {
           element.contentEditable = 'true';
           delete element.dataset.writingEditable;
@@ -3979,14 +3934,11 @@
         }
       });
       blockMarginControl.addEventListener('change', () => {
-        const range = toolbarRange?.cloneRange();
-        if (!range || !applyBlockMargin(blockMarginControl.value, range)) return;
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        toolbarRange = range.cloneRange();
-        editor.focus({ preventScroll:true });
-        queueSave();
+        const range = toolbarRange?.cloneRange();if(!range)return;
+        const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+        HeartspaceDocsBookPagination.prepare(editor);const current=selection.rangeCount?selection.getRangeAt(0).cloneRange():null;
+        const mutation=rememberNarrativeMutation();if(!current||!applyBlockMargin(blockMarginControl.value,current))return;
+        commitNarrativeMutation(mutation);toolbarRange=current;editor.focus({preventScroll:true});queueSave();scheduleBookPagination();
       });
       document.querySelectorAll('[data-toolbar-kind]').forEach(button => {
         button.addEventListener('mousedown', event => event.preventDefault());
@@ -3997,6 +3949,7 @@
             const selection = window.getSelection();
             selection.removeAllRanges(); selection.addRange(toolbarRange);
           }
+          HeartspaceDocsBookPagination.prepare(editor);
           if (button.dataset.toolbarKind === 'tasks') insertChecklist();
           else if (button.dataset.toolbarKind === 'callout') insertCallout(button.dataset.value);
           toolbarRange = null;
@@ -4019,11 +3972,14 @@
           selection.removeAllRanges();
           selection.addRange(toolbarRange);
         } else editor.focus({preventScroll:true});
+        if(!titleSelection&&!subtitleSelection)HeartspaceDocsBookPagination.prepare(editor);
+        const bookMutation=rememberNarrativeMutation();
         if (!titleSelection && !subtitleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
           document.execCommand(button.dataset.command, false, button.dataset.value || null);
         }
+        commitNarrativeMutation(bookMutation);
         toolbarRange = null;
-        queueSave();
+        scheduleBookPagination();queueSave();
         });
       });
       document.querySelector('#undo').addEventListener('click', () => { editor.focus(); if (!undoNarrativeMutation()) document.execCommand('undo'); queueSave(); });
@@ -4704,7 +4660,7 @@
         if (!element) return '';
         if (element === title) return title.textContent.trim();
         if (element === subtitle) return subtitle.value.trim();
-        const snapshot = element.cloneNode(true);
+        const snapshot = HeartspaceDocsBookPagination.logicalClone(element);
         snapshot.querySelectorAll('.narrative-block').forEach(item => item.replaceWith(document.createTextNode(`{{${item.dataset.localizationId || 'narrative'}}}`)));
         snapshot.querySelectorAll('.authoring-decoration').forEach(item => item.remove());
         if (element.matches('li')) snapshot.querySelectorAll('ul,ol').forEach(item => item.remove());
@@ -4733,7 +4689,7 @@
         append(subtitle, 'document.subtitle');
         const selector = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,figcaption,.callout-title,[data-checklist-text]';
         [...editor.querySelectorAll(selector)].forEach(element => {
-          if (element.closest('.narrative-block,.authoring-decoration,.mermaid-source')) return;
+          if (element.hasAttribute('data-book-continuation') || element.closest('.narrative-block,.authoring-decoration,.mermaid-source')) return;
           if (element.matches('li[data-checklist-item]')) return;
           if (element.matches('li,td,th,blockquote') && element.querySelector(selector)) return;
           if (!commonLocalizationText(element)) return;
@@ -4773,7 +4729,7 @@
         ];
         const selector = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,figcaption,.callout-title,[data-checklist-text]';
         [...root.querySelectorAll(selector)].forEach(element => {
-          if (element.closest('.narrative-block,.authoring-decoration,.mermaid-source')) return;
+          if (element.hasAttribute('data-book-continuation') || element.closest('.narrative-block,.authoring-decoration,.mermaid-source')) return;
           if (element.matches('li[data-checklist-item]')) return;
           if (element.matches('li,td,th,blockquote') && element.querySelector(selector)) return;
           const text = commonLocalizationText(element);
@@ -5304,6 +5260,19 @@
       };
       let localizationPreviewPage = null;
       let localizationPreviewBanner = null;
+      paginatePreview = () => {
+        const page=localizationPreviewPage,root=page?.querySelector('.content');
+        if(!root||!page.isConnected)return;
+        if(page.dataset.layout!=='book'){HeartspaceDocsBookPagination.canonicalize(root);root.classList.remove('book-paginated');return;}
+        const zoom=Number(editorWrap.style.zoom)||1,spec=paperSpecs[paperSizeControl.value]||paperSpecs.a4;
+        const width=paperOrientationControl.value==='landscape'?spec[1]:spec[0],height=paperOrientationControl.value==='landscape'?spec[0]:spec[1];
+        const sheetHeight=Math.min(height,page.getBoundingClientRect().width/zoom*(height/width));
+        const firstHeight=Math.max(240,sheetHeight-(root.getBoundingClientRect().top-page.getBoundingClientRect().top)/zoom);
+        let pages=[...root.children].filter(child=>child.classList.contains('book-page-content'));
+        root.classList.add('book-paginated');page.style.setProperty('--book-authoring-extra','0px');
+        const makePage=index=>{const leaf=document.createElement('div');leaf.className='book-page-content';leaf.contentEditable='false';leaf.setAttribute('role','group');leaf.setAttribute('aria-label',`Folha ${index+1}`);leaf.dataset.bookLogicalHeight=String(index?sheetHeight:firstHeight);leaf.style.height=`${index?sheetHeight:firstHeight}px`;root.append(leaf);pages.push(leaf);return leaf;};
+        HeartspaceDocsBookPagination.reflow({editor:root,pages,makePage});documentAmbience?.schedule();
+      };
       let localizationPreviewPreviousViewMode = 'writing';
       const isLocalizationPreviewOpen = () => document.body.classList.contains('localization-preview-active');
       const closeLocalizationPreview = () => {
@@ -5365,7 +5334,9 @@
         const entries = allLocalizableEntries();
         const translations = localization.translations[locale] || {};
         const clone = documentPage.cloneNode(true);
+        const previewEditor=clone.querySelector('.content');if(previewEditor)HeartspaceDocsBookPagination.canonicalize(previewEditor);
         clone.classList.add('localization-preview-page');
+        const translatedContent=clone.querySelector('.content');if(translatedContent)translatedContent.lang=locale;
         clone.hidden = false;
         clone.removeAttribute('id');
         clone.querySelectorAll('[id]').forEach(element => { if (!element.closest('svg')) element.removeAttribute('id'); });
@@ -5412,6 +5383,7 @@
         // Language and progress already appear in the translation toolbar.
         if (document.body.dataset.workArea !== 'translation') editorWrap.prepend(banner);
         editorWrap.append(clone);
+        paginatePreview();
         document.body.classList.add('localization-preview-active');
         localizationPreview.textContent = 'Sair da prévia';
         localizationPreview.setAttribute('aria-pressed', 'true');
@@ -8016,8 +7988,12 @@
         const templateName = customTemplate?.title || templateHeading?.textContent.trim() || '';
         templateHeading?.remove();
         const collection = libraryFolders.find(folder => folder.id === collectionId);
-        const record = makeRecord({ folderId:collection?.id || '', folderName:collection?.name || '', collection:collectionSnapshot(collection), title: templateName || (collection ? (collection.layout === 'book' ? 'Novo capítulo' : 'Nova seção') : isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, narrativeProfile: customTemplate?.narrativeProfile, introSpacing:customTemplate?.introSpacing, titleAlign: customTemplate?.titleAlign, subtitleAlign: customTemplate?.subtitleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin, ambience:customTemplate?.ambience });
-        documents.unshift(record); activeDocumentId = record.id; selectedCollectionId = record.folderId;
+        const record = makeRecord({ folderId:collection?.id || '', folderName:collection?.name || '', collection:collectionSnapshot(collection), title: templateName || (collection ? (collection.layout === 'book' ? 'Novo capítulo' : 'Nova seção') : isNotebook ? 'Anotação' : quick ? 'Anotação rápida' : 'Novo documento'), subtitle: customTemplate?.subtitle || '', projectId: currentProjectId, layout: customTemplate?.layout || layout, isNotebook, status: customTemplate?.status, tags: customTemplate?.tags, narrativeProfile: customTemplate?.narrativeProfile, bookStyle:customTemplate?.bookStyle, chapterHeading:customTemplate?.chapterHeading || (collection?.layout==='book'&&!isNotebook&&(customTemplate?.layout||layout)==='book' ? {schema_version:1,enabled:true,numbering:'auto',number:1} : null), introSpacing:customTemplate?.introSpacing, titleAlign: customTemplate?.titleAlign, subtitleAlign: customTemplate?.subtitleAlign, paperSize: customTemplate?.paperSize, pageOrientation: customTemplate?.pageOrientation, pageMargin: customTemplate?.pageMargin, ambience:customTemplate?.ambience });
+        if(collection?.layout==='book'&&!isNotebook){
+          const lastChapter=documents.map(item=>item.folderId).lastIndexOf(collection.id);
+          documents.splice(lastChapter<0?documents.length:lastChapter+1,0,record);
+        }else documents.unshift(record);
+        activeDocumentId = record.id; selectedCollectionId = record.folderId;
         updateDocumentOrderIndices();
         applyDocumentViewMode('writing');
         title.textContent = record.title; subtitle.value = record.subtitle; setEditorBody(templateContent ? templateFragment.innerHTML : '<p><br></p>', record.layout);
@@ -8182,7 +8158,7 @@
         const layout = document.querySelector('#folder-layout').value === 'canvas' ? 'canvas' : 'book';
         let folder = libraryFolders.find(item => item.id === editingFolderId);
         if (folder) { folder.name = name; folder.layout = layout; }
-        else { folder = normalizeFolder({name,layout}); libraryFolders.push(folder); }
+        else { folder = normalizeFolder({name,layout,bookStyle:layout==='book' ? HeartspaceDocsBookTypography.preset('classic') : null}); libraryFolders.push(folder); }
         persistCollectionChange(folder); selectedCollectionId = folder.id;
         persistLibrary(); renderLibrary(); folderDialog.close();
       });
@@ -8413,7 +8389,7 @@
         document.querySelector('#fast-doc').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#add-notebook').disabled = Boolean(currentProjectId && !editable);
         document.querySelector('#add-folder').disabled = Boolean(currentProjectId && !editable);
-        marginNotes?.schedule();
+        marginNotes?.schedule(); bookTypography?.refresh();
       };
       const parseRemoteContent = content => {
         if (typeof content === 'string') { try { content = JSON.parse(content); } catch (_) { content = {}; } }
@@ -8421,7 +8397,7 @@
       };
       const remoteToRecord = (row, existingId = '') => {
         const content = parseRemoteContent(row.content);
-        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, marginNotes:HeartspaceDocsMarginNotes.fromWire(content.authoring_notes), storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, introSpacing:content.page?.intro_spacing, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
+        return makeRecord({ id: existingId || (content.authoring?.schema_version === 1 && typeof content.authoring.document_id === 'string' && content.authoring.document_id.trim()) || row.id, remoteId: row.id, projectId: row.project_id, remoteUpdatedAt: row.updated_at || '', lastEditor: row.author || 'Equipe', lastEditedAt: row.updated_at || row.created_at || '', title: row.title || content.title || 'Sem título', subtitle: content.subtitle || '', body: content.format === 'heartspace-html-v1' && typeof content.body === 'string' ? HeartspaceDocsProjectFiles.sanitizeBody(content.body,document) : '<p><br></p>', isNotebook: content.is_notebook, status: content.status, tags: content.tags, marginNotes:HeartspaceDocsMarginNotes.fromWire(content.authoring_notes), storyPlanning: content.story_planning, localization: content.narrative?.localization, narrativeEventId: content.narrative?.event_id, narrativeSequences: content.narrative?.sequences, activeNarrativeSequenceId: content.narrative?.active_event_id, narrativeProfile: content.narrative?.reading_profile, bookStyle:content.appearance?.book_style, chapterHeading:content.page?.chapter_heading, introSpacing:content.page?.intro_spacing, titleAlign: content.title_align, subtitleAlign: content.subtitle_align, layout: content.layout, paperSize: content.page?.size, pageOrientation: content.page?.orientation, pageMargin: content.page?.margin, ambience:content.appearance?.ambience, collection:content.organization?.collection, folderId: content.organization?.folder_id, folderName: content.organization?.folder_name, favorite: content.organization?.favorite, archivedAt: content.organization?.archived_at || '', trashedAt: content.trash?.deleted_at || '', trashedBy: content.trash?.deleted_by || '', savedAt: row.updated_at || row.created_at || new Date().toISOString(), dirty: false });
       };
       const persistDocumentOrder = async () => {
         if (!currentProjectId || !currentAccessToken || !canEditProject({ capabilities: projectCapabilities })) return;
@@ -8638,7 +8614,7 @@
       };
       const contentForRecord = (record,book = undefined) => {
         const captured = {title:record.title || 'Sem título',subtitle:record.subtitle || '',body:record.body || '<p><br></p>'};
-        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, authoring_notes:HeartspaceDocsMarginNotes.toWire(record.marginNotes), is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin, intro_spacing:record.introSpacing }, appearance:{ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
+        return { format: 'heartspace-html-v1', authoring:{schema_version:1,document_id:record.id}, title: captured.title, subtitle: captured.subtitle, body: captured.body, authoring_notes:HeartspaceDocsMarginNotes.toWire(record.marginNotes), is_notebook: record.isNotebook, status: record.status, tags: record.tags, story_planning:HeartspaceStoryPlanning.normalize(record.storyPlanning), narrative: record.narrativeSequences?.length || record.narrativeEventId || record.narrativeProfile !== 'prose' || record.localization?.locales?.length ? { format: 'heartspace-narrative-v2', event_id: record.narrativeEventId || record.narrativeSequences?.[0]?.id || '', sequences:(record.narrativeSequences || []).map(sequence => ({ event_id:sequence.id, title:sequence.title, presentation:normalizeNarrativePresentation(sequence.presentation) })), reading_profile: record.narrativeProfile, localization:record.localization } : null, title_align: record.titleAlign, subtitle_align: record.subtitleAlign, layout: record.layout, page: { size: record.paperSize, orientation: record.pageOrientation, margin: record.pageMargin, intro_spacing:record.introSpacing, chapter_heading:HeartspaceDocsBookTypography.normalizeChapter(record.chapterHeading) }, appearance:{book_style:HeartspaceDocsBookTypography.normalizeStyle(record.bookStyle),ambience:HeartspaceDocumentAmbience.normalize(record.ambience)}, organization: { schema_version:2, collection:currentProjectId && book === undefined ? null : collectionSnapshot(book === undefined ? libraryFolders.find(folder => folder.id === record.folderId) : book), folder_id: record.folderId || '', folder_name: record.folderName || '', archived_at: record.archivedAt || '' }, trash: record.trashedAt ? { deleted_at: record.trashedAt, deleted_by: record.trashedBy || '' } : null };
       };
       const syncContextKey = () => `${storageKey}:${projectContextEpoch}:${currentUser?.id || ''}`;
       const ownsCloudWorkspace = () => Boolean(currentUser?.id && currentProjectId && cloudCacheBase === (desktopMode ? `heartspace-docs-desktop-v1:${currentUser.id}:docs:${currentProjectId}` : `heartspace-docs-web-v2:${currentUser.id}:docs:${currentProjectId}`) && storageKey.startsWith(`${cloudCacheBase}:window:`));
@@ -8662,7 +8638,7 @@
         const book = normalizeFolder(folder);
         book.migratedDocuments = [...new Set(book.migratedDocuments)];
         book.legacyPlans = [...new Map(book.legacyPlans.map(item => { const plan = qualifyStoryPlan(item.plan,item.documentId); return [`${item.documentId}:${JSON.stringify(plan)}`,{...item,plan}]; })).values()];
-        return {schema_version:1,id:book.id,name:book.name,layout:book.layout,storyPlanning:book.storyPlanning,migratedDocuments:book.migratedDocuments,legacyPlans:book.legacyPlans};
+        return {schema_version:1,id:book.id,name:book.name,layout:book.layout,bookStyle:book.bookStyle,storyPlanning:book.storyPlanning,migratedDocuments:book.migratedDocuments,legacyPlans:book.legacyPlans};
       };
       const applyBook = (value,deleted) => {
         const folder = libraryFolders.find(item => item.id === value.id);
@@ -8686,7 +8662,7 @@
         document,context:syncContextKey,project:() => currentProjectId,connected:() => Boolean(currentProjectId && currentAccessToken && ownsCloudWorkspace()),
         editable:() => !desktopBlocked && !authoringStorageError && canEditProject({capabilities:projectCapabilities}),unavailable:() => syncProtocolUnavailable,
         api:apiFetch,send:(attempt,id) => mediaTransport.commit('book',id,attempt),normalize:bookValue,books:() => libraryFolders.map(bookValue),value:id => { const folder = libraryFolders.find(item => item.id === id); return folder ? bookValue(folder) : null; },
-        focused:id => editingFolderId === id || deletingFolderId === id || planningCollectionId() === id && Boolean(document.activeElement?.closest('#narrative-planning')),
+        focused:id => editingFolderId === id || deletingFolderId === id || documents.find(record => record.id===activeDocumentId)?.folderId === id && Boolean(bookTypography?.focused()) || planningCollectionId() === id && Boolean(document.activeElement?.closest('#narrative-planning')),
         childrenPending:id => documents.some(record => record.folderId === id && (record.dirty || record.syncAttempt || record.remoteConflict || record.id === activeDocumentId && pendingEditorSave)),
         apply:applyBook,persist:persistLibrary,durable:async () => { await waitForLocalWrites(); if (localWriteFailed) throw new Error('O envio do livro não pôde ser protegido localmente. Salve um arquivo .hdocs.'); },
         changed:() => { renderLibrary(); reportDesktopDocumentState(); syncReview?.refresh(); if (!document.activeElement?.closest('#narrative-planning')) storyPlanning?.render(); },
@@ -9257,6 +9233,7 @@
         placeSlashMenu();
       };
       const insertAtCaret = html => {
+        HeartspaceDocsBookPagination.prepare(editor);
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
         range.deleteContents();
@@ -9271,6 +9248,7 @@
         }
       };
       const insertPageBreak = () => {
+        HeartspaceDocsBookPagination.prepare(editor);
         const selection = window.getSelection();
         if (!selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
         const range = selection.getRangeAt(0);
@@ -9548,7 +9526,7 @@
         const record = documents.find(item => item.id === activeDocumentId);
         if (!record) return;
         const templates = readDocumentTemplates();
-        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, narrativeProfile: record.narrativeProfile, introSpacing:record.introSpacing, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, ambience:HeartspaceDocumentAmbience.normalize(record.ambience), body: serializeEditorBody() });
+        templates.push({ id: makeId(), name: name.trim(), title: title.textContent.trim() || name.trim(), subtitle: subtitle.value, layout: record.layout, status: record.status, tags: record.tags, narrativeProfile: record.narrativeProfile, bookStyle:record.bookStyle,chapterHeading:record.chapterHeading,introSpacing:record.introSpacing, titleAlign: record.titleAlign, subtitleAlign: record.subtitleAlign, paperSize: record.paperSize, pageOrientation: record.pageOrientation, pageMargin: record.pageMargin, ambience:HeartspaceDocumentAmbience.normalize(record.ambience), body: serializeEditorBody() });
         try { if (!templatesStorageKey) throw new Error('Contexto local indisponível'); localStorage.setItem(templatesStorageKey, JSON.stringify(templates)); statusMessage(`Template “${name.trim()}” salvo neste dispositivo`); }
         catch (_) { statusMessage('Não foi possível salvar este template neste dispositivo', 'pending'); }
       });
@@ -9580,7 +9558,11 @@
         if (title.contains(anchor)) {
           title.dataset.align = alignment;
           const record = documents.find(item => item.id === activeDocumentId);
-          if (record) record.titleAlign = alignment;
+          if (record) {
+            record.titleAlign = alignment;
+            record.chapterHeading=HeartspaceDocsBookTypography.normalizeChapter({...record.chapterHeading,schema_version:1,enabled:record.chapterHeading?.enabled===true,numbering:record.chapterHeading?.numbering||'auto',number:record.chapterHeading?.number||1,alignment});
+            bookTypography?.refresh();
+          }
           return true;
         }
         const block = element?.closest('p,h1,h2,h3,blockquote,li,th,td');
@@ -9843,6 +9825,10 @@
         if (!mutation || mutation.documentId !== activeDocumentId) return;
         mutation.after = serializeEditorBody();
         if (mutation.before === mutation.after) return;
+        const last=narrativeMutationHistory.at(-1);
+        if(mutation.bookInput==='insertText'&&last?.bookInput==='insertText'&&last.documentId===mutation.documentId&&last.after===mutation.before&&JSON.stringify(last.bookAfterSelection)===JSON.stringify(mutation.bookBeforeSelection)&&mutation.bookInputAt-last.bookInputAt<1000&&!/\s/.test(last.bookInputData||'')){
+          last.after=mutation.after;last.bookAfterSelection=mutation.bookAfterSelection;last.bookInputAt=mutation.bookInputAt;last.bookInputData=mutation.bookInputData;narrativeMutationRedo.length=0;return;
+        }
         narrativeMutationHistory.push(mutation);
         if (narrativeMutationHistory.length > 60) narrativeMutationHistory.shift();
         narrativeMutationRedo.length = 0;
@@ -9895,6 +9881,7 @@
         narrativeMutationHistory.pop();
         narrativeMutationRedo.push(mutation);
         restoreNarrativeMutationBody(mutation.before);
+        HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookBeforeSelection);scheduleBookPagination();
         return true;
       };
       const redoNarrativeMutation = () => {
@@ -9903,6 +9890,7 @@
         narrativeMutationRedo.pop();
         narrativeMutationHistory.push(mutation);
         restoreNarrativeMutationBody(mutation.after);
+        HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookAfterSelection);scheduleBookPagination();
         return true;
       };
       const createNarrativeBlock = (type, data = {}) => {
@@ -10081,6 +10069,7 @@
           selection?.removeAllRanges();
           selection?.addRange(savedNarrativeSelection.cloneRange());
         }
+        HeartspaceDocsBookPagination.prepare(editor);
         const activeRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
         const selectedText = activeRange && !activeRange.collapsed ? activeRange.toString() : '';
         const startElement = activeRange?.startContainer.nodeType === Node.ELEMENT_NODE ? activeRange.startContainer : activeRange?.startContainer.parentElement;
@@ -11272,9 +11261,9 @@
           const documentTitle = title.textContent.trim() || 'Documento sem título';
           const documentSubtitle = subtitle.value.trim();
           const activeRecord = documents.find(record => record.id === activeDocumentId) || { status:'draft', tags:[], titleAlign:'left', isNotebook:false };
-          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\nnarrative_profile: ${activeRecord.narrativeProfile || 'prose'}\ntitle_align: ${activeRecord.titleAlign}\nsubtitle_align: ${activeRecord.subtitleAlign || 'left'}\nintro_spacing: ${activeRecord.introSpacing ?? 'null'}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
+          const metadata = `---\nsubtitle: ${JSON.stringify(documentSubtitle)}\nstatus: ${activeRecord.status}\ntags: ${JSON.stringify(activeRecord.tags)}\nnarrative_profile: ${activeRecord.narrativeProfile || 'prose'}\ntitle_align: ${activeRecord.titleAlign}\nsubtitle_align: ${activeRecord.subtitleAlign || 'left'}\nbook_style: ${JSON.stringify(libraryFolders.find(folder=>folder.id===activeRecord.folderId&&folder.layout==='book')?.bookStyle ?? activeRecord.bookStyle ?? null)}\nchapter_heading: ${JSON.stringify(activeRecord.chapterHeading ?? null)}\nintro_spacing: ${activeRecord.introSpacing ?? 'null'}\nis_notebook: ${activeRecord.isNotebook}\n---\n\n`;
           const exportRoot = editor.cloneNode(true);
-          exportRoot.querySelectorAll('.book-page-content').forEach(page => page.replaceWith(...page.childNodes));
+          HeartspaceDocsBookPagination.canonicalize(exportRoot);
           for (const image of exportRoot.querySelectorAll('img[data-local-image]')) {
             const imageBlob = await loadImage(image.dataset.localImage);
             if (imageBlob) image.src = await blobToDataUrl(imageBlob);
@@ -11313,7 +11302,7 @@
         let importedTags = [];
         let importedTitleAlign = 'left';
         let importedSubtitleAlign = 'left';
-        let importedIntroSpacing = null;
+        let importedIntroSpacing = null, importedBookStyle = null, importedChapterHeading = null;
         let importedNotebook = false;
         const firstMetadataLine = lines.findIndex(line => line.trim());
         if (firstMetadataLine >= 0 && lines[firstMetadataLine].trim() === '---') {
@@ -11330,7 +11319,7 @@
               catch (_) { importedSubtitle = rawSubtitle.replace(/^['"]|['"]$/g, ''); }
             }
             for (const line of metadataLines) {
-              const match = line.match(/^(status|tags|narrative_profile|title_align|subtitle_align|intro_spacing|is_notebook):\s*(.*)$/i);
+              const match = line.match(/^(status|tags|narrative_profile|title_align|subtitle_align|intro_spacing|book_style|chapter_heading|is_notebook):\s*(.*)$/i);
               if (!match) continue;
               try {
                 if (match[1].toLowerCase() === 'status' && ['draft','production','final'].includes(match[2].trim())) importedStatus = match[2].trim();
@@ -11338,6 +11327,8 @@
                 if (match[1].toLowerCase() === 'tags') { const value = JSON.parse(match[2]); if (Array.isArray(value)) importedTags = [...new Set(value.filter(tag => typeof tag === 'string').map(tag => tag.trim().toLocaleLowerCase('pt-BR')).filter(Boolean))]; }
                 if (match[1].toLowerCase() === 'title_align' && ['left','center','right','justify'].includes(match[2].trim())) importedTitleAlign = match[2].trim();
                 if (match[1].toLowerCase() === 'subtitle_align' && ['left','center','right','justify'].includes(match[2].trim())) importedSubtitleAlign = match[2].trim();
+                if (match[1].toLowerCase() === 'book_style') importedBookStyle = HeartspaceDocsBookTypography.normalizeStyle(JSON.parse(match[2]));
+                if (match[1].toLowerCase() === 'chapter_heading') importedChapterHeading = HeartspaceDocsBookTypography.normalizeChapter(JSON.parse(match[2]));
                 if (match[1].toLowerCase() === 'intro_spacing') importedIntroSpacing = normalizeIntroSpacing(JSON.parse(match[2]));
                 if (match[1].toLowerCase() === 'is_notebook') importedNotebook = JSON.parse(match[2]) === true;
               } catch (_) { /* metadado inválido é ignorado sem interromper a importação */ }
@@ -11354,7 +11345,7 @@
         title.textContent = importedTitle || file.name.replace(/\.(md|markdown)$/i, '') || 'Documento importado';
         subtitle.value = importedSubtitle;
         const activeRecord = documents.find(record => record.id === activeDocumentId);
-        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.narrativeProfile = importedNarrativeProfile; activeRecord.titleAlign = importedTitleAlign; activeRecord.subtitleAlign = importedSubtitleAlign; activeRecord.introSpacing = importedIntroSpacing; activeRecord.isNotebook = importedNotebook; }
+        if (activeRecord) { activeRecord.status = importedStatus; activeRecord.tags = importedTags; activeRecord.narrativeProfile = importedNarrativeProfile; activeRecord.titleAlign = importedTitleAlign; activeRecord.subtitleAlign = importedSubtitleAlign; activeRecord.introSpacing = importedIntroSpacing; activeRecord.bookStyle = importedBookStyle; activeRecord.chapterHeading = importedChapterHeading; activeRecord.isNotebook = importedNotebook; }
         applyPageSettings(activeRecord);
         title.dataset.align = importedTitleAlign;
         subtitle.style.textAlign = importedSubtitleAlign;
@@ -12230,6 +12221,36 @@
         },
         status:message=>statusMessage(message,'pending'),
       });
+      HeartspaceDocsBookPagination.installEditing({
+        editor,editable:() => documentViewMode==='writing'&&editor.isContentEditable&&!desktopBlocked&&!authoringStorageError,
+        begin:rememberNarrativeMutation,end:commitNarrativeMutation,undo:undoNarrativeMutation,redo:redoNarrativeMutation,changed:queueSave,layout:scheduleBookPagination
+      });
+      bookTypography = HeartspaceDocsBookTypography.mount({
+        panel:document.querySelector('#book-typography-settings'),page:documentPage,editor,title,introSpacing:introSpacingControl,number:document.querySelector('#chapter-heading-number'),
+        context:() => {
+          const record=documents.find(item=>item.id===activeDocumentId);
+          const book=libraryFolders.find(folder=>folder.id===record?.folderId&&folder.layout==='book');
+          return {record,book,records:documents,key:`${storageKey}:${projectContextEpoch}:${record?.id||''}:${book?.id||''}`,
+            editable:Boolean(record&&!record.trashedAt&&!record.archivedAt&&storageKey&&documentViewMode==='writing'&&!desktopBlocked&&!authoringStorageError&&(!currentProjectId||canEditProject({capabilities:projectCapabilities})))};
+        },
+        change:(kind,value,key) => {
+          const record=documents.find(item=>item.id===activeDocumentId),book=libraryFolders.find(folder=>folder.id===record?.folderId&&folder.layout==='book');
+          if(!record||key!==`${storageKey}:${projectContextEpoch}:${record.id}:${book?.id||''}`||!storageKey||record.trashedAt||record.archivedAt||documentViewMode!=='writing'||desktopBlocked||authoringStorageError||currentProjectId&&!canEditProject({capabilities:projectCapabilities}))throw new Error('O capítulo ou sua permissão mudou. Abra as configurações novamente.');
+          if(kind==='style'&&book){
+            if(pendingEditorSave)flushSave({remote:false});
+            book.bookStyle=HeartspaceDocsBookTypography.normalizeStyle(value);persistCollectionChange(book);
+            setSaveStatus(currentProjectId?'Estilos do livro salvos localmente; sincronização após a pausa':'Estilos do livro salvos neste dispositivo');
+          }else{
+            if(kind==='style')record.bookStyle=HeartspaceDocsBookTypography.normalizeStyle(value);
+            else if(kind==='chapter')record.chapterHeading=HeartspaceDocsBookTypography.normalizeChapter(value);
+            else if(kind==='title'){record.title=value;title.textContent=value;updateDocumentLabel();}
+            queueSave();
+          }
+          bookTypography?.refresh(true);scheduleBookPagination();scheduleLocalizationPreviewRefresh();renderLibrary();
+        },
+        layout:() => {scheduleBookPagination();documentAmbience?.schedule();marginNotes?.schedule();scheduleLocalizationPreviewRefresh();}
+      });
+      bookTypography.refresh();
       publicationUI = HeartspaceDocsPublication.mount({
         button:document.querySelector('.publish-menu-item'),storage:HeartspaceDocsProjectStorage,
         context:() => {
