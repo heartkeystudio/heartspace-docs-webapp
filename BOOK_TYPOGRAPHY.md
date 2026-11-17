@@ -1,4 +1,4 @@
-# Projeto gráfico do livro — fatias 1 e 2
+# Projeto gráfico do livro — fatias 1 a 3
 
 ## Uso
 
@@ -13,7 +13,7 @@ No capítulo, abra **Configurações da página → Estilos e abertura**.
   títulos/separadores, idioma e hifenização do navegador.
 - **Abertura do capítulo**: fonte, tamanho, alinhamento, versaletes, espaços acima
   da abertura, entre número/título e antes do texto, apresentação da numeração.
-- **Este capítulo**: ativar a abertura, editar o título, escolher numeração
+- **Abertura desta seção**: ativar a abertura, editar o título, escolher numeração
   automática, manual ou ausente e substituir o alinhamento do título.
 
 O título é o mesmo campo autoral usado no documento e na árvore. O número é uma
@@ -22,6 +22,8 @@ A árvore mostra o número antes do nome quando a abertura está ativa.
 A numeração automática segue a ordem atual dos documentos no livro, excluindo
 anotações, documentos de prancheta, arquivados, excluídos e os marcados **Sem
 número**. Documentos antigos contam na ordem, mesmo com a abertura desativada.
+Seções com outra função editorial, como prefácio ou apêndice, não usam nem
+incrementam a numeração de capítulos.
 Números manuais são substituições individuais e não reiniciam a contagem dos
 seguintes. Avulsos usam o número escolhido enquanto não pertencem a um livro.
 A apresentação romana usa algarismos arábicos acima de 3.999.
@@ -115,8 +117,9 @@ futura composição editorial de tabelas ou a exportação PDF/EPUB.
 1. **Concluída no código:** estilos do livro e abertura de capítulos.
 2. **Concluída no código:** paginação de parágrafos por linhas, proteção contra
    linhas isoladas e títulos acompanhados de texto, com os limites acima.
-3. Composição do livro completo, funções editoriais, margens espelhadas,
-   numeração de páginas, cabeçalhos e páginas duplas.
+3. **Concluída no código:** composição do livro completo em uma prévia própria,
+   funções editoriais, margens espelhadas, numeração, cabeçalhos e páginas duplas.
+   Uso, transporte e limites em `BOOK_COMPOSITION.md`.
 4. Sumário, lista de ilustrações e notas de rodapé.
 5. Modelos editoriais, ornamentos, separadores e ilustrações.
 6. Prévia final e exportação editorial PDF/EPUB.

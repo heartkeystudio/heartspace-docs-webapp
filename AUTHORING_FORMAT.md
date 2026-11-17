@@ -77,6 +77,14 @@ marcadores `data-book-fragment`/`data-book-continuation` e ajustes temporários 
 altura não pertencem ao HTML autoral. Um parágrafo que ocupa várias folhas
 continua sendo um único parágrafo na fonte, inclusive para as traduções.
 
+A composição do livro usa `books[].bookStyle.edition` (ou
+`documents[].typography.bookStyle.edition` em avulsos) e a função editorial
+opcional `documents[].editorial.bookSection`. A função é metadado do documento:
+não altera seu ID nem seu tipo autoral `chapter`/`section`. Páginas numeradas,
+cabeçalhos, margens espelhadas e páginas em branco calculadas são projeções, não
+novos documentos. Os contratos, opções e limites estão em `BOOK_COMPOSITION.md`.
+Essas adições opcionais mantêm a fonte v1 e não requerem migração SQL.
+
 `documents[].typography.introSpacing` é opcional: `null` ou ausente preserva o
 espaçamento padrão; um número de 0 a 200 define a distância, em pixels sem zoom,
 entre o cabeçalho (título/subtítulo) e o primeiro bloco do texto. O controle fica

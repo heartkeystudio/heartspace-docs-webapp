@@ -42,10 +42,22 @@
     for (const [key,values] of Object.entries(enums)) if (value[key] !== undefined && !values.includes(value[key])) fail('opção do estilo do livro inválida.');
     for (const key of ['enabled','skipFirstIndent','hyphenate','smallCaps']) if (value[key] !== undefined && typeof value[key] !== 'boolean') fail('opção do estilo do livro inválida.');
     if (value.numberLabel !== undefined && (typeof value.numberLabel !== 'string' || value.numberLabel.length>40)) fail('nome da numeração inválido.');
+    const edition=value.edition;
+    if(edition!=null){
+      if(!object(edition)||edition.schema_version!==1)fail('composição do livro incompatível.');
+      for(const [key,[min,max]] of Object.entries({inner:[24,160],outer:[24,160],top:[32,160],bottom:[32,160],startNumber:[1,99999],frontStart:[1,99999]}))if(edition[key]!==undefined&&(!Number.isInteger(edition[key])||edition[key]<min||edition[key]>max))fail('medida da composição inválida.');
+      for(const [key,values] of Object.entries({paper:['a4','a5','letter'],orientation:['portrait','landscape'],numberPosition:['outer','center'],headers:['none','book-chapter','chapter','custom']}))if(edition[key]!==undefined&&!values.includes(edition[key]))fail('opção da composição inválida.');
+      for(const key of ['mirrored','pageNumbers','frontRoman','hideOpening'])if(edition[key]!==undefined&&typeof edition[key]!=='boolean')fail('opção da composição inválida.');
+      for(const key of ['leftHeader','rightHeader'])if(edition[key]!==undefined&&(typeof edition[key]!=='string'||edition[key].length>160))fail('cabeçalho da composição inválido.');
+    }
   }
   function validateChapterHeading(value) {
     if (value == null) return;
     if (!object(value) || value.schema_version !== 1 || typeof value.enabled !== 'boolean' || value.alignment != null && !['left','center','right','justify'].includes(value.alignment) || !['auto','custom','none'].includes(value.numbering) || !Number.isInteger(value.number) || value.number<1 || value.number>9999) fail('abertura do capítulo inválida.');
+  }
+  function validateBookSection(value){
+    if(value==null)return;
+    if(!object(value)||value.schema_version!==1||!['cover','title','credits','dedication','epigraph','preface','part','prologue','chapter','epilogue','appendix'].includes(value.role)||!['next','recto','verso'].includes(value.start)||!['auto','arabic','roman','none'].includes(value.numbering)||typeof value.include!=='boolean'||typeof value.showHeading!=='boolean')fail('função editorial da seção inválida.');
   }
 
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
@@ -77,6 +89,7 @@
       if (document.typography.introSpacing != null && (typeof document.typography.introSpacing !== 'number' || !Number.isFinite(document.typography.introSpacing) || document.typography.introSpacing < 0 || document.typography.introSpacing > 200)) fail('distância até o texto inválida.');
       validateBookStyle(document.typography.bookStyle); validateChapterHeading(document.typography.chapterHeading);
       validateMarginNotes(document.editorial.marginNotes);
+      validateBookSection(document.editorial.bookSection);
       if (!['draft','production','final'].includes(document.editorial.status) || !Array.isArray(document.editorial.tags) || document.editorial.tags.some(value => typeof value !== 'string') || typeof document.editorial.notebook !== 'boolean') fail('estado editorial inválido.');
       if (![document.editorial.archivedAt,document.editorial.trashedAt,document.editorial.trashedBy,document.updatedAt].every(value => typeof value === 'string') || !Number.isFinite(document.order)) fail('metadados editoriais inválidos.');
       if (!['prose','script'].includes(document.narrative.readingProfile) || typeof document.narrative.entrySequenceId !== 'string' || !object(document.narrative.localization)) fail('configuração narrativa inválida.');
@@ -121,7 +134,7 @@
         page:{layout:record.layout === 'canvas' ? 'canvas' : 'book', size:string(record.paperSize) || 'a4', orientation:string(record.pageOrientation) || 'portrait', margin:string(record.pageMargin) || 'normal'},
         typography:{bookStyle:record.bookStyle == null ? null : data(record.bookStyle),chapterHeading:record.chapterHeading == null ? null : data(record.chapterHeading),introSpacing:record.introSpacing ?? null,titleAlign:string(record.titleAlign) || 'left', subtitleAlign:string(record.subtitleAlign) || 'left'},
         appearance:{ambience:data(record.ambience)},
-        editorial:{marginNotes:list(record.marginNotes),status:string(record.status) || 'draft', tags:list(record.tags), notebook:record.isNotebook === true, archivedAt:string(record.archivedAt), trashedAt:string(record.trashedAt), trashedBy:string(record.trashedBy)},
+        editorial:{bookSection:record.bookSection==null?null:data(record.bookSection),marginNotes:list(record.marginNotes),status:string(record.status) || 'draft', tags:list(record.tags), notebook:record.isNotebook === true, archivedAt:string(record.archivedAt), trashedAt:string(record.trashedAt), trashedBy:string(record.trashedBy)},
         order:Number.isFinite(record.sortOrder) ? record.sortOrder : 0, updatedAt:string(record.savedAt)
       };
     });
@@ -134,7 +147,7 @@
     const folders = new Map(libraryFolders.map(folder => [folder.id, folder]));
     const documents = source.documents.map(document => ({
       id:document.id, folderId:document.bookId || '', folderName:folders.get(document.bookId)?.name || '', collection:null,
-      isNotebook:document.editorial.notebook === true || document.kind === 'note', title:document.title, subtitle:document.subtitle, body:document.content.body,
+      bookSection:document.editorial.bookSection??null,isNotebook:document.editorial.notebook === true || document.kind === 'note', title:document.title, subtitle:document.subtitle, body:document.content.body,
       storyPlanning:document.legacyPlanning, narrativeEventId:document.narrative.entrySequenceId, narrativeSequences:document.narrative.sequences,
       narrativeProfile:document.narrative.readingProfile, localization:document.narrative.localization,
       layout:document.page.layout, paperSize:document.page.size, pageOrientation:document.page.orientation, pageMargin:document.page.margin,

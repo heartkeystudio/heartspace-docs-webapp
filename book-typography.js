@@ -16,6 +16,7 @@
     for(const [key,values] of Object.entries(enums))if(value[key]!==undefined){if(!values.includes(value[key]))throw new Error('Uma opção do estilo do livro é inválida.');result[key]=value[key];}
     for(const key of ['enabled','skipFirstIndent','hyphenate','smallCaps'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Uma opção do estilo do livro é inválida.');result[key]=value[key];}
     if(value.numberLabel!==undefined){if(typeof value.numberLabel!=='string'||value.numberLabel.length>40)throw new Error('O nome da numeração do capítulo é inválido.');result.numberLabel=value.numberLabel;}
+    if(value.edition!=null)result.edition=root.HeartspaceDocsBookComposition.normalizeEdition(value.edition);
     return result;
   }
   function normalizeChapter(value){
@@ -25,9 +26,9 @@
   }
   function chapterNumber(record,records){
     const config=normalizeChapter(record?.chapterHeading);
-    if(!config?.enabled||config.numbering==='none'||record.layout==='canvas'||record.isNotebook)return null;
+    if(!config?.enabled||config.numbering==='none'||record.layout==='canvas'||record.isNotebook||record.bookSection?.role&&record.bookSection.role!=='chapter')return null;
     if(config.numbering==='custom'||!record.folderId)return config.number;
-    const chapters=records.filter(r=>r.folderId===record.folderId&&r.layout!=='canvas'&&!r.isNotebook&&!r.trashedAt&&!r.archivedAt&&r.chapterHeading?.numbering!=='none');
+    const chapters=records.filter(r=>r.folderId===record.folderId&&r.layout!=='canvas'&&!r.isNotebook&&!r.trashedAt&&!r.archivedAt&&(!r.bookSection?.role||r.bookSection.role==='chapter')&&r.chapterHeading?.numbering!=='none');
     const index=chapters.findIndex(r=>r.id===record.id);return index<0?config.number:index+1;
   }
   function numeral(number){
@@ -36,6 +37,22 @@
     return result;
   }
   function numberText(number,style){if(number==null)return '';const s=style||base;return s.numberFormat==='roman'?numeral(number):s.numberFormat==='label'?`${s.numberLabel.trim()} ${number}`.trim():String(number);}
+  function decorate(o,c){
+    const active=Boolean(c.record&&c.record.layout==='book'),s=active&&c.style?.enabled?normalizeStyle(c.style):null,page=o.page;
+    const heading=active&&c.record.chapterHeading?.enabled?numberText(chapterNumber(c.record,c.records),s):'';
+    c={...c,chapter:normalizeChapter(c.record?.chapterHeading)};
+      page.toggleAttribute('data-book-style',Boolean(s));page.toggleAttribute('data-chapter-opening',Boolean(active&&c.chapter?.enabled));
+      o.number.textContent=heading;o.number.hidden=!heading;
+      if(c.chapter?.alignment)page.dataset.chapterTitleAlign=c.chapter.alignment;else delete page.dataset.chapterTitleAlign;
+      page.toggleAttribute('data-book-first-indent',Boolean(s?.skipFirstIndent));
+      if(s){
+        for(const [key,value] of Object.entries({'body-font':FONTS[s.font],'body-size':`${s.fontSize}px`,'line-height':s.lineHeight,'body-align':s.align,'paragraph-space':`${s.paragraphSpace}px`,'first-indent':`${s.firstIndent}em`,'heading-font':FONTS[s.headingFont],'heading-size':`${s.headingSize}px`,'heading-align':s.headingAlign,'heading-caps':s.smallCaps?'small-caps':'normal','opening-space':`${s.openingSpace}px`,'number-size':`${s.numberSize}px`,'number-gap':`${s.numberGap}px`,'text-gap':`${s.textGap}px`,'hyphens':s.hyphenate?'auto':'manual'}))page.style.setProperty(`--book-${key}`,String(value));
+        o.editor.lang=s.language;
+      }else {
+        o.editor.removeAttribute('lang');
+        for(const key of ['body-font','body-size','line-height','body-align','paragraph-space','first-indent','heading-font','heading-size','heading-align','heading-caps','opening-space','number-size','number-gap','text-gap','hyphens'])page.style.removeProperty(`--book-${key}`);
+      }
+  }
   function mount(o){
     const doc=o.page.ownerDocument,panel=o.panel;
     const node=(tag,text)=>Object.assign(doc.createElement(tag),text===undefined?{}:{textContent:text});
@@ -57,10 +74,10 @@
     const body=group('Corpo do texto');field(body,'font','Fonte','select',fontChoices);field(body,'fontSize','Tamanho (px)','number');field(body,'lineHeight','Entrelinha','number');field(body,'align','Alinhamento','select',[['left','À esquerda'],['justify','Justificado']]);
     const paragraphs=group('Parágrafos');field(paragraphs,'firstIndent','Recuo da primeira linha (em)','number');field(paragraphs,'paragraphSpace','Espaço entre parágrafos (px)','number');field(paragraphs,'skipFirstIndent','Sem recuo após títulos e separadores','checkbox');field(paragraphs,'hyphenate','Hifenização automática do navegador','checkbox');field(paragraphs,'language','Idioma do texto','select',[['pt-BR','Português · Brasil'],['pt-PT','Português · Portugal'],['en','Inglês'],['es','Espanhol'],['fr','Francês'],['de','Alemão']]);
     const opening=group('Abertura do capítulo');field(opening,'headingFont','Fonte do título','select',fontChoices);field(opening,'headingSize','Tamanho do título (px)','number');field(opening,'headingAlign','Alinhamento','select',[['left','À esquerda'],['center','Centralizado'],['right','À direita']]);field(opening,'smallCaps','Título em versaletes','checkbox');field(opening,'openingSpace','Espaço acima da abertura (px)','number');field(opening,'numberSize','Tamanho do número (px)','number');field(opening,'numberGap','Distância entre número e título (px)','number');field(opening,'textGap','Distância até o texto (px)','number');field(opening,'numberFormat','Apresentação do número','select',[['label','Nome e número'],['arabic','1, 2, 3…'],['roman','I, II, III…']]);field(opening,'numberLabel','Nome da numeração','text');
-    const chapterSection=node('details');chapterSection.append(node('summary','Este capítulo'));const chapterForm=node('div');chapterForm.className='book-style-fields';chapterSection.append(chapterForm);
-    const chapterLabel=node('label'),chapterEnabled=node('input');chapterEnabled.type='checkbox';chapterLabel.className='book-style-check';chapterLabel.append(chapterEnabled,doc.createTextNode(' Mostrar abertura de capítulo'));
+    const chapterSection=node('details');chapterSection.append(node('summary','Abertura desta seção'));const chapterForm=node('div');chapterForm.className='book-style-fields';chapterSection.append(chapterForm);
+    const chapterLabel=node('label'),chapterEnabled=node('input');chapterEnabled.type='checkbox';chapterLabel.className='book-style-check';chapterLabel.append(chapterEnabled,doc.createTextNode(' Mostrar abertura'));
     const chapterFields=node('div');chapterFields.className='book-style-fields';
-    const titleLabel=node('label','Título do capítulo'),chapterTitle=node('input');chapterTitle.type='text';chapterTitle.maxLength=500;titleLabel.append(chapterTitle);
+    const titleLabel=node('label','Título da seção'),chapterTitle=node('input');chapterTitle.type='text';chapterTitle.maxLength=500;titleLabel.append(chapterTitle);
     const numberLabel=node('label','Numeração'),chapterMode=node('select');for(const [value,name] of [['auto','Automática pela ordem do livro'],['custom','Número escolhido'],['none','Sem número']]){const option=node('option',name);option.value=value;chapterMode.append(option);}numberLabel.append(chapterMode);
     const valueLabel=node('label','Número'),chapterValue=node('input');chapterValue.type='number';chapterValue.required=true;chapterValue.min=1;chapterValue.max=9999;chapterValue.step=1;valueLabel.append(chapterValue);
     const alignmentLabel=node('label','Alinhamento deste título'),chapterAlign=node('select');for(const [value,name] of [['','Seguir estilo do livro'],['left','À esquerda'],['center','Centralizado'],['right','À direita'],['justify','Justificado']]){const option=node('option',name);option.value=value;chapterAlign.append(option);}alignmentLabel.append(chapterAlign);
@@ -74,32 +91,24 @@
     function apply(c){
       const active=Boolean(c.record&&c.record.layout==='book'),s=active&&c.style?.enabled?c.style:null,page=o.page;
       const heading=active&&c.chapter?.enabled?numberText(chapterNumber(c.record,c.records),s):'';
-      const next=JSON.stringify([active,s,c.chapter,heading,c.record?.introSpacing]);
+      const next=JSON.stringify([active,s,c.chapter,heading,c.record?.introSpacing,c.record?.bookSection]);
       if(applied===next)return;applied=next;
-      page.toggleAttribute('data-book-style',Boolean(s));page.toggleAttribute('data-chapter-opening',Boolean(active&&c.chapter?.enabled));
-      o.number.textContent=heading;o.number.hidden=!heading;
-      if(c.chapter?.alignment)page.dataset.chapterTitleAlign=c.chapter.alignment;else delete page.dataset.chapterTitleAlign;
+      decorate(o,c);
       if(o.introSpacing){o.introSpacing.placeholder=s?'Do estilo do livro':'Padrão';o.introSpacing.title=s?'Deixe vazio para seguir a distância do estilo do livro.':'Distância até o texto. Deixe vazio para restaurar o padrão.';}
-      page.toggleAttribute('data-book-first-indent',Boolean(s?.skipFirstIndent));
-      if(s){
-        for(const [key,value] of Object.entries({'body-font':FONTS[s.font],'body-size':`${s.fontSize}px`,'line-height':s.lineHeight,'body-align':s.align,'paragraph-space':`${s.paragraphSpace}px`,'first-indent':`${s.firstIndent}em`,'heading-font':FONTS[s.headingFont],'heading-size':`${s.headingSize}px`,'heading-align':s.headingAlign,'heading-caps':s.smallCaps?'small-caps':'normal','opening-space':`${s.openingSpace}px`,'number-size':`${s.numberSize}px`,'number-gap':`${s.numberGap}px`,'text-gap':`${s.textGap}px`,'hyphens':s.hyphenate?'auto':'manual'}))page.style.setProperty(`--book-${key}`,String(value));
-        o.editor.lang=s.language;
-      }else {
-        o.editor.removeAttribute('lang');
-        for(const key of ['body-font','body-size','line-height','body-align','paragraph-space','first-indent','heading-font','heading-size','heading-align','heading-caps','opening-space','number-size','number-gap','text-gap','hyphens'])page.style.removeProperty(`--book-${key}`);
-      }
       layout();
     }
     function refresh(force=false){
       const c=context();apply(c);section.hidden=!c.record||c.record.layout!=='book';
-      const next=JSON.stringify([c.key,c.style,c.chapter,c.record?.title,c.editable,c.book?.name]);
+      const next=JSON.stringify([c.key,c.style,c.chapter,c.record?.title,c.record?.bookSection,c.editable,c.book?.name]);
       if(!force&&c.key===formKey&&panel.contains(doc.activeElement))return;
       if(!force&&signature===next)return;signature=next;formKey=c.key;
       const s=c.style||base;scopeLabel.textContent=c.book?`Estilo compartilhado por todos os capítulos de “${c.book.name}”`:'Estilo deste documento';
       enabled.checked=Boolean(c.style?.enabled);enabledLabel.lastChild.textContent=c.book?' Usar estilos compartilhados':' Usar estilos neste documento';form.hidden=!enabled.checked;
-      preset.value=Object.keys(presets).find(name=>JSON.stringify(normalizeStyle(presets[name]))===JSON.stringify(c.style))||'custom';for(const [key,input] of controls){if(input.type==='checkbox')input.checked=s[key];else input.value=String(s[key]);input.disabled=!c.editable;}
+      const comparable=c.style?{...c.style}:null;if(comparable)delete comparable.edition;
+      preset.value=Object.keys(presets).find(name=>JSON.stringify(normalizeStyle(presets[name]))===JSON.stringify(comparable))||'custom';for(const [key,input] of controls){if(input.type==='checkbox')input.checked=s[key];else input.value=String(s[key]);input.disabled=!c.editable;}
       enabled.disabled=preset.disabled=!c.editable;
       chapterEnabled.checked=Boolean(c.chapter?.enabled);chapterEnabled.disabled=!c.editable;chapterFields.hidden=!c.chapter?.enabled;chapterTitle.value=o.title.textContent.trim()||c.record?.title||'';chapterMode.value=c.chapter?.numbering||'auto';chapterValue.value=String(c.chapter?.number||1);valueLabel.hidden=chapterMode.value!=='custom'&&Boolean(c.book);chapterAlign.value=c.chapter?.alignment||'';chapterAlign.disabled=chapterTitle.disabled=chapterMode.disabled=chapterValue.disabled=!c.editable;
+      const numberedChapter=!c.record?.bookSection?.role||c.record.bookSection.role==='chapter';numberLabel.hidden=!numberedChapter;if(!numberedChapter)valueLabel.hidden=true;help.textContent=numberedChapter?'O título acima é o mesmo nome do documento. A numeração é calculada separadamente.':'Esta função editorial não usa numeração de capítulos. O título é o mesmo nome do documento.';
       if(!c.book&&chapterMode.value==='auto')numberLabel.title='Documentos avulsos usam o número escolhido até serem movidos para um livro.';else numberLabel.removeAttribute('title');
       status.textContent='';
     }
@@ -107,7 +116,7 @@
       try{const c=context();if(c.key!==formKey||!c.editable)throw new Error('O capítulo ou sua permissão mudou. Abra as configurações novamente.');o.change(kind,value,c.key);refresh(true);}catch(error){status.textContent=error.message;}
     }
     enabled.addEventListener('change',()=>commit('style',{...(context().style||base),enabled:enabled.checked}));
-    preset.addEventListener('change',()=>{if(presets[preset.value])commit('style',clone(presets[preset.value]));});
+    preset.addEventListener('change',()=>{if(presets[preset.value])commit('style',{...clone(presets[preset.value]),...(context().style?.edition?{edition:context().style.edition}:{})});});
     for(const [key,input] of controls)input.addEventListener('change',()=>{if(!input.validity.valid)return;const c=context();commit('style',{...(c.style||base),[key]:input.type==='checkbox'?input.checked:input.type==='number'?input.valueAsNumber:input.value});});
     function commitChapter(){if(!chapterValue.validity.valid)return;commit('chapter',{schema_version:1,enabled:chapterEnabled.checked,numbering:chapterMode.value,number:chapterValue.valueAsNumber||1,alignment:chapterAlign.value||null});}
     chapterAlign.addEventListener('change',commitChapter);chapterEnabled.addEventListener('change',commitChapter);chapterMode.addEventListener('change',commitChapter);chapterValue.addEventListener('change',commitChapter);
@@ -137,5 +146,5 @@
 .page[data-book-style] .content>:first-child,.page[data-book-style] .content>.book-page-content:first-child>:first-child{margin-top:0}
 .page[data-book-style]:not([data-chapter-opening]) .doc-title{margin-top:var(--book-opening-space)}
 `;
-  root.HeartspaceDocsBookTypography=Object.freeze({normalizeStyle,normalizeChapter,chapterNumber,numberText,preset:name=>clone(presets[name]||base),mount});
+  root.HeartspaceDocsBookTypography=Object.freeze({normalizeStyle,normalizeChapter,chapterNumber,numberText,decorate,preset:name=>clone(presets[name]||base),mount});
 })(globalThis);
