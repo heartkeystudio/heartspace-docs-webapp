@@ -46,8 +46,8 @@
     if(edition!=null){
       if(!object(edition)||edition.schema_version!==1)fail('composição do livro incompatível.');
       for(const [key,[min,max]] of Object.entries({inner:[24,160],outer:[24,160],top:[32,160],bottom:[32,160],startNumber:[1,99999],frontStart:[1,99999]}))if(edition[key]!==undefined&&(!Number.isInteger(edition[key])||edition[key]<min||edition[key]>max))fail('medida da composição inválida.');
-      for(const [key,values] of Object.entries({paper:['a4','a5','letter'],orientation:['portrait','landscape'],numberPosition:['outer','center'],headers:['none','book-chapter','chapter','custom']}))if(edition[key]!==undefined&&!values.includes(edition[key]))fail('opção da composição inválida.');
-      for(const key of ['mirrored','pageNumbers','frontRoman','hideOpening'])if(edition[key]!==undefined&&typeof edition[key]!=='boolean')fail('opção da composição inválida.');
+      for(const [key,values] of Object.entries({paper:['a4','a5','letter'],orientation:['portrait','landscape'],numberPosition:['outer','center'],headers:['none','book-chapter','chapter','custom'],footnoteNumbering:['book','section']}))if(edition[key]!==undefined&&!values.includes(edition[key]))fail('opção da composição inválida.');
+      for(const key of ['mirrored','pageNumbers','frontRoman','hideOpening','contents','illustrations'])if(edition[key]!==undefined&&typeof edition[key]!=='boolean')fail('opção da composição inválida.');
       for(const key of ['leftHeader','rightHeader'])if(edition[key]!==undefined&&(typeof edition[key]!=='string'||edition[key].length>160))fail('cabeçalho da composição inválido.');
     }
   }

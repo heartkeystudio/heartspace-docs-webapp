@@ -29,6 +29,7 @@
       .replace('src="sequence-map.js"', `src="${rootPrefix}sequence-map.js"`)
       .replace('src="story-planning.js"', `src="${rootPrefix}story-planning.js"`)
       .replace('src="margin-notes.js"', `src="${rootPrefix}margin-notes.js"`)
+      .replace('src="book-references.js"', `src="${rootPrefix}book-references.js"`)
       .replace('src="book-pagination.js"', `src="${rootPrefix}book-pagination.js"`)
       .replace('src="book-composition.js"', `src="${rootPrefix}book-composition.js"`)
       .replace('src="book-typography.js"', `src="${rootPrefix}book-typography.js"`)

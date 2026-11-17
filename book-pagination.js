@@ -100,6 +100,7 @@
   function canonicalize(editor,{unwrap=true,preserve=false,flow=false}={}){
     const restore=preserve?bookmark(editor):()=>{};
     try{
+      root.HeartspaceDocsBookReferences?.clear(editor);
       if(unwrap)editor.querySelectorAll('.book-page-content').forEach(page=>page.replaceWith(...page.childNodes));
       if(flow)normalizeTextFlow(editor);
       editor.normalize();
@@ -139,10 +140,10 @@
     }
     return lines;
   }
-  function contentBottom(page){const style=getComputedStyle(page),rect=page.getBoundingClientRect(),scale=page.offsetHeight?rect.height/page.offsetHeight:1;return rect.bottom-(parseFloat(style.paddingBottom)||0)*scale-(parseFloat(style.borderBottomWidth)||0)*scale;}
+  function contentBottom(page){const style=getComputedStyle(page),rect=page.getBoundingClientRect(),scale=page.offsetHeight?rect.height/page.offsetHeight:1;return rect.bottom-((parseFloat(style.paddingBottom)||0)+(root.HeartspaceDocsBookReferences?.reserve(page)||0))*scale-(parseFloat(style.borderBottomWidth)||0)*scale;}
   function splittable(block){
-    if(block.nodeType!==1||!block.matches('p,div')||!block.textContent.trim())return false;
-    return [...block.querySelectorAll('*')].every(e=>/^(span|a|strong|b|em|i|u|s|del|mark|small|sub|sup|code|br)$/.test(e.localName)&&!e.id&&!e.hasAttribute('data-localization-id')&&!e.hasAttribute('contenteditable')&&!e.classList.contains('narrative-inline')&&getComputedStyle(e).display!=='inline-block');
+    if(block.nodeType!==1||!block.matches('p,div')||block.matches('.book-edition-index-row')||!block.textContent.trim())return false;
+    return [...block.querySelectorAll('*')].every(e=>/^(span|a|strong|b|em|i|u|s|del|mark|small|sub|sup|code|br)$/.test(e.localName)&&!e.id&&(!e.hasAttribute('data-localization-id')||e.matches('sup[data-book-footnote]'))&&(!e.hasAttribute('contenteditable')||e.matches('sup[data-book-footnote]'))&&!e.classList.contains('narrative-inline')&&getComputedStyle(e).display!=='inline-block');
   }
   function safeCut(text,offset){
     if(root.Intl?.Segmenter){const segment=new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text).containing(offset-1);if(segment&&segment.index+segment.segment.length>offset)return segment.index;}
@@ -157,9 +158,14 @@
     const bottom=lines[count-1].bottom+.5,map=textMap(block),range=block.ownerDocument.createRange();
     let low=0,high=map.text.length;
     while(low<high){const mid=Math.ceil((low+high)/2),at=point(map,mid);if(!at)break;range.setStart(block,0);range.setEnd(at.node,at.offset);const rects=[...range.getClientRects()];if(rects.every(r=>r.bottom<=bottom))low=mid;else high=mid-1;}
-    const cut=safeCut(map.text,low);if(cut<1||cut>=map.text.length||!map.text.slice(0,cut).trim()||!map.text.slice(cut).trim())return null;
-    const at=point(map,cut);range.setStart(at.node,at.offset);range.setEnd(block,block.childNodes.length);
-    for(let e=at.node.parentElement;e&&e!==block;e=e.parentElement)if(!e.hasAttribute(INLINE))e.setAttribute(INLINE,uid());
+    let cut=safeCut(map.text,low);
+    const candidate=point(map,cut),reference=candidate?.node.parentElement?.closest('sup[data-book-footnote]');
+    if(reference){const first=map.nodes.find(item=>reference.contains(item.node));if(first&&cut>first.start&&cut<first.end)cut=first.start;}
+    if(cut<1||cut>=map.text.length||!map.text.slice(0,cut).trim()||!map.text.slice(cut).trim())return null;
+    const at=point(map,cut),atomic=at.node.parentElement?.closest('sup[data-book-footnote]');
+    if(atomic){if(at.offset===0)range.setStartBefore(atomic);else range.setStartAfter(atomic);}else range.setStart(at.node,at.offset);
+    range.setEnd(block,block.childNodes.length);
+    for(let e=atomic?atomic.parentElement:at.node.parentElement;e&&e!==block;e=e.parentElement)if(!e.hasAttribute(INLINE))e.setAttribute(INLINE,uid());
     const tail=block.cloneNode(false);tail.removeAttribute('id');tail.removeAttribute('data-localization-id');
     tail.append(range.extractContents());
     const token=block.getAttribute(PART)||uid();block.setAttribute(PART,token);tail.setAttribute(PART,token);tail.setAttribute(CONT,'true');
@@ -168,7 +174,7 @@
     return tail;
   }
   function isHeading(node){return node.nodeType===1&&node.matches('h1,h2,h3,h4,h5,h6');}
-  function hasContent(page){return [...page.childNodes].some(n=>n.nodeType===1||n.nodeType===3&&n.data.trim());}
+  function hasContent(page){return [...page.childNodes].some(n=>n.nodeType===1&&!n.hasAttribute('data-book-generated')||n.nodeType===3&&n.data.trim());}
   function blockBottom(block){return block.nodeType===1?block.getBoundingClientRect().bottom:0;}
   function fitAtomic(block,page){
     const scale=page.offsetHeight?page.getBoundingClientRect().height/page.offsetHeight:1;
@@ -183,10 +189,10 @@
     if(composing.has(editor))return pages;
     const restore=bookmark(editor);let flow=[];
     try{
-      canonicalize(editor,{flow:true});flow=[...editor.childNodes];editor.replaceChildren();pages.length=0;
+      canonicalize(editor,{flow:true});const notes=root.HeartspaceDocsBookReferences?.createFlow(editor);flow=[...editor.childNodes];editor.replaceChildren();pages.length=0;
       if(!flow.length){const p=editor.ownerDocument.createElement('p');p.append(editor.ownerDocument.createElement('br'));flow.push(p);}
-      let page=makePage(0);page.classList.add('measuring-reading');let headings=[];
-      const fresh=()=>{page.classList.remove('measuring-reading');page=makePage(pages.length);page.classList.add('measuring-reading');};
+      let page=makePage(0);notes?.start(page);page.classList.add('measuring-reading');let headings=[];
+      const fresh=()=>{notes?.end(page);page.classList.remove('measuring-reading');page=makePage(pages.length);notes?.start(page);page.classList.add('measuring-reading');};
       for(let index=0;index<flow.length;index++){
         let block=flow[index];
         if(block.nodeType===1&&block.matches('[data-page-break="true"]')){page.append(block);headings=[];fresh();continue;}
@@ -203,8 +209,14 @@
         // Inline comments (including caret bookmarks) must not end a heading run.
         if(block.nodeType!==1){if(block.nodeType===3&&block.data.trim())headings=[];continue;}
         if(blockBottom(block)<=contentBottom(page)+.5){headings=[];continue;}
-        let previous=[...page.childNodes].filter(n=>n!==block&&!headings.includes(n));
-        const beforeGroup=previous.some(n=>n.nodeType===1||n.nodeType===3&&n.data.trim());
+        let previous=[...page.childNodes].filter(n=>n!==block&&!headings.includes(n)&&!n.dataset?.bookGenerated);
+        let beforeGroup=previous.some(n=>n.nodeType===1||n.nodeType===3&&n.data.trim());
+        // A new reference can reserve space under text that already fitted.
+        // Move its block first so that earlier text never overlaps its footer.
+        if(previous.some(n=>n.nodeType===1&&blockBottom(n)>contentBottom(page)+.5)){
+          block.remove();for(const h of headings)h.remove();fresh();for(const h of headings)page.append(h);page.append(block);beforeGroup=false;
+          if(blockBottom(block)<=contentBottom(page)+.5){headings=[];continue;}
+        }
         let tail=split(block,page,false);
         if(tail){flow.splice(index+1,0,tail);headings=[];fresh();continue;}
         if(beforeGroup||headings.length||pages.length===1){block.remove();for(const h of headings)h.remove();fresh();for(const h of headings)page.append(h);page.append(block);}
@@ -216,8 +228,10 @@
           fitAtomic(block,page);
         }
       }
+      notes?.end(page);
+      while(notes?.pending()){page.classList.remove('measuring-reading');page=makePage(pages.length);notes.start(page);page.classList.add('measuring-reading');notes.end(page);}
       page.classList.remove('measuring-reading');
-      if(!hasContent(page)){const p=editor.ownerDocument.createElement('p');p.append(editor.ownerDocument.createElement('br'));page.append(p);}
+      if(!hasContent(page)&&!page.querySelector('[data-book-generated="footnotes"]')){const p=editor.ownerDocument.createElement('p');p.append(editor.ownerDocument.createElement('br'));page.append(p);}
       return pages;
     }catch(error){
       // A failed measurement must leave the complete authoring text available.

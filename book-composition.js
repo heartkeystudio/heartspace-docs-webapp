@@ -5,16 +5,16 @@
   const clone=v=>JSON.parse(JSON.stringify(v));
   const roles={cover:'Capa',title:'Folha de rosto',credits:'Créditos',dedication:'Dedicatória',epigraph:'Epígrafe',preface:'Prefácio',part:'Parte',prologue:'Prólogo',chapter:'Capítulo',epilogue:'Epílogo',appendix:'Apêndice'};
   const frontRoles=new Set(['cover','title','credits','dedication','epigraph','preface']);
-  const defaults={schema_version:1,paper:'a5',orientation:'portrait',mirrored:true,inner:64,outer:48,top:56,bottom:56,pageNumbers:true,startNumber:1,frontStart:1,frontRoman:true,numberPosition:'outer',headers:'book-chapter',leftHeader:'',rightHeader:'',hideOpening:true};
+  const defaults={schema_version:1,paper:'a5',orientation:'portrait',mirrored:true,inner:64,outer:48,top:56,bottom:56,pageNumbers:true,startNumber:1,frontStart:1,frontRoman:true,numberPosition:'outer',headers:'book-chapter',leftHeader:'',rightHeader:'',hideOpening:true,contents:false,illustrations:false,footnoteNumbering:'book'};
   const ranges={inner:[24,160],outer:[24,160],top:[32,160],bottom:[32,160],startNumber:[1,99999],frontStart:[1,99999]};
-  const enums={paper:['a4','a5','letter'],orientation:['portrait','landscape'],numberPosition:['outer','center'],headers:['none','book-chapter','chapter','custom']};
+  const enums={paper:['a4','a5','letter'],orientation:['portrait','landscape'],numberPosition:['outer','center'],headers:['none','book-chapter','chapter','custom'],footnoteNumbering:['book','section']};
   function normalizeEdition(value){
     if(value==null)return null;
     if(!object(value)||value.schema_version!==1)throw new Error('A composição do livro usa uma versão incompatível. A fonte foi preservada.');
     const result=clone(defaults);
     for(const [key,[min,max]] of Object.entries(ranges))if(value[key]!==undefined){if(!Number.isInteger(value[key])||value[key]<min||value[key]>max)throw new Error('Uma medida ou numeração da composição é inválida.');result[key]=value[key];}
     for(const [key,values] of Object.entries(enums))if(value[key]!==undefined){if(!values.includes(value[key]))throw new Error('Uma opção da composição é inválida.');result[key]=value[key];}
-    for(const key of ['mirrored','pageNumbers','frontRoman','hideOpening'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Uma opção da composição é inválida.');result[key]=value[key];}
+    for(const key of ['mirrored','pageNumbers','frontRoman','hideOpening','contents','illustrations'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Uma opção da composição é inválida.');result[key]=value[key];}
     for(const key of ['leftHeader','rightHeader'])if(value[key]!==undefined){if(typeof value[key]!=='string'||value[key].length>160)throw new Error('O texto do cabeçalho é inválido.');result[key]=value[key];}
     return result;
   }
@@ -53,6 +53,11 @@
     field(paper,editionFields,'orientation','Orientação','select',[['portrait','Retrato'],['landscape','Paisagem']]);
     field(paper,editionFields,'mirrored','Espelhar margens pares e ímpares','checkbox');
     for(const [key,label] of [['inner','Margem interna / esquerda (px)'],['outer','Margem externa / direita (px)'],['top','Margem superior (px)'],['bottom','Margem inferior (px)']])field(paper,editionFields,key,label,'number');
+    const references=group('Índices e notas');
+    field(references,editionFields,'contents','Gerar sumário com links para as seções','checkbox');
+    field(references,editionFields,'illustrations','Gerar lista das imagens com legenda','checkbox');
+    field(references,editionFields,'footnoteNumbering','Numeração das notas de rodapé','select',[['book','Contínua no livro'],['section','Recomeçar em cada seção']]);
+    references.append(node('p','Os índices entram após as páginas iniciais, antes do corpo do livro. Use “Nota de rodapé” no menu Ações ou digite / no texto para inserir uma referência.'));
     const numbers=group('Numeração e cabeçalhos');
     field(numbers,editionFields,'pageNumbers','Mostrar números das páginas','checkbox');
     field(numbers,editionFields,'startNumber','Primeiro número do corpo do livro','number');
@@ -108,19 +113,20 @@
       if(!c.readable||c.key!==openedKey)throw new Error('O projeto ou seu acesso mudou. Abra a prévia novamente.');
       const edition=normalizeEdition(c.style?.edition)||clone(defaults),spec=paperSizes[edition.paper];
       const [width,height]=edition.orientation==='landscape'?[spec[1],spec[0]]:spec;
-      const records=c.records.filter(record=>record.layout==='book'&&!record.isNotebook&&!record.trashedAt&&!record.archivedAt&&sectionFor(record).include);
+      const originalRecords=c.records.filter(record=>record.layout==='book'&&!record.isNotebook&&!record.trashedAt&&!record.archivedAt&&sectionFor(record).include);
       const staging=node('div');staging.className='book-edition-staging';dialog.append(staging);
-      const result=[],urls=[],sections=[];let physical=0,front=edition.frontStart,body=edition.startNumber,previousFront=null,missingImages=0;
+      const result=[],urls=[],sections=[],prepared=new Map(),illustrationEntries=[];let physical=0,front=edition.frontStart,body=edition.startNumber,previousFront=null,missingImages=0,nextFootnote=1;
       const check=()=>{if(attempt!==run||!dialog.open||o.context().key!==openedKey||!o.context().readable)throw new Error('A composição foi interrompida porque o contexto mudou.');};
       const margins=index=>edition.mirrored&&index%2===0?[edition.outer,edition.inner]:[edition.inner,edition.outer];
       function sheet(record,section,isFront,opening,blank=false){
         physical+=1;const number=isFront?front++:body++,leaf=node('article');leaf.className='page book-edition-sheet';leaf.dataset.layout='book';leaf.dataset.opening=String(opening);leaf.dataset.physicalPage=String(physical);leaf.dataset.documentId=record.id;
         leaf.style.cssText=`width:${width}px;height:${height}px;min-height:0;padding:0;--book-margin-y:${edition.bottom}px;--book-sheet-height:${height}px;--book-page-height:${height}px;--book-page-width:${width}px;--book-sheet-gap:0px`;
         leaf.setAttribute('aria-label',`Página física ${physical}${blank?' · em branco':` · ${record.title}`}`);
+        const hiddenNumber=section.numbering==='none'||section.numbering==='auto'&&['cover','title','credits'].includes(section.role);
+        leaf.dataset.pageLabel=hiddenNumber?'—':section.numbering==='roman'||section.numbering==='auto'&&isFront&&edition.frontRoman?roman(number):String(number);
         if(blank){leaf.classList.add('book-edition-blank');leaf.title='Página em branco inserida para respeitar o lado de abertura da seção';}else{
           const [left,right]=margins(physical),suppress=opening&&edition.hideOpening;
-          const hiddenNumber=section.numbering==='none'||section.numbering==='auto'&&['cover','title','credits'].includes(section.role);
-          if(edition.pageNumbers&&!suppress&&!hiddenNumber){const footer=node('div',section.numbering==='roman'||section.numbering==='auto'&&isFront&&edition.frontRoman?roman(number):String(number));footer.className='book-edition-folio';footer.style.bottom=`${Math.max(8,edition.bottom/2-8)}px`;footer.style.left=`${left}px`;footer.style.right=`${right}px`;footer.style.textAlign=edition.numberPosition==='center'?'center':physical%2?'right':'left';leaf.append(footer);}
+          if(edition.pageNumbers&&!suppress&&!hiddenNumber){const footer=node('div',leaf.dataset.pageLabel);footer.className='book-edition-folio';footer.style.bottom=`${Math.max(8,edition.bottom/2-8)}px`;footer.style.left=`${left}px`;footer.style.right=`${right}px`;footer.style.textAlign=edition.numberPosition==='center'?'center':physical%2?'right':'left';leaf.append(footer);}
           if(edition.headers!=='none'&&!suppress){const head=node('div',edition.headers==='custom'?(physical%2?edition.rightHeader:edition.leftHeader):edition.headers==='chapter'||physical%2?record.title:c.book?.name||record.title);head.className='book-edition-running-head';head.style.top=`${Math.max(8,edition.top/2-8)}px`;head.style.left=`${left}px`;head.style.right=`${right}px`;head.style.textAlign=physical%2?'right':'left';leaf.append(head);}
         }
         result.push(leaf);return leaf;
@@ -128,6 +134,41 @@
       dialog.setAttribute('aria-busy','true');update.disabled=edit.disabled=true;progress.textContent='Compondo o livro…';
       try{
         if(doc.fonts?.ready)await doc.fonts.ready;check();
+        // Prepare the canonical reading path once before enumerating illustrations.
+        for(const record of originalRecords){
+          const content=node('div');content.className='content';content.innerHTML=o.sanitize(record.body||'<p><br></p>');staging.append(content);
+          await o.prepare(content,record);check();
+          content.querySelectorAll('.authoring-decoration,[data-reading-empty="true"],[data-canonical-visible="false"],.narrative-variation-version[data-reading-active="false"]').forEach(element=>element.remove());
+          root.HeartspaceDocsBookReferences.clear(content);
+          for(const figure of content.querySelectorAll('figure:has(img)')){
+            const caption=figure.querySelector('figcaption')?.textContent.trim();if(!caption)continue;
+            const key=String(illustrationEntries.length+1);figure.dataset.editionIllustration=key;
+            illustrationEntries.push({key,record,label:caption});
+          }
+          prepared.set(record.id,content);
+        }
+        function indexRecord(kind,title,entries){
+          const holder=node('div');
+          if(!entries.length)holder.append(node('p',kind==='contents'?'Nenhuma seção de texto incluída no sumário.':'Nenhuma ilustração com legenda nas seções incluídas.'));
+          for(const entry of entries){
+            const row=node('div'),link=node('a'),label=node('span',entry.label),locator=node('span','—');
+            row.className='book-edition-index-row';link.className='book-edition-index-link';locator.className='book-edition-index-page';locator.setAttribute('aria-hidden','true');
+            link.dataset.indexRecord=entry.record.id;if(entry.key)link.dataset.indexIllustration=entry.key;
+            link.href='#';link.append(label,locator);row.append(link);holder.append(row);
+          }
+          return {id:`generated-${kind}`,title,layout:'book',body:holder.innerHTML,generated:true,chapterHeading:null,bookSection:{schema_version:1,role:'preface',start:'next',numbering:'auto',include:true,showHeading:true}};
+        }
+        const indices=[];
+        if(edition.contents&&originalRecords.length){
+          const entries=originalRecords.filter(record=>['preface','part','prologue','chapter','epilogue','appendix'].includes(sectionFor(record).role)).map(record=>{
+            const number=root.HeartspaceDocsBookTypography.numberText(root.HeartspaceDocsBookTypography.chapterNumber(record,c.allRecords),c.style);
+            return {record,label:number?`${number} — ${record.title}`:record.title};
+          });
+          indices.push(indexRecord('contents','Sumário',entries));
+        }
+        if(edition.illustrations&&originalRecords.length)indices.push(indexRecord('illustrations','Lista de ilustrações',illustrationEntries));
+        const records=[...originalRecords],firstBody=records.findIndex(record=>!frontRoles.has(sectionFor(record).role));
+        records.splice(firstBody<0?records.length:firstBody,0,...indices);
         for(let recordIndex=0;recordIndex<records.length;recordIndex++){
           const record=records[recordIndex],section=sectionFor(record),isFront=frontRoles.has(section.role);
           const desired=section.start==='recto'?1:section.start==='verso'?0:null;
@@ -136,10 +177,10 @@
           const source=node('article');source.className='page book-edition-source';source.dataset.layout='book';source.dataset.narrativeProfile=record.narrativeProfile||'prose';source.style.cssText=`width:${width}px;min-height:0;padding:0;--book-margin-y:${edition.bottom}px;--book-sheet-gap:0px`;
           const opening=node('div');opening.className='book-edition-opening';opening.style.cssText=`padding:${edition.top}px ${right}px 0 ${left}px`;
           const chapterNumber=node('div');chapterNumber.className='chapter-heading-number';const title=node('h1',record.title);title.className='doc-title';title.dataset.align=record.titleAlign||'left';const subtitle=node('div',record.subtitle||'');subtitle.className='doc-subtitle';subtitle.hidden=!record.subtitle;subtitle.style.textAlign=record.subtitleAlign||'left';opening.append(chapterNumber,title,subtitle);opening.hidden=!section.showHeading;
-          const content=node('div');content.className='content';content.innerHTML=o.sanitize(record.body||'<p><br></p>');source.append(opening,content);staging.append(source);
+          const content=prepared.get(record.id)||node('div');content.className='content';if(record.generated)content.innerHTML=record.body;source.append(opening,content);staging.append(source);
           root.HeartspaceDocsBookTypography.decorate({page:source,editor:content,number:chapterNumber},{record,records:c.allRecords,style:c.style});
           if(record.introSpacing!=null){source.dataset.customIntroSpacing='';source.style.setProperty('--intro-spacing',`${record.introSpacing}px`);}
-          await o.prepare(content,record);check();
+          if(!record.generated){content.dataset.bookFootnoteStart=String(edition.footnoteNumbering==='book'?nextFootnote:1);nextFootnote=root.HeartspaceDocsBookReferences.renumber(content,Number(content.dataset.bookFootnoteStart));}
           for(const image of content.querySelectorAll('img[data-local-image],img[data-remote-image]')){
             let blob=null;try{blob=await o.loadImage({localId:image.dataset.localImage,remotePath:image.dataset.remoteImage});}catch(error){check();}
             check();if(blob){const url=URL.createObjectURL(blob);urls.push(url);image.src=url;}
@@ -164,21 +205,39 @@
           }
           source.remove();previousFront=isFront;progress.textContent=`${recordIndex+1} de ${records.length} seções · ${physical} páginas`;await new Promise(resolve=>requestAnimationFrame(resolve));check();
         }
+        // Locators occupy a fixed column, so resolving them cannot repaginate an index.
+        for(const page of result)for(const link of page.querySelectorAll('[data-index-record]')){
+          const destination=result.find(leaf=>leaf.dataset.documentId===link.dataset.indexRecord&&!leaf.classList.contains('book-edition-blank')&&(!link.dataset.indexIllustration||[...leaf.querySelectorAll('[data-edition-illustration]')].some(figure=>figure.dataset.editionIllustration===link.dataset.indexIllustration)));
+          if(!destination)throw new Error('Um destino do índice não foi encontrado na composição.');
+          const number=destination.dataset.physicalPage;link.dataset.editionLink=number;link.href=`#book-page-${number}`;
+          link.querySelector('.book-edition-index-page').textContent=destination.dataset.pageLabel;
+          link.setAttribute('aria-label',`${link.firstElementChild.textContent}, página ${destination.dataset.pageLabel==='—'?`física ${number}`:destination.dataset.pageLabel}`);
+        }
         revoke(assetUrls);assetUrls=urls;rendered=result;currentWidth=width;heading.textContent=c.book?.name||c.record.title;
-        sectionSelect.replaceChildren();for(const {record,start,count} of sections){const option=node('option',`${record.title} · ${roles[sectionFor(record).role]} · p. física ${start}–${start+count-1}`);option.value=record.id;sectionSelect.append(option);}
+        sectionSelect.replaceChildren();for(const {record,start,count} of sections){const option=node('option',`${record.title} · ${record.generated?'Índice gerado':roles[sectionFor(record).role]} · p. física ${start}–${start+count-1}`);option.value=record.id;option.dataset.generated=String(Boolean(record.generated));sectionSelect.append(option);}
         sectionSelect.value=sections[0]?.record.id||'';arrange();viewport.scrollTop=0;
-        progress.textContent=records.length?`${records.length} seções · ${physical} páginas físicas · prévia do conteúdo original${missingImages?` · ${missingImages} imagem(ns) indisponível(is)`:''}`:'Nenhuma seção incluída. Confira a função editorial das seções do livro.';
-        edit.disabled=!records.length;sectionSelect.disabled=!records.length;
+        progress.textContent=originalRecords.length?`${originalRecords.length} seções${indices.length?` · ${indices.length} índice(s)`:''} · ${physical} páginas físicas · prévia do conteúdo original${missingImages?` · ${missingImages} imagem(ns) indisponível(is)`:''}`:'Nenhuma seção incluída. Confira a função editorial das seções do livro.';
+        edit.disabled=!records.length||Boolean(records[0]?.generated);sectionSelect.disabled=!records.length;
       }catch(error){revoke(urls);if(attempt===run&&dialog.open)progress.textContent=`Não foi possível compor o livro: ${error.message}`;}
       finally{staging.remove();if(attempt===run){dialog.removeAttribute('aria-busy');update.disabled=false;}}
     }
     async function open(){try{const c=o.context();if(!c.readable)throw new Error('Abra um documento disponível para visualizar o livro.');openedKey=c.key;if(!dialog.open)dialog.showModal();await compose();}catch(error){status.textContent=error.message;if(dialog.open)progress.textContent=error.message;}}
     openButton.addEventListener('click',open);update.addEventListener('click',()=>{void compose().catch(error=>{progress.textContent=error.message;});});
     close.addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{run+=1;rendered=[];viewport.replaceChildren();revoke(assetUrls);assetUrls=[];dialog.querySelectorAll('.book-edition-staging').forEach(element=>element.remove());});
-    sectionSelect.addEventListener('change',()=>{rendered.find(page=>page.dataset.documentId===sectionSelect.value&&!page.classList.contains('book-edition-blank'))?.scrollIntoView({block:'start',inline:'nearest'});});
-    edit.addEventListener('click',()=>{const id=sectionSelect.value;if(!id)return;dialog.close();o.edit(id);});
+    sectionSelect.addEventListener('change',()=>{edit.disabled=sectionSelect.selectedOptions[0]?.dataset.generated==='true';rendered.find(page=>page.dataset.documentId===sectionSelect.value&&!page.classList.contains('book-edition-blank'))?.scrollIntoView({block:'start',inline:'nearest'});});
+    edit.addEventListener('click',()=>{const id=sectionSelect.value;if(!id||sectionSelect.selectedOptions[0]?.dataset.generated==='true')return;dialog.close();o.edit(id);});
     view.addEventListener('change',()=>{arrange();viewport.scrollTop=0;});zoom.addEventListener('change',scale);
-    viewport.addEventListener('click',event=>{if(event.target.closest('a'))event.preventDefault();});
+    viewport.addEventListener('click',event=>{
+      const link=event.target.closest('a');if(link){event.preventDefault();const page=rendered.find(leaf=>leaf.dataset.physicalPage===link.dataset.editionLink);if(page){page.scrollIntoView({block:'start',inline:'nearest'});sectionSelect.value=page.dataset.documentId;edit.disabled=sectionSelect.selectedOptions[0]?.dataset.generated==='true';}return;}
+      const reference=event.target.closest('sup[data-book-footnote],[data-footnote-edit]');if(!reference)return;
+      const id=reference.dataset.bookFootnote||reference.dataset.footnoteEdit,section=reference.closest('[data-document-id]')?.dataset.documentId;
+      const query=reference.matches('sup')?'[data-footnote-edit]':'sup[data-book-footnote]';
+      for(const page of rendered.filter(leaf=>leaf.dataset.documentId===section)){
+        const target=[...page.querySelectorAll(query)].find(element=>(element.dataset.bookFootnote||element.dataset.footnoteEdit)===id);
+        if(target){target.scrollIntoView({block:'center',inline:'nearest'});break;}
+      }
+    });
+    viewport.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)&&event.target.matches('sup[data-book-footnote],[data-footnote-edit]')){event.preventDefault();event.target.click();}});
     const observer=new ResizeObserver(scale);observer.observe(viewport);
     return Object.freeze({refresh,open,focused:()=>o.panel.contains(doc.activeElement)});
   }
@@ -201,6 +260,10 @@
 .book-edition-dialog .book-edition-opening{display:flow-root}.book-edition-dialog .book-edition-opening[hidden],.book-edition-dialog .doc-subtitle[hidden]{display:none}.book-edition-dialog .doc-subtitle{resize:none;white-space:pre-wrap}
 .book-edition-dialog :is(.book-edition-folio,.book-edition-running-head){position:absolute;font:12px Georgia,serif;color:var(--document-ink,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px;pointer-events:none}
 .book-edition-viewport:focus-visible{outline:1px solid var(--accent,#0c8ce9);outline-offset:-2px}
+.book-edition-index-row{margin:0 0 12px;break-inside:avoid;text-indent:0;text-align:left}
+.book-edition-dialog .book-edition-index-link{display:grid;grid-template-columns:minmax(0,1fr) 14ch;gap:12px;color:inherit;text-decoration:none;align-items:end}
+.book-edition-index-link>span:first-child{overflow-wrap:anywhere}.book-edition-index-page{font-size:.85em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.book-edition-index-link:focus-visible{outline:1px solid var(--accent,#0c8ce9)}
 .book-edition-missing-image{box-sizing:border-box;min-height:100px;padding:20px;border:1px dashed #999;color:#999;font:14px system-ui;text-align:center}
 .book-edition-dialog .authoring-decoration,.book-edition-dialog [data-placeholder]:empty::before{display:none!important}
 .book-edition-dialog .content [data-page-break=true]{height:0;margin:0;border:0}.book-edition-dialog .content [data-page-break=true]>span{display:none}

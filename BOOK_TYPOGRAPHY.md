@@ -142,7 +142,9 @@ futura composição editorial de tabelas ou a exportação PDF/EPUB.
 3. **Concluída no código:** composição do livro completo em uma prévia própria,
    funções editoriais, margens espelhadas, numeração, cabeçalhos e páginas duplas.
    Uso, transporte e limites em `BOOK_COMPOSITION.md`.
-4. Sumário, lista de ilustrações e notas de rodapé.
+4. **Concluída no código:** sumário e lista de ilustrações navegáveis na
+   composição, notas de rodapé com continuação entre folhas. Uso e limites em
+   `BOOK_REFERENCES.md`.
 5. Modelos editoriais, ornamentos, separadores e ilustrações.
 6. Prévia final e exportação editorial PDF/EPUB.
 
