@@ -79,6 +79,11 @@
     const viewport=node('div');viewport.className='book-edition-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Páginas do livro');
     dialog.append(bar,progress,viewport);doc.body.append(dialog);
     let formKey='',signature='',run=0,openedKey='',rendered=[],assetUrls=[],currentWidth=559;
+    const exports=root.HeartspaceDocsBookExport.mount({dialog,bar,
+      valid:()=>dialog.open&&o.context().readable&&o.context().key===openedKey,
+      report:message=>{progress.textContent=message;},
+      lock:value=>{update.disabled=close.disabled=value;edit.disabled=value||!sectionSelect.value||sectionSelect.selectedOptions[0]?.dataset.generated==='true';}
+    });
     const revoke=urls=>urls.forEach(url=>URL.revokeObjectURL(url));
     function refresh(force=false){
       const c=o.context();details.hidden=!c.record||c.record.layout!=='book';
@@ -109,13 +114,14 @@
       viewport.replaceChildren(fragment);scale();
     }
     async function compose(){
+      if(exports.busy()){progress.textContent='Aguarde o encerramento da exportação e use Atualizar para recompor o livro.';return;}exports.invalidate();
       const attempt=++run,c=await o.snapshot();if(attempt!==run||!dialog.open)return;
       if(!c.readable||c.key!==openedKey)throw new Error('O projeto ou seu acesso mudou. Abra a prévia novamente.');
       const edition=normalizeEdition(c.style?.edition)||clone(defaults),spec=paperSizes[edition.paper];
       const [width,height]=edition.orientation==='landscape'?[spec[1],spec[0]]:spec;
       const originalRecords=c.records.filter(record=>record.layout==='book'&&!record.isNotebook&&!record.trashedAt&&!record.archivedAt&&sectionFor(record).include);
       const staging=node('div');staging.className='book-edition-staging';dialog.append(staging);
-      const result=[],urls=[],sections=[],prepared=new Map(),illustrationEntries=[];let physical=0,front=edition.frontStart,body=edition.startNumber,previousFront=null,missingImages=0,nextFootnote=1;
+      const result=[],urls=[],imageBlobs=new Map(),sections=[],exportSections=[],prepared=new Map(),illustrationEntries=[];let physical=0,front=edition.frontStart,body=edition.startNumber,previousFront=null,missingImages=0,nextFootnote=1;
       const check=()=>{if(attempt!==run||!dialog.open||o.context().key!==openedKey||!o.context().readable)throw new Error('A composição foi interrompida porque o contexto mudou.');};
       const margins=index=>edition.mirrored&&index%2===0?[edition.outer,edition.inner]:[edition.inner,edition.outer];
       function sheet(record,section,isFront,opening,blank=false){
@@ -183,13 +189,17 @@
           if(!record.generated){content.dataset.bookFootnoteStart=String(edition.footnoteNumbering==='book'?nextFootnote:1);nextFootnote=root.HeartspaceDocsBookReferences.renumber(content,Number(content.dataset.bookFootnoteStart));}
           for(const image of content.querySelectorAll('img[data-local-image],img[data-remote-image]')){
             let blob=null;try{blob=await o.loadImage({localId:image.dataset.localImage,remotePath:image.dataset.remoteImage});}catch(error){check();}
-            check();if(blob){const url=URL.createObjectURL(blob);urls.push(url);image.src=url;}
+            check();if(blob){const url=URL.createObjectURL(blob);urls.push(url);imageBlobs.set(url,blob);image.src=url;}
           }
           await Promise.all([...content.querySelectorAll('img')].map(image=>Promise.race([image.decode?.().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))])));check();
           for(const image of content.querySelectorAll('img'))if(!image.complete||!image.naturalWidth){const placeholder=node('div',`Imagem indisponível${image.alt?`: ${image.alt}`:''}`);placeholder.className='book-edition-missing-image';image.replaceWith(placeholder);missingImages+=1;}
           content.querySelectorAll('.authoring-decoration,[data-reading-empty="true"],[data-canonical-visible="false"]').forEach(element=>element.remove());
           content.querySelectorAll('.narrative-variation-version[data-reading-active="false"]').forEach(element=>element.remove());
           content.querySelectorAll('[contenteditable]').forEach(element=>element.contentEditable='false');content.querySelectorAll('button,input,textarea,select').forEach(element=>element.disabled=true);
+          if(!record.generated){
+            const number=chapterNumber.hidden?'':chapterNumber.textContent;
+            exportSections.push({record,opening:opening.cloneNode(true),content:content.cloneNode(true),label:number?`${number} — ${record.title}`:record.title});
+          }
           for(const e of content.querySelectorAll('[id]'))if(!e.closest('svg'))e.removeAttribute('id');
           const firstHeight=height-(section.showHeading?opening.getBoundingClientRect().height:0),pages=[];
           if(firstHeight<edition.bottom+40)throw new Error(`A abertura de “${record.title}” não cabe no papel escolhido. Reduza os espaços da abertura ou escolha um papel maior.`);
@@ -218,6 +228,9 @@
         sectionSelect.value=sections[0]?.record.id||'';arrange();viewport.scrollTop=0;
         progress.textContent=originalRecords.length?`${originalRecords.length} seções${indices.length?` · ${indices.length} índice(s)`:''} · ${physical} páginas físicas · prévia do conteúdo original${missingImages?` · ${missingImages} imagem(ns) indisponível(is)`:''}`:'Nenhuma seção incluída. Confira a função editorial das seções do livro.';
         edit.disabled=!records.length||Boolean(records[0]?.generated);sectionSelect.disabled=!records.length;
+        if(originalRecords.length)exports.set({key:openedKey,title:c.book?.name||c.record.title,style:c.style,edition,width,height,sections:exportSections,pages:result,imageBlobs,missingImages,available:c.exportAvailable!==false});
+        const overflow=result.reduce((count,page)=>count+page.querySelectorAll('[data-book-overflow]').length,0);
+        if(overflow)progress.textContent+=` · ${overflow} bloco(s) excedem a folha: ajuste antes de imprimir; o EPUB preserva o texto completo`;
       }catch(error){revoke(urls);if(attempt===run&&dialog.open)progress.textContent=`Não foi possível compor o livro: ${error.message}`;}
       finally{staging.remove();if(attempt===run){dialog.removeAttribute('aria-busy');update.disabled=false;}}
     }

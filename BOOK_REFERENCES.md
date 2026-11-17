@@ -90,5 +90,5 @@ desktop juntos; o arquivo CSP acompanha a alteração do código principal.
 
 Foram feitas revisão estática da integração e conferências de sintaxe, sem
 adicionar ou executar testes. A paginação visual, a interação, a impressão e a
-sincronização real ainda precisam de validação. Exportação editorial PDF/EPUB e
-prévia final de impressão pertencem à fatia 6.
+sincronização real ainda precisam de validação. A exportação editorial PDF/EPUB
+e a prévia final de impressão da fatia 6 estão descritas em `BOOK_EXPORT.md`.

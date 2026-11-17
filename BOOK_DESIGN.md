@@ -124,4 +124,5 @@ Foram feitas conferências de sintaxe e revisão estática da integração. Não
 adicionados nem executados testes. A paginação visual, os controles, a importação
 e a sincronização real ainda precisam de validação em ambiente de uso.
 
-A fatia 6 continua destinada à prévia final e exportação editorial PDF/EPUB.
+A fatia 6 acrescenta prévia final e exportação editorial PDF/EPUB; consulte
+`BOOK_EXPORT.md` para uso e limites de cada saída.

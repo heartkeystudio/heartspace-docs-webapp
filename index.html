@@ -1866,6 +1866,7 @@
   <script src="book-design.js"></script>
   <script src="book-references.js"></script>
   <script src="book-pagination.js"></script>
+  <script src="book-export.js"></script>
   <script src="book-composition.js"></script>
   <script src="book-typography.js"></script>
   <script src="authoring-project.js"></script>
@@ -12288,7 +12289,7 @@
       const bookCompositionContext = () => {
         const record=documents.find(item=>item.id===activeDocumentId),book=libraryFolders.find(folder=>folder.id===record?.folderId&&folder.layout==='book');
         const readable=Boolean(record&&record.layout==='book'&&!record.trashedAt&&!record.archivedAt&&storageKey&&!desktopBlocked&&!authoringStorageError&&projectLoading.hidden);
-        return {record,book,key:`${storageKey}:${projectContextEpoch}:${book?.id||''}:${record?.id||''}`,style:HeartspaceDocsBookTypography.normalizeStyle(book?book.bookStyle:record?.bookStyle),records:book?documents.filter(item=>item.folderId===book.id):record?[record]:[],allRecords:documents,readable,
+        return {record,book,key:`${storageKey}:${projectContextEpoch}:${book?.id||''}:${record?.id||''}`,style:HeartspaceDocsBookTypography.normalizeStyle(book?book.bookStyle:record?.bookStyle),records:book?documents.filter(item=>item.folderId===book.id):record?[record]:[],allRecords:documents,readable,exportAvailable:!desktopMode,
           editable:readable&&documentViewMode==='writing'&&(!currentProjectId||canEditProject({capabilities:projectCapabilities}))};
       };
       bookComposition=HeartspaceDocsBookComposition.mount({

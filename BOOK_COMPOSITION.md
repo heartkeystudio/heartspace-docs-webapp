@@ -107,10 +107,13 @@ e o carregador/recursos desktop em conjunto, inclusive `ops/desktop-csp.txt`.
 A composição é uma prévia editorial do livro inteiro. A fatia 4 acrescenta
 sumário, lista de ilustrações e notas de rodapé, descritos em `BOOK_REFERENCES.md`.
 A fatia 5 acrescenta modelos, ornamentos, separadores de cena e ilustrações em
-folha exclusiva, descritos em `BOOK_DESIGN.md`. Exportação PDF/EPUB e prévia de
-impressão final ficam na fatia 6. Decorações de ambientação e notas de margem
+folha exclusiva, descritos em `BOOK_DESIGN.md`. A fatia 6 acrescenta prévia em
+papel branco, impressão para PDF e download EPUB, descritos em `BOOK_EXPORT.md`.
+Decorações de ambientação e notas de margem
 não são incorporadas a esta prévia editorial. Tabelas e blocos complexos mantêm os limites da fatia 2:
 permanecem indivisíveis, com rolagem interna se excederem a área útil.
+A impressão bloqueia esses recortes; o EPUB parte do conteúdo completo antes
+da paginação.
 
 Foram feitas conferências estáticas de integração e sintaxe. Não foram
 adicionados ou executados testes. Paginação visual, interação e sincronização

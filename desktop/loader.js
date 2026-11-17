@@ -32,6 +32,7 @@
       .replace('src="book-design.js"', `src="${rootPrefix}book-design.js"`)
       .replace('src="book-references.js"', `src="${rootPrefix}book-references.js"`)
       .replace('src="book-pagination.js"', `src="${rootPrefix}book-pagination.js"`)
+      .replace('src="book-export.js"', `src="${rootPrefix}book-export.js"`)
       .replace('src="book-composition.js"', `src="${rootPrefix}book-composition.js"`)
       .replace('src="book-typography.js"', `src="${rootPrefix}book-typography.js"`)
       .replace('src="authoring-project.js"', `src="${rootPrefix}authoring-project.js"`)

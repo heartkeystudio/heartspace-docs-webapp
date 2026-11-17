@@ -148,7 +148,10 @@ futura composição editorial de tabelas ou a exportação PDF/EPUB.
 5. **Concluída no código:** modelos editoriais, ornamentos de abertura,
    separadores de cena e composição de ilustrações junto ao texto ou em folha
    exclusiva. Uso, transporte e limites em `BOOK_DESIGN.md`.
-6. Prévia final e exportação editorial PDF/EPUB.
+6. **Concluída no código para navegador:** prévia em papel branco, impressão
+   das folhas compostas (salvar como PDF) e download EPUB com texto ajustável,
+   recursos incorporados e notas navegáveis. Uso e limites em `BOOK_EXPORT.md`.
+   A ponte desktop ainda não oferece a saída de arquivos/impressão.
 
 Nestas fatias foram feitas conferências estáticas de integração e sintaxe. Não
 foram adicionados ou executados testes. A interação, paginação visual e
