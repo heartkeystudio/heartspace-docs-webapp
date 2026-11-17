@@ -6,6 +6,67 @@
   let serial=0;
   const uid=()=>`bp-${++serial}`;
   const composing=new WeakSet();
+  const viewports=new WeakMap();
+  // A collapsed element range can have an empty rectangle after restoring a
+  // bookmark. Resolve its text boundary instead of using the entire paragraph.
+  function caretRect(editor,selection=editor.ownerDocument.getSelection()){
+    if(!selection?.rangeCount||!selection.isCollapsed||!editor.contains(selection.focusNode))return null;
+    const range=selection.getRangeAt(0).cloneRange(),usable=rect=>rect&&Number.isFinite(rect.top)&&rect.height>0;
+    let rect=range.getBoundingClientRect();if(usable(rect))return rect;
+    const node=selection.focusNode,offset=selection.focusOffset;
+    if(node.nodeType===1){
+      const edge=(child,last)=>{
+        if(!child)return null;
+        const walker=editor.ownerDocument.createTreeWalker(child,4),texts=[];
+        if(child.nodeType===3)texts.push(child);else{let text;while((text=walker.nextNode()))texts.push(text);}
+        if(last)texts.reverse();
+        for(const text of texts){if(!text.length)continue;range.setStart(text,last?text.length:0);range.collapse(true);const r=range.getBoundingClientRect();if(usable(r))return r;}
+        return null;
+      };
+      rect=edge(node.childNodes[offset],false)||edge(node.childNodes[offset-1],true);if(rect)return rect;
+      if(!node.textContent.trim()&&node.matches('p,div,li,td,th')){rect=node.getBoundingClientRect();if(usable(rect))return {top:rect.top,bottom:rect.top+Math.min(rect.height,24),height:Math.min(rect.height,24)};}
+    }
+    return null;
+  }
+  function captureViewport(editor){
+    const pending=viewports.get(editor);if(pending)return pending;
+    const area=editor.closest('.editor-area');if(!area)return null;
+    const bounds=area.getBoundingClientRect(),rect=caretRect(editor),visible=rect&&rect.bottom>bounds.top&&rect.top<bounds.bottom;
+    const anchor={area,top:visible?rect.top:null,scrollTop:area.scrollTop,scrollLeft:area.scrollLeft,minHeight:editor.style.getPropertyValue('min-height'),priority:editor.style.getPropertyPriority('min-height'),reveal:false};
+    // Removing the wrappers must not shrink the scroll range while the browser
+    // is applying an edit or while the paginator is measuring the new leaves.
+    editor.style.setProperty('min-height',`${editor.offsetHeight}px`);
+    viewports.set(editor,anchor);return anchor;
+  }
+  function restoreViewport(editor,anchor=viewports.get(editor)){
+    if(!anchor)return;
+    viewports.delete(editor);
+    if(anchor.minHeight)editor.style.setProperty('min-height',anchor.minHeight,anchor.priority);else editor.style.removeProperty('min-height');
+    const rect=caretRect(editor),area=anchor.area;
+    // During typing keep the viewport itself still. Natural line wraps or an
+    // explicit page break may move the caret; the caller reveals it only when
+    // it actually leaves the usable area. Layout-only changes retain its line.
+    if(!anchor.reveal&&anchor.top!=null&&rect)area.scrollTop+=rect.top-anchor.top;else area.scrollTop=anchor.scrollTop;
+    area.scrollLeft=anchor.scrollLeft;
+  }
+  function normalizeTextFlow(editor){
+    // Plain clipboard wrappers carry no authoring identity or formatting. Keep
+    // their block children in the page flow instead of treating the whole paste
+    // as one indivisible object. Containers with attributes remain intact.
+    let wrappers=[...editor.children].filter(n=>n.matches('div')&&!n.attributes.length&&n.querySelector('p,div,h1,h2,h3,h4,h5,h6,ul,ol,blockquote,pre,figure,table'));
+    while(wrappers.length){for(const wrapper of wrappers)wrapper.replaceWith(...wrapper.childNodes);wrappers=[...editor.children].filter(n=>n.matches('div')&&!n.attributes.length&&n.querySelector('p,div,h1,h2,h3,h4,h5,h6,ul,ol,blockquote,pre,figure,table'));}
+    const inline='a,span,strong,b,em,i,u,s,del,mark,small,sub,sup,code,br,img';let run=[];
+    const flush=()=>{
+      if(run.some(n=>n.nodeType===3&&n.data.trim()||n.nodeType===1)){
+        const paragraph=editor.ownerDocument.createElement('p');run[0].before(paragraph);paragraph.append(...run);
+      }
+      run=[];
+    };
+    for(const node of [...editor.childNodes]){
+      if(node.nodeType===3||node.nodeType===8||node.nodeType===1&&node.matches(inline))run.push(node);else flush();
+    }
+    flush();
+  }
   function bookmark(editor){
     const doc=editor.ownerDocument,selection=doc.getSelection();
     if(!selection?.rangeCount||!editor.contains(selection.anchorNode)||!editor.contains(selection.focusNode))return ()=>{};
@@ -36,10 +97,11 @@
       if(e.hasAttribute('style')&&!e.getAttribute('style'))e.removeAttribute('style');
     }
   }
-  function canonicalize(editor,{unwrap=true,preserve=false}={}){
+  function canonicalize(editor,{unwrap=true,preserve=false,flow=false}={}){
     const restore=preserve?bookmark(editor):()=>{};
     try{
       if(unwrap)editor.querySelectorAll('.book-page-content').forEach(page=>page.replaceWith(...page.childNodes));
+      if(flow)normalizeTextFlow(editor);
       editor.normalize();
       const blocks=[...editor.querySelectorAll(`[${PART}]`)];let previous=null;
       for(const block of blocks){
@@ -79,7 +141,7 @@
   }
   function contentBottom(page){const style=getComputedStyle(page),rect=page.getBoundingClientRect(),scale=page.offsetHeight?rect.height/page.offsetHeight:1;return rect.bottom-(parseFloat(style.paddingBottom)||0)*scale-(parseFloat(style.borderBottomWidth)||0)*scale;}
   function splittable(block){
-    if(block.nodeType!==1||!block.matches('p')||!block.textContent.trim())return false;
+    if(block.nodeType!==1||!block.matches('p,div')||!block.textContent.trim())return false;
     return [...block.querySelectorAll('*')].every(e=>/^(span|a|strong|b|em|i|u|s|del|mark|small|sub|sup|code|br)$/.test(e.localName)&&!e.id&&!e.hasAttribute('data-localization-id')&&!e.hasAttribute('contenteditable')&&!e.classList.contains('narrative-inline')&&getComputedStyle(e).display!=='inline-block');
   }
   function safeCut(text,offset){
@@ -121,7 +183,7 @@
     if(composing.has(editor))return pages;
     const restore=bookmark(editor);let flow=[];
     try{
-      canonicalize(editor);flow=[...editor.childNodes];editor.replaceChildren();pages.length=0;
+      canonicalize(editor,{flow:true});flow=[...editor.childNodes];editor.replaceChildren();pages.length=0;
       if(!flow.length){const p=editor.ownerDocument.createElement('p');p.append(editor.ownerDocument.createElement('br'));flow.push(p);}
       let page=makePage(0);page.classList.add('measuring-reading');let headings=[];
       const fresh=()=>{page.classList.remove('measuring-reading');page=makePage(pages.length);page.classList.add('measuring-reading');};
@@ -165,21 +227,32 @@
   }
   function prepare(editor){
     if(!editor.querySelector(`[${PART}],.book-page-content`))return;
-    const selection=editor.ownerDocument.getSelection(),area=editor.closest('.editor-area');
-    const rect=selection?.rangeCount&&editor.contains(selection.anchorNode)?selection.getRangeAt(0).getBoundingClientRect():null;
+    captureViewport(editor);
     canonicalize(editor,{preserve:true});editor.classList.remove('book-paginated');
-    if(rect&&area&&selection?.rangeCount){const next=selection.getRangeAt(0).getBoundingClientRect();if(Number.isFinite(next.top)&&Number.isFinite(rect.top))area.scrollTop+=next.top-rect.top;}
   }
   function captureSelection(editor){
     const selection=editor.ownerDocument.getSelection();
     if(!selection?.rangeCount||!editor.contains(selection.anchorNode)||!editor.contains(selection.focusNode))return null;
-    const endpoint=(node,offset)=>{
+    const endpoint=(scope,node,offset)=>{
       const element=node.nodeType===1?node:node.parentElement,path=[];
-      for(let current=element;current!==editor;current=current.parentElement)path.unshift([...current.parentElement.children].indexOf(current));
+      for(let current=element;current!==scope;current=current.parentElement)path.unshift([...current.parentElement.children].indexOf(current));
       const range=editor.ownerDocument.createRange();range.selectNodeContents(element);range.setEnd(node,offset);
       return {path,offset:range.toString().length};
     };
-    return {anchor:endpoint(selection.anchorNode,selection.anchorOffset),focus:endpoint(selection.focusNode,selection.focusOffset)};
+    if(editor.querySelector(`.book-page-content,[${PART}]`)){
+      // IME must keep the live leaves intact. Resolve source positions on a
+      // clone so undo still uses logical paragraphs, not physical fragments.
+      const copy=editor.cloneNode(true),sourceRange=selection.getRangeAt(0),range=editor.ownerDocument.createRange();
+      const copied=node=>{const path=[];for(let n=node;n!==editor;n=n.parentNode)path.unshift([...n.parentNode.childNodes].indexOf(n));let result=copy;for(const index of path)result=result.childNodes[index];return result;};
+      range.setStart(copied(sourceRange.startContainer),sourceRange.startOffset);range.setEnd(copied(sourceRange.endContainer),sourceRange.endOffset);
+      const start=editor.ownerDocument.createComment('book-source-start'),end=sourceRange.collapsed?null:editor.ownerDocument.createComment('book-source-end');
+      if(end){const tail=range.cloneRange();tail.collapse(false);tail.insertNode(end);}range.collapse(true);range.insertNode(start);
+      canonicalize(copy,{flow:true});
+      const at=marker=>endpoint(copy,marker.parentNode,[...marker.parentNode.childNodes].indexOf(marker));
+      const first=at(start),last=end?at(end):first,backward=selection.anchorNode===sourceRange.endContainer&&selection.anchorOffset===sourceRange.endOffset&&!sourceRange.collapsed;
+      return {anchor:backward?last:first,focus:backward?first:last};
+    }
+    return {anchor:endpoint(editor,selection.anchorNode,selection.anchorOffset),focus:endpoint(editor,selection.focusNode,selection.focusOffset)};
   }
   function restoreSelection(editor,snapshot){
     if(!snapshot)return;
@@ -193,10 +266,11 @@
     if(a&&b)editor.ownerDocument.getSelection()?.setBaseAndExtent(a.node,a.offset,b.node,b.offset);
   }
   function installEditing(o){
-    let mutation=null;
+    let mutation=null,pasted=false;
+    const editing=()=>{const anchor=captureViewport(o.editor);if(anchor)anchor.reveal=true;};
     o.editor.addEventListener('keydown',event=>{
       const formatting=(event.ctrlKey||event.metaKey)&&!event.altKey&&(/^(b|i|u|x|[0-6])$/i.test(event.key)||event.shiftKey&&['Digit7','Digit8'].includes(event.code));
-      if(o.editable()&&!event.isComposing&&(['Enter','Backspace','Delete','Tab'].includes(event.key)||event.key===' '&&event.shiftKey||formatting)){prepare(o.editor);o.layout();}
+      if(o.editable()&&!event.isComposing&&(['Enter','Backspace','Delete','Tab'].includes(event.key)||event.key===' '&&event.shiftKey||formatting)){editing();prepare(o.editor);o.layout();}
     },true);
     o.editor.addEventListener('beforeinput',event=>{
       if(!o.editable()||composing.has(o.editor)||event.isComposing)return;
@@ -205,12 +279,18 @@
         if(event.cancelable&&(event.inputType==='historyUndo'?o.undo():o.redo()))event.preventDefault();
         return;
       }
-      prepare(o.editor);mutation=o.begin();mutation.bookBeforeSelection=captureSelection(o.editor);mutation.bookInput=event.inputType;mutation.bookInputData=event.data;mutation.bookInputAt=Date.now();
+      editing();prepare(o.editor);
+      const anchor=viewports.get(o.editor);if(anchor&&/insertFrom(Paste|Drop)|insertReplacementText/.test(event.inputType))anchor.top=null;
+      mutation=o.begin();mutation.bookBeforeSelection=captureSelection(o.editor);mutation.bookInput=event.inputType;mutation.bookInputData=event.data;mutation.bookInputAt=Date.now();
     },true);
-    o.editor.addEventListener('input',()=>{if(composing.has(o.editor))return;if(mutation){mutation.bookAfterSelection=captureSelection(o.editor);o.end(mutation);mutation=null;}o.layout();});
-    o.editor.addEventListener('compositionstart',()=>{if(!o.editable())return;prepare(o.editor);mutation=o.begin();mutation.bookBeforeSelection=captureSelection(o.editor);composing.add(o.editor);});
-    o.editor.addEventListener('compositionend',()=>{if(!composing.has(o.editor))return;composing.delete(o.editor);if(mutation){mutation.bookAfterSelection=captureSelection(o.editor);o.end(mutation);mutation=null;}o.changed();o.layout();});
-    for(const type of ['copy','cut','paste'])o.editor.addEventListener(type,()=>{prepare(o.editor);o.layout();},true);
+    o.editor.addEventListener('input',event=>{
+      if(composing.has(o.editor))return;editing();
+      if((pasted||/insertFrom(Paste|Drop)/.test(event.inputType))&&o.editor.closest('.page')?.dataset.layout==='book'){const restore=bookmark(o.editor);try{normalizeTextFlow(o.editor);}finally{restore();}}
+      pasted=false;if(mutation){mutation.bookAfterSelection=captureSelection(o.editor);o.end(mutation);mutation=null;}o.layout({immediate:true});
+    });
+    o.editor.addEventListener('compositionstart',()=>{if(!o.editable())return;editing();mutation=o.begin();mutation.bookBeforeSelection=captureSelection(o.editor);composing.add(o.editor);});
+    o.editor.addEventListener('compositionend',()=>{if(!composing.has(o.editor))return;composing.delete(o.editor);prepare(o.editor);if(mutation){mutation.bookAfterSelection=captureSelection(o.editor);o.end(mutation);mutation=null;}o.changed();o.layout({immediate:true});});
+    for(const type of ['copy','cut','paste'])o.editor.addEventListener(type,()=>{prepare(o.editor);if(type==='paste'){pasted=true;const anchor=viewports.get(o.editor);if(anchor){anchor.top=null;anchor.reveal=true;}}o.layout();if(type!=='copy')setTimeout(()=>o.layout({immediate:true}),0);},true);
   }
   const styles=`
 .content .book-page-content:first-child{padding-bottom:var(--book-margin-y,72px)}
@@ -220,5 +300,5 @@
 .content [data-book-overflow]{max-height:var(--book-overflow-height);overflow:auto;box-sizing:border-box}
 .content img[style*="--book-image-fit"]{max-height:var(--book-image-fit)!important;object-fit:contain}
 `;
-  root.HeartspaceDocsBookPagination=Object.freeze({reflow,canonicalize,logicalClone,prepare,restoreSelection,installEditing,composing:editor=>composing.has(editor),styles});
+  root.HeartspaceDocsBookPagination=Object.freeze({reflow,canonicalize,logicalClone,prepare,restoreSelection,caretRect,captureViewport,restoreViewport,installEditing,composing:editor=>composing.has(editor),styles});
 })(globalThis);

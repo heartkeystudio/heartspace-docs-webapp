@@ -105,6 +105,28 @@ autoral, com posição de seleção para desfazer/refazer, em vez de depender da
 operações de rearranjo das folhas. Os vínculos das notas continuam ligados ao
 texto existente.
 
+### Estabilidade durante edição e colagem
+
+A altura do fluxo é preservada temporariamente enquanto as folhas são
+reconstruídas, evitando que o navegador encurte a faixa de rolagem no meio de
+uma edição. A rolagem anterior é restaurada após a paginação; o cursor só é
+revelado quando sai da área útil. Sua posição é medida na própria linha, sem
+usar o retângulo inteiro de um parágrafo longo. A ancoragem automática de
+rolagem do navegador fica desativada na área do editor para não competir com
+esse ajuste. Correções adiadas não substituem uma rolagem manual posterior.
+
+Colagens são paginadas ao terminar o evento de entrada, com uma passagem de
+segurança após o evento de colagem. Texto solto ganha um parágrafo, divisões
+simples de texto também podem continuar entre folhas e envoltórios `div` sem
+atributos são desfeitos quando contêm outros blocos. Contêineres com atributos
+ou estruturas complexas permanecem intactos. Fontes, imagens e diagramas que
+terminam de carregar também solicitam uma nova paginação.
+
+Durante composição por IME, as folhas existentes permanecem no lugar. O
+histórico resolve posições sobre uma cópia da fonte; a reconstrução visual é
+feita depois que a composição termina. A altura temporária e a posição da
+rolagem são estado visual, sem novos campos autorais ou migração SQL.
+
 **Limites desta fatia:** listas, tabelas, diagramas, citações, chamadas e blocos
 narrativos interativos permanecem indivisíveis. Parágrafos que contêm elementos
 interativos ou formatação complexa também permanecem inteiros. Imagens maiores
