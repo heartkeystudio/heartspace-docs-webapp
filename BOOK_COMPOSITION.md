@@ -1,4 +1,4 @@
-# Composição do livro — fatias 3 e 4
+# Composição do livro — fatias 3 a 5
 
 ## Uso
 
@@ -106,9 +106,10 @@ e o carregador/recursos desktop em conjunto, inclusive `ops/desktop-csp.txt`.
 
 A composição é uma prévia editorial do livro inteiro. A fatia 4 acrescenta
 sumário, lista de ilustrações e notas de rodapé, descritos em `BOOK_REFERENCES.md`.
-Ornamentos, exportação PDF/EPUB e prévia de impressão final ficam nas próximas
-fatias. Decorações de ambientação e notas de margem não são incorporadas a esta
-prévia editorial. Tabelas e blocos complexos mantêm os limites da fatia 2:
+A fatia 5 acrescenta modelos, ornamentos, separadores de cena e ilustrações em
+folha exclusiva, descritos em `BOOK_DESIGN.md`. Exportação PDF/EPUB e prévia de
+impressão final ficam na fatia 6. Decorações de ambientação e notas de margem
+não são incorporadas a esta prévia editorial. Tabelas e blocos complexos mantêm os limites da fatia 2:
 permanecem indivisíveis, com rolagem interna se excederem a área útil.
 
 Foram feitas conferências estáticas de integração e sintaxe. Não foram

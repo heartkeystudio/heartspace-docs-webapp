@@ -145,7 +145,9 @@ futura composição editorial de tabelas ou a exportação PDF/EPUB.
 4. **Concluída no código:** sumário e lista de ilustrações navegáveis na
    composição, notas de rodapé com continuação entre folhas. Uso e limites em
    `BOOK_REFERENCES.md`.
-5. Modelos editoriais, ornamentos, separadores e ilustrações.
+5. **Concluída no código:** modelos editoriais, ornamentos de abertura,
+   separadores de cena e composição de ilustrações junto ao texto ou em folha
+   exclusiva. Uso, transporte e limites em `BOOK_DESIGN.md`.
 6. Prévia final e exportação editorial PDF/EPUB.
 
 Nestas fatias foram feitas conferências estáticas de integração e sintaxe. Não

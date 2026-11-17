@@ -194,7 +194,7 @@
           const firstHeight=height-(section.showHeading?opening.getBoundingClientRect().height:0),pages=[];
           if(firstHeight<edition.bottom+40)throw new Error(`A abertura de “${record.title}” não cabe no papel escolhido. Reduza os espaços da abertura ou escolha um papel maior.`);
           content.classList.add('book-paginated');
-          const makePage=index=>{const page=node('div'),[l,r]=margins(start+index);page.className='book-page-content';page.style.cssText=`height:${index?height:Math.max(80,firstHeight)}px;padding:${index||!section.showHeading?edition.top:0}px ${r}px ${edition.bottom}px ${l}px`;content.append(page);pages.push(page);return page;};
+          const makePage=index=>{const page=node('div'),[l,r]=margins(start+index);page.className='book-page-content';page.dataset.bookOpening=String(index===0&&section.showHeading);page.style.cssText=`height:${index?height:Math.max(80,firstHeight)}px;padding:${index||!section.showHeading?edition.top:0}px ${r}px ${edition.bottom}px ${l}px`;content.append(page);pages.push(page);return page;};
           root.HeartspaceDocsBookPagination.reflow({editor:content,pages,makePage});
           sections.push({record,start,count:pages.length});
           for(let i=0;i<pages.length;i++){

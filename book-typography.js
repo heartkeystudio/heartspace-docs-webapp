@@ -8,6 +8,12 @@
   const ranges={fontSize:[12,28],lineHeight:[1,2.5],paragraphSpace:[0,40],firstIndent:[0,4],headingSize:[18,64],openingSpace:[0,200],numberSize:[10,32],numberGap:[0,120],textGap:[0,200]};
   const enums={font:Object.keys(FONTS),headingFont:Object.keys(FONTS),align:['left','justify'],headingAlign:['left','center','right'],language:['pt-BR','pt-PT','en','es','fr','de'],numberFormat:['label','arabic','roman']};
   const presets={classic:base,airy:{...base,font:'classic',align:'left',lineHeight:1.75,paragraphSpace:10,firstIndent:0,headingFont:'classic'},modern:{...base,font:'sans',headingFont:'sans',align:'left',paragraphSpace:10,firstIndent:0,headingSize:30,numberFormat:'arabic',textGap:32}};
+  Object.assign(presets,{
+    fantasy:{...base,font:'classic',headingFont:'classic',headingSize:34,smallCaps:true,openingSpace:32,textGap:36,design:{...root.HeartspaceDocsBookDesign.defaults(),openingOrnament:'flourish',separator:'diamond',illustrations:true,captionFont:'italic'}},
+    stories:{...base,font:'classic',fontSize:18,lineHeight:1.65,firstIndent:1,textGap:32,design:{...root.HeartspaceDocsBookDesign.defaults(),openingOrnament:'dots',separator:'stars',illustrations:true,illustrationWidth:85,captionFont:'italic'}},
+    essay:{...base,fontSize:16,headingFont:'sans',headingAlign:'left',headingSize:28,textGap:28,numberFormat:'roman',design:{...root.HeartspaceDocsBookDesign.defaults(),separator:'line',illustrations:true,illustrationWidth:90,illustrationFrame:'soft'}},
+    illustrated:{...presets.airy,headingSize:30,design:{...root.HeartspaceDocsBookDesign.defaults(),openingOrnament:'diamond',illustrations:true,captionFont:'italic'}}
+  });
   function normalizeStyle(value){
     if(value==null)return null;
     if(!object(value)||value.schema_version!==1)throw new Error('Esta versão dos estilos do livro não é suportada. A fonte foi preservada.');
@@ -16,6 +22,7 @@
     for(const [key,values] of Object.entries(enums))if(value[key]!==undefined){if(!values.includes(value[key]))throw new Error('Uma opção do estilo do livro é inválida.');result[key]=value[key];}
     for(const key of ['enabled','skipFirstIndent','hyphenate','smallCaps'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Uma opção do estilo do livro é inválida.');result[key]=value[key];}
     if(value.numberLabel!==undefined){if(typeof value.numberLabel!=='string'||value.numberLabel.length>40)throw new Error('O nome da numeração do capítulo é inválido.');result.numberLabel=value.numberLabel;}
+    if(value.design!=null)result.design=root.HeartspaceDocsBookDesign.normalize(value.design);
     if(value.edition!=null)result.edition=root.HeartspaceDocsBookComposition.normalizeEdition(value.edition);
     return result;
   }
@@ -52,6 +59,7 @@
         o.editor.removeAttribute('lang');
         for(const key of ['body-font','body-size','line-height','body-align','paragraph-space','first-indent','heading-font','heading-size','heading-align','heading-caps','opening-space','number-size','number-gap','text-gap','hyphens'])page.style.removeProperty(`--book-${key}`);
       }
+      root.HeartspaceDocsBookDesign.decorate(o,c);
   }
   function mount(o){
     const doc=o.page.ownerDocument,panel=o.panel;
@@ -69,11 +77,29 @@
       if(type==='checkbox'){row.textContent='';row.className='book-style-check';row.append(input,doc.createTextNode(` ${label}`));}else row.append(input);
       input.dataset.bookStyleField=key;controls.set(key,input);parent.append(row);return input;
     }
-    const presetRow=node('label','Modelo'),preset=node('select');for(const [value,name] of [['custom','Personalizado'],['classic','Romance clássico'],['airy','Leitura arejada'],['modern','Contemporâneo']]){const option=node('option',name);option.value=value;preset.append(option);}presetRow.append(preset);form.append(presetRow);
+    const presetRow=node('label','Modelo editorial'),preset=node('select');for(const [value,name] of [['custom','Personalizado'],['classic','Romance clássico'],['airy','Leitura arejada'],['modern','Contemporâneo'],['fantasy','Fantasia ilustrada'],['stories','Contos'],['essay','Ensaio'],['illustrated','Livro ilustrado']]){const option=node('option',name);option.value=value;preset.append(option);}presetRow.append(preset);form.append(presetRow);
     const fontChoices=[['serif','Serifada · Georgia'],['classic','Serifada · Palatino'],['sans','Sem serifa · Sistema']];
     const body=group('Corpo do texto');field(body,'font','Fonte','select',fontChoices);field(body,'fontSize','Tamanho (px)','number');field(body,'lineHeight','Entrelinha','number');field(body,'align','Alinhamento','select',[['left','À esquerda'],['justify','Justificado']]);
     const paragraphs=group('Parágrafos');field(paragraphs,'firstIndent','Recuo da primeira linha (em)','number');field(paragraphs,'paragraphSpace','Espaço entre parágrafos (px)','number');field(paragraphs,'skipFirstIndent','Sem recuo após títulos e separadores','checkbox');field(paragraphs,'hyphenate','Hifenização automática do navegador','checkbox');field(paragraphs,'language','Idioma do texto','select',[['pt-BR','Português · Brasil'],['pt-PT','Português · Portugal'],['en','Inglês'],['es','Espanhol'],['fr','Francês'],['de','Alemão']]);
     const opening=group('Abertura do capítulo');field(opening,'headingFont','Fonte do título','select',fontChoices);field(opening,'headingSize','Tamanho do título (px)','number');field(opening,'headingAlign','Alinhamento','select',[['left','À esquerda'],['center','Centralizado'],['right','À direita']]);field(opening,'smallCaps','Título em versaletes','checkbox');field(opening,'openingSpace','Espaço acima da abertura (px)','number');field(opening,'numberSize','Tamanho do número (px)','number');field(opening,'numberGap','Distância entre número e título (px)','number');field(opening,'textGap','Distância até o texto (px)','number');field(opening,'numberFormat','Apresentação do número','select',[['label','Nome e número'],['arabic','1, 2, 3…'],['roman','I, II, III…']]);field(opening,'numberLabel','Nome da numeração','text');
+    const designControls=new Map(),designGroup=group('Ornamentos, separadores e ilustrações');
+    function designField(key,label,type,choices){const row=node('label',label),input=node(type==='select'?'select':'input');
+      if(type==='select')for(const [value,name] of choices){const item=node('option',name);item.value=value;input.append(item);}
+      else{input.type=type;if(type==='number'){const range=root.HeartspaceDocsBookDesign.ranges[key];input.min=range[0];input.max=range[1];input.step='1';input.required=true;}}
+      if(type==='checkbox'){row.textContent='';row.className='book-style-check';row.append(input,doc.createTextNode(` ${label}`));}else row.append(input);designGroup.append(row);designControls.set(key,input);return input;
+    }
+    designField('openingOrnament','Ornamento da abertura','select',Object.entries(root.HeartspaceDocsBookDesign.ornaments));
+    designField('ornamentSize','Tamanho do ornamento (px)','number');designField('ornamentSpace','Espaço após o ornamento (px)','number');
+    designField('separator','Separador padrão das cenas','select',Object.entries(root.HeartspaceDocsBookDesign.separators).filter(([key])=>key!=='inherit'));
+    designField('separatorSpace','Espaço ao redor do separador (px)','number');
+    designField('illustrations','Usar apresentação editorial nas ilustrações','checkbox');
+    designField('illustrationWidth','Largura padrão das ilustrações (%)','number');
+    designField('illustrationAlign','Alinhamento das ilustrações','select',[['left','Esquerda'],['center','Centro'],['right','Direita']]);
+    designField('illustrationFrame','Moldura padrão','select',[['none','Sem moldura'],['line','Traço fino'],['soft','Moldura suave']]);
+    designField('illustrationSpace','Espaço ao redor da ilustração (px)','number');
+    designField('captionSize','Tamanho das legendas (px)','number');designField('captionSpace','Distância da legenda (px)','number');
+    designField('captionFont','Estilo das legendas','select',[['body','Normal'],['italic','Itálico']]);
+    const designHelp=node('p','Insira separadores pelo menu / ou por Ações. Clique duas vezes em uma imagem para compor sua ilustração. Os ajustes desta imagem podem seguir ou substituir os padrões do livro.');designHelp.className='book-style-help';designGroup.append(designHelp);
     const chapterSection=node('details');chapterSection.append(node('summary','Abertura desta seção'));const chapterForm=node('div');chapterForm.className='book-style-fields';chapterSection.append(chapterForm);
     const chapterLabel=node('label'),chapterEnabled=node('input');chapterEnabled.type='checkbox';chapterLabel.className='book-style-check';chapterLabel.append(chapterEnabled,doc.createTextNode(' Mostrar abertura'));
     const chapterFields=node('div');chapterFields.className='book-style-fields';
@@ -104,8 +130,9 @@
       if(!force&&signature===next)return;signature=next;formKey=c.key;
       const s=c.style||base;scopeLabel.textContent=c.book?`Estilo compartilhado por todos os capítulos de “${c.book.name}”`:'Estilo deste documento';
       enabled.checked=Boolean(c.style?.enabled);enabledLabel.lastChild.textContent=c.book?' Usar estilos compartilhados':' Usar estilos neste documento';form.hidden=!enabled.checked;
-      const comparable=c.style?{...c.style}:null;if(comparable)delete comparable.edition;
-      preset.value=Object.keys(presets).find(name=>JSON.stringify(normalizeStyle(presets[name]))===JSON.stringify(comparable))||'custom';for(const [key,input] of controls){if(input.type==='checkbox')input.checked=s[key];else input.value=String(s[key]);input.disabled=!c.editable;}
+      const comparable=value=>{const style=value?normalizeStyle(value):null;if(style)for(const key of ['edition','language','numberLabel'])delete style[key];return JSON.stringify(style);};
+      preset.value=Object.keys(presets).find(name=>comparable(presets[name])===comparable(c.style))||'custom';for(const [key,input] of controls){if(input.type==='checkbox')input.checked=s[key];else input.value=String(s[key]);input.disabled=!c.editable;}
+      const design=s.design||root.HeartspaceDocsBookDesign.defaults();for(const [key,input] of designControls){if(input.type==='checkbox')input.checked=design[key];else input.value=String(design[key]);input.disabled=!c.editable;input.parentElement.hidden=((key.startsWith('illustration')&&key!=='illustrations')||key.startsWith('caption'))&&!design.illustrations;}
       enabled.disabled=preset.disabled=!c.editable;
       chapterEnabled.checked=Boolean(c.chapter?.enabled);chapterEnabled.disabled=!c.editable;chapterFields.hidden=!c.chapter?.enabled;chapterTitle.value=o.title.textContent.trim()||c.record?.title||'';chapterMode.value=c.chapter?.numbering||'auto';chapterValue.value=String(c.chapter?.number||1);valueLabel.hidden=chapterMode.value!=='custom'&&Boolean(c.book);chapterAlign.value=c.chapter?.alignment||'';chapterAlign.disabled=chapterTitle.disabled=chapterMode.disabled=chapterValue.disabled=!c.editable;
       const numberedChapter=!c.record?.bookSection?.role||c.record.bookSection.role==='chapter';numberLabel.hidden=!numberedChapter;if(!numberedChapter)valueLabel.hidden=true;help.textContent=numberedChapter?'O título acima é o mesmo nome do documento. A numeração é calculada separadamente.':'Esta função editorial não usa numeração de capítulos. O título é o mesmo nome do documento.';
@@ -116,7 +143,8 @@
       try{const c=context();if(c.key!==formKey||!c.editable)throw new Error('O capítulo ou sua permissão mudou. Abra as configurações novamente.');o.change(kind,value,c.key);refresh(true);}catch(error){status.textContent=error.message;}
     }
     enabled.addEventListener('change',()=>commit('style',{...(context().style||base),enabled:enabled.checked}));
-    preset.addEventListener('change',()=>{if(presets[preset.value])commit('style',{...clone(presets[preset.value]),...(context().style?.edition?{edition:context().style.edition}:{})});});
+    preset.addEventListener('change',()=>{const old=context().style;if(presets[preset.value])commit('style',{...clone(presets[preset.value]),...(old?{language:old.language,numberLabel:old.numberLabel}:{}),...(old?.edition?{edition:old.edition}:{})});});
+    for(const [key,input] of designControls)input.addEventListener('change',()=>{if(!input.validity.valid)return;const c=context();commit('style',{...(c.style||base),design:{...(c.style?.design||root.HeartspaceDocsBookDesign.defaults()),[key]:input.type==='checkbox'?input.checked:input.type==='number'?input.valueAsNumber:input.value}});});
     for(const [key,input] of controls)input.addEventListener('change',()=>{if(!input.validity.valid)return;const c=context();commit('style',{...(c.style||base),[key]:input.type==='checkbox'?input.checked:input.type==='number'?input.valueAsNumber:input.value});});
     function commitChapter(){if(!chapterValue.validity.valid)return;commit('chapter',{schema_version:1,enabled:chapterEnabled.checked,numbering:chapterMode.value,number:chapterValue.valueAsNumber||1,alignment:chapterAlign.value||null});}
     chapterAlign.addEventListener('change',commitChapter);chapterEnabled.addEventListener('change',commitChapter);chapterMode.addEventListener('change',commitChapter);chapterValue.addEventListener('change',commitChapter);
@@ -137,7 +165,7 @@
 .page[data-book-style] :is(.content,.book-page-content)>p{margin-block:0 var(--book-paragraph-space);text-indent:var(--book-first-indent)}
 .page[data-book-style][data-book-first-indent] .content>p:first-child,
 .page[data-book-style][data-book-first-indent] .content>.book-page-content:first-child>p:first-child,
-.page[data-book-style][data-book-first-indent] :is(h1,h2,h3,h4,h5,h6,hr,[data-page-break])+p{text-indent:0}
+.page[data-book-style][data-book-first-indent] :is(h1,h2,h3,h4,h5,h6,hr,[data-page-break],[data-book-separator])+p{text-indent:0}
 .page[data-book-style] .doc-title{font-family:var(--book-heading-font);font-size:var(--book-heading-size);text-align:var(--book-heading-align);font-variant-caps:var(--book-heading-caps)}
 .page[data-chapter-title-align=left] .doc-title{text-align:left}.page[data-chapter-title-align=center] .doc-title{text-align:center}.page[data-chapter-title-align=right] .doc-title{text-align:right}.page[data-chapter-title-align=justify] .doc-title{text-align:justify}
 .page[data-book-style] .content :is(h1,h2,h3,h4,h5,h6){font-family:var(--book-heading-font)}

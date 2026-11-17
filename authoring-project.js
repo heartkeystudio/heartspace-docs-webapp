@@ -33,6 +33,13 @@
     }
   }
 
+  function validateBookDesign(value){
+    if(value==null)return;
+    if(!object(value)||value.schema_version!==1)fail('decoração editorial incompatível.');
+    for(const [key,[min,max]] of Object.entries({ornamentSize:[14,48],ornamentSpace:[0,80],separatorSpace:[8,100],illustrationWidth:[20,100],illustrationSpace:[0,80],captionSize:[10,24],captionSpace:[0,40]}))if(value[key]!==undefined&&(!Number.isInteger(value[key])||value[key]<min||value[key]>max))fail('medida da decoração editorial inválida.');
+    for(const [key,values] of Object.entries({openingOrnament:['none','dots','diamond','flourish'],separator:['line','dots','stars','diamond','space'],illustrationAlign:['left','center','right'],illustrationFrame:['none','line','soft'],captionFont:['body','italic']}))if(value[key]!==undefined&&!values.includes(value[key]))fail('opção da decoração editorial inválida.');
+    if(value.illustrations!==undefined&&typeof value.illustrations!=='boolean')fail('opção das ilustrações inválida.');
+  }
   function validateBookStyle(value) {
     if (value == null) return;
     if (!object(value) || value.schema_version !== 1) fail('versão dos estilos do livro incompatível.');
@@ -42,6 +49,7 @@
     for (const [key,values] of Object.entries(enums)) if (value[key] !== undefined && !values.includes(value[key])) fail('opção do estilo do livro inválida.');
     for (const key of ['enabled','skipFirstIndent','hyphenate','smallCaps']) if (value[key] !== undefined && typeof value[key] !== 'boolean') fail('opção do estilo do livro inválida.');
     if (value.numberLabel !== undefined && (typeof value.numberLabel !== 'string' || value.numberLabel.length>40)) fail('nome da numeração inválido.');
+    validateBookDesign(value.design);
     const edition=value.edition;
     if(edition!=null){
       if(!object(edition)||edition.schema_version!==1)fail('composição do livro incompatível.');
