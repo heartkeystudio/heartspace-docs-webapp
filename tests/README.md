@@ -15,8 +15,10 @@ node tests/run-stage0.cjs --strict-known
 ```
 
 Os dois problemas conhecidos S0-P01/S0-P02 foram corrigidos com autorização
-específica e seus casos agora são regressões normais. Referência aprovada: 60 casos. Com os 15 casos de herança da segunda parcela,
-o modo estrito atual executa **75 casos, 75 aprovados, zero falhas e zero TODO**. O agregador mantém
+específica e seus casos agora são regressões normais. A referência histórica de
+60 casos e os 15 casos de herança foram ampliados nas parcelas seguintes. Após
+A4, o modo estrito executa **119 casos, 119 aprovados, zero falhas e zero TODO**.
+O agregador mantém
 suporte a TODO para diagnóstico futuro; saída zero com TODO não seria aceite
 integral. Um TODO que passe inesperadamente exige revisão e faz o runner falhar.
 Consulte [o relatório](../SCENE_EDITOR_STAGE_0_RESULTS.md).
@@ -236,3 +238,17 @@ realocados. A preparação invalida também o cache de scene-workspace.js.
 As capturas reais e o registro final estão em SCENE_EDITOR_STAGE_A3_RESULTS.md.
 As baterias de navegador de compatibilidade/recuperação anteriores são referências
 preservadas, sem alegação de nova execução nesta parcela de organização.
+
+## Parcela A4 — seleção e manipulação coletiva
+
+A matriz do editor passou a 56 cenários: os 47 anteriores mais A4-01–09,
+cobrindo seleção pelas camadas e por área, adição/remoção no palco, composição
+mista, vínculos narrativos, parallax, movimentação, rotação, escala proporcional,
+uma única transação por ação, cancelamento/no-op, foco textual e salvar/reabrir.
+Após os ajustes finais de visibilidade em parallax e posicionamento da barra,
+os nove casos A4 e o caso de fechamento M20 foram executados novamente: 10
+aprovados, zero falhas.
+O runner estrito Node preserva 119/119 casos. O teste de navegador usa captura
+de ponteiro sintética para cancelar gestos e arquivos `.hdocs` descartáveis;
+não certifica hardware, dispositivo tátil ou tecnologias assistivas. Capturas e
+relatório: [SCENE_EDITOR_STAGE_A4_RESULTS.md](../SCENE_EDITOR_STAGE_A4_RESULTS.md).
