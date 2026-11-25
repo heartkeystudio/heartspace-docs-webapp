@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'), output=path.join(__dirname,'.stage0-output');
 fs.mkdirSync(output,{recursive:true});
 let editor=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('<head>','<head><base href="/"><meta http-equiv="Content-Security-Policy" content="connect-src \'self\' blob:"><script src="tests/stage0-editor-support.js"></script>');
-for (const name of ['scene-composer.js','narrative-package.js','local-projects.js','book-pagination.js','authoring-history-patch.js']) {
+for (const name of ['scene-composer.js','narrative-package.js','local-projects.js','book-pagination.js','authoring-history-patch.js','scene-workspace.js']) {
   const hash=require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,name))).digest('hex').slice(0,16);
   editor=editor.replace(`src="${name}"`,`src="${name}?stage0=${hash}"`);
 }

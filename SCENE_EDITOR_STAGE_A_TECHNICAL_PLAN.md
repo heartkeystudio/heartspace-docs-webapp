@@ -1,10 +1,10 @@
 # Planejamento técnico da etapa A do editor de Cena
 
-> Atualização de execução — 25/11/2026: A1 foi aprovada pelo fundador.
-> A2 foi autorizada e implementada no alcance registrado em
-> [Resultados de A2](SCENE_EDITOR_STAGE_A2_RESULTS.md), para avaliação.
-> A3–A6 e B–E continuam sem autorização de execução. O planejamento original
-> abaixo permanece como referência histórica anterior às autorizações específicas.
+> Atualização de execução — 25/11/2026: A1 e A2 foram aprovadas e consolidadas
+> em 0.1.0-internal.1. A3 foi autorizada e implementada no alcance registrado em
+> [Resultados de A3](SCENE_EDITOR_STAGE_A3_RESULTS.md), para avaliação do fundador.
+> A4–A6 e B–E continuam sem autorização. O plano original abaixo é referência
+> histórica anterior às autorizações específicas.
 
 
 **Data:** 25/11/2026  

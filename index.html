@@ -1647,6 +1647,7 @@
     .docs-publication-dialog{width:min(900px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:24px;color:var(--text,#ddd);background:#191919;border:1px solid #444;border-radius:12px}
     .docs-publication-dialog::backdrop{background:#0009}.docs-publication-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:16px}.docs-publication-dialog h2{margin:0}.docs-publication-dialog>div{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.docs-publication-dialog label{display:grid;gap:5px;flex:1 1 250px}.docs-publication-dialog input,.docs-publication-dialog select{min-width:0;width:100%}.docs-publication-preview{padding-top:16px;border-top:1px solid #444;white-space:pre-wrap}.docs-publication-preview:empty{display:none}.docs-publication-preview img{display:block;max-width:100%;height:auto}.docs-publication-preview figure{margin:16px 0}.docs-publication-preview aside{color:#ccc;font-size:.9em}.docs-publication-dialog a{color:#75c8ff}
   </style>
+<link rel="stylesheet" href="./assets/docs/scene-workspace.css">
 </head>
 <body data-work-area="writing">
   <div class="app">
@@ -1855,6 +1856,7 @@
   <script src="project-assets.js"></script>
   <script src="authoring-history-patch.js"></script>
   <script src="scene-composer.js"></script>
+  <script src="scene-workspace.js"></script>
   <script src="narrative-html.js"></script>
   <script src="narrative-package.js"></script>
   <script src="heartspace-showcase.js"></script>
@@ -7271,7 +7273,7 @@
       document.querySelector('#narrative-presentation-form').addEventListener('submit',event => event.preventDefault());
       document.querySelector('#narrative-presentation-form').addEventListener('input', event => {
         if (event.target === narrativeSampleDisplay) return;
-        if (event.target.closest('.scene-composer,.scene-moment-controls')) return;
+        if (!event.target.closest('[data-scene-setting]')) return;
         if (event.target === narrativeSceneSafeArea) {
           sceneSafeAreaEnabled = narrativeSceneSafeArea.checked;
           narrativeSampleViewport.setGuide(sceneSafeAreaEnabled); narrativeTestViewport.setGuide(sceneSafeAreaEnabled);
@@ -10029,6 +10031,7 @@
         }else if(event.key==='Enter'&&!event.isComposing&&event.target.matches('input')){finishSceneTextEdit();}
       },true);
       const sceneHistoryKeydown = event=>{
+        if(event.target.closest('#sidebar'))return;
         if(!(event.ctrlKey||event.metaKey)||event.altKey||event.isComposing)return;
         const key=event.key.toLowerCase();if(key!=='z'&&!(key==='y'&&!event.shiftKey))return;
         event.preventDefault();event.stopPropagation();finishSceneTextEdit();
@@ -10036,6 +10039,7 @@
       };
       sceneHistoryRoot.addEventListener('keydown',sceneHistoryKeydown,true);
       narrativePresentationPreview.addEventListener('keydown',sceneHistoryKeydown,true);
+      HeartspaceSceneWorkspace.create({view:narrativePresentationView,form:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,moments:sceneMomentControls});
       const applySceneHistoryEntry = (mutation,redo) => {
         if(desktopBlocked || authoringStorageError || (currentProjectId && !canEditProject({capabilities:projectCapabilities})))return false;
         const record=documents.find(d=>d.id===activeDocumentId),sequence=record?.narrativeSequences?.find(s=>s.id===mutation.sequenceId);

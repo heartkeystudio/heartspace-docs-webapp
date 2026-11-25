@@ -20,6 +20,7 @@
       .replace('src="image-optimizer.js"', `src="${rootPrefix}image-optimizer.js"`)
       .replace('src="narrative-media.js"', `src="${rootPrefix}narrative-media.js"`)
       .replace('src="project-assets.js"', `src="${rootPrefix}project-assets.js"`)
+      .replace('src="scene-workspace.js"', `src="${rootPrefix}scene-workspace.js"`)
       .replace('src="authoring-history-patch.js"', `src="${rootPrefix}authoring-history-patch.js"`)
       .replace('src="scene-composer.js"', `src="${rootPrefix}scene-composer.js"`)
       .replace('src="narrative-html.js"', `src="${rootPrefix}narrative-html.js"`)
