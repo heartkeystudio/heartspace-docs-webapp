@@ -1,0 +1,80 @@
+{
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "name": "M01 earlier edits propagate while later property overrides survive",
+      "status": "pass"
+    },
+    {
+      "name": "M02 equal override is lost on unrelated inspector edit (known H07)",
+      "status": "pass"
+    },
+    {
+      "name": "M03 Herdar anterior removes local pose and animation together",
+      "status": "pass"
+    },
+    {
+      "name": "M04 Restaurar início clears prior local edits and animation; follows edited base",
+      "status": "pass"
+    },
+    {
+      "name": "M05 orphan cleanup removes only absent block references without history entry",
+      "status": "pass"
+    },
+    {
+      "name": "M06 animation duration, add/remove keyframe have no body-history entries",
+      "status": "pass"
+    },
+    {
+      "name": "M07 duplicate/remove element preserve original IDs and do not enter body history",
+      "status": "pass"
+    },
+    {
+      "name": "M08 layer ordering persists in cue without creating body transaction",
+      "status": "pass"
+    },
+    {
+      "name": "M09 undo in Escrever does not reverse a Cena-only property edit",
+      "status": "pass"
+    },
+    {
+      "name": "M10 existing block removal undo/redo restores text identity but leaves cue orphaned",
+      "status": "pass"
+    },
+    {
+      "name": "M11 playback changes variables without writing source or authoring history",
+      "status": "pass"
+    },
+    {
+      "name": "M12 prior body history survives import of different project with same document ID (risk investigation)",
+      "status": "pass",
+      "observed": {
+        "oldKey": "heartspace-docs-local:4ee90c73-d5ca-4510-9533-874dbfad3778",
+        "newKey": "heartspace-docs-local:ffe85ea9-d87a-4373-aef2-009846dee567",
+        "matchingBody": true,
+        "foreignUndoRestoredBlock": true
+      }
+    },
+    {
+      "name": "M13 reorder narrative blocks through existing drag/drop handler, then undo",
+      "status": "pass"
+    },
+    {
+      "name": "M14 cleanup of orphan cue is not restored by undoing block removal",
+      "status": "pass"
+    },
+    {
+      "name": "M15-pointerup drag preview commits once or cancels without body history (synthetic pointer capture)",
+      "status": "pass"
+    },
+    {
+      "name": "M15-pointercancel drag preview commits once or cancels without body history (synthetic pointer capture)",
+      "status": "pass"
+    },
+    {
+      "name": "M15-lostpointercapture drag preview commits once or cancels without body history (synthetic pointer capture)",
+      "status": "pass"
+    }
+  ]
+}

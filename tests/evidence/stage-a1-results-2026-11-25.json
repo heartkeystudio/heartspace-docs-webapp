@@ -1,0 +1,131 @@
+{
+  "date": "2026-11-25",
+  "scope": "A1 only; local synthetic copies, no shared contract or persisted format changes",
+  "node": {
+    "node": "v22.23.1",
+    "strict": true,
+    "totals": {
+      "tests": 109,
+      "pass": 109,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "browser_observations": "Summaries transcribed from observed DOM; synthetic handlers distinguished from trusted keyboard; not exported raw logs",
+  "browser": {
+    "compatibility": {
+      "passed": 11,
+      "failed": 0
+    },
+    "recovery": {
+      "passed": 24,
+      "failed": 0
+    },
+    "editor": {
+      "passed": 32,
+      "failed": 0,
+      "new": [
+        "A1-01 independent undo/redo",
+        "A1-02 pending navigation and late composition end",
+        "A1-03 archive restore clears session",
+        "A1-04 portable save retains memory history",
+        "A1-05 trash restore clears session",
+        "A1-06 autosave composition single transaction"
+      ]
+    },
+    "closeReopen": {
+      "passed": 1,
+      "history": 0,
+      "redo": 0,
+      "bodyPreserved": true
+    }
+  },
+  "trusted_keyboard": [
+    {
+      "step": "A edited",
+      "document": "stage0-doc",
+      "body": "<p><b>Texto base. autor A</b></p>",
+      "undo": 4,
+      "redo": 0
+    },
+    {
+      "step": "B edited",
+      "document": "a1-native-second",
+      "body": "<p><i>Texto base. autor B</i></p>",
+      "undo": 4,
+      "redo": 0
+    },
+    {
+      "step": "A undo formatting after navigation",
+      "body": "<p>Texto base. autor A</p>",
+      "undo": 3,
+      "redo": 1
+    },
+    {
+      "step": "B undo formatting after navigation",
+      "body": "<p>Texto base. autor B</p>",
+      "undo": 3,
+      "redo": 1
+    },
+    {
+      "step": "B redo",
+      "body": "<p><i>Texto base. autor B</i></p>",
+      "undo": 4,
+      "redo": 0
+    },
+    {
+      "step": "A redo",
+      "body": "<p><b>Texto base. autor A</b></p>",
+      "undo": 4,
+      "redo": 0
+    },
+    {
+      "step": "A five undos stop at baseline",
+      "body": "<p>Texto base.</p>",
+      "undo": 0,
+      "redo": 4
+    },
+    {
+      "step": "B unaffected",
+      "body": "<p><i>Texto base. autor B</i></p>",
+      "undo": 4,
+      "redo": 0
+    },
+    {
+      "step": "title field focus",
+      "toolbarUndo": "no change; focus preserved",
+      "keyboardUndo": "last character removed; focus preserved",
+      "bodyHistoryUnchanged": true
+    }
+  ],
+  "environmental_limits": [
+    "Native OS file picker cancellation not certified",
+    "IME real hardware not certified; synthetic composition boundary tested",
+    "Assistive technology acceptance pending; no waiver",
+    "No remote backend/production acceptance or multiwindow crash certification"
+  ],
+  "retention": "60 entries per document, in memory only",
+  "preserved_sha256": {
+    "local-projects.js": "c5ace47daf3e426daf810b91a3f4d57d204552274839a1c4b6fb1370e0e33094",
+    "narrative-package.js": "9654868126b266157747d7c2b101aede9d1f001543944d0d1d7272eb6edb674d",
+    "scene-composer.js": "239ac0901b37977b5ab0faed6795a889aeae5cd731bb0a5964e3a1f83c2f0353",
+    "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+    "tests/fixtures/stage0-current.hdocs": "6b68251cc420d1b4f7d26e3c0428fcca5f2c6f0682fa04c5792d0b6ed461d04a",
+    "tests/fixtures/stage0-editor-saved.hdocs": "53209e75a6fe30d32bd121a40224b13c5e574c02866dab2134edcd013ca05407",
+    "tests/fixtures/stage0-legacy.hdocs": "02d4418f267dc242451891fcb091a1c7f8529d6abd827bb6a5392644bc1042db",
+    "SCENE_EDITOR_FUNCTIONAL_COMPLEMENT_V1.md": "532fffdc8d9ebfae74c652353822fa95da97db4a5a15309bd69bc94b7672596b"
+  },
+  "csp_policy": "Only inline hashes changed",
+  "sha256": {
+    "index.html": "6f66c3115809885a537b7682bdb70e7233d289c72fade22c60a97170005c76d7",
+    "book-pagination.js": "f2cf8951aaf762263682e4f5ebb574db2a38521080e5d8a8ab036771510e2fc5",
+    "ops/desktop-csp.txt": "b092fee9a040cac1ac723ca2a9602aaa316a4c9e542464e3c6af894dd4f4be30",
+    "tests/stage0-history.test.cjs": "bf0f2b65bfab0854d7ffa96652acf13666be65818a4fffb189f82c917b5f0357",
+    "tests/stage0-editor-matrix.js": "aa2807f1d5aafd1b75d91a21c1aeeb3c617ed9f828d2ee46f40487774196f19b",
+    "tests/stage0-native-input.js": "9e8070792c5b7366ca4007093b555238bf7610f597b67c4435b3b48d8ec647fb",
+    "tests/prepare-stage0.cjs": "b162662ec70209e90953e131e6a4a88e47aac21a13ecd66d0c5b2e91588b998e"
+  },
+  "next": "A2 requires separate authorization"
+}

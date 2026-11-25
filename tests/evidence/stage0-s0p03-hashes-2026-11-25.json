@@ -1,0 +1,6 @@
+{
+  "local-projects.js": "c5ace47daf3e426daf810b91a3f4d57d204552274839a1c4b6fb1370e0e33094",
+  "tests/stage0-recovery.js": "37779a90912f25db11149d62b865c37d03351c4eed7273499dce184aa0f6bc35",
+  "tests/stage0-recovery.html": "5819a460276d2d36ff7cd8b85d3e99af009e2b94056e96ee3b6b5a40bf0ade3a",
+  "tests/prepare-stage0.cjs": "5607e1d3d0660d8369b0a7af5ff15fcdabb75c64e9f493d6ac5b091bf9d07bf4"
+}

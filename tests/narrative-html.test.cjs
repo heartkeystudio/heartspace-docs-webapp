@@ -7,7 +7,7 @@ const context = vm.createContext({atob,btoa,Uint8Array,Uint32Array,DataView,Text
 for (const name of ['narrative-runtime.js','narrative-media.js','narrative-html.js','narrative-package.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
 const runtime = context.HeartspaceNarrativeRuntime;
 const htmlExporter = context.HeartspaceNarrativeHtml;
-const { mountExportedHtml } = require('./player-dom.cjs');
+const { mountExportedHtml, scriptBlocks } = require('./player-dom.cjs');
 const plain = value => JSON.parse(JSON.stringify(value));
 const story = () => ({
   title:'A floresta', locale:'pt-BR', start_event_id:'start',
@@ -78,13 +78,16 @@ test('HTML safely embeds script-like titles and dialogue without remote dependen
   const input = story(); const hostile = '</script><script>globalThis.attacked=true</script><img src=x onerror=alert(1)>';
   input.title = hostile; input.sequences[0].nodes[0].text = hostile;
   const html = htmlExporter.buildHtml(input);
-  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  assert.equal(scripts.length,2); assert.equal(/<script\b[^>]*\bsrc\s*=/.test(html),false);
+  const scripts = scriptBlocks(html);
+  assert.equal(scripts.filter(script => /id="story-data"/.test(script.attributes)).length,1); assert.equal(/<script\b[^>]*\bsrc\s*=/.test(html),false);
   assert.equal(/<link\b|<img\b|<iframe\b/.test(html),false);
-  const embedded = JSON.parse(scripts[0][2]);
+  const embedded = JSON.parse(scripts.find(script => /id="story-data"/.test(script.attributes)).source);
   assert.equal(embedded.title,hostile); assert.equal(embedded.sequences[0].nodes[0].text,hostile);
   assert.ok(html.includes("connect-src 'none'"));
-  new vm.Script(scripts[1][2]);
+  scripts.filter(script => !/type="application\/json"/.test(script.attributes)).forEach(script => new vm.Script(script.source));
+  const ui = mountExportedHtml(html,true); ui.click('start');
+  assert.equal(ui.elements.get('copy').textContent,hostile);
+  assert.equal(ui.context.attacked,undefined);
 });
 test('serialized runtime runs independently from the editor globals', () => {
   const isolated = vm.runInNewContext(`(${runtime.source})()`);
@@ -114,7 +117,7 @@ test('home and restart cancel typing and pause timers', () => {
   ui.key('Escape'); assert.equal(ui.timers.size,0); assert.equal(ui.elements.get('menu').hidden,false);
   ui.click('start'); ui.key('Enter'); ui.key('Enter'); ui.key('Enter'); ui.key('1'); ui.key('Enter'); ui.key('Enter');
   assert.ok([...ui.timers.values()].some(timer => timer.delay === 100));
-  ui.click('home'); assert.equal(ui.timers.size,0);
+  ui.click('preferences-open'); ui.click('home'); assert.equal(ui.timers.size,0);
   ui.click('start'); assert.equal(ui.elements.get('utility-dialog').open,true);
   ui.click('new-game-confirm'); ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Olá!');
 });
@@ -140,7 +143,7 @@ test('reduced motion skips typing; blocked choices offer a clear dead-end messag
   assert.equal(ui.elements.get('choices').hidden,false);
   assert.match(ui.elements.get('hint').textContent,/Nenhuma opção disponível/);
   ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
-  ui.click('restart'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
+  ui.click('preferences-open'); ui.click('preferences-menu-open'); ui.click('restart'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
 });
 test('actual export adapter strips document metadata and handles translations across documents', () => {
   const editor = fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
@@ -156,7 +159,9 @@ test('actual export adapter strips document metadata and handles translations ac
   const exportContext = vm.createContext({
     HeartspaceNarrativeRuntime:runtime, HeartspaceNarrativeHtml:htmlExporter, HeartspaceNarrativeMedia:context.HeartspaceNarrativeMedia, buildNarrativeRegistry:() => ({entries,byId:new Map(entries.map(entry => [entry.id,entry]))}),
     validateNarrativeRegistry:() => [], localizationDataFor:record => record.localization,
-    normalizeNarrativePresentation:value => value, narrativeCharacters:[], narrativeVariables:input.variable_registry,
+    normalizeNarrativePresentation:context.HeartspaceNarrativeMedia.presentation,
+    gameViewport:() => context.HeartspaceNarrativeMedia.viewport(),
+    document:{querySelector:() => ({value:'standard'})}, narrativeCharacters:[], narrativeVariables:input.variable_registry,
     coerceNarrativeValue:runtime.coerce
   });
   const result = vm.runInContext(editor.slice(begin,end) + '\nbuildStandaloneNarrativeStory("start","en-US","My story");',exportContext);
@@ -179,7 +184,7 @@ test('export validation catches missing targets and rules invalidated by variabl
   entries.push({id:'absent',nodes:[],routes:[],provisional:true});
   const registry = {entries,byId:new Map(entries.map(entry => [entry.id,entry])),duplicateIds:new Set()};
   const validationContext = vm.createContext({
-    registry,characterById:() => null,
+    registry,HeartspaceNarrativeMedia:context.HeartspaceNarrativeMedia,characterById:() => null,
     narrativeVariableById:id => input.variable_registry.find(variable => variable.id === id)
   });
   const issues = vm.runInContext(editor.slice(begin,end) + '\nvalidateNarrativeRegistry(registry,"start");',validationContext);
@@ -196,7 +201,7 @@ test('progress resumes across page loads with variables and no duplicated choice
   const second = mountExportedHtml(html,true,{storage});
   assert.equal(second.elements.get('resume').hidden,false);
   second.click('resume'); assert.equal(second.elements.get('copy').textContent,'Alex segue com você.');
-  second.click('history-open');
+  second.click('preferences-open'); second.click('history-open');
   const text = second.elements.get('history-list').textContent;
   assert.match(text,/Olá!/); assert.match(text,/Você escolheu: Ajudar/); assert.match(text,/Alex segue com você/);
   second.click('utility-close'); second.key('Escape');
@@ -207,10 +212,10 @@ test('history is read-only and opening it repeatedly does not duplicate lines', 
   const ui = mountExportedHtml(htmlExporter.buildHtml(story()),true);
   ui.click('start'); ui.key('Enter');
   const savedBefore = [...ui.storage.values()][0];
-  ui.click('history-open'); const first = ui.elements.get('history-list').textContent;
+  ui.click('preferences-open'); ui.click('history-open'); const first = ui.elements.get('history-list').textContent;
   ui.key('Enter'); ui.key('1'); assert.equal(ui.elements.get('copy').textContent,'Qual caminho?');
   ui.key('Escape'); assert.equal(ui.elements.get('utility-dialog').open,false);
-  ui.click('history-open'); assert.equal(ui.elements.get('history-list').textContent,first);
+  ui.click('preferences-open'); ui.click('history-open'); assert.equal(ui.elements.get('history-list').textContent,first);
   ui.click('utility-close'); assert.equal([...ui.storage.values()][0],savedBefore);
 });
 test('new-game confirmation preserves progress on cancel and resets it on confirm', () => {
@@ -219,7 +224,7 @@ test('new-game confirmation preserves progress on cancel and resets it on confir
   ui.click('start'); assert.equal(ui.elements.get('confirm-view').hidden,false);
   ui.click('new-game-cancel'); ui.click('resume');
   assert.equal(ui.elements.get('copy').textContent,'Alex segue com você.');
-  ui.click('preferences-open'); ui.click('restart'); ui.click('new-game-confirm');
+  ui.click('preferences-open'); ui.click('preferences-menu-open'); ui.click('restart'); ui.click('new-game-confirm');
   assert.equal(ui.elements.get('copy').textContent,'Olá!');
   const saved = JSON.parse([...ui.storage.values()][0]);
   assert.deepEqual(saved.snapshot.variables,{trust:0,met:false}); assert.equal(saved.history.length,0);
@@ -227,7 +232,7 @@ test('new-game confirmation preserves progress on cancel and resets it on confir
 test('preferences persist independently and affect future text without advancing the game', () => {
   const html = htmlExporter.buildHtml(story()); const storage = new Map();
   const first = mountExportedHtml(html,false,{storage});
-  first.click('preferences-open'); first.change('preference-speed','0'); first.change('preference-text-size','1.3'); first.change('preference-motion','reduce');
+  first.click('preferences-open'); first.click('preferences-menu-open'); first.change('preference-speed','0'); first.change('preference-text-size','1.3'); first.change('preference-motion','reduce');
   first.click('utility-close'); first.click('start');
   assert.equal(first.elements.get('copy').textContent,'Olá!'); assert.equal(first.timers.size,0);
   assert.equal(first.elements.get('stage').style.getPropertyValue('--text-scale'),'1.3');
@@ -291,7 +296,7 @@ test('completed paths resume their ending and do not repeat effects', () => {
   assert.match(first.elements.get('copy').textContent,/fim deste caminho/);
   const second = mountExportedHtml(html,true,{storage}); second.click('resume');
   assert.match(second.elements.get('copy').textContent,/fim deste caminho/);
-  second.click('history-open'); assert.match(second.elements.get('history-list').textContent,/Fim\./);
+  second.click('preferences-open'); second.click('history-open'); assert.match(second.elements.get('history-list').textContent,/Fim\./);
 });
 test('embedded startup does not steal focus; system motion updates apply immediately', () => {
   const ui = mountExportedHtml(htmlExporter.buildHtml(story()),false,{search:'?embed=1'});
@@ -306,7 +311,7 @@ test('long looping stories bound saved history without losing the current positi
   for (let turn = 0; turn < 105; turn += 1) { ui.key('Enter'); ui.key('1'); }
   const save = JSON.parse([...ui.storage.values()][0]);
   assert.equal(save.history.length,200); assert.equal(save.snapshot.index,0); assert.equal(save.snapshot.eventId,'loop');
-  ui.click('history-open'); assert.equal(ui.elements.get('history-list').children.length,201);
+  ui.click('preferences-open'); ui.click('history-open'); assert.equal(ui.elements.get('history-list').children.length,201);
 });
 test('invalid restored snapshots leave the runtime untouched', () => {
   const runner = runtime.createRunner(story()); runner.advance(); const before = plain(runner.snapshot());
@@ -327,7 +332,7 @@ test('invalid preferences are normalized and untrusted history is rendered as pl
   storage.set(key.replace(/progress$/,'preferences'),JSON.stringify({speed:'-1',motion:'unsafe',textSize:'900'}));
   const second = mountExportedHtml(html,true,{storage});
   assert.equal(second.elements.get('preference-speed').value,'story'); assert.equal(second.elements.get('preference-text-size').value,'1');
-  second.click('resume'); second.click('history-open');
+  second.click('resume'); second.click('preferences-open'); second.click('history-open');
   assert.match(second.elements.get('history-list').textContent,/<img src=x onerror=alert\(1\)>/);
   assert.equal(second.elements.get('history-list').children[1].children[1].tagName,'P');
 });
@@ -335,8 +340,11 @@ test('embed code follows the HTML filename and escapes a title containing markup
   const editor = fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
   const begin = editor.indexOf('      const updateStoryEmbedCode =');
   const end = editor.indexOf("      document.querySelector('#story-export-open')",begin);
-  const fields = {'#story-export-name':{value:'Livro "><script>alert(1)</script>'},'#story-embed-code':{value:''},'#story-export-format':{value:'html'}};
+  const fields = {'#story-export-name':{value:'Livro "><script>alert(1)</script>'},'#story-embed-code':{value:''},'#story-export-format':{value:'html'},
+    '#story-embed-url':{value:''},'#story-embed-copy':{},'#story-embed-status':{},'#story-export-profile':{value:'standard'},
+    '#story-export-orientation':{value:'auto'},'#story-export-interface':{value:'visible'},'#story-export-profile-help':{}};
   const embedContext = vm.createContext({
+    URL,HeartspaceNarrativeMedia:context.HeartspaceNarrativeMedia,gameViewport:() => context.HeartspaceNarrativeMedia.viewport(),
     document:{querySelector:selector => fields[selector]},
     narrativeSlug:value => value.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''),
     escapeHtml:value => value.replace(/[&<>"']/g,char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))

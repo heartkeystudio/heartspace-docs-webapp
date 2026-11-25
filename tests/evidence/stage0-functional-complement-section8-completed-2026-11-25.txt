@@ -1,0 +1,19 @@
+## 8. Critérios fundamentais de aceite
+
+A evolução deverá demonstrar que:
+
+1. Personalizações explícitas não são descartadas por coincidência de valores.
+2. Restaurações respeitam o escopo escolhido.
+3. Duplicação, remoção e reordenação preservam as intenções autorais.
+4. Operações significativas podem ser desfeitas e refeitas sem corrupção de conteúdo.
+5. O histórico permanece isolado entre contextos de autoria.
+6. A substituição de representações preserva a composição narrativa.
+7. Atualizações compartilhadas respeitam personalizações locais.
+8. Diferenças de proporção e incompatibilidades interativas são comunicadas.
+9. Agrupar e desagrupar não altera inesperadamente a aparência.
+10. Transformações coletivas preservam relações espaciais.
+11. Visibilidade e bloqueio coletivos não eliminam configurações individuais.
+12. Grupos não duplicam os mecanismos narrativos.
+13. A organização espacial permanece coerente com momentos, animações e parallax.
+14. Documentos existentes continuam compatíveis dentro dos critérios de evolução aprovados.
+15. Os fluxos fundamentais permanecem acessíveis e autônomos.

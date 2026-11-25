@@ -1,0 +1,68 @@
+{
+  "passed": 15,
+  "failed": 0,
+  "nativeOpenAvailable": true,
+  "nativeSaveAvailable": true,
+  "results": [
+    {
+      "name": "R01 ordered concurrent writes acknowledge last committed cache",
+      "status": "pass"
+    },
+    {
+      "name": "R02 new module session preserves previous session, not every edit",
+      "status": "pass"
+    },
+    {
+      "name": "R03 aborted IndexedDB transaction retains last commit; later write recovers",
+      "status": "pass"
+    },
+    {
+      "name": "R04 closing session after acknowledged write survives reopen",
+      "status": "pass"
+    },
+    {
+      "name": "R05 native open AbortError preserves source and performs no install (injected)",
+      "status": "pass"
+    },
+    {
+      "name": "R06 native save AbortError does not rename or build (injected)",
+      "status": "pass"
+    },
+    {
+      "name": "R07 delayed file read after context switch cannot install stale project",
+      "status": "pass"
+    },
+    {
+      "name": "R08 permission refusal preserves source and does not build",
+      "status": "pass"
+    },
+    {
+      "name": "R09 interrupted write aborts stream and never claims saved backup",
+      "status": "pass"
+    },
+    {
+      "name": "R10 context switch during stream write aborts before close",
+      "status": "pass"
+    },
+    {
+      "name": "R11 editing during save keeps dirty flag after successful close",
+      "status": "pass"
+    },
+    {
+      "name": "R12 closing new-project modal leaves current source unchanged",
+      "status": "pass"
+    },
+    {
+      "name": "R13 recovery modal closes without installing; selecting copy installs once",
+      "status": "pass"
+    },
+    {
+      "name": "R14 failed Save As keeps renamed workspace (characterization, risk S0-P03)",
+      "status": "pass"
+    },
+    {
+      "name": "R15 invalid recovered source is rejected before installation",
+      "status": "pass"
+    }
+  ]
+}

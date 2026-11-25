@@ -1,0 +1,15 @@
+{
+  "projectName": "Etapa0-S0P03",
+  "format": "heartspace.docs.project-file",
+  "schema_version": 1,
+  "checks": [
+    "UI Save As fallback initiated download",
+    "UI reload retained new project name",
+    "UI close renamed draft dialog preserved prior project name",
+    "downloaded file preserved project/document IDs, title, narrative IDs, choices, effects, conditions, base element IDs and detail animation",
+    "all media checksums valid"
+  ],
+  "limitations": [
+    "native file picker cancellation and OS stream not exercised; injected browser cases cover boundary behavior"
+  ]
+}

@@ -327,7 +327,7 @@
       if (!file || !intent || !context().editable) return;
       status.textContent = 'Preparando imagem…';
       try {
-        const asset = await media.readFile(file,'image',{purpose:'scene'}), state = context();
+        const asset = await media.readFile(file,'image',{purpose:'background'}), state = context();
         if (state.key !== intent.key || !state.editable) return;
         if (intent.id) {
           if (!media.presentation(state.presentation).elements.some(item => item.id === intent.id)) return;
@@ -350,7 +350,7 @@
       const mode = event.target.closest('[data-handle]')?.dataset.handle || 'move';
       render();
       const start = pointer(event), rect = surface.getBoundingClientRect();
-      drag = {key:state.key,pointerId:event.pointerId,item,start,mode,value:media.presentation(state.presentation),rect};
+      drag = {key:state.key,pointerId:event.pointerId,item,start,mode,value:media.presentation(state.presentation),original:media.presentation(state.presentation),rect};
       surface.setPointerCapture(event.pointerId);
     });
     surface.addEventListener('pointermove',event => {
@@ -381,7 +381,12 @@
       const current = drag; drag = null;
       if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId);
       if (cancelled) { preview(context().presentation); render(); }
-      else commit(current.value,current.key,true);
+      else {
+        const latest=context();
+        const value=latest.key===current.key ? (options.mergeGesture ? options.mergeGesture(current.original,current.value,media.presentation(latest.presentation)) : current.value) : null;
+        if(value)commit(value,current.key,true);
+        else {status.textContent='A cena mudou durante o gesto. As alterações atuais foram preservadas; refaça a manipulação.';preview(latest.presentation);render();}
+      }
     };
     surface.addEventListener('pointerup',event => finish(event));
     surface.addEventListener('pointercancel',event => finish(event,true));

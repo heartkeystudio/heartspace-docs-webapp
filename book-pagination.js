@@ -320,6 +320,13 @@
     o.editor.addEventListener('compositionstart',()=>{if(!o.editable())return;editing();mutation=o.begin();mutation.bookBeforeSelection=captureSelection(o.editor);composing.add(o.editor);});
     o.editor.addEventListener('compositionend',()=>{if(!composing.has(o.editor))return;composing.delete(o.editor);prepare(o.editor);if(mutation){mutation.bookAfterSelection=captureSelection(o.editor);o.end(mutation);mutation=null;}o.changed();o.layout({immediate:true});});
     for(const type of ['copy','cut','paste'])o.editor.addEventListener(type,()=>{prepare(o.editor);if(type==='paste'){pasted=true;const anchor=viewports.get(o.editor);if(anchor){anchor.top=null;anchor.reveal=true;}}o.layout();if(type!=='copy')setTimeout(()=>o.layout({immediate:true}),0);},true);
+    // Finish before navigation; autosave must not terminate an active composition.
+    // Clearing composition also makes a late compositionend harmless in the new body.
+    return (commit=true,endComposition=true)=>{
+      if(commit&&!endComposition&&composing.has(o.editor))return;
+      const pending=mutation;mutation=null;pasted=false;composing.delete(o.editor);
+      if(commit&&pending){prepare(o.editor);pending.bookAfterSelection=captureSelection(o.editor);o.end(pending);}
+    };
   }
   const styles=`
 .content .book-page-content:first-child{padding-bottom:var(--book-margin-y,72px)}

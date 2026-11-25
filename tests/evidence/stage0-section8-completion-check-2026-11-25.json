@@ -1,0 +1,11 @@
+{
+  "section8_criteria": 15,
+  "decisions": 30,
+  "prior_receipt_preserved": true,
+  "original_spec_preserved": true,
+  "s0p05_protected_files_preserved": true,
+  "editorial_gap": "resolved",
+  "stage0_closed": false,
+  "environmental_acceptance": "still pending explicit acceptance",
+  "implementation": false
+}

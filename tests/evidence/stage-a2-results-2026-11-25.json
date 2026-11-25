@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-25",
+  "scope": "A2 only; local synthetic corpus; no deployment or production documents",
+  "node": {
+    "tests": 119,
+    "pass": 119,
+    "fail": 0
+  },
+  "browser": {
+    "compatibility": {
+      "pass": 11,
+      "fail": 0
+    },
+    "recovery": {
+      "pass": 24,
+      "fail": 0
+    },
+    "editor_matrix": {
+      "pass": 41,
+      "fail": 0
+    },
+    "close_reopen": {
+      "status": "pass",
+      "history": 0,
+      "redo": 0,
+      "bodyPreserved": true
+    }
+  },
+  "evidence_kind": "Summary transcribed from observed browser DOM, not raw browser log export",
+  "trusted_keyboard": [
+    "Title typing then Ctrl+Z / Ctrl+Shift+Z restores text and focus",
+    "Scene x=48 -> Ctrl+Z=40 -> Ctrl+Shift+Z=48 with field focus retained",
+    "Visible Scene history buttons x=49 -> undo=40 -> redo=49 with field focus retained"
+  ],
+  "synthetic_limits": [
+    "Pointer capture and composition events are synthetic",
+    "Not every connected media import or inspector control validated individually",
+    "Held key auto-repeat not coalesced into a dedicated transaction",
+    "Desktop module loading only; no full host certification"
+  ],
+  "environmental_limits": [
+    "Native OS file picker",
+    "Specialized IME input",
+    "Assistive technologies"
+  ],
+  "retention": {
+    "per_document_entries": 60,
+    "memory_only": true
+  },
+  "csp_policy": "Only inline hashes updated; directives equal to HEAD after hash removal",
+  "preserved_sha256": {
+    "local-projects.js": "c5ace47daf3e426daf810b91a3f4d57d204552274839a1c4b6fb1370e0e33094",
+    "narrative-package.js": "9654868126b266157747d7c2b101aede9d1f001543944d0d1d7272eb6edb674d",
+    "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+    "tests/fixtures/stage0-current.hdocs": "6b68251cc420d1b4f7d26e3c0428fcca5f2c6f0682fa04c5792d0b6ed461d04a",
+    "tests/fixtures/stage0-editor-saved.hdocs": "53209e75a6fe30d32bd121a40224b13c5e574c02866dab2134edcd013ca05407",
+    "tests/fixtures/stage0-legacy.hdocs": "02d4418f267dc242451891fcb091a1c7f8529d6abd827bb6a5392644bc1042db",
+    "SCENE_EDITOR_FUNCTIONAL_COMPLEMENT_V1.md": "532fffdc8d9ebfae74c652353822fa95da97db4a5a15309bd69bc94b7672596b",
+    "book-pagination.js": "f2cf8951aaf762263682e4f5ebb574db2a38521080e5d8a8ab036771510e2fc5"
+  },
+  "sha256": {
+    "index.html": "5c55e6a58ae5ed63fad5acb19b97077e4e8f5318cc3addd70a7dddb7c634fddd",
+    "authoring-history-patch.js": "de40cb1159cb3dcaf9cb83affa8dd3d671edd178d436f3967d5e2fdd21136d62",
+    "scene-composer.js": "064ad15138b0f7a790b4d3d97183e8488a7622b2ec4915cc8128396f6148592c",
+    "desktop/loader.js": "18edbaf72cc53860293ce624d0e6514e02cc78833a7d8ead75a1047ecada5cc1",
+    "ops/desktop-csp.txt": "fa0edd2d62fc2ef7d0fcbd0dc81e783836f2b11cbdcfbbb15015b47636e7a2e2",
+    "tests/stage0-editor-matrix.js": "d6284e511088a7817831bd5d4c7e0a973587372f6af887780a40e4b3f9dd6ab2",
+    "tests/authoring-history-patch.test.cjs": "db013023b7298c69bcf021cadd4a5b5d704b038a2b65fa8cedb324b9e3a4f476"
+  },
+  "next": "A3 organization of environment, requires separate authorization"
+}

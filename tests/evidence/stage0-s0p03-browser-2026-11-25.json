@@ -1,0 +1,52 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "origin": "http://127.0.0.1:8775",
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "name": "B09 recuperação persiste após recarregar a página",
+      "status": "pass"
+    },
+    {
+      "name": "B01 legado sem cues abre, grava e reabre duas vezes",
+      "status": "pass"
+    },
+    {
+      "name": "B02 composição completa preserva IDs, patches, animações, mídia e referência fixada",
+      "status": "pass"
+    },
+    {
+      "name": "B03 edição, cache e recuperação IndexedDB preservam a composição",
+      "status": "pass"
+    },
+    {
+      "name": "B04 mídia corrompida e referência ausente são recusadas sem mutar a fonte aberta",
+      "status": "pass"
+    },
+    {
+      "name": "B05 versões desconhecidas e referência sem cópia são recusadas",
+      "status": "pass"
+    },
+    {
+      "name": "B06 normalização e resolvedor preservam momentos e reset após arquivo portátil",
+      "status": "pass"
+    },
+    {
+      "name": "B07 otimizador e decodificador reais aceitam imagem e recusam SVG",
+      "status": "pass"
+    },
+    {
+      "name": "B08 HTML e ZIP não alteram a fonte e preservam mídias dos momentos",
+      "status": "pass"
+    },
+    {
+      "name": "S0-P02 importação de elemento com perfil background aceita PNG válido",
+      "status": "pass"
+    },
+    {
+      "name": "S0-P01 ZIP recusa mídia inválida de fundo e de patch sem alterar a fonte",
+      "status": "pass"
+    }
+  ]
+}

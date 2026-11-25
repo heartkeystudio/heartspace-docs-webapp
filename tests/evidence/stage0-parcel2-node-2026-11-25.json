@@ -1,0 +1,12 @@
+{
+  "node": "v22.23.1",
+  "strict": true,
+  "totals": {
+    "tests": 75,
+    "pass": 75,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  }
+}
