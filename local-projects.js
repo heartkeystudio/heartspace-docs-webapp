@@ -80,7 +80,6 @@
           if (permission !== 'granted') throw new Error('Sem permissão para gravar neste arquivo. Use Salvar projeto como para escolher outro destino.');
         }
         if (!current(context)) throw new Error('O projeto ou seu acesso mudou. Salve novamente no destino correto.');
-        if (projectName) options.rename(projectName);
         options.flush();
         const cache = options.snapshot(), capturedEdits = edits;
         if (projectName) cache.source.project.name = projectName;
@@ -101,6 +100,13 @@
           root.setTimeout(() => URL.revokeObjectURL(url),60000);
         }
         if (current(context)) {
+          // Commit only the name after file success; never restore the captured
+          // source over edits made while its portable copy was being prepared.
+          if (projectName) {
+            options.rename(projectName);
+            lastSignature = signature(cache.source);
+            options.flush();
+          }
           handle = destination; attached = true; dirty = capturedEdits !== edits;
           report(`${destination ? 'Arquivo do projeto salvo' : 'Download do projeto iniciado'}${dirty ? '; há alterações mais recentes na área de trabalho' : ''}.`);
         }

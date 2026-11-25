@@ -1,0 +1,130 @@
+{
+  "origin": "http://127.0.0.1:8779",
+  "method": "Summary recorded from browser DOM reports observed through automation; runner labels retained from the executed test source.",
+  "node": {
+    "tests": 93,
+    "pass": 93,
+    "fail": 0
+  },
+  "compatibility": {
+    "passed": 11,
+    "failed": 0
+  },
+  "recovery": {
+    "passed": 24,
+    "failed": 0
+  },
+  "editor": {
+    "passed": 23,
+    "failed": 0,
+    "results": [
+      {
+        "name": "M01 earlier edits propagate while later property overrides survive",
+        "status": "pass"
+      },
+      {
+        "name": "M02 equal override is lost on unrelated inspector edit (known H07)",
+        "status": "pass"
+      },
+      {
+        "name": "M03 Herdar anterior removes local pose and animation together",
+        "status": "pass"
+      },
+      {
+        "name": "M04 Restaurar início clears prior local edits and animation; follows edited base",
+        "status": "pass"
+      },
+      {
+        "name": "M05 orphan cleanup removes only absent block references without history entry",
+        "status": "pass"
+      },
+      {
+        "name": "M06 animation duration, add/remove keyframe have no body-history entries",
+        "status": "pass"
+      },
+      {
+        "name": "M07 duplicate/remove element preserve original IDs and do not enter body history",
+        "status": "pass"
+      },
+      {
+        "name": "M08 layer ordering persists in cue without creating body transaction",
+        "status": "pass"
+      },
+      {
+        "name": "M09 undo in Escrever does not reverse a Cena-only property edit",
+        "status": "pass"
+      },
+      {
+        "name": "M10 existing block removal undo/redo restores text identity but leaves cue orphaned",
+        "status": "pass"
+      },
+      {
+        "name": "M11 playback changes variables without writing source or authoring history",
+        "status": "pass"
+      },
+      {
+        "name": "M12 new project with same document ID/body cannot consume previous undo or redo",
+        "status": "pass"
+      },
+      {
+        "name": "M13 reorder narrative blocks through existing drag/drop handler, then undo",
+        "status": "pass"
+      },
+      {
+        "name": "M14 cleanup of orphan cue is not restored by undoing block removal",
+        "status": "pass"
+      },
+      {
+        "name": "M15-pointerup drag preview commits once or cancels without body history (synthetic pointer capture)",
+        "status": "pass"
+      },
+      {
+        "name": "M15-pointercancel drag preview commits once or cancels without body history (synthetic pointer capture)",
+        "status": "pass"
+      },
+      {
+        "name": "M15-lostpointercapture drag preview commits once or cancels without body history (synthetic pointer capture)",
+        "status": "pass"
+      },
+      {
+        "name": "M16 repeated reopen of same project clears old redo and keeps current undo/redo working",
+        "status": "pass"
+      },
+      {
+        "name": "M17 native fallback is fenced for toolbar, shortcuts and beforeinput after project switch",
+        "status": "pass"
+      },
+      {
+        "name": "M18 new local project and reopening existing file do not reuse prior history",
+        "status": "pass"
+      },
+      {
+        "name": "M19 recovery in separate workspace does not import undo/redo of current page",
+        "status": "pass"
+      },
+      {
+        "name": "M21 switching documents fences foreign undo while preserving current-project history",
+        "status": "pass"
+      },
+      {
+        "name": "M20 seed acknowledged body with both stacks for close/reopen validation",
+        "status": "pass"
+      }
+    ]
+  },
+  "s0p04Observation": {
+    "differentProjectSameDocumentAndBody": "blocked",
+    "foreignUndoRestoredBlock": false
+  },
+  "closeReopen": {
+    "name": "CLOSE-REOPEN",
+    "status": "pass",
+    "history": 0,
+    "redo": 0,
+    "bodyPreserved": true
+  },
+  "browserAutomationLimitations": [
+    "Two clicks timed out during reload; state was inspected and the pending actions then completed. Not classified as a product defect.",
+    "Native pointer capture and file stream cancellation remain simulated in their existing test cases."
+  ]
+}

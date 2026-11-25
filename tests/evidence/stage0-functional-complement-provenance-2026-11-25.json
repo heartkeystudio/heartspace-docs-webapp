@@ -1,0 +1,23 @@
+{
+  "received_on": "2026-11-25",
+  "source": "Founder attachment; functional approval stated in the received text",
+  "archive": "tests/evidence/stage0-functional-complement-received-2026-11-25.txt",
+  "archive_sha256": "43c4ea5b72578e46a969b51f2a71c7780c38fbf976aa19a383d1b01e6bd597ce",
+  "complement": "SCENE_EDITOR_FUNCTIONAL_COMPLEMENT_V1.md",
+  "complement_sha256": "532fffdc8d9ebfae74c652353822fa95da97db4a5a15309bd69bc94b7672596b",
+  "extraction": "Initial verbatim prefix; section 8 replaced only with the founder supplied complete section in a subsequent message",
+  "editorial_gap": "Resolved by subsequent founder message; original incomplete receipt preserved unchanged",
+  "decisions": {
+    "HA": 8,
+    "IR": 10,
+    "OE": 12
+  },
+  "original_spec_sha256": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+  "initial_complement_sha256": "e78777e95d067caac174f7edd4e931afd985dcdaab6d7208240b301767c95eed",
+  "section8_completion": {
+    "source": "Subsequent founder message in this conversation",
+    "archive": "tests/evidence/stage0-functional-complement-section8-completed-2026-11-25.txt",
+    "sha256": "4bb9a95893e5fcda999689387a7ce7476a3e1452bb7a0b3b5b7df4af10894854",
+    "criteria": 15
+  }
+}

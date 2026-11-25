@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-25",
+  "product_head": "959b9b13cb13162aa1963b2fc7bffb97fb17ba61",
+  "product_implementation_changed": false,
+  "node_normal": {
+    "node": "v22.23.1",
+    "strict": false,
+    "totals": {
+      "tests": 57,
+      "pass": 55,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 2
+    }
+  },
+  "node_strict": {
+    "node": "v22.23.1",
+    "strict": true,
+    "totals": {
+      "tests": 57,
+      "pass": 55,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "browser_report": "stage0-browser-2026-11-25.json",
+  "manual_ui": {
+    "scope": "Synthetic files only; generated editor copy with standard-file fallback and download observation",
+    "opened_fixture": "tests/fixtures/stage0-current.hdocs",
+    "saved_fixture": "tests/fixtures/stage0-editor-saved.hdocs",
+    "moment": "detail",
+    "element": "door",
+    "x_before": 40,
+    "x_after": 45,
+    "verified": [
+      "saved and reopened through editor UI",
+      "preview and internal narrative test at x=45",
+      "visual choice reaches ending",
+      "actual HTML and extracted ZIP at x=45",
+      "text choice in extracted ZIP reaches ending",
+      "real + Imagem shows Perfil de imagem inválido."
+    ],
+    "not_certified": [
+      "native file picker/handle",
+      "Core/backend/SQL",
+      "physical devices",
+      "full frame-by-frame animation",
+      "all historical documents"
+    ]
+  },
+  "sha256": {
+    "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+    "tests/fixtures/stage0-legacy.hdocs": "02d4418f267dc242451891fcb091a1c7f8529d6abd827bb6a5392644bc1042db",
+    "tests/fixtures/stage0-current.hdocs": "6b68251cc420d1b4f7d26e3c0428fcca5f2c6f0682fa04c5792d0b6ed461d04a",
+    "tests/fixtures/stage0-editor-saved.hdocs": "53209e75a6fe30d32bd121a40224b13c5e574c02866dab2134edcd013ca05407"
+  }
+}

@@ -28,10 +28,13 @@ test('media signatures and limits reject remote URLs, executable images and inva
   assert.equal(media.normalize({src:'assets/image-001.png',mime:'image/jpeg'},'image',true),null);
   assert.equal(media.normalize({data:'data:image/png;base64,' + 'A'.repeat(Math.ceil(media.limits.image * 4 / 3) + 104)},'image'),null);
 });
-test('file reader infers formats from contents and rejects oversize files before reading', async () => {
+test('file reader delegates image preparation, infers signatures and rejects oversize audio before reading', async () => {
+  const prepared = [];
+  // Boundary double only: real optimization/decoding is covered in stage0-browser.html.
+  context.HeartspaceImageOptimizer = {prepare:async file => { prepared.push(file); return file; }};
   const bytes = Uint8Array.from(atob(png.data.split(',')[1]),character => character.charCodeAt(0));
   const loaded = await media.readFile({name:'photo.wrong-extension',size:bytes.length,type:'text/plain',arrayBuffer:async () => bytes.buffer},'image');
-  assert.equal(loaded.mime,'image/png');
+  assert.equal(loaded.mime,'image/png'); assert.equal(prepared.length,1); assert.equal(prepared[0].name,'photo.wrong-extension');
   await assert.rejects(media.readFile({size:media.limits.audio + 1,arrayBuffer:() => {throw Error('Must not read');}},'audio'),/até 8 MB/);
   await assert.rejects(media.readFile({name:'bad.svg',size:4,arrayBuffer:async () => Uint8Array.of(1,2,3,4).buffer},'image'),/Formato não reconhecido/);
 });
@@ -43,7 +46,7 @@ test('presentation normalization keeps media and clamps authoring controls', () 
 });
 test('player renders the speaker portrait outside the card and keeps audio through consecutive lines', async () => {
   const ui = mountExportedHtml(exporter.buildHtml(story())); ui.click('start'); await Promise.resolve();
-  const scene = layer(ui), audio = scene.children[3];
+  const scene = layer(ui), audio = scene.querySelector('audio');
   scene.children[2].handlers.get('load')();
   assert.equal(scene.children[0].src,png.data); assert.equal(scene.children[2].src,png.data);
   assert.equal(scene.dataset.portraitPosition,'right'); assert.equal(scene.children[2].dataset.transition,'slide');
@@ -56,14 +59,14 @@ test('player renders the speaker portrait outside the card and keeps audio throu
 });
 test('music pauses for tools, background tabs and home; player volume and mute persist', async () => {
   const input = story(), storage = new Map(), ui = mountExportedHtml(exporter.buildHtml(input),false,{storage});
-  ui.click('start'); await Promise.resolve(); const audio = layer(ui).children[3]; assert.equal(audio.paused,false);
-  ui.click('preferences-open'); assert.equal(audio.paused,true);
+  ui.click('start'); await Promise.resolve(); const audio = layer(ui).querySelector('audio'); assert.equal(audio.paused,false);
+  ui.click('preferences-open'); assert.equal(audio.paused,true); ui.click('preferences-menu-open');
   ui.change('preference-volume','0.25'); ui.change('preference-sound','off'); ui.click('utility-close'); assert.equal(audio.paused,true); assert.equal(audio.volume,.25);
-  ui.click('preferences-open'); ui.change('preference-sound','on'); ui.click('utility-close'); await Promise.resolve(); assert.equal(audio.paused,false);
+  ui.click('preferences-open'); ui.click('preferences-menu-open'); ui.change('preference-sound','on'); ui.click('utility-close'); await Promise.resolve(); assert.equal(audio.paused,false);
   ui.setHidden(true); assert.equal(audio.paused,true); ui.setHidden(false); await Promise.resolve(); assert.equal(audio.paused,false);
   ui.key('Escape'); assert.equal(audio.paused,true);
   const reload = mountExportedHtml(exporter.buildHtml(input),false,{storage});
-  assert.equal(reload.elements.get('preference-volume').value,'0.25'); reload.click('resume'); assert.equal(layer(reload).children[3].volume,.25);
+  assert.equal(reload.elements.get('preference-volume').value,'0.25'); reload.click('resume'); assert.equal(layer(reload).querySelector('audio').volume,.25);
 });
 test('autoplay rejection and image decode errors leave reading and choices usable', async () => {
   const ui = mountExportedHtml(exporter.buildHtml(story()),false,{blockAudio:true}); ui.click('start'); await new Promise(setImmediate);
@@ -102,6 +105,8 @@ test('ZIP deduplicates assets, rewrites paths and contains all references withou
 test('ZIP writer rejects unsafe paths and uses the standard CRC32', () => {
   assert.equal(packages.crc32(new TextEncoder().encode('123456789')),0xcbf43926);
   assert.throws(() => packages.zip([{name:'../outside.js',data:new Uint8Array()}]),/Caminho inválido/);
+});
+test('S0-P01 ZIP must report invalid authored background instead of silently losing it', () => {
   const input = story(); input.sequences[0].presentation.background = {src:'https://example.com/x.png',mime:'image/png'};
   assert.throws(() => packages.buildPackage(input),/mídia/);
 });
@@ -111,4 +116,36 @@ test('character normalization preserves portrait across registry reloads', () =>
   const helper = vm.createContext({HeartspaceNarrativeMedia:media,normalizeCharacterId:value => value,narrativeSlug:value => value});
   const character = vm.runInContext(editor.slice(begin,end) + '\nnormalizedCharacterRecord',helper)({id:'alex',name:'Alex',portrait:png,portrait_position:'right'});
   assert.equal(character.portrait.data,png.data); assert.equal(character.portrait_position,'right');
+});
+test('S0-P01 invalid declared media is diagnosed in base layers and moment patches without changing source', () => {
+  const invalid = {src:'https://example.com/not-embedded.png',mime:'image/png'};
+  const cases = [
+    {name:'fundo',apply:p => {p.background=invalid;}},
+    {name:'áudio',apply:p => {p.music=png;}},
+    {name:'bad-element',apply:p => {p.elements=[{id:'bad-element',type:'image',asset:invalid}];}},
+    {name:'momento · fundo',apply:p => {p.cues=[{block_id:'momento',settings:{background:invalid}}];}},
+    {name:'momento · áudio',apply:p => {p.cues=[{block_id:'momento',settings:{music:png}}];}},
+    {name:'momento · bad-layer',apply:p => {p.cues=[{block_id:'momento',set:[{id:'bad-layer',asset:invalid}]}];}}
+  ];
+  for (const {name,apply} of cases) {
+    const input=story(); apply(input.sequences[0].presentation); const before=JSON.stringify(input);
+    assert.throws(()=>packages.buildPackage(input),error => /Uma mídia não pôde ser incluída/.test(error.message) && error.message.includes(name),name);
+    assert.equal(JSON.stringify(input),before,name);
+  }
+});
+test('S0-P01 explicit absence and partial moment changes remain valid and preserve inheritance', () => {
+  const input=story(); input.sequences[0].presentation.elements=[{id:'art',type:'image',asset:png}];
+  input.sequences[0].presentation.cues=[
+    {block_id:'keep',settings:{accent:'#123456'},set:[{id:'art',x:25}]},
+    {block_id:'clear',settings:{background:null,music:null},set:[{id:'art',asset:null}]}
+  ];
+  const before=JSON.stringify(input), output=packages.buildPackage(input), cues=output.story.sequences[0].presentation.cues;
+  assert.equal(Object.hasOwn(cues[0].settings,'background'),false); assert.equal(Object.hasOwn(cues[0].settings,'music'),false);
+  assert.equal(Object.hasOwn(cues[0].set[0],'asset'),false);
+  assert.equal(cues[1].settings.background,null); assert.equal(cues[1].settings.music,null); assert.equal(cues[1].set[0].asset,null);
+  assert.equal(JSON.stringify(input),before);
+});
+test('S0-P01 malformed provenance cannot silently discard a declared asset',()=>{
+  const input=story();input.sequences[0].presentation.background={...png,project_ref:{schema_version:999}};
+  assert.throws(()=>packages.buildPackage(input),/mídia.*fundo/);
 });

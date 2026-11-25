@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-25",
+  "scope": "Local synthetic documents only; browser summaries transcribed from observed DOM, not raw exported logs",
+  "node": {
+    "node": "v22.23.1",
+    "strict": true,
+    "totals": {
+      "tests": 101,
+      "pass": 101,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "browser": {
+    "compatibility": {
+      "passed": 11,
+      "failed": 0
+    },
+    "recovery": {
+      "passed": 24,
+      "failed": 0,
+      "nativePicker": "API-boundary injected tests; OS cancellation not certified"
+    },
+    "editor": {
+      "passed": 26,
+      "failed": 0,
+      "newCases": [
+        "P05-01 toolbar/keyboard equality and undo/redo bounds",
+        "P05-02 reopen context and current formatting undo/redo",
+        "P05-03 list shortcut single transaction"
+      ]
+    },
+    "closeReopen": {
+      "passed": 1,
+      "bodyPreserved": true,
+      "history": 0,
+      "redo": 0
+    }
+  },
+  "trustedInputObservations": {
+    "bold": {
+      "history": 1,
+      "undo": "<p>Texto base.</p>",
+      "redo": "<p><b>Texto base.</b></p>",
+      "extraUndoRedo": "No additional mutation"
+    },
+    "italicUnderlineStrike": {
+      "historyEach": 1,
+      "undoEach": "<p>Texto base.</p>"
+    },
+    "typingThenBold": {
+      "history": 3,
+      "undoToBase": "<p>Texto base.</p>",
+      "redo": "<p><b>Texto base. teste</b></p>"
+    },
+    "reload": {
+      "history": 0,
+      "nativeAllowed": false,
+      "emptyUndoRedo": "<p><b>Texto base. teste</b></p>",
+      "newItalicUndo": "<p><b>Texto base. teste</b></p>"
+    },
+    "numberedList": {
+      "history": 1,
+      "undo": "<p>Texto base.</p>"
+    },
+    "finalTitleFocus": {
+      "typed": "Capítulo de teste Q",
+      "toolbarUndo": "unchanged; field focused",
+      "keyboardUndo": "Q removed; field focused",
+      "note": "Field native history not integrated into body snapshots"
+    }
+  },
+  "preservation": {
+    "protectedModulesAndFrozenFixturesUnchanged": true,
+    "cspDirectivesUnchangedExceptInlineHashes": true,
+    "newHistorySystem": false,
+    "contractsOrPersistenceChanges": false
+  },
+  "sha256": {
+    "index.html": "6870ca800f3e62b30948c3d246495e0221ffdee453b29236cc14eca09362e00b",
+    "ops/desktop-csp.txt": "cb87dc45a3d8d8c5b0bf0484c52fde5cf44aa5613841b891dbd5b68753f77411",
+    "tests/stage0-history.test.cjs": "f30cc06da71871ecc2da4c8db7d367243d691bbfa6b9dc6d066e1375702028a1",
+    "tests/stage0-editor-matrix.js": "9b08d94bb080c764e4f935faf60df47cbfcf983cc8666529e17b2e40179b45e7",
+    "tests/prepare-stage0.cjs": "28b72e86faf5cd818bdeb80ca91d871d557fcabe7d5fefad62646e9a6cfcb796",
+    "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e"
+  }
+}

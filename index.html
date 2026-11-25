@@ -1853,6 +1853,7 @@
   <script src="image-optimizer.js"></script>
   <script src="narrative-media.js"></script>
   <script src="project-assets.js"></script>
+  <script src="authoring-history-patch.js"></script>
   <script src="scene-composer.js"></script>
   <script src="narrative-html.js"></script>
   <script src="narrative-package.js"></script>
@@ -2195,6 +2196,10 @@
       let editingFolderId = '';
       let deletingFolderId = '', folderRemovalBusy = false;
       let activeDocumentId = '';
+      let synchronizeAuthoringHistory = () => {};
+      let finishAuthoringTextEdit = () => {};
+      let finishSceneTextEdit = () => {};
+      let captureSceneAuthoringMutation = () => null, commitSceneAuthoringMutation = () => {};
       let expandedSidebarTag = '';
       const makeId = () => `doc-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       const normalizeLocaleCode = value => {
@@ -3551,6 +3556,8 @@
       };
       let hydrateMermaidBlocks = () => {};
       const setEditorBody = (body, layout = documentPage.dataset.layout || 'book') => {
+        finishAuthoringTextEdit(false);
+        synchronizeAuthoringHistory();
         HeartspaceDocsBookPagination.restoreViewport(editor);
         documentPage.dataset.layout = layout;
         const activeRecord = documents.find(item => item.id === activeDocumentId);
@@ -3947,8 +3954,10 @@
             selection.removeAllRanges(); selection.addRange(toolbarRange);
           }
           HeartspaceDocsBookPagination.prepare(editor);
-          if (button.dataset.toolbarKind === 'tasks') insertChecklist();
-          else if (button.dataset.toolbarKind === 'callout') insertCallout(button.dataset.value);
+          runNarrativeCommand(() => {
+            if (button.dataset.toolbarKind === 'tasks') insertChecklist();
+            else if (button.dataset.toolbarKind === 'callout') insertCallout(button.dataset.value);
+          });
           toolbarRange = null;
           queueSave();
         });
@@ -3970,17 +3979,31 @@
           selection.addRange(toolbarRange);
         } else editor.focus({preventScroll:true});
         if(!titleSelection&&!subtitleSelection)HeartspaceDocsBookPagination.prepare(editor);
-        const bookMutation=rememberNarrativeMutation();
-        if (!titleSelection && !subtitleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
-          document.execCommand(button.dataset.command, false, button.dataset.value || null);
-        }
-        commitNarrativeMutation(bookMutation);
+        runNarrativeCommand(() => {
+          if (!titleSelection && !subtitleSelection && (!alignmentCommand || !applyTextAlignment(button.dataset.command))) {
+            document.execCommand(button.dataset.command, false, button.dataset.value || null);
+          }
+        });
         toolbarRange = null;
         scheduleBookPagination();queueSave();
         });
       });
-      document.querySelector('#undo').addEventListener('click', () => { editor.focus(); if (!undoNarrativeMutation()) document.execCommand('undo'); queueSave(); });
-      document.querySelector('#redo').addEventListener('click', () => { editor.focus(); if (!redoNarrativeMutation()) document.execCommand('redo'); queueSave(); });
+      for (const id of ['undo','redo']) {
+        const button = document.getElementById(id);
+        button.addEventListener('mousedown', event => event.preventDefault());
+        button.addEventListener('click', () => {
+          const field = document.activeElement;
+          const localTextField = field && !editor.contains(field) &&
+            (field.matches('input,textarea') || field.isContentEditable);
+          // Unmanaged fields retain their own editing behavior; managed fields use
+          // this document chronology without falling through to native entries.
+          if (localTextField && field !== title && field !== subtitle && !sceneHistoryRoot.contains(field)) return;
+          finishSceneTextEdit();
+          if (id === 'undo') undoNarrativeMutation(true);
+          else redoNarrativeMutation(true);
+          queueSave();
+        });
+      }
       const cleanWritingToggle = document.querySelector('#clean-writing-toggle');
       function applyCleanWriting(enabled) {
         document.body.classList.toggle('writing-clean',enabled);
@@ -6579,6 +6602,8 @@
         if (context.key !== expected || !context.editable) return false;
         const sequence = activeNarrativeSequence();
         if (!sequence) return false;
+        if (HeartspaceDocsHistoryPatch.equal(normalizeNarrativePresentation(context.presentation),normalizeNarrativePresentation(presentation))) return true;
+        const historyMutation = captureSceneAuthoringMutation(sequence);
         const base = normalizeNarrativePresentation(sequence.presentation);
         if (context.index < 0) sequence.presentation = normalizeNarrativePresentation({...presentation,cues:base.cues});
         else {
@@ -6593,6 +6618,7 @@
           }
           sequence.presentation = normalizeNarrativePresentation(base);
         }
+        commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation);
         renderSceneMomentControls(); queueSave(); return true;
       };
@@ -6600,6 +6626,10 @@
         const context = sceneMomentContext();
         if (context.key !== expected || !context.editable || context.index < 0 || !context.presentation.elements.some(item => item.id === elementId)) return false;
         const sequence = activeNarrativeSequence(), base = normalizeNarrativePresentation(sequence.presentation);
+        const oldTrack = base.cues.find(cue => cue.block_id === context.blockId)?.animations?.find(track => track.element_id === elementId) || null;
+        const nextTrack = animation ? HeartspaceNarrativeMedia.sceneAnimations([{...animation,element_id:elementId}])[0] || null : null;
+        if(HeartspaceDocsHistoryPatch.equal(oldTrack,nextTrack))return true;
+        const historyMutation = captureSceneAuthoringMutation(sequence);
         const existing = base.cues.find(cue => cue.block_id === context.blockId);
         const cue = existing || {block_id:context.blockId,...HeartspaceNarrativeMedia.sceneDiff(context.presentation,context.presentation)};
         cue.animations = (cue.animations || []).filter(track => track.element_id !== elementId);
@@ -6610,12 +6640,14 @@
           base.cues.push(cue);
         }
         sequence.presentation = normalizeNarrativePresentation(base);
+        commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation); renderSceneMomentControls(); queueSave(); return true;
       };
       const sceneComposer = HeartspaceSceneComposer.create({
         parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
         pickAsset:(kind,options) => projectAssets.pick(kind,options),describeAsset:projectAssets.describe,
         read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeAnimation:writeSceneAnimation,
+        mergeGesture:(before,after,current) => HeartspaceDocsHistoryPatch.apply(current,HeartspaceDocsHistoryPatch.diff(before,after),true),
         previewParallax:enabled => narrativeSampleScene.setParallaxPreview(enabled),
         previewAnimationAt:(id,at) => {
           const track = sceneMomentContext().motion.tracks.find(item => item.element_id === id); if (!track) return;
@@ -6630,12 +6662,13 @@
       ['inherit','reset','clean'].forEach(action => sceneMomentControls.querySelector(`#scene-moment-${action}`).addEventListener('click',() => {
         const context = sceneMomentContext(); if (!context.editable || (action !== 'clean' && context.index < 0)) return;
         const sequence = activeNarrativeSequence(), base = normalizeNarrativePresentation(sequence.presentation);
+        const historyMutation = captureSceneAuthoringMutation(sequence);
         base.cues = base.cues.filter(cue => action === 'clean' ? context.nodes.some(node => node.id === cue.block_id) : cue.block_id !== context.blockId);
         if (action === 'reset') {
           if (base.cues.length >= 1000) { statusMessage('Esta sequência já possui 1000 momentos de cena.','pending'); return; }
           base.cues.push({block_id:context.blockId,reset:true});
         }
-        sequence.presentation = normalizeNarrativePresentation(base); queueSave(); renderNarrativePresentation();
+        sequence.presentation = normalizeNarrativePresentation(base); commitSceneAuthoringMutation(historyMutation,sequence); queueSave(); renderNarrativePresentation();
       }));
       const narrativePresentationFromControls = previousPresentation => normalizeNarrativePresentation({
         ...previousPresentation,
@@ -7887,6 +7920,8 @@
       });
       searchDialog.addEventListener('click',event=>{ if(event.target===searchDialog) searchDialog.close(); });
       const flushSave = ({remote = true} = {}) => {
+        finishAuthoringTextEdit(true,false);
+        finishSceneTextEdit();
         pendingEditorSave = false;
         clearTimeout(saveTimer);
         clearTimeout(revisionTimer);
@@ -7911,6 +7946,7 @@
       };
       const openDocument = id => {
         if (id === activeDocumentId) return;
+        finishAuthoringTextEdit();
         closeLocalizationPreview();
         flushSave();
         const record = documents.find(item => item.id === id && !item.trashedAt); if (!record) return;
@@ -7979,6 +8015,7 @@
         if (templateKey === 'builtin:heartspace-showcase') { void createHeartspaceShowcase(); return; }
         closeLocalizationPreview();
         productionWorkspace?.write(false);
+        finishAuthoringTextEdit();
         flushSave();
         const customTemplate = templateKey.startsWith('custom:') ? readDocumentTemplates().find(item => item.id === templateKey.slice(7)) : null;
         const builtinKey = templateKey.startsWith('builtin:') ? templateKey.slice(8) : '';
@@ -8025,8 +8062,9 @@
         if (!record) return;
         if (currentProjectId && !canEditProject({ capabilities: projectCapabilities })) { statusMessage('Sua permissão não permite arquivar documentos.', 'pending'); return; }
         const restoring = Boolean(record.archivedAt);
-        if (!restoring && record.id === activeDocumentId) flushSave();
+        if (!restoring && record.id === activeDocumentId) { finishAuthoringTextEdit(); flushSave(); }
         record.archivedAt = restoring ? '' : new Date().toISOString();
+        synchronizeAuthoringHistory();
         if (!restoring && record.id === activeDocumentId) {
           const next = documents.find(item => item.id !== record.id && !item.trashedAt && !item.archivedAt);
           activeDocumentId = '';
@@ -8051,6 +8089,7 @@
           return;
         }
         if (wasActive) {
+          finishAuthoringTextEdit();
           closeLocalizationPreview();
           clearTimeout(saveTimer);
           Object.assign(record, { title: title.textContent.trim() || 'Sem título', subtitle: subtitle.value, body: serializeEditorBody(), savedAt: new Date().toISOString() });
@@ -8064,6 +8103,7 @@
         }
         const oldId = record.id;
         record.trashedAt = new Date().toISOString();
+        synchronizeAuthoringHistory();
         record.trashedBy = currentUser?.user_metadata?.full_name || currentUser?.email || '';
         record.savedAt = record.trashedAt;
         record.editRevision = (record.editRevision || 0) + 1;
@@ -8097,6 +8137,8 @@
         if (currentProjectId && !canEditProject({ capabilities: projectCapabilities })) { statusMessage('Sua permissão não permite restaurar este documento.', 'pending'); return; }
         if (isRecordSyncing(record)) { statusMessage('Aguarde a sincronização atual terminar e tente novamente.', 'pending'); return; }
         closeLocalizationPreview();
+        finishAuthoringTextEdit();
+        flushSave();
         record.trashedAt = ''; record.trashedBy = ''; record.savedAt = new Date().toISOString(); record.editRevision = (record.editRevision || 0) + 1;
         if (currentProjectId) { record.dirty = true; dirtyDocumentIds.add(record.id); }
         activeDocumentId = record.id;
@@ -9580,6 +9622,12 @@
       };
       function applyCommand(index) {
         const command = filteredCommands[index];
+        const formatting = ['block','align','list','ordered','tasks','callout','inline','inline-markup','link'];
+        return formatting.includes(command?.kind)
+          ? runNarrativeCommand(() => applyCommandAction(index)) : applyCommandAction(index);
+      }
+      function applyCommandAction(index) {
+        const command = filteredCommands[index];
         if (!command || !slashRange) return;
         if (command.kind === 'folder') { enterSlashFolder(command); return; }
         const commandTarget = slashTarget;
@@ -9829,20 +9877,172 @@
         return option;
       };
       let savedNarrativeSelection = null;
-      const narrativeMutationHistory = [];
-      const narrativeMutationRedo = [];
-      const rememberNarrativeMutation = () => ({ documentId:activeDocumentId, before:serializeEditorBody() });
+      const narrativeDocumentHistories = new Map();
+      let narrativeMutationHistory = [], narrativeMutationRedo = [];
+      const narrativeHistoryContextKey = () => JSON.stringify([storageKey,projectContextEpoch,currentProjectId,currentUser?.id || '',authoringProject.id]);
+      let narrativeMutationContext = narrativeHistoryContextKey();
+      let narrativeHistoryDocument = null, narrativeHistoryVisit = 0, narrativeHistoryGeneration = 0;
+      // Native entries cannot establish a safe source baseline or identify a session.
+      const nativeNarrativeHistoryAllowed = false;
+      const syncNarrativeHistoryContext = () => {
+        const context = narrativeHistoryContextKey();
+        if (context !== narrativeMutationContext) {
+          narrativeDocumentHistories.clear();
+          narrativeMutationContext = context;
+          narrativeHistoryDocument = null;
+          narrativeHistoryVisit++;
+        }
+        // Archiving, trashing or removing a document ends its history session.
+        for (const id of narrativeDocumentHistories.keys()) {
+          if (!documents.some(record => record.id === id && !record.trashedAt && !record.archivedAt)) narrativeDocumentHistories.delete(id);
+        }
+        if (narrativeHistoryDocument !== activeDocumentId) {
+          narrativeHistoryDocument = activeDocumentId;
+          narrativeHistoryVisit++;
+        }
+        let session = narrativeDocumentHistories.get(activeDocumentId);
+        if (!session) {
+          session = {history:[],redo:[],generation:++narrativeHistoryGeneration};
+          if (activeDocumentId && documents.some(record => record.id === activeDocumentId && !record.trashedAt && !record.archivedAt)) narrativeDocumentHistories.set(activeDocumentId,session);
+        }
+        narrativeMutationHistory = session.history;
+        narrativeMutationRedo = session.redo;
+        return context;
+      };
+      const canUseNativeNarrativeHistory = () => { syncNarrativeHistoryContext(); return nativeNarrativeHistoryAllowed; };
+      synchronizeAuthoringHistory = syncNarrativeHistoryContext;
+      const rememberNarrativeMutation = () => {
+        const context = syncNarrativeHistoryContext();
+        return {context,documentId:activeDocumentId,session:narrativeDocumentHistories.get(activeDocumentId)?.generation,visit:narrativeHistoryVisit,before:serializeEditorBody()};
+      };
+      let narrativeCommandDepth = 0;
+      const runNarrativeCommand = action => {
+        if (narrativeCommandDepth) return action();
+        const mutation = rememberNarrativeMutation();
+        narrativeCommandDepth++;
+        try { return action(); }
+        finally { narrativeCommandDepth--; commitNarrativeMutation(mutation); }
+      };
       const commitNarrativeMutation = mutation => {
-        if (!mutation || mutation.documentId !== activeDocumentId) return;
+        // Synchronous command events can also reach the editing input listener.
+        // The outer command owns that snapshot; do not record it twice.
+        if (narrativeCommandDepth) return;
+        const context = syncNarrativeHistoryContext();
+        if (!mutation || mutation.context !== context || mutation.documentId !== activeDocumentId ||
+            mutation.session !== narrativeDocumentHistories.get(activeDocumentId)?.generation || mutation.visit !== narrativeHistoryVisit) return;
         mutation.after = serializeEditorBody();
         if (mutation.before === mutation.after) return;
         const last=narrativeMutationHistory.at(-1);
-        if(mutation.bookInput==='insertText'&&last?.bookInput==='insertText'&&last.documentId===mutation.documentId&&last.after===mutation.before&&JSON.stringify(last.bookAfterSelection)===JSON.stringify(mutation.bookBeforeSelection)&&mutation.bookInputAt-last.bookInputAt<1000&&!/\s/.test(last.bookInputData||'')){
+        if(mutation.bookInput==='insertText'&&last?.bookInput==='insertText'&&last.documentId===mutation.documentId&&last.visit===mutation.visit&&last.after===mutation.before&&JSON.stringify(last.bookAfterSelection)===JSON.stringify(mutation.bookBeforeSelection)&&mutation.bookInputAt-last.bookInputAt<1000&&!/\s/.test(last.bookInputData||'')){
           last.after=mutation.after;last.bookAfterSelection=mutation.bookAfterSelection;last.bookInputAt=mutation.bookInputAt;last.bookInputData=mutation.bookInputData;narrativeMutationRedo.length=0;return;
         }
         narrativeMutationHistory.push(mutation);
         if (narrativeMutationHistory.length > 60) narrativeMutationHistory.shift();
         narrativeMutationRedo.length = 0;
+      };
+      const appendAuthoringEntry = mutation => {
+        // Retain only touched scene data; full snapshots are temporary capture state.
+        if(mutation.kind==='scene'){delete mutation.before;delete mutation.after;}
+        narrativeMutationHistory.push(mutation);
+        if (narrativeMutationHistory.length > 60) narrativeMutationHistory.shift();
+        narrativeMutationRedo.length = 0;
+      };
+      let externalTextEdit = null;
+      const fieldTextValue = field => field === subtitle ? field.value : field.textContent;
+      const finishExternalTextEdit = () => {
+        const pending=externalTextEdit;externalTextEdit=null;if(!pending)return;
+        const m=pending.mutation;m.after=fieldTextValue(pending.field);
+        if(m.before===m.after)return;
+        if(m.context===syncNarrativeHistoryContext()&&m.documentId===activeDocumentId&&m.session===narrativeDocumentHistories.get(activeDocumentId)?.generation&&m.visit===narrativeHistoryVisit)appendAuthoringEntry(m);
+      };
+      for(const field of [title,subtitle]){
+        const begin=()=>{if(externalTextEdit?.field===field)return;finishExternalTextEdit();externalTextEdit={field,mutation:{...rememberNarrativeMutation(),kind:'field',fieldId:field.id,before:fieldTextValue(field)}};};
+        field.addEventListener('beforeinput',event=>{
+          if(event.inputType==='historyUndo'||event.inputType==='historyRedo'){event.preventDefault();finishExternalTextEdit();if(event.inputType==='historyUndo')undoNarrativeMutation();else redoNarrativeMutation();}
+          else begin();
+        });
+        field.addEventListener('compositionstart',begin);
+        field.addEventListener('blur',finishExternalTextEdit);
+        field.addEventListener('keydown',event=>{
+          if(!(event.ctrlKey||event.metaKey)||event.altKey||event.isComposing)return;
+          const k=event.key.toLowerCase();if(k!=='z'&&!(k==='y'&&!event.shiftKey))return;
+          event.preventDefault();event.stopPropagation();finishExternalTextEdit();
+          if(k==='y'||event.shiftKey)redoNarrativeMutation();else undoNarrativeMutation();
+        },true);
+      }
+      const applyFieldHistoryEntry = (mutation,redo) => {
+        if(desktopBlocked || authoringStorageError || (currentProjectId && !canEditProject({capabilities:projectCapabilities})))return false;
+        const field=mutation.fieldId===title.id?title:mutation.fieldId===subtitle.id?subtitle:null;if(!field)return false;
+        if(fieldTextValue(field)!==mutation[redo?'before':'after']){statusMessage('O campo mudou fora desta operação. O texto atual foi preservado.','pending');return false;}
+        if(field===subtitle)field.value=mutation[redo?'after':'before'];else field.textContent=mutation[redo?'after':'before'];
+        resizeSubtitle();updateDocumentLabel();queueSave();return true;
+      };
+      let sceneFieldEdit = null;
+      captureSceneAuthoringMutation = sequence => {
+        finishExternalTextEdit();
+        finishAuthoringTextEdit(true,false);
+        const mutation = rememberNarrativeMutation();
+        return {...mutation,kind:'scene',sequenceId:sequence.id,before:HeartspaceDocsHistoryPatch.clone(sequence.presentation)};
+      };
+      commitSceneAuthoringMutation = (mutation,sequence) => {
+        if (!mutation || mutation.context !== syncNarrativeHistoryContext() || mutation.documentId !== activeDocumentId || mutation.session !== narrativeDocumentHistories.get(activeDocumentId)?.generation || mutation.visit !== narrativeHistoryVisit) return;
+        mutation.after = HeartspaceDocsHistoryPatch.clone(sequence.presentation);
+        mutation.changes = HeartspaceDocsHistoryPatch.diff(mutation.before,mutation.after);
+        if (!mutation.changes.length) return;
+        if (sceneFieldEdit?.field === document.activeElement && sceneFieldEdit.mutation.sequenceId === sequence.id) {
+          sceneFieldEdit.mutation.after=mutation.after;
+          sceneFieldEdit.mutation.changes=HeartspaceDocsHistoryPatch.diff(sceneFieldEdit.mutation.before,mutation.after);
+          return;
+        }
+        appendAuthoringEntry(mutation);
+      };
+      finishSceneTextEdit = () => {
+        finishExternalTextEdit();
+        const pending=sceneFieldEdit;sceneFieldEdit=null;
+        if(!pending?.mutation.changes?.length)return;
+        const m=pending.mutation;
+        if(m.context===syncNarrativeHistoryContext()&&m.documentId===activeDocumentId&&m.session===narrativeDocumentHistories.get(activeDocumentId)?.generation&&m.visit===narrativeHistoryVisit)appendAuthoringEntry(m);
+      };
+      const sceneHistoryRoot = document.querySelector('#narrative-presentation-form');
+      const sceneHistoryButtons = document.createElement('div');
+      sceneHistoryButtons.className='scene-element-actions';
+      sceneHistoryButtons.innerHTML='<button type="button" aria-label="Desfazer autoria" data-scene-history="undo">Desfazer</button><button type="button" aria-label="Refazer autoria" data-scene-history="redo">Refazer</button>';
+      sceneMomentControls.prepend(sceneHistoryButtons);
+      sceneHistoryButtons.addEventListener('mousedown',event=>event.preventDefault());
+      sceneHistoryButtons.addEventListener('click',event=>{
+        const action=event.target.closest('[data-scene-history]')?.dataset.sceneHistory;if(!action||desktopBlocked||authoringStorageError||(currentProjectId&&!canEditProject({capabilities:projectCapabilities})))return;
+        finishSceneTextEdit();if(action==='undo')undoNarrativeMutation(true);else redoNarrativeMutation(true);
+      });
+      const beginSceneFieldEdit = field => {
+        if(!field.matches('input[type=number],input[type=text],input[type=color],input:not([type]),textarea')||!field.matches('[data-field],[data-motion-field],[data-motion-pose]')||sceneFieldEdit?.field===field)return;
+        finishSceneTextEdit();const sequence=activeNarrativeSequence();if(sequence)sceneFieldEdit={field,mutation:captureSceneAuthoringMutation(sequence)};
+      };
+      sceneHistoryRoot.addEventListener('focusin',event=>beginSceneFieldEdit(event.target));
+      sceneHistoryRoot.addEventListener('beforeinput',event=>beginSceneFieldEdit(event.target),true);
+      sceneHistoryRoot.addEventListener('focusout',()=>finishSceneTextEdit());
+      sceneHistoryRoot.addEventListener('keydown',event=>{
+        if(event.isComposing)return;
+        if(event.key==='Escape'&&sceneFieldEdit?.field===event.target){
+          const pending=sceneFieldEdit;sceneFieldEdit=null;const sequence=activeNarrativeSequence();
+          if(sequence?.id===pending.mutation.sequenceId&&pending.mutation.context===syncNarrativeHistoryContext()&&pending.mutation.documentId===activeDocumentId){if(pending.mutation.changes?.length){const value=HeartspaceDocsHistoryPatch.apply(sequence.presentation,pending.mutation.changes);if(!value){sceneFieldEdit=pending;statusMessage('Os dados mudaram durante a edição. O cancelamento não sobrescreveu as alterações atuais.','pending');event.preventDefault();event.stopPropagation();return;}sequence.presentation=value;queueSave();}renderNarrativePresentation();}
+          event.preventDefault();event.stopPropagation();
+        }else if(event.key==='Enter'&&!event.isComposing&&event.target.matches('input')){finishSceneTextEdit();}
+      },true);
+      const sceneHistoryKeydown = event=>{
+        if(!(event.ctrlKey||event.metaKey)||event.altKey||event.isComposing)return;
+        const key=event.key.toLowerCase();if(key!=='z'&&!(key==='y'&&!event.shiftKey))return;
+        event.preventDefault();event.stopPropagation();finishSceneTextEdit();
+        if(key==='y'||event.shiftKey)redoNarrativeMutation(true);else undoNarrativeMutation(true);
+      };
+      sceneHistoryRoot.addEventListener('keydown',sceneHistoryKeydown,true);
+      narrativePresentationPreview.addEventListener('keydown',sceneHistoryKeydown,true);
+      const applySceneHistoryEntry = (mutation,redo) => {
+        if(desktopBlocked || authoringStorageError || (currentProjectId && !canEditProject({capabilities:projectCapabilities})))return false;
+        const record=documents.find(d=>d.id===activeDocumentId),sequence=record?.narrativeSequences?.find(s=>s.id===mutation.sequenceId);
+        if(!sequence)return false;
+        const next=HeartspaceDocsHistoryPatch.apply(sequence.presentation,mutation.changes,redo);
+        if(!next){statusMessage('Não foi possível alterar o histórico de Cena: os dados envolvidos mudaram. As alterações atuais foram preservadas.','pending');return false;}
+        sequence.presentation=next;renderNarrativePresentation();queueSave();return true;
       };
       const removeNarrativeBlock = block => {
         if (!block?.matches?.('.narrative-block') || !editor.contains(block)) return false;
@@ -9880,28 +10080,54 @@
         return true;
       };
       const restoreNarrativeMutationBody = body => {
+        const focused = document.activeElement;
         const record = documents.find(item => item.id === activeDocumentId);
         setEditorBody(body, record?.layout || documentPage.dataset.layout);
         updateCount();
         queueSave();
-        editor.focus();
+        if(focused?.isConnected && !editor.contains(focused)) focused.focus({preventScroll:true});
+        else editor.focus();
       };
-      const undoNarrativeMutation = () => {
+      const undoNarrativeMutation = (explicit = false) => {
+        finishSceneTextEdit();
+        const context = syncNarrativeHistoryContext();
         const mutation = narrativeMutationHistory.at(-1);
-        if (!mutation || mutation.documentId !== activeDocumentId || serializeEditorBody() !== mutation.after) return false;
+        if (!mutation || mutation.context !== context || mutation.documentId !== activeDocumentId) return false;
+        const focused=document.activeElement;
+        if(!explicit&&(focused===title||focused===subtitle)&&!(mutation.kind==='field'&&mutation.fieldId===focused.id)){statusMessage('A próxima operação pertence a outro alvo. Use o botão de histórico para confirmar.','pending');return true;}
+        if(mutation.kind==='field'&&!explicit&&editor.contains(focused)){statusMessage('A próxima operação pertence a um campo do documento. Use o botão de histórico para confirmar.','pending');return true;}
+        if(mutation.kind==='field'){if(!applyFieldHistoryEntry(mutation,false))return false;narrativeMutationHistory.pop();narrativeMutationRedo.push(mutation);return true;}
+        if(mutation.kind==='scene'){
+          if(!explicit&&editor.contains(document.activeElement)){statusMessage('A próxima operação é de Cena. Use o botão de histórico para confirmar esse alvo.','pending');return true;}
+          if(!applySceneHistoryEntry(mutation,false))return false;
+          narrativeMutationHistory.pop();narrativeMutationRedo.push(mutation);return true;
+        }
+        if (serializeEditorBody() !== mutation.after) { statusMessage('Não foi possível desfazer: o texto mudou fora desta operação. As alterações atuais foram preservadas.','pending'); return false; }
         narrativeMutationHistory.pop();
         narrativeMutationRedo.push(mutation);
         restoreNarrativeMutationBody(mutation.before);
-        HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookBeforeSelection);scheduleBookPagination();
+        if(!document.activeElement || editor.contains(document.activeElement))HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookBeforeSelection);scheduleBookPagination();
         return true;
       };
-      const redoNarrativeMutation = () => {
+      const redoNarrativeMutation = (explicit = false) => {
+        finishSceneTextEdit();
+        const context = syncNarrativeHistoryContext();
         const mutation = narrativeMutationRedo.at(-1);
-        if (!mutation || mutation.documentId !== activeDocumentId || serializeEditorBody() !== mutation.before) return false;
+        if (!mutation || mutation.context !== context || mutation.documentId !== activeDocumentId) return false;
+        const focused=document.activeElement;
+        if(!explicit&&(focused===title||focused===subtitle)&&!(mutation.kind==='field'&&mutation.fieldId===focused.id)){statusMessage('A próxima operação pertence a outro alvo. Use o botão de histórico para confirmar.','pending');return true;}
+        if(mutation.kind==='field'&&!explicit&&editor.contains(focused)){statusMessage('A próxima operação pertence a um campo do documento. Use o botão de histórico para confirmar.','pending');return true;}
+        if(mutation.kind==='field'){if(!applyFieldHistoryEntry(mutation,true))return false;narrativeMutationRedo.pop();narrativeMutationHistory.push(mutation);return true;}
+        if(mutation.kind==='scene'){
+          if(!explicit&&editor.contains(document.activeElement)){statusMessage('A próxima operação é de Cena. Use o botão de histórico para confirmar esse alvo.','pending');return true;}
+          if(!applySceneHistoryEntry(mutation,true))return false;
+          narrativeMutationRedo.pop();narrativeMutationHistory.push(mutation);return true;
+        }
+        if (serializeEditorBody() !== mutation.before) { statusMessage('Não foi possível refazer: o texto mudou fora desta operação. As alterações atuais foram preservadas.','pending'); return false; }
         narrativeMutationRedo.pop();
         narrativeMutationHistory.push(mutation);
         restoreNarrativeMutationBody(mutation.after);
-        HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookAfterSelection);scheduleBookPagination();
+        if(!document.activeElement || editor.contains(document.activeElement))HeartspaceDocsBookPagination.restoreSelection(editor,mutation.bookAfterSelection);scheduleBookPagination();
         return true;
       };
       const createNarrativeBlock = (type, data = {}) => {
@@ -10817,7 +11043,7 @@
       const inlineEffectTags = { bold: 'strong', italic: 'em', strikeThrough: 's', underline: 'u' };
       const applyInlineCommand = command => {
         if (!inlineEffectTags[command]) return;
-        document.execCommand(command);
+        runNarrativeCommand(() => document.execCommand(command));
       };
       const stopInlineEffectOnShiftSpace = () => {
         const selection = window.getSelection();
@@ -11514,7 +11740,8 @@
           queueSave(); transferStatus.textContent = asset.project_ref ? 'Versão da imagem fixada; legenda e formatação mantidas.' : 'Imagem mantida como cópia independente.';
         } catch (error) { transferStatus.textContent = error.message || 'Não foi possível atualizar a imagem.'; }
       };
-      const insertLink = () => {
+      const insertLink = () => runNarrativeCommand(insertLinkContent);
+      const insertLinkContent = () => {
         const value = window.prompt('Endereço do link (URL)');
         const href = value && normalizeLink(value);
         if (!href) return;
@@ -11699,15 +11926,15 @@
           return;
         }
         if ((event.ctrlKey || event.metaKey) && !event.altKey && event.shiftKey && ['Digit7','Digit8'].includes(event.code)) {
-          event.preventDefault(); document.execCommand(event.code === 'Digit7' ? 'insertOrderedList' : 'insertUnorderedList'); queueSave(); return;
+          event.preventDefault(); runNarrativeCommand(() => document.execCommand(event.code === 'Digit7' ? 'insertOrderedList' : 'insertUnorderedList')); queueSave(); return;
         }
         if ((event.ctrlKey || event.metaKey) && !event.altKey && event.shiftKey && event.key.toLowerCase() === 'k') {
           event.preventDefault(); event.stopPropagation(); insertLink(); queueSave(); return;
         }
-        if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'y' && redoNarrativeMutation()) { event.preventDefault(); return; }
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'y' && (redoNarrativeMutation() || !canUseNativeNarrativeHistory())) { event.preventDefault(); return; }
         if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase('pt-BR') === 'z') {
           const handled = event.shiftKey ? redoNarrativeMutation() : undoNarrativeMutation();
-          if (handled) { event.preventDefault(); return; }
+          if (handled || !canUseNativeNarrativeHistory()) { event.preventDefault(); return; }
         }
         if (slashMenu.classList.contains('open') && handleSlashMenuKeydown(event)) return;
         if (!selectionElement?.closest('.narrative-block') && ['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.key)) {
@@ -12244,9 +12471,9 @@
         },
         status:message=>statusMessage(message,'pending'),
       });
-      HeartspaceDocsBookPagination.installEditing({
+      finishAuthoringTextEdit = HeartspaceDocsBookPagination.installEditing({
         editor,editable:() => documentViewMode==='writing'&&editor.isContentEditable&&!desktopBlocked&&!authoringStorageError,
-        begin:rememberNarrativeMutation,end:commitNarrativeMutation,undo:undoNarrativeMutation,redo:redoNarrativeMutation,changed:queueSave,layout:options=>{if(options?.immediate){cancelAnimationFrame(paginationFrame);paginationFrame=0;paginateBook();}else scheduleBookPagination();}
+        begin:rememberNarrativeMutation,end:commitNarrativeMutation,undo:() => undoNarrativeMutation() || !canUseNativeNarrativeHistory(),redo:() => redoNarrativeMutation() || !canUseNativeNarrativeHistory(),changed:queueSave,layout:options=>{if(options?.immediate){cancelAnimationFrame(paginationFrame);paginationFrame=0;paginateBook();}else scheduleBookPagination();}
       });
       bookDesign=HeartspaceDocsBookDesign.mount({
         editor,imageTrigger:document.querySelector('#book-illustration-edit'),separatorTrigger:document.querySelector('#book-scene-break'),

@@ -1,0 +1,6 @@
+{
+  "index.html": "3d7b3752d5d8a7a3390e1767bcbfb30bf8e5274a57e95bc46c8fcd072e45b180",
+  "ops/desktop-csp.txt": "e65a1631211e94778c225058b854de1145cc42d6931a30ab63f9e25151af3ee6",
+  "tests/stage0-history.test.cjs": "e221121928f602115ab364f7cea87feb7b78e71372958f5c2fa7dfc246a5ac99",
+  "tests/stage0-editor-matrix.js": "6d409cbcfac05510e8c5df3d8491cae1c907f5c8646653ce464c2a0c8cfedd8e"
+}

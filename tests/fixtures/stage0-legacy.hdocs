@@ -1,0 +1,82 @@
+{
+  "format": "heartspace.docs.project-file",
+  "schema_version": 1,
+  "source": {
+    "format": "heartspace.docs.authoring",
+    "schema_version": 1,
+    "project": {
+      "id": "stage0-project",
+      "name": "Teste descartável da etapa 0"
+    },
+    "books": [
+      {
+        "id": "stage0-book",
+        "name": "Livro de teste",
+        "kind": "book",
+        "planning": {
+          "premise": "Preservar"
+        },
+        "preservedChapterPlans": [],
+        "migratedChapterIds": [],
+        "updatedAt": ""
+      }
+    ],
+    "documents": [
+      {
+        "id": "stage0-doc",
+        "bookId": "stage0-book",
+        "kind": "chapter",
+        "title": "Capítulo de teste",
+        "subtitle": "",
+        "content": {
+          "format": "heartspace-html-v1",
+          "body": "<p>Uma cena de teste.</p>"
+        },
+        "legacyPlanning": {},
+        "narrative": {
+          "entrySequenceId": "room",
+          "readingProfile": "script",
+          "localization": {
+            "sourceLocale": "pt-BR",
+            "translations": {}
+          },
+          "sequences": [
+            {
+              "id": "room",
+              "title": "Sala",
+              "presentation": {}
+            }
+          ]
+        },
+        "page": {
+          "layout": "book",
+          "size": "a4",
+          "orientation": "portrait",
+          "margin": "normal"
+        },
+        "typography": {
+          "titleAlign": "left",
+          "subtitleAlign": "left"
+        },
+        "appearance": {},
+        "editorial": {
+          "status": "draft",
+          "tags": [],
+          "notebook": false,
+          "archivedAt": "",
+          "trashedAt": "",
+          "trashedBy": ""
+        },
+        "order": 0,
+        "updatedAt": ""
+      }
+    ],
+    "resources": {
+      "characters": [],
+      "variables": [],
+      "glossary": [],
+      "sceneSettings": {}
+    }
+  },
+  "assets": []
+}

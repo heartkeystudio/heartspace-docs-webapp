@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-25",
+  "scope": "Synthetic copies; manually transcribed observations from DOM report, not raw event export",
+  "automated": {
+    "node": "v22.23.1",
+    "strict": true,
+    "totals": {
+      "tests": 97,
+      "pass": 97,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "native": [
+    {
+      "step": "corpo-digitado",
+      "body": "<p>Texto base. Escrito</p>",
+      "history": 2,
+      "redo": 0,
+      "nativeAllowed": false
+    },
+    {
+      "step": "corpo-desfeito",
+      "body": "<p>Texto base.</p>",
+      "history": 0,
+      "redo": 2,
+      "nativeAllowed": false
+    },
+    {
+      "step": "corpo-refeito",
+      "body": "<p>Texto base. Escrito</p>",
+      "history": 2,
+      "redo": 0,
+      "nativeAllowed": false
+    },
+    {
+      "step": "atalho-negrito",
+      "body": "<p><b>Texto base.</b></p>",
+      "history": 0,
+      "redo": 0,
+      "nativeAllowed": false
+    },
+    {
+      "step": "atalho-negrito-undo",
+      "body": "<p><b>Texto base.</b></p>",
+      "history": 0,
+      "redo": 0,
+      "nativeAllowed": false
+    },
+    {
+      "step": "barra-negrito",
+      "body": "<p><b>Texto base.</b></p>",
+      "history": 1,
+      "redo": 0,
+      "nativeAllowed": false
+    },
+    {
+      "step": "barra-negrito-undo",
+      "body": "<p>Texto base.</p>",
+      "history": 0,
+      "redo": 1,
+      "nativeAllowed": false
+    },
+    {
+      "step": "pagina-nova-negrito",
+      "body": "<p><b>Texto base.</b></p>",
+      "history": 0,
+      "redo": 0,
+      "nativeAllowed": true
+    },
+    {
+      "step": "pagina-nova-negrito-desfeito",
+      "body": "<p></p>",
+      "history": 0,
+      "redo": 0,
+      "nativeAllowed": true
+    },
+    {
+      "step": "pagina-nova-refazer",
+      "body": "<p></p>",
+      "history": 0,
+      "redo": 0,
+      "nativeAllowed": true
+    }
+  ],
+  "fields": {
+    "title": {
+      "typed": "Título base extra",
+      "after_native_undo": "Título base extr"
+    },
+    "subtitle": {
+      "typed": "Subtítulo base extra",
+      "after_native_undo": "Subtítulo base extr"
+    }
+  },
+  "limits": [
+    "Single reload observation; native grouping cause not isolated",
+    "Prior browser regression suites retained, not rerun in this parcel",
+    "No native OS picker, IME or screen reader acceptance"
+  ],
+  "protected_sha256": {
+    "index.html": "3d7b3752d5d8a7a3390e1767bcbfb30bf8e5274a57e95bc46c8fcd072e45b180",
+    "ops/desktop-csp.txt": "e65a1631211e94778c225058b854de1145cc42d6931a30ab63f9e25151af3ee6",
+    "local-projects.js": "c5ace47daf3e426daf810b91a3f4d57d204552274839a1c4b6fb1370e0e33094",
+    "narrative-package.js": "9654868126b266157747d7c2b101aede9d1f001543944d0d1d7272eb6edb674d",
+    "scene-composer.js": "239ac0901b37977b5ab0faed6795a889aeae5cd731bb0a5964e3a1f83c2f0353",
+    "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+    "tests/fixtures/stage0-current.hdocs": "6b68251cc420d1b4f7d26e3c0428fcca5f2c6f0682fa04c5792d0b6ed461d04a",
+    "tests/fixtures/stage0-editor-saved.hdocs": "53209e75a6fe30d32bd121a40224b13c5e574c02866dab2134edcd013ca05407",
+    "tests/fixtures/stage0-legacy.hdocs": "02d4418f267dc242451891fcb091a1c7f8529d6abd827bb6a5392644bc1042db"
+  }
+}

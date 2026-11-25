@@ -1,0 +1,23 @@
+// Characterization of existing APIs; no proposed inheritance rules implemented.
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const c=vm.createContext({atob,btoa});
+for(const f of ['narrative-media.js','narrative-runtime.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),c);
+const m=c.HeartspaceNarrativeMedia, plain=x=>JSON.parse(JSON.stringify(x));
+const nodes=()=>['a','b','c'].map(id=>({id}));
+const fixture=()=>({elements:[{id:'e',type:'text',text:'Objeto',x:10,y:20}],cues:[{block_id:'a',set:[{id:'e',x:30}]},{block_id:'b',set:[{id:'e',y:60}]}]});
+const pose=(p,i=2,n=nodes())=>m.resolveScene(p,n,i).elements.find(e=>e.id==='e');
+test('H01 earlier x propagates while later local y survives',()=>{const p=fixture();p.cues[0].set[0].x=45;assert.equal(pose(p).x,45);assert.equal(pose(p).y,60);});
+test('H02 base edits propagate only through properties without overrides',()=>{const p=fixture();p.elements[0].x=80;p.elements[0].text='Novo';assert.equal(pose(p).x,30);assert.equal(pose(p).text,'Novo');});
+test('H03 removing one local property restores previous value without losing sibling override',()=>{const p=fixture();p.cues[1].set[0].x=90;delete p.cues[1].set[0].x;assert.equal(pose(p).x,30);assert.equal(pose(p).y,60);});
+test('H04 inheriting entire moment removes its animation as well as patches',()=>{const p=fixture();p.cues[1].animations=[{element_id:'e',duration_ms:400}];p.cues=p.cues.filter(x=>x.block_id!=='b');assert.equal(pose(p).y,20);assert.equal(m.sceneMotion(p,nodes(),1).tracks.length,0);});
+test('H05 reset uses edited base plus local patch, not an immutable historical copy',()=>{const p=fixture();p.cues[1].reset=true;p.elements[0].x=75;assert.equal(pose(p).x,75);assert.equal(pose(p).y,60);});
+test('H06 same value explicit patch survives normalize and later base change',()=>{const p=fixture();p.cues[1].set[0].x=30;const q=m.presentation(p);q.cues[0].set[0].x=45;assert.equal(pose(q).x,30);});
+test('H07 value diff drops explicit equal intent during unrelated edit (characterization)',()=>{const p=fixture();p.cues[1].set[0].x=30;const before=m.resolveScene(p,nodes(),0),after=m.resolveScene(p,nodes(),1);after.elements[0].text='Editado';p.cues[1]={block_id:'b',...m.sceneDiff(before,after)};p.cues[0].set[0].x=45;assert.equal(pose(p).x,45);assert.equal(pose(p).text,'Editado');});
+test('H08 deleting moment leaves orphan cue inert; restoring same ID reactivates it',()=>{const p=fixture();assert.equal(pose(p,1,[{id:'a'},{id:'c'}]).y,20);assert.equal(pose(p).y,60);assert.equal(p.cues.length,2);});
+test('H09 reorder changes inherited composition in narrative order',()=>{const p=fixture();p.cues[1].set[0].x=70;assert.equal(pose(p).x,70);assert.equal(pose(p,2,[{id:'b'},{id:'a'},{id:'c'}]).x,30);});
+test('H10 new block ID inherits predecessor, does not acquire cue of copied text',()=>{const p=fixture();assert.equal(pose(p,1,[{id:'a'},{id:'copy-b'},{id:'c'}]).y,20);});
+test('H11 explicitly copied cue with new ID retains independent overrides',()=>{const p=fixture();const copy=structuredClone(p.cues[1]);copy.block_id='copy-b';p.cues.push(copy);copy.set[0].y=85;assert.equal(pose(p,1,[{id:'a'},{id:'copy-b'}]).y,85);assert.equal(pose(p).y,60);});
+test('H12 remove persists until reset; transform alone does not resurrect element',()=>{const p=fixture();p.cues[0].remove=['e'];assert.equal(pose(p),undefined);p.cues[1].reset=true;assert.equal(pose(p).y,60);});
+test('H13 explicit full element can reintroduce removed identity',()=>{const p=fixture();p.cues[0].remove=['e'];p.cues[1].set=[{id:'e',type:'text',text:'Retorno',x:50}];assert.equal(pose(p).text,'Retorno');});
+test('H14 resolution and inspection never mutate authored composition',()=>{const p=fixture(),s=JSON.stringify(p);for(let i=-1;i<3;i++){m.resolveScene(p,nodes(),i);m.sceneMotion(p,nodes(),i);}assert.equal(JSON.stringify(p),s);});
+test('H15 runtime variable changes and restores do not become authoring overrides',()=>{const p=fixture();const story={start_event_id:'s',variable_registry:[{id:'v',type:'boolean',default:false}],sequences:[{event_id:'s',presentation:p,nodes:[{id:'a',type:'choice',options:[{target_event:'t',effects:[{variable:'v',operation:'set',value:true}]}]}]},{event_id:'t',nodes:[]}]};const before=JSON.stringify(story),r=c.HeartspaceNarrativeRuntime.createRunner(story);assert.equal(r.choose(0),true);assert.equal(r.snapshot().variables.v,true);const snap=plain(r.snapshot());assert.equal(r.restore(snap),true);assert.equal(r.restore({...snap,index:-1}),false);assert.equal(JSON.stringify(story),before);assert.equal(pose(p).x,30);});

@@ -41,10 +41,35 @@
     const media = root.HeartspaceNarrativeMedia;
     const packed = JSON.parse(JSON.stringify(story));
     const files = [], seen = new Map();
-    const add = (value,kind) => {
-      if (!value) return null;
+    const checkedAsset = (value,kind,location = 'recurso') => {
+      if (value == null) return null;
       const asset = media.normalize(value,kind);
-      if (!asset) throw new Error('Uma mídia não pôde ser incluída. Adicione o arquivo novamente na aba Cena ou Personagens.');
+      if (!asset) throw new Error(`Uma mídia não pôde ser incluída (${location}). Adicione o arquivo novamente na aba Cena ou Personagens.`);
+      return asset;
+    };
+    const checkState = (state,location) => {
+      checkedAsset(state?.background,'image',`${location} · fundo`);
+      checkedAsset(state?.music,'audio',`${location} · áudio`);
+    };
+    // Inspect declared media before presentation normalization can turn invalid
+    // input into null. Work only on the export copy; never repair authored data.
+    (packed.sequences || []).forEach(sequence => {
+      const raw = sequence.presentation, location = sequence.title || sequence.event_id || 'Cena';
+      checkState(raw,location);
+      (Array.isArray(raw?.elements) ? raw.elements : []).forEach(item => {
+        checkedAsset(item?.asset,'image',`${location} · ${item?.name || item?.id || 'elemento'}`);
+      });
+      (Array.isArray(raw?.cues) ? raw.cues : []).forEach(cue => {
+        const moment = `${location} · ${cue?.block_id || 'momento'}`;
+        checkState(cue?.settings,moment);
+        (Array.isArray(cue?.set) ? cue.set : []).forEach(patch => {
+          checkedAsset(patch?.asset,'image',`${moment} · ${patch?.id || 'elemento'}`);
+        });
+      });
+    });
+    const add = (value,kind) => {
+      const asset = checkedAsset(value,kind);
+      if (!asset) return null;
       if (!seen.has(asset.data)) {
         const path = `assets/${kind}-${String(files.length + 1).padStart(3,'0')}.${media.extensions[asset.mime]}`;
         const binary = atob(asset.data.slice(asset.data.indexOf(',') + 1));

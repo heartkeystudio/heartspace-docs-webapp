@@ -1,0 +1,775 @@
+TAP version 13
+# Subtest: connected story excludes unrelated sequences and terminates graph cycles
+ok 1 - connected story excludes unrelated sequences and terminates graph cycles
+  ---
+  duration_ms: 4.669768
+  type: 'test'
+  ...
+# Subtest: reachable missing and duplicate targets are reported
+ok 2 - reachable missing and duplicate targets are reported
+  ---
+  duration_ms: 0.361223
+  type: 'test'
+  ...
+# Subtest: choice guards prevent effects until an available option is selected
+ok 3 - choice guards prevent effects until an available option is selected
+  ---
+  duration_ms: 1.214899
+  type: 'test'
+  ...
+# Subtest: restoration and restart reset effects and re-resolve the default variation
+ok 4 - restoration and restart reset effects and re-resolve the default variation
+  ---
+  duration_ms: 0.682006
+  type: 'test'
+  ...
+# Subtest: variation priority is deterministic, manual tabs do not override the default
+ok 5 - variation priority is deterministic, manual tabs do not override the default
+  ---
+  duration_ms: 0.498671
+  type: 'test'
+  ...
+# Subtest: effects reject inherited variable names and preserve typed initial values
+ok 6 - effects reject inherited variable names and preserve typed initial values
+  ---
+  duration_ms: 0.380918
+  type: 'test'
+  ...
+# Subtest: HTML safely embeds script-like titles and dialogue without remote dependencies
+ok 7 - HTML safely embeds script-like titles and dialogue without remote dependencies
+  ---
+  duration_ms: 31.479134
+  type: 'test'
+  ...
+# Subtest: serialized runtime runs independently from the editor globals
+ok 8 - serialized runtime runs independently from the editor globals
+  ---
+  duration_ms: 4.134081
+  type: 'test'
+  ...
+# Subtest: exported player handles reveal, keyboard choice, effects, pauses and completion
+ok 9 - exported player handles reveal, keyboard choice, effects, pauses and completion
+  ---
+  duration_ms: 12.25767
+  type: 'test'
+  ...
+# Subtest: home and restart cancel typing and pause timers
+ok 10 - home and restart cancel typing and pause timers
+  ---
+  duration_ms: 21.446068
+  type: 'test'
+  ...
+# Subtest: Enter respects a choice focused by Tab and the final restart button
+ok 11 - Enter respects a choice focused by Tab and the final restart button
+  ---
+  duration_ms: 11.494019
+  type: 'test'
+  ...
+# Subtest: reduced motion skips typing; blocked choices offer a clear dead-end message
+ok 12 - reduced motion skips typing; blocked choices offer a clear dead-end message
+  ---
+  duration_ms: 9.872989
+  type: 'test'
+  ...
+# Subtest: actual export adapter strips document metadata and handles translations across documents
+ok 13 - actual export adapter strips document metadata and handles translations across documents
+  ---
+  duration_ms: 8.147964
+  type: 'test'
+  ...
+# Subtest: export validation catches missing targets and rules invalidated by variable type changes
+ok 14 - export validation catches missing targets and rules invalidated by variable type changes
+  ---
+  duration_ms: 8.15376
+  type: 'test'
+  ...
+# Subtest: progress resumes across page loads with variables and no duplicated choice effects
+ok 15 - progress resumes across page loads with variables and no duplicated choice effects
+  ---
+  duration_ms: 20.175714
+  type: 'test'
+  ...
+# Subtest: history is read-only and opening it repeatedly does not duplicate lines
+ok 16 - history is read-only and opening it repeatedly does not duplicate lines
+  ---
+  duration_ms: 8.235895
+  type: 'test'
+  ...
+# Subtest: new-game confirmation preserves progress on cancel and resets it on confirm
+ok 17 - new-game confirmation preserves progress on cancel and resets it on confirm
+  ---
+  duration_ms: 11.609816
+  type: 'test'
+  ...
+# Subtest: preferences persist independently and affect future text without advancing the game
+ok 18 - preferences persist independently and affect future text without advancing the game
+  ---
+  duration_ms: 16.752693
+  type: 'test'
+  ...
+# Subtest: modal and background suspension preserve the remaining pause duration
+ok 19 - modal and background suspension preserve the remaining pause duration
+  ---
+  duration_ms: 6.836194
+  type: 'test'
+  ...
+# Subtest: blocked storage and write quota keep a session playable and clearly warn the reader
+ok 20 - blocked storage and write quota keep a session playable and clearly warn the reader
+  ---
+  duration_ms: 30.602479
+  type: 'test'
+  ...
+# Subtest: corrupt or incompatible progress is rejected without overwriting the stored save
+ok 21 - corrupt or incompatible progress is rejected without overwriting the stored save
+  ---
+  duration_ms: 25.524764
+  type: 'test'
+  ...
+# Subtest: story and locale save slots are isolated while presentation changes keep progress
+ok 22 - story and locale save slots are isolated while presentation changes keep progress
+  ---
+  duration_ms: 25.341848
+  type: 'test'
+  ...
+# Subtest: completed paths resume their ending and do not repeat effects
+ok 23 - completed paths resume their ending and do not repeat effects
+  ---
+  duration_ms: 13.685587
+  type: 'test'
+  ...
+# Subtest: embedded startup does not steal focus; system motion updates apply immediately
+ok 24 - embedded startup does not steal focus; system motion updates apply immediately
+  ---
+  duration_ms: 10.507083
+  type: 'test'
+  ...
+# Subtest: long looping stories bound saved history without losing the current position
+ok 25 - long looping stories bound saved history without losing the current position
+  ---
+  duration_ms: 65.391908
+  type: 'test'
+  ...
+# Subtest: invalid restored snapshots leave the runtime untouched
+ok 26 - invalid restored snapshots leave the runtime untouched
+  ---
+  duration_ms: 0.994618
+  type: 'test'
+  ...
+# Subtest: invalid preferences are normalized and untrusted history is rendered as plain text
+ok 27 - invalid preferences are normalized and untrusted history is rendered as plain text
+  ---
+  duration_ms: 12.603387
+  type: 'test'
+  ...
+# Subtest: embed code follows the HTML filename and escapes a title containing markup
+ok 28 - embed code follows the HTML filename and escapes a title containing markup
+  ---
+  duration_ms: 7.289607
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 398.960659
+TAP version 13
+# Subtest: media signatures and limits reject remote URLs, executable images and invalid base64
+ok 1 - media signatures and limits reject remote URLs, executable images and invalid base64
+  ---
+  duration_ms: 10.448626
+  type: 'test'
+  ...
+# Subtest: file reader delegates image preparation, infers signatures and rejects oversize audio before reading
+ok 2 - file reader delegates image preparation, infers signatures and rejects oversize audio before reading
+  ---
+  duration_ms: 1.713221
+  type: 'test'
+  ...
+# Subtest: presentation normalization keeps media and clamps authoring controls
+ok 3 - presentation normalization keeps media and clamps authoring controls
+  ---
+  duration_ms: 1.526953
+  type: 'test'
+  ...
+# Subtest: player renders the speaker portrait outside the card and keeps audio through consecutive lines
+ok 4 - player renders the speaker portrait outside the card and keeps audio through consecutive lines
+  ---
+  duration_ms: 32.734891
+  type: 'test'
+  ...
+# Subtest: music pauses for tools, background tabs and home; player volume and mute persist
+ok 5 - music pauses for tools, background tabs and home; player volume and mute persist
+  ---
+  duration_ms: 21.251279
+  type: 'test'
+  ...
+# Subtest: autoplay rejection and image decode errors leave reading and choices usable
+ok 6 - autoplay rejection and image decode errors leave reading and choices usable
+  ---
+  duration_ms: 21.499008
+  type: 'test'
+  ...
+# Subtest: reduced motion suppresses portrait entrance and media changes preserve saved progress
+ok 7 - reduced motion suppresses portrait entrance and media changes preserve saved progress
+  ---
+  duration_ms: 16.585422
+  type: 'test'
+  ...
+# Subtest: ZIP deduplicates assets, rewrites paths and contains all references without changing the input
+ok 8 - ZIP deduplicates assets, rewrites paths and contains all references without changing the input
+  ---
+  duration_ms: 13.720996
+  type: 'test'
+  ...
+# Subtest: ZIP writer rejects unsafe paths and uses the standard CRC32
+ok 9 - ZIP writer rejects unsafe paths and uses the standard CRC32
+  ---
+  duration_ms: 0.721956
+  type: 'test'
+  ...
+# Subtest: S0-P01 ZIP must report invalid authored background instead of silently losing it
+ok 10 - S0-P01 ZIP must report invalid authored background instead of silently losing it
+  ---
+  duration_ms: 0.818058
+  type: 'test'
+  ...
+# Subtest: character normalization preserves portrait across registry reloads
+ok 11 - character normalization preserves portrait across registry reloads
+  ---
+  duration_ms: 5.185131
+  type: 'test'
+  ...
+# Subtest: S0-P01 invalid declared media is diagnosed in base layers and moment patches without changing source
+ok 12 - S0-P01 invalid declared media is diagnosed in base layers and moment patches without changing source
+  ---
+  duration_ms: 2.240178
+  type: 'test'
+  ...
+# Subtest: S0-P01 explicit absence and partial moment changes remain valid and preserve inheritance
+ok 13 - S0-P01 explicit absence and partial moment changes remain valid and preserve inheritance
+  ---
+  duration_ms: 4.024778
+  type: 'test'
+  ...
+# Subtest: S0-P01 malformed provenance cannot silently discard a declared asset
+ok 14 - S0-P01 malformed provenance cannot silently discard a declared asset
+  ---
+  duration_ms: 0.829163
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154.04326
+TAP version 13
+# Subtest: C01 synthetic pre-cue source retains IDs, content and empty presentation through editor adapter
+ok 1 - C01 synthetic pre-cue source retains IDs, content and empty presentation through editor adapter
+  ---
+  duration_ms: 7.965048
+  type: 'test'
+  ...
+# Subtest: C02 current source and working-copy cache preserve composition, provenance, translations and revisions
+ok 2 - C02 current source and working-copy cache preserve composition, provenance, translations and revisions
+  ---
+  duration_ms: 3.602444
+  type: 'test'
+  ...
+# Subtest: C03 book, loose note, archived/trash state and empty book survive authoring adapters
+ok 3 - C03 book, loose note, archived/trash state and empty book survive authoring adapters
+  ---
+  duration_ms: 4.16977
+  type: 'test'
+  ...
+# Subtest: C04 patches inherit only changed properties; source stays immutable
+ok 4 - C04 patches inherit only changed properties; source stays immutable
+  ---
+  duration_ms: 9.111572
+  type: 'test'
+  ...
+# Subtest: C05 reset, orphaned cue and reordered stable block IDs resolve deterministically
+ok 5 - C05 reset, orphaned cue and reordered stable block IDs resolve deterministically
+  ---
+  duration_ms: 6.982861
+  type: 'test'
+  ...
+# Subtest: C06 removal of base element does not recreate empty art from later partial patch
+ok 6 - C06 removal of base element does not recreate empty art from later partial patch
+  ---
+  duration_ms: 2.020037
+  type: 'test'
+  ...
+# Subtest: C07 explicit equal override survives normalization; sceneDiff currently drops that intent
+ok 7 - C07 explicit equal override survives normalization; sceneDiff currently drops that intent
+  ---
+  duration_ms: 1.805273
+  type: 'test'
+  ...
+# Subtest: C08 animation plan preserves times and final pose and is independent of scene inspection
+ok 8 - C08 animation plan preserves times and final pose and is independent of scene inspection
+  ---
+  duration_ms: 2.83565
+  type: 'test'
+  ...
+# Subtest: C09 provenance separates artifact identity, revision, hash and file path
+ok 9 - C09 provenance separates artifact identity, revision, hash and file path
+  ---
+  duration_ms: 0.720279
+  type: 'test'
+  ...
+# Subtest: C10 HTML and ZIP preserve moment composition/animation but omit private provenance from data
+ok 10 - C10 HTML and ZIP preserve moment composition/animation but omit private provenance from data
+  ---
+  duration_ms: 29.243216
+  type: 'test'
+  ...
+# Subtest: C11 narrative runner and exported text choice apply the same effects and restore without replay
+ok 11 - C11 narrative runner and exported text choice apply the same effects and restore without replay
+  ---
+  duration_ms: 50.478361
+  type: 'test'
+  ...
+# Subtest: C12 visual choice and text choice share the exported runner and availability
+ok 12 - C12 visual choice and text choice share the exported runner and availability
+  ---
+  duration_ms: 19.953407
+  type: 'test'
+  ...
+# Subtest: C13 bootstrap is executed; unsupported core APIs expose compatibility message
+ok 13 - C13 bootstrap is executed; unsupported core APIs expose compatibility message
+  ---
+  duration_ms: 4.743801
+  type: 'test'
+  ...
+# Subtest: C14 initialization errors cannot silently pass through the harness
+ok 14 - C14 initialization errors cannot silently pass through the harness
+  ---
+  duration_ms: 12.526282
+  type: 'test'
+  ...
+# Subtest: C15 modal capture blocks narrative input and retains all visibility handlers
+ok 15 - C15 modal capture blocks narrative input and retains all visibility handlers
+  ---
+  duration_ms: 12.683985
+  type: 'test'
+  ...
+# Subtest: S0-P02 composer image import must use a supported optimizer profile
+ok 16 - S0-P02 composer image import must use a supported optimizer profile
+  ---
+  duration_ms: 1.951522
+  type: 'test'
+  ...
+# Subtest: C16 frozen portable fixture media are complete and checksummed
+ok 17 - C16 frozen portable fixture media are complete and checksummed
+  ---
+  duration_ms: 3.102516
+  type: 'test'
+  ...
+# Subtest: C17 real editor save retains artwork identity, animation, orphan and intended edit
+ok 18 - C17 real editor save retains artwork identity, animation, orphan and intended edit
+  ---
+  duration_ms: 0.735226
+  type: 'test'
+  ...
+# Subtest: C19 replacing only media retains instance identity, pose and narrative links
+ok 19 - C19 replacing only media retains instance identity, pose and narrative links
+  ---
+  duration_ms: 0.454671
+  type: 'test'
+  ...
+# Subtest: C20 equal media bytes do not merge different instance or artifact identities
+ok 20 - C20 equal media bytes do not merge different instance or artifact identities
+  ---
+  duration_ms: 0.313241
+  type: 'test'
+  ...
+# Subtest: C21 current spatial model is flat: unknown group and parent fields are not persisted
+ok 21 - C21 current spatial model is flat: unknown group and parent fields are not persisted
+  ---
+  duration_ms: 0.376587
+  type: 'test'
+  ...
+# Subtest: C22 image fit changes do not implicitly reposition independent interactive regions
+ok 22 - C22 image fit changes do not implicitly reposition independent interactive regions
+  ---
+  duration_ms: 0.537572
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209.570771
+TAP version 13
+# Subtest: H01 earlier x propagates while later local y survives
+ok 1 - H01 earlier x propagates while later local y survives
+  ---
+  duration_ms: 8.862516
+  type: 'test'
+  ...
+# Subtest: H02 base edits propagate only through properties without overrides
+ok 2 - H02 base edits propagate only through properties without overrides
+  ---
+  duration_ms: 2.13765
+  type: 'test'
+  ...
+# Subtest: H03 removing one local property restores previous value without losing sibling override
+ok 3 - H03 removing one local property restores previous value without losing sibling override
+  ---
+  duration_ms: 2.758125
+  type: 'test'
+  ...
+# Subtest: H04 inheriting entire moment removes its animation as well as patches
+ok 4 - H04 inheriting entire moment removes its animation as well as patches
+  ---
+  duration_ms: 2.350669
+  type: 'test'
+  ...
+# Subtest: H05 reset uses edited base plus local patch, not an immutable historical copy
+ok 5 - H05 reset uses edited base plus local patch, not an immutable historical copy
+  ---
+  duration_ms: 2.132063
+  type: 'test'
+  ...
+# Subtest: H06 same value explicit patch survives normalize and later base change
+ok 6 - H06 same value explicit patch survives normalize and later base change
+  ---
+  duration_ms: 1.952918
+  type: 'test'
+  ...
+# Subtest: H07 value diff drops explicit equal intent during unrelated edit (characterization)
+ok 7 - H07 value diff drops explicit equal intent during unrelated edit (characterization)
+  ---
+  duration_ms: 4.393264
+  type: 'test'
+  ...
+# Subtest: H08 deleting moment leaves orphan cue inert; restoring same ID reactivates it
+ok 8 - H08 deleting moment leaves orphan cue inert; restoring same ID reactivates it
+  ---
+  duration_ms: 1.626129
+  type: 'test'
+  ...
+# Subtest: H09 reorder changes inherited composition in narrative order
+ok 9 - H09 reorder changes inherited composition in narrative order
+  ---
+  duration_ms: 2.537146
+  type: 'test'
+  ...
+# Subtest: H10 new block ID inherits predecessor, does not acquire cue of copied text
+ok 10 - H10 new block ID inherits predecessor, does not acquire cue of copied text
+  ---
+  duration_ms: 1.981484
+  type: 'test'
+  ...
+# Subtest: H11 explicitly copied cue with new ID retains independent overrides
+ok 11 - H11 explicitly copied cue with new ID retains independent overrides
+  ---
+  duration_ms: 5.314898
+  type: 'test'
+  ...
+# Subtest: H12 remove persists until reset; transform alone does not resurrect element
+ok 12 - H12 remove persists until reset; transform alone does not resurrect element
+  ---
+  duration_ms: 1.607621
+  type: 'test'
+  ...
+# Subtest: H13 explicit full element can reintroduce removed identity
+ok 13 - H13 explicit full element can reintroduce removed identity
+  ---
+  duration_ms: 1.321338
+  type: 'test'
+  ...
+# Subtest: H14 resolution and inspection never mutate authored composition
+ok 14 - H14 resolution and inspection never mutate authored composition
+  ---
+  duration_ms: 6.341713
+  type: 'test'
+  ...
+# Subtest: H15 runtime variable changes and restores do not become authoring overrides
+ok 15 - H15 runtime variable changes and restores do not become authoring overrides
+  ---
+  duration_ms: 2.558937
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 84.121616
+TAP version 13
+# Subtest: T01 no-op creates no transaction
+ok 1 - T01 no-op creates no transaction
+  ---
+  duration_ms: 4.641343
+  type: 'test'
+  ...
+# Subtest: T02 body mutation undo and redo restore exact body
+ok 2 - T02 body mutation undo and redo restore exact body
+  ---
+  duration_ms: 1.621449
+  type: 'test'
+  ...
+# Subtest: T03 different active document cannot consume history
+ok 3 - T03 different active document cannot consume history
+  ---
+  duration_ms: 1.178023
+  type: 'test'
+  ...
+# Subtest: T04 unrecorded body changes block snapshot overwrite
+ok 4 - T04 unrecorded body changes block snapshot overwrite
+  ---
+  duration_ms: 1.723838
+  type: 'test'
+  ...
+# Subtest: T05 new recorded edit clears redo branch
+ok 5 - T05 new recorded edit clears redo branch
+  ---
+  duration_ms: 1.410527
+  type: 'test'
+  ...
+# Subtest: T06 contiguous insertText coalesces within existing time/selection rule
+ok 6 - T06 contiguous insertText coalesces within existing time/selection rule
+  ---
+  duration_ms: 1.549582
+  type: 'test'
+  ...
+# Subtest: T07 whitespace and pause separate typing transactions
+ok 7 - T07 whitespace and pause separate typing transactions
+  ---
+  duration_ms: 2.285855
+  type: 'test'
+  ...
+# Subtest: T08 history is bounded at 60 entries
+ok 8 - T08 history is bounded at 60 entries
+  ---
+  duration_ms: 1.867153
+  type: 'test'
+  ...
+# Subtest: T09 mutation begun in prior document cannot be committed
+ok 9 - T09 mutation begun in prior document cannot be committed
+  ---
+  duration_ms: 1.307859
+  type: 'test'
+  ...
+# Subtest: T10 redo refuses body diverging from expected before-state
+ok 10 - T10 redo refuses body diverging from expected before-state
+  ---
+  duration_ms: 1.411295
+  type: 'test'
+  ...
+# Subtest: T11 same document and body cannot undo across project cache keys
+ok 11 - T11 same document and body cannot undo across project cache keys
+  ---
+  duration_ms: 1.221953
+  type: 'test'
+  ...
+# Subtest: T12 coincident body cannot consume redo of another context
+ok 12 - T12 coincident body cannot consume redo of another context
+  ---
+  duration_ms: 2.598817
+  type: 'test'
+  ...
+# Subtest: T13 reopening same key at new epoch clears both stacks
+ok 13 - T13 reopening same key at new epoch clears both stacks
+  ---
+  duration_ms: 1.317986
+  type: 'test'
+  ...
+# Subtest: T14 previous context delayed commit rejected even with matching document ID
+ok 14 - T14 previous context delayed commit rejected even with matching document ID
+  ---
+  duration_ms: 1.04246
+  type: 'test'
+  ...
+# Subtest: T15 edits after context switch still undo and redo within current context
+ok 15 - T15 edits after context switch still undo and redo within current context
+  ---
+  duration_ms: 0.964656
+  type: 'test'
+  ...
+# Subtest: T16 native fallback is fenced even on the initial loaded body
+ok 16 - T16 native fallback is fenced even on the initial loaded body
+  ---
+  duration_ms: 0.969475
+  type: 'test'
+  ...
+# Subtest: T17 account change invalidates existing history with same cache key
+ok 17 - T17 account change invalidates existing history with same cache key
+  ---
+  duration_ms: 0.99406
+  type: 'test'
+  ...
+# Subtest: T18 A to B to A does not resurrect old transaction
+ok 18 - T18 A to B to A does not resurrect old transaction
+  ---
+  duration_ms: 1.222443
+  type: 'test'
+  ...
+# Subtest: T19 command owns nested event transaction once
+ok 19 - T19 command owns nested event transaction once
+  ---
+  duration_ms: 1.334119
+  type: 'test'
+  ...
+# Subtest: T20 nested commands form one significant operation
+ok 20 - T20 nested commands form one significant operation
+  ---
+  duration_ms: 0.93204
+  type: 'test'
+  ...
+# Subtest: T21 no-op command preserves redo and pending text
+ok 21 - T21 no-op command preserves redo and pending text
+  ---
+  duration_ms: 1.018294
+  type: 'test'
+  ...
+# Subtest: T22 command crossing a context boundary cannot commit into destination
+ok 22 - T22 command crossing a context boundary cannot commit into destination
+  ---
+  duration_ms: 0.988822
+  type: 'test'
+  ...
+# Subtest: A101 document A/B/A retains separate undo and redo even with equal bodies
+ok 23 - A101 document A/B/A retains separate undo and redo even with equal bodies
+  ---
+  duration_ms: 0.939513
+  type: 'test'
+  ...
+# Subtest: A102 new edit clears redo only in current document
+ok 24 - A102 new edit clears redo only in current document
+  ---
+  duration_ms: 1.038269
+  type: 'test'
+  ...
+# Subtest: A103 delayed commit cannot survive a visit to another document
+ok 25 - A103 delayed commit cannot survive a visit to another document
+  ---
+  duration_ms: 1.06893
+  type: 'test'
+  ...
+# Subtest: A104 archive/reopen never revives obsolete undo or delayed commit
+ok 26 - A104 archive/reopen never revives obsolete undo or delayed commit
+  ---
+  duration_ms: 1.533309
+  type: 'test'
+  ...
+# Subtest: A105 context roundtrip discards sessions of every document
+ok 27 - A105 context roundtrip discards sessions of every document
+  ---
+  duration_ms: 1.326018
+  type: 'test'
+  ...
+# Subtest: A106 typing coalescence never spans document navigation
+ok 28 - A106 typing coalescence never spans document navigation
+  ---
+  duration_ms: 1.882099
+  type: 'test'
+  ...
+# Subtest: A107 incidental flush keeps composition pending; navigation confirms it once
+ok 29 - A107 incidental flush keeps composition pending; navigation confirms it once
+  ---
+  duration_ms: 4.051667
+  type: 'test'
+  ...
+# Subtest: A108 replacing editor discards stale capture and late compositionend
+ok 30 - A108 replacing editor discards stale capture and late compositionend
+  ---
+  duration_ms: 2.828317
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76.25742
+TAP version 13
+# Subtest: J01 coordinate undo preserves an unrelated property and another element
+ok 1 - J01 coordinate undo preserves an unrelated property and another element
+  ---
+  duration_ms: 6.839267
+  type: 'test'
+  ...
+# Subtest: J02 conflicting touched property refuses the whole operation
+ok 2 - J02 conflicting touched property refuses the whole operation
+  ---
+  duration_ms: 0.723632
+  type: 'test'
+  ...
+# Subtest: J03 missing property is distinct from false and zero
+ok 3 - J03 missing property is distinct from false and zero
+  ---
+  duration_ms: 0.816801
+  type: 'test'
+  ...
+# Subtest: J04 add/remove element and order roundtrip without changing IDs
+ok 4 - J04 add/remove element and order roundtrip without changing IDs
+  ---
+  duration_ms: 3.094974
+  type: 'test'
+  ...
+# Subtest: J05 cue changes preserve unrelated animation fields
+ok 5 - J05 cue changes preserve unrelated animation fields
+  ---
+  duration_ms: 1.765673
+  type: 'test'
+  ...
+# Subtest: J06 media assignment is atomic including provenance
+ok 6 - J06 media assignment is atomic including provenance
+  ---
+  duration_ms: 0.598545
+  type: 'test'
+  ...
+# Subtest: J07 array order conflict refuses operation instead of losing a new element
+ok 7 - J07 array order conflict refuses operation instead of losing a new element
+  ---
+  duration_ms: 0.616215
+  type: 'test'
+  ...
+# Subtest: J08 adding a cue and its animation can undo/redo as a single change
+ok 8 - J08 adding a cue and its animation can undo/redo as a single change
+  ---
+  duration_ms: 0.584926
+  type: 'test'
+  ...
+# Subtest: J09 object property order does not create changes or false conflicts
+ok 9 - J09 object property order does not create changes or false conflicts
+  ---
+  duration_ms: 0.8256
+  type: 'test'
+  ...
+# Subtest: J10 background representation and provenance are one assignment
+ok 10 - J10 background representation and provenance are one assignment
+  ---
+  duration_ms: 0.894744
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 49.090255
+STAGE0_TOTALS {"tests":119,"pass":119,"fail":0,"cancelled":0,"skipped":0,"todo":0}

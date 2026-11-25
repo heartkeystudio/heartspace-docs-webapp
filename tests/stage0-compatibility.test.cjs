@@ -1,0 +1,187 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const {createHash} = require('node:crypto');
+const {mountExportedHtml,scriptBlocks} = require('./player-dom.cjs');
+const fixtures = require('./fixtures/stage0.js');
+const context = vm.createContext({atob,btoa,Uint8Array,Uint32Array,TextEncoder,TextDecoder,DataView});
+for (const file of ['authoring-project.js','narrative-runtime.js','narrative-media.js','narrative-html.js','narrative-package.js','image-optimizer.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context,{filename:file});
+const media = context.HeartspaceNarrativeMedia, authoring = context.HeartspaceDocsAuthoring;
+const plain = value => JSON.parse(JSON.stringify(value));
+const image = {name:'teste.png',mime:'image/png',data:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='};
+const ref = {schema_version:1,kind:'artifact',project_id:'stage0-project',source_app_id:'canvas',artifact_id:'test-art',type:'image',revision:1,path:'test/a.png',sha256:createHash('sha256').update(Buffer.from(image.data.split(',')[1],'base64')).digest('hex'),policy:'pinned'};
+const makeSource = () => fixtures.current(image,ref);
+const scene = source => source.documents[0].narrative.sequences[0].presentation;
+const resolved = (source,index) => media.resolveScene(scene(source),fixtures.nodes(),index);
+const extract = html => JSON.parse(scriptBlocks(html).find(script=>/id="story-data"/.test(script.attributes)).source);
+
+test('C01 synthetic pre-cue source retains IDs, content and empty presentation through editor adapter',() => {
+  const old = fixtures.legacy(), before = JSON.stringify(old), restored = authoring.fromEditor(authoring.toEditor(old));
+  assert.equal(JSON.stringify(old),before);
+  // Older omitted optional fields are materialized by the existing authoring adapter.
+  assert.equal(restored.documents[0].id,old.documents[0].id);
+  assert.equal(restored.documents[0].content.body,old.documents[0].content.body);
+  assert.deepEqual(plain(scene(restored)),{});
+  assert.deepEqual(plain(authoring.fromEditor(authoring.toEditor(restored))),plain(restored));
+});
+test('C02 current source and working-copy cache preserve composition, provenance, translations and revisions',() => {
+  const source = makeSource(), state = authoring.toEditor(source);
+  state.documents[0].remoteVersion = 7; state.documents[0].dirty = true;
+  state.documents[0].localization = {sourceLocale:'pt-BR',translations:{en:{line:{text:'Room',source:'Sala'}}}};
+  state.syncWorkspace = {schema_version:1,registry:{},recovery:[{id:'test-recovery'}]};
+  const before = JSON.stringify(state), cache = authoring.cacheFromEditor(state), reopened = authoring.readCache(cache);
+  assert.equal(JSON.stringify(state),before);
+  assert.equal(reopened.documents[0].remoteVersion,7); assert.equal(reopened.documents[0].dirty,true);
+  assert.deepEqual(plain(authoring.fromEditor(reopened)),plain(authoring.fromEditor(state)));
+  assert.deepEqual(plain(reopened.syncWorkspace),plain(state.syncWorkspace));
+  assert.equal(JSON.stringify(cache.source).includes('remoteVersion'),false);
+});
+test('C03 book, loose note, archived/trash state and empty book survive authoring adapters',() => {
+  const source = makeSource(), loose = structuredClone(source.documents[0]);
+  loose.id='note'; loose.bookId=null; loose.kind='note'; loose.editorial.notebook=true; loose.editorial.archivedAt='2026-11-01'; loose.editorial.trashedAt='2026-11-02';
+  source.documents.push(loose); source.books.push({...structuredClone(source.books[0]),id:'empty',name:'Vazio'});
+  const restored=authoring.fromEditor(authoring.toEditor(source));
+  assert.deepEqual(plain(restored.books),source.books.map(book=>({...book,bookStyle:null})));
+  const note=restored.documents[1]; assert.equal(note.bookId,null); assert.equal(note.kind,'note'); assert.equal(note.editorial.trashedAt,'2026-11-02');
+  assert.deepEqual(plain(scene(restored)),scene(source));
+});
+test('C04 patches inherit only changed properties; source stays immutable',() => {
+  const source=makeSource(), before=JSON.stringify(source), door=resolved(source,1).elements.find(item=>item.id==='door');
+  assert.equal(door.x,40); assert.equal(door.rotation,10); assert.equal(door.asset.data,image.data);
+  const later=resolved(source,2); assert.equal(later.elements.find(item=>item.id==='door').x,40); assert.equal(later.elements.find(item=>item.id==='label').text,'Escolha');
+  assert.equal(JSON.stringify(source),before);
+});
+test('C05 reset, orphaned cue and reordered stable block IDs resolve deterministically',() => {
+  const source=makeSource(), p=scene(source), nodes=fixtures.nodes();
+  assert.equal(resolved(source,3).elements.find(item=>item.id==='door').x,20);
+  assert.equal(resolved(source,2).elements.find(item=>item.id==='door').x,40);
+  const restoredNodes=[...nodes,{id:'removed-block',type:'narration'}];
+  assert.equal(media.resolveScene(p,restoredNodes,4).elements.find(item=>item.id==='door').x,99);
+  const reordered=[nodes[1],nodes[0],nodes[2]];
+  assert.equal(media.resolveScene(p,reordered,0).elements.find(item=>item.id==='door').x,40);
+  assert.ok(p.cues.some(cue=>cue.block_id==='removed-block'));
+});
+test('C06 removal of base element does not recreate empty art from later partial patch',() => {
+  const source=makeSource(); scene(source).elements=scene(source).elements.filter(item=>item.id!=='door');
+  assert.equal(resolved(source,1).elements.some(item=>item.id==='door'),false);
+});
+test('C07 explicit equal override survives normalization; sceneDiff currently drops that intent',() => {
+  const p=media.presentation({elements:[{id:'e',type:'text',x:20}],cues:[{block_id:'b',set:[{id:'e',x:20}]}]});
+  assert.equal(p.cues[0].set[0].x,20);
+  const final=media.resolveScene(p,[{id:'b'}],0);
+  assert.equal(media.sceneDiff(media.sceneState(p),final).set.length,0);
+  // Characterization of existing behavior, not approval of this future editing rule.
+});
+test('C08 animation plan preserves times and final pose and is independent of scene inspection',() => {
+  const source=makeSource(), before=JSON.stringify(source), plan=media.sceneMotion(scene(source),fixtures.nodes(),1);
+  assert.equal(plan.duration,700); assert.equal(plan.tracks[0].delay_ms,100); assert.equal(plan.tracks[0].to.x,40);
+  assert.equal(plan.tracks[0].keyframes.some(frame=>frame.x===30),true);
+  assert.equal(JSON.stringify(source),before);
+});
+test('C09 provenance separates artifact identity, revision, hash and file path',() => {
+  assert.deepEqual(plain(media.projectRef(ref)),ref);
+  const file={schema_version:1,kind:'file',project_id:ref.project_id,path:ref.path,sha256:ref.sha256,policy:'pinned'};
+  assert.equal(media.projectRef(file).artifact_id,undefined);
+  assert.equal(media.projectRef({...ref,schema_version:999}),null);
+  assert.equal(media.normalize({...image,project_ref:{...ref,sha256:'bad'}},'image'),null);
+});
+test('C10 HTML and ZIP preserve moment composition/animation but omit private provenance from data',() => {
+  const input=fixtures.story(makeSource()), before=JSON.stringify(input), html=context.HeartspaceNarrativeHtml.buildHtml(input), data=extract(html), packed=context.HeartspaceNarrativePackage.buildPackage(input);
+  assert.equal(JSON.stringify(input),before); assert.equal(JSON.stringify(data).includes('project_ref'),false);
+  assert.equal(packed.files.filter(file=>file.name.startsWith('assets/')).length,1);
+  for(let index=-1;index<fixtures.nodes().length;index++) {
+    const expected=plain(media.resolveScene(input.sequences[0].presentation,fixtures.nodes(),index));
+    const actual=plain(media.resolveScene(data.sequences[0].presentation,fixtures.nodes(),index));
+    const strip=object=>JSON.parse(JSON.stringify(object,(key,value)=>key==='project_ref'?undefined:value));
+    assert.deepEqual(actual,strip(expected));
+    assert.equal(media.resolveScene(packed.story.sequences[0].presentation,fixtures.nodes(),index).elements.find(item=>item.id==='door').asset.src,'assets/image-001.png');
+  }
+  assert.deepEqual(plain(media.sceneMotion(data.sequences[0].presentation,fixtures.nodes(),1)),JSON.parse(JSON.stringify(media.sceneMotion(input.sequences[0].presentation,fixtures.nodes(),1),(key,value)=>key==='project_ref'?undefined:value)));
+});
+test('C11 narrative runner and exported text choice apply the same effects and restore without replay',() => {
+  const input=fixtures.story(makeSource()), runner=context.HeartspaceNarrativeRuntime.createRunner(input);
+  runner.advance();runner.advance(); assert.equal(runner.choose(1),false); assert.equal(runner.choose(0),true);
+  const ui=mountExportedHtml(context.HeartspaceNarrativeHtml.buildHtml(input),true);ui.click('start');ui.key('Enter');ui.key('Enter');ui.key('1');
+  const saved=JSON.parse([...ui.storage.entries()].find(([key])=>key.endsWith(':progress'))[1]);
+  assert.deepEqual(saved.snapshot,plain(runner.snapshot()));
+  const reload=mountExportedHtml(context.HeartspaceNarrativeHtml.buildHtml(input),true,{storage:ui.storage}); reload.click('resume');
+  assert.equal(reload.elements.get('copy').textContent,'Fim do teste.');
+  assert.equal(JSON.parse([...reload.storage.entries()].find(([key])=>key.endsWith(':progress'))[1]).snapshot.variables.opened,true);
+});
+test('C12 visual choice and text choice share the exported runner and availability',() => {
+  const input=fixtures.story(makeSource()), ui=mountExportedHtml(context.HeartspaceNarrativeHtml.buildHtml(input),true);ui.click('start');ui.key('Enter');ui.key('Enter');
+  const hit=ui.document.querySelector('[data-scene-element="region"]').querySelector('.scene-element-hit');
+  assert.equal(hit.disabled,false); hit.click();
+  assert.equal(ui.elements.get('copy').textContent,'Fim do teste.');
+  const saved=JSON.parse([...ui.storage.entries()].find(([key])=>key.endsWith(':progress'))[1]); assert.equal(saved.snapshot.variables.opened,true); assert.equal(saved.history.at(-1).choice,'Abrir');
+});
+test('C13 bootstrap is executed; unsupported core APIs expose compatibility message',() => {
+  const html=context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(makeSource()));
+  const ui=mountExportedHtml(html,false,{missingUrl:true,allowBootFailure:true});
+  assert.equal(ui.window.heartspacePlayerBoot.supported,false); assert.equal(ui.elements.get('player-startup').style.display,'block');
+  assert.match(ui.elements.get('player-startup-message').textContent,/não conseguiu iniciar/);
+});
+test('C14 initialization errors cannot silently pass through the harness',() => {
+  const html=context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(makeSource())).replace("const menu = byId('menu')","throw new Error('stage0 boot fault'); const menu = byId('menu')");
+  assert.throws(()=>mountExportedHtml(html),/failed to boot/i);
+});
+test('C15 modal capture blocks narrative input and retains all visibility handlers',() => {
+  const ui=mountExportedHtml(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(makeSource())),true);ui.click('start');ui.click('preferences-open');
+  ui.key('Enter'); assert.equal(ui.elements.get('copy').textContent,'Uma sala de teste.');
+  ui.key('Escape');assert.equal(ui.elements.get('utility-dialog').open,false);
+  assert.throws(()=>ui.click('history-open'),/Hidden control/);
+});
+test('S0-P02 composer image import must use a supported optimizer profile',async()=>{
+  const composer=fs.readFileSync(path.join(__dirname,'..','scene-composer.js'),'utf8');
+  const purpose=composer.match(/media\.readFile\(file,'image',\{purpose:'([^']+)'\}/)[1];
+  // The exact profile supplied by the existing compositor must be accepted.
+  assert.ok(context.HeartspaceImageOptimizer.profiles[purpose],`Unsupported compositor profile: ${purpose}`);
+});
+test('C16 frozen portable fixture media are complete and checksummed',()=>{
+  for(const name of ['stage0-legacy.hdocs','stage0-current.hdocs','stage0-editor-saved.hdocs']){
+    const packed=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures',name),'utf8'));
+    assert.equal(packed.format,'heartspace.docs.project-file');assert.equal(packed.schema_version,1); authoring.validate(packed.source);
+    for(const asset of packed.assets){const bytes=Buffer.from(asset.base64,'base64');assert.equal(bytes.length,asset.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),asset.checksum.value);}
+  }
+});
+test('C17 real editor save retains artwork identity, animation, orphan and intended edit',()=>{
+  const read=name=>JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures',name),'utf8'));
+  const before=read('stage0-current.hdocs'), after=read('stage0-editor-saved.hdocs');
+  assert.deepEqual(after.assets,before.assets);assert.equal(after.source.project.id,before.source.project.id);
+  assert.deepEqual(after.source.documents.map(doc=>doc.id),before.source.documents.map(doc=>doc.id));
+  const p=scene(after.source),cue=p.cues.find(cue=>cue.block_id==='detail');
+  assert.equal(cue.set.find(item=>item.id==='door').x,45);
+  assert.deepEqual(cue.animations,scene(before.source).cues.find(cue=>cue.block_id==='detail').animations);
+  assert.ok(p.cues.some(cue=>cue.block_id==='removed-block'));
+  assert.deepEqual(p.elements.map(item=>item.id),scene(before.source).elements.map(item=>item.id));
+  assert.deepEqual(p.elements[0].asset.project_ref,scene(before.source).elements[0].asset.project_ref);
+  for(const id of ['intro','detail','choose','reset','end'])assert.ok(after.source.documents[0].content.body.includes(`data-narrative-id="${id}"`));
+});
+
+// Characterization only: these adapter tests do not implement an editor replacement command.
+test('C19 replacing only media retains instance identity, pose and narrative links',() => {
+  const before=media.element({id:'visual',type:'image',asset:image,x:31,y:42,width:20,height:30,scale:1.3,rotation:25,anchor_x:17,anchor_y:82,parallax_x:3,choice_block_id:'pick',choice_option_id:'inspect'});
+  const after=media.element({...before,asset:{...image,name:'definitiva.png'}});
+  const withoutAsset=value=>{const result=plain(value);delete result.asset;return result;};
+  assert.deepEqual(withoutAsset(after),withoutAsset(before));
+  assert.equal(after.asset.name,'definitiva.png');
+});
+test('C20 equal media bytes do not merge different instance or artifact identities',() => {
+  const list=media.elements([{id:'one',asset:{...image,project_ref:ref}},{id:'two',asset:{...image,project_ref:{...ref,artifact_id:'other'}}}]);
+  assert.equal(list.length,2);assert.notEqual(list[0].id,list[1].id);
+  assert.notEqual(list[0].asset.project_ref.artifact_id,list[1].asset.project_ref.artifact_id);
+  assert.equal(list[0].asset.data,list[1].asset.data);
+});
+test('C21 current spatial model is flat: unknown group and parent fields are not persisted',() => {
+  const element=media.element({id:'child',parent_id:'group',group_id:'group',children:['other']});
+  assert.equal('parent_id' in element,false);assert.equal('group_id' in element,false);assert.equal('children' in element,false);
+  const list=media.elements([{id:'second'},{id:'first'},{id:'second'}]);
+  assert.deepEqual(plain(list.map(item=>item.id)),['second','first']);
+});
+test('C22 image fit changes do not implicitly reposition independent interactive regions',() => {
+  const state=media.sceneState({elements:[{id:'art',type:'image',asset:image,fit:'cover'},{id:'hit',type:'hotspot',x:25,y:35,width:15,height:10,choice_block_id:'pick',choice_option_id:'inspect'}]});
+  const after=media.sceneState({...state,elements:state.elements.map(item=>item.id==='art'?{...item,fit:'contain',width:70}:item)});
+  assert.deepEqual(plain(after.elements[1]),plain(state.elements[1]));
+});

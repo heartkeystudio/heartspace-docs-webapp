@@ -1,0 +1,16 @@
+{
+  "SCENE_EDITOR_FUNCTIONAL_SPEC_V1.md": "afb463dee5191e3403c81d3cd8f7b2b4e4179b00b44683a4e83b1de05aaac47e",
+  "tests/fixtures/stage0-current.hdocs": "6b68251cc420d1b4f7d26e3c0428fcca5f2c6f0682fa04c5792d0b6ed461d04a",
+  "tests/fixtures/stage0-editor-saved.hdocs": "53209e75a6fe30d32bd121a40224b13c5e574c02866dab2134edcd013ca05407",
+  "tests/fixtures/stage0-legacy.hdocs": "02d4418f267dc242451891fcb091a1c7f8529d6abd827bb6a5392644bc1042db",
+  "narrative-package.js": "9654868126b266157747d7c2b101aede9d1f001543944d0d1d7272eb6edb674d",
+  "scene-composer.js": "239ac0901b37977b5ab0faed6795a889aeae5cd731bb0a5964e3a1f83c2f0353",
+  "local-projects.js": "c5ace47daf3e426daf810b91a3f4d57d204552274839a1c4b6fb1370e0e33094",
+  "project-storage.js": "d02e6e24c26d85cb6e73a8e3b30230c92c42b17555fab9742c3fc0075ce8ea6c",
+  "narrative-media.js": "b9644daad1fa2078d19952c29f850e240168760d8c78f7ea180a4efdedc016c1",
+  "index.html": "afc55e8d372650d65f675346f9ba69c78a7c252e31e7e2dc688806a0950d1fea",
+  "tests/stage0-recovery.js": "37779a90912f25db11149d62b865c37d03351c4eed7273499dce184aa0f6bc35",
+  "tests/stage0-editor-matrix.js": "c8571965a0bab45849e6056fd6a754b224adb1eef362ded8bd0e5410d6f197ad",
+  "tests/stage0-history.test.cjs": "128eb4a8ede84b15f50322bfda58220fabd7ce9b876c88f284ef83ef523b72ce",
+  "tests/prepare-stage0.cjs": "d8688d0c9b485e22620576a87f9e0674ca251e39c45788f67b8950f803bbf051"
+}
