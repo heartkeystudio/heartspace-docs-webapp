@@ -225,3 +225,14 @@ Expectativas de ausência de histórico em Cena foram atualizadas para A2.
 O teste aguarda o subtítulo importado antes de editar e restabelece a seleção
 após o refluxo antes do botão de formatação, com selectionchange explícito.
 Resultados e limites: SCENE_EDITOR_STAGE_A2_RESULTS.md e evidência A2.
+
+
+## Regressão A3
+
+A3 preserva os 119 casos automatizados e amplia a matriz de 41 para 47 cenários.
+A3-01–06 verificam as regiões, troca de contexto, recolhimento/redimensionamento
+com efeito visual, rascunhos, escopos, foco da busca e eventos dos controles
+realocados. A preparação invalida também o cache de scene-workspace.js.
+As capturas reais e o registro final estão em SCENE_EDITOR_STAGE_A3_RESULTS.md.
+As baterias de navegador de compatibilidade/recuperação anteriores são referências
+preservadas, sem alegação de nova execução nesta parcela de organização.

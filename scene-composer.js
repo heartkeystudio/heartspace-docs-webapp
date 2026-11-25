@@ -28,7 +28,7 @@
     const {parent,surface,read,write,preview} = options;
     const doc = parent.ownerDocument, win = doc.defaultView;
     const style = doc.createElement('style'); style.textContent = styles; doc.head.append(style);
-    const panel = doc.createElement('details'); panel.className = 'scene-composer'; panel.open = true;
+    const panel = doc.createElement('section'); panel.className = 'scene-composer';
     panel.innerHTML = `<summary>Elementos da cena</summary><div class="scene-composer-body">
       <label class="scene-check"><input data-field="dialogue_visible" type="checkbox" checked>Mostrar caixa de diálogo</label>
       <details><summary>Parallax da cena</summary><div class="scene-composer-body">
@@ -99,6 +99,7 @@
         </div>
       </div></div>`;
     properties.querySelector('.scene-composer-body').append(motionEditor);
+    const authoredControls = [...panel.querySelectorAll('input,textarea,select,button')];
     const fields = [...panel.querySelectorAll('[data-field]')];
     const sceneFields = new Set(['dialogue_visible','parallax_enabled','parallax_strength','parallax_smoothing_ms']);
     const percentFields = new Set(['scale','opacity','parallax_strength']);
@@ -225,6 +226,7 @@
       list.replaceChildren(...value.elements.slice().reverse().map(item => new Option(`${item.visible ? '' : '◌ '}${item.name}`,item.id)));
       list.value = selected; list.disabled = !value.elements.length;
       properties.hidden = !active;
+      panel.dispatchEvent(new win.CustomEvent('scene-selection-change',{detail:{id:active?.id || '',name:active?.name || ''}}));
       if (populate) {
         const characters = fields.find(field => field.dataset.field === 'character_id');
         characters.replaceChildren(new Option('Escolha um personagem',''),...state.characters.map(character => new Option(character.name,character.id)));
@@ -241,7 +243,7 @@
       }
       panel.querySelectorAll('[data-type]').forEach(node => { node.hidden = !active || (node.dataset.type === 'art' ? !['image','character'].includes(active.type) : !node.dataset.type.split(' ').includes(active.type)); });
       panel.querySelector('[data-action=replace]').hidden = active?.type !== 'image';
-      panel.querySelectorAll('input,textarea,select,button').forEach(control => { if (control !== list) control.disabled = !state.editable; });
+      authoredControls.forEach(control => { if (control !== list) control.disabled = !state.editable; });
       ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
       renderMotionEditor(populate);
       renderInteractions();

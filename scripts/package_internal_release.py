@@ -5,15 +5,16 @@ from pathlib import Path, PurePosixPath
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--ref', required=True)
+parser.add_argument('--version', required=True)
 parser.add_argument('--output', required=True)
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
 def git(*argv):
     return subprocess.check_output(['git', '-C', str(root), *argv])
 commit = git('rev-parse', args.ref + '^{commit}').decode().strip()
-version = '0.1.0-internal.1'
+version = args.version
 if args.ref != version:
-    raise SystemExit('Use the approved annotated tag: ' + version)
+    raise SystemExit('--ref must match --version and name the approved annotated tag')
 if git('cat-file', '-t', args.ref).decode().strip() != 'tag':
     raise SystemExit('An annotated release tag is required')
 output = Path(args.output).resolve()
@@ -29,7 +30,8 @@ with tarfile.open(fileobj=io.BytesIO(git('archive', '--format=tar', commit))) as
         include = (len(path.parts) == 1 and path.suffix in ('.html', '.js'))
         include |= path.parts[0] in ('assets', 'vendor') and path.suffix not in ('.import', '.uid')
         include |= item.name in ('desktop/index.html', 'desktop/adapter.js', 'desktop/loader.js')
-        include |= item.name == 'RELEASE_NOTES_0_1_0_INTERNAL_1.md'
+        release_notes = 'RELEASE_NOTES_' + version.upper().replace('.', '_').replace('-', '_') + '.md'
+        include |= item.name == release_notes
         if include:
             files[item.name] = archive.extractfile(item).read()
 files['VERSION.json'] = (json.dumps({'product': 'Heartspace Docs', 'version': version,

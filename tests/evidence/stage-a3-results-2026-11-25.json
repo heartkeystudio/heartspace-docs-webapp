@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-25",
+  "scope": "A3 workspace organization only",
+  "recovery_ref": {
+    "tag": "0.1.0-internal.1",
+    "commit": "a9cdaa8af42dc7f637487c08c34eeb5df11921bb"
+  },
+  "branch": "codex/docs-scene-a3",
+  "node": {
+    "tests": 119,
+    "pass": 119,
+    "fail": 0
+  },
+  "editor": {
+    "pass": 47,
+    "fail": 0,
+    "new_cases": 6,
+    "existing_cases": 41
+  },
+  "close_reopen": {
+    "name": "CLOSE-REOPEN",
+    "status": "pass",
+    "history": 0,
+    "redo": 0,
+    "bodyPreserved": true
+  },
+  "trusted_input": {
+    "numeric_field": {
+      "typed": 47,
+      "undo": 40,
+      "redo": 47,
+      "focus_preserved": true
+    },
+    "panel_pointer_resize": {
+      "before_px": 224,
+      "after_px": 250
+    }
+  },
+  "desktop_fixture": {
+    "module_src": "../../scene-workspace.js",
+    "css_href": "../../assets/docs/scene-workspace.css",
+    "observed_browser_errors": 0,
+    "scope": "Local loader smoke only; not real Core acceptance"
+  },
+  "prior_browser_regressions": {
+    "compatibility": 11,
+    "recovery": 24,
+    "rerun": false
+  },
+  "environmental_pending": [
+    "Native file picker",
+    "IME",
+    "Assistive technologies"
+  ],
+  "release_proposal": "0.1.0-internal.2; no release commit, tag, push or hosted publication performed",
+  "csp_policy": "Same directives as recovery tag; inline hashes updated",
+  "sha256": {
+    "index.html": "4fc1ad652ff2169c07dbe399615d756ce85d2db0e04cc58aa92ff9d5a67ed313",
+    "scene-composer.js": "8c1ccf657ac75eb9c766409144047d10f904e829852351650290d66c34eeab0a",
+    "scene-workspace.js": "5a5360a5b499d7bf958a15938986198d80114794b3dbb32c2f38f33135f39bdd",
+    "assets/docs/scene-workspace.css": "bd663fd7e058d0c4077be2ce281fcefcb3a97396f81f17ae5b2fa246243fe24f",
+    "desktop/loader.js": "5e55dba174b3ffc819310ec46260f2843bc020b689d7eb2e81b8353de930012d",
+    "ops/desktop-csp.txt": "2901547aedf7c817ee85dad8e76ee4e0c7b738b810233da87109ec250bd6c7e5",
+    "tests/stage0-editor-matrix.js": "64c4c3183911a07060673e30897292158187eaaea34148191b8a51c5f405c072",
+    "tests/prepare-stage0.cjs": "3577b941d0e8cf4bf18f382b9e3fd52161286a5045e0fd52423ac48f1a85d730"
+  },
+  "visual_sha256": {
+    "tests/evidence/a3-visual/1440-no-selection.png": "56e7b03b77c95af002b2ca50f902a416ea1aae35e34f8bb6d41e867d94ddb4c5",
+    "tests/evidence/a3-visual/1440-element-selected.png": "973bf46172803403b6120a1018673e7dfec7cba2c0131bf7b390e898839d8b52",
+    "tests/evidence/a3-visual/1440-panels-collapsed.png": "1367459a09094c7b74f089f40600eaa5f0d593d0493dc12e2146a61caaa665b7",
+    "tests/evidence/a3-visual/1000-inspector.png": "f17b0d347177ec49c2c0b0561247eadef36dacc067d2b3e46eebf21aa13bd524",
+    "tests/evidence/a3-visual/390-stage.png": "6b37f749ee376437eb046b11d7219ac3d4833eb381e097413356d6bb90d33b9b"
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "passed": 47,
+  "failed": 0,
+  "results": [
+    {
+      "name": "M01 earlier edits propagate while later property overrides survive",
+      "status": "pass"
+    },
+    {
+      "name": "M02 equal override is lost on unrelated inspector edit (known H07)",
+      "status": "pass"
+    },
+    {
+      "name": "M03 Herdar anterior removes local pose and animation together",
+      "status": "pass"
+    },
+    {
+      "name": "M04 Restaurar início clears prior local edits and animation; follows edited base",
+      "status": "pass"
+    },
+    {
+      "name": "M05 orphan cleanup removes only absent block references with one history entry",
+      "status": "pass"
+    },
+    {
+      "name": "M06 animation duration, add/remove keyframe share document history",
+      "status": "pass"
+    },
+    {
+      "name": "M07 duplicate/remove element preserve original IDs and enter document history",
+      "status": "pass"
+    },
+    {
+      "name": "M08 layer ordering persists in cue with document history",
+      "status": "pass"
+    },
+    {
+      "name": "M09 explicit toolbar undo in Escrever reverses the latest Cena property",
+      "status": "pass"
+    },
+    {
+      "name": "M10 existing block removal undo/redo restores text identity but leaves cue orphaned",
+      "status": "pass"
+    },
+    {
+      "name": "M11 playback changes variables without writing source or authoring history",
+      "status": "pass"
+    },
+    {
+      "name": "M12 new project with same document ID/body cannot consume previous undo or redo",
+      "status": "pass",
+      "observed": {
+        "oldKey": "heartspace-docs-local:1954da5e-f886-459c-a7d5-d810acc3a570",
+        "newKey": "heartspace-docs-local:105c54b3-6754-4a7d-a9cd-2deb480afa5c",
+        "foreignUndoRestoredBlock": false
+      }
+    },
+    {
+      "name": "M13 reorder narrative blocks through existing drag/drop handler, then undo",
+      "status": "pass"
+    },
+    {
+      "name": "M14 cleanup and block removal undo in chronological order",
+      "status": "pass"
+    },
+    {
+      "name": "M15-pointerup drag preview commits once or cancels without an entry (synthetic pointer capture)",
+      "status": "pass"
+    },
+    {
+      "name": "M15-pointercancel drag preview commits once or cancels without an entry (synthetic pointer capture)",
+      "status": "pass"
+    },
+    {
+      "name": "M15-lostpointercapture drag preview commits once or cancels without an entry (synthetic pointer capture)",
+      "status": "pass"
+    },
+    {
+      "name": "M16 repeated reopen of same project clears old redo and keeps current undo/redo working",
+      "status": "pass"
+    },
+    {
+      "name": "M17 native fallback is fenced for toolbar, shortcuts and beforeinput after project switch",
+      "status": "pass"
+    },
+    {
+      "name": "M18 new local project and reopening existing file do not reuse prior history",
+      "status": "pass"
+    },
+    {
+      "name": "M19 recovery in separate workspace does not import undo/redo of current page",
+      "status": "pass"
+    },
+    {
+      "name": "M21 switching documents fences foreign undo while preserving current-project history",
+      "status": "pass"
+    },
+    {
+      "name": "P05-01 toolbar and shortcuts create identical single formatting transactions",
+      "status": "pass"
+    },
+    {
+      "name": "P05-02 reopened file cannot consume formatting undo or redo of prior context",
+      "status": "pass"
+    },
+    {
+      "name": "P05-03 list shortcut is a single reversible formatting action",
+      "status": "pass"
+    },
+    {
+      "name": "A1-01 alternating documents preserves independent formatting undo and redo",
+      "status": "pass"
+    },
+    {
+      "name": "A1-02 pending composition commits before navigation and late end cannot touch destination",
+      "status": "pass"
+    },
+    {
+      "name": "A1-03 archived document restoration does not resurrect its history",
+      "status": "pass"
+    },
+    {
+      "name": "A1-04 portable save preserves text sessions and never serializes history",
+      "status": "pass"
+    },
+    {
+      "name": "A1-05 trash/restore ends the old document history session",
+      "status": "pass"
+    },
+    {
+      "name": "A1-06 autosave during composition preserves a single pending text transaction",
+      "status": "pass"
+    },
+    {
+      "name": "A2-01 text and scene share chronological undo/redo without unrelated loss",
+      "status": "pass"
+    },
+    {
+      "name": "A2-02 animation and element commands undo and redo restore exact authoring data",
+      "status": "pass"
+    },
+    {
+      "name": "A2-03 scene numeric typing confirms once and Escape cancels without history",
+      "status": "pass"
+    },
+    {
+      "name": "A2-04 text keyboard does not silently undo a latest scene operation",
+      "status": "pass"
+    },
+    {
+      "name": "A2-05 title and subtitle join chronology without consuming body edits",
+      "status": "pass"
+    },
+    {
+      "name": "A2-06 no-op scene fields preserve authoring data and redo",
+      "status": "pass"
+    },
+    {
+      "name": "A2-07 existing transforms undo/redo restore source and unrelated text",
+      "status": "pass"
+    },
+    {
+      "name": "A2-08 scene histories remain independent across documents and project reopening",
+      "status": "pass"
+    },
+    {
+      "name": "A2-09 gestures preserve concurrent unrelated properties and reject touched conflicts",
+      "status": "pass"
+    },
+    {
+      "name": "A3-01 workspace regions and left contexts preserve authoring data",
+      "status": "pass"
+    },
+    {
+      "name": "A3-02 collapse and keyboard resize are UI only",
+      "status": "pass"
+    },
+    {
+      "name": "A3-03 textual field draft survives panels and area navigation",
+      "status": "pass"
+    },
+    {
+      "name": "A3-04 scope navigation does not author or erase inheritance",
+      "status": "pass"
+    },
+    {
+      "name": "A3-05 document search focus never consumes scene history",
+      "status": "pass"
+    },
+    {
+      "name": "A3-06 relocated composition controls retain write and undo handlers",
+      "status": "pass"
+    },
+    {
+      "name": "M20 seed acknowledged body with both stacks for close/reopen validation",
+      "status": "pass"
+    }
+  ]
+}
