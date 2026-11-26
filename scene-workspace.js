@@ -26,7 +26,7 @@
     sceneSettings.forEach(n=>composition.append(n));
     const add=body.querySelector('[data-action="image"]').parentElement;
     left.querySelector('[data-left-page="resources"]').append(add);
-    const list=body.querySelector('[data-list]');left.querySelector('[data-left-page="layers"]').append(list.closest('label'));
+    const layers=left.querySelector('[data-left-page="layers"]'),list=body.querySelector('[data-list]');layers.append(list.closest('label'),body.querySelector('[data-group-actions]'),body.querySelector('[data-layer-tree]'),body.querySelector(':scope > small'));
     const actions=body.querySelector('[data-action="up"]').parentElement;toolbar.append(actions);
     const properties=body.querySelector('[data-properties]');right.querySelector('[data-scope="element"]').append(properties);
     const status=body.querySelector('[role="status"]')||body.querySelector('.scene-composer-status');if(status)panel.append(status);

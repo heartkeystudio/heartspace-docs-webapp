@@ -174,9 +174,9 @@ test('C20 equal media bytes do not merge different instance or artifact identiti
   assert.notEqual(list[0].asset.project_ref.artifact_id,list[1].asset.project_ref.artifact_id);
   assert.equal(list[0].asset.data,list[1].asset.data);
 });
-test('C21 current spatial model is flat: unknown group and parent fields are not persisted',() => {
+test('C21 authoring group membership is retained while unrelated parent/entity fields remain unsupported',() => {
   const element=media.element({id:'child',parent_id:'group',group_id:'group',children:['other']});
-  assert.equal('parent_id' in element,false);assert.equal('group_id' in element,false);assert.equal('children' in element,false);
+  assert.equal('parent_id' in element,false);assert.equal(element.group_id,'group');assert.equal('children' in element,false);
   const list=media.elements([{id:'second'},{id:'first'},{id:'second'}]);
   assert.deepEqual(plain(list.map(item=>item.id)),['second','first']);
 });
@@ -184,4 +184,35 @@ test('C22 image fit changes do not implicitly reposition independent interactive
   const state=media.sceneState({elements:[{id:'art',type:'image',asset:image,fit:'cover'},{id:'hit',type:'hotspot',x:25,y:35,width:15,height:10,choice_block_id:'pick',choice_option_id:'inspect'}]});
   const after=media.sceneState({...state,elements:state.elements.map(item=>item.id==='art'?{...item,fit:'contain',width:70}:item)});
   assert.deepEqual(plain(after.elements[1]),plain(state.elements[1]));
+});
+test('C23 v1 remains v1 while the first persistent group opts the authoring source into v2',()=>{
+  const source=makeSource(),plainAgain=authoring.fromEditor(authoring.toEditor(source));
+  assert.equal(source.schema_version,1);assert.equal(plainAgain.schema_version,1);
+  const p=scene(source);p.layer_groups_version=1;p.groups=[{id:'group-room',name:'Sala',parent_id:'',element_ids:['door','label']}];
+  p.elements[0].group_id='group-room';p.elements[1].group_id='group-room';
+  source.schema_version=2;authoring.validate(source);
+  const restored=authoring.fromEditor(authoring.toEditor(source));
+  assert.equal(restored.schema_version,2);assert.deepEqual(plain(scene(restored).groups),plain(p.groups));
+  assert.equal(scene(restored).elements[0].group_id,'group-room');
+});
+test('C24 v2 marker survives cache, save projection and removal of the last group without downgrade',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=2;p.layer_groups_version=1;p.groups=[];
+  const state=authoring.toEditor(source),cache=authoring.cacheFromEditor(state),reopened=authoring.readCache(cache),saved=authoring.fromEditor(reopened);
+  assert.equal(saved.schema_version,2);assert.equal(scene(saved).layer_groups_version,1);assert.deepEqual(plain(scene(saved).groups),[]);
+});
+test('C25 invalid or v1 group metadata is rejected without normalization loss',()=>{
+  const source=makeSource(),p=scene(source);p.layer_groups_version=1;p.groups=[{id:'group-bad',name:'Inválido',parent_id:'missing',element_ids:['door']}];
+  assert.throws(()=>authoring.validate(source),/versão autoral 2/);
+  source.schema_version=2;assert.throws(()=>authoring.validate(source),/hierarquia de grupos inválida/);
+});
+test('C26 exported runtime flattens authoring groups and preserves every resolved moment',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=2;p.layer_groups_version=1;p.groups=[{id:'group-room',name:'Sala',parent_id:'',element_ids:['door','label']}];
+  p.elements[0].group_id='group-room';p.elements[1].group_id='group-room';authoring.validate(source);
+  const input=fixtures.story(source),packed=context.HeartspaceNarrativePackage.buildPackage(input),runtime=packed.story.sequences[0].presentation;
+  assert.equal('groups' in runtime,false);assert.equal('layer_groups_version' in runtime,false);assert.equal(runtime.elements.some(item=>'group_id' in item),false);
+  for(let index=-1;index<fixtures.nodes().length;index++){
+    const expected=media.resolveScene(p,fixtures.nodes(),index),actual=media.resolveScene(runtime,fixtures.nodes(),index);
+    const strip=value=>JSON.parse(JSON.stringify(value,(key,item)=>key==='project_ref'||key==='group_id'?undefined:['asset','background','music'].includes(key)&&item&&typeof item==='object'?{name:item.name,mime:item.mime}:item));
+    assert.deepEqual(strip(actual),strip(expected));
+  }
 });

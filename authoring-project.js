@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const FORMAT = 'heartspace.docs.authoring';
-  const SCHEMA_VERSION = 1;
+  const SCHEMA_VERSION = 2;
   const CACHE_VERSION = 3;
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const string = value => typeof value === 'string' ? value : '';
@@ -68,10 +68,40 @@
     if(!object(value)||value.schema_version!==1||!['cover','title','credits','dedication','epigraph','preface','part','prologue','chapter','epilogue','appendix'].includes(value.role)||!['next','recto','verso'].includes(value.start)||!['auto','arabic','roman','none'].includes(value.numbering)||typeof value.include!=='boolean'||typeof value.showHeading!=='boolean')fail('função editorial da seção inválida.');
   }
 
+  function validateLayerGroups(presentation, schemaVersion) {
+    const groups = presentation.groups, elements = Array.isArray(presentation.elements) ? presentation.elements : [];
+    const usesGroups = Array.isArray(groups) && groups.length > 0 || elements.some(element => element?.group_id) || presentation.layer_groups_version === 1;
+    if (schemaVersion === 1 && usesGroups) fail('grupos persistentes exigem a versão autoral 2. O conteúdo existente foi preservado.');
+    if (schemaVersion === 2 && presentation.layer_groups_version !== 1 && usesGroups) fail('marcador de hierarquia incompatível.');
+    if (schemaVersion !== 2) return;
+    if (presentation.layer_groups_version !== undefined && presentation.layer_groups_version !== 1) fail('versão de camadas inválida.');
+    if (groups !== undefined && (!Array.isArray(groups) || groups.length > 80)) fail('hierarquia de camadas inválida.');
+    const ids = new Set(elements.map(element => element?.id)), groupsById = new Map(), membership = new Map();
+    for (const group of groups || []) {
+      if (!object(group) || !id(group.id) || group.id.length > 80 || ids.has(group.id) || groupsById.has(group.id) || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 120 || typeof group.parent_id !== 'string' || !Array.isArray(group.element_ids) || group.element_ids.length > 80) fail('grupo persistente inválido.');
+      groupsById.set(group.id,group);
+      for (const elementId of group.element_ids) {
+        if (!ids.has(elementId) || membership.has(elementId)) fail('um elemento possui vínculo de grupo inválido.');
+        membership.set(elementId,group.id);
+      }
+    }
+    for (const group of groupsById.values()) if (group.parent_id && (!groupsById.has(group.parent_id) || group.parent_id === group.id)) fail('hierarquia de grupos inválida.');
+    for (const group of groupsById.values()) {
+      const seen = new Set([group.id]); let parent = group.parent_id;
+      while (parent) { if (seen.has(parent)) fail('ciclo na hierarquia de grupos.'); seen.add(parent); parent = groupsById.get(parent)?.parent_id || ''; }
+    }
+    for (const element of elements) {
+      const groupId = element?.group_id || '';
+      if (groupId && (!groupsById.has(groupId) || membership.get(element.id) !== groupId)) fail('vínculo entre elemento e grupo inválido.');
+      if (!groupId && membership.has(element?.id)) fail('composição de grupo inconsistente.');
+    }
+    for (const cue of presentation.cues || []) for (const patch of cue.set || []) if (Object.prototype.hasOwnProperty.call(patch,'group_id')) fail('a associação de grupo é estrutural e não pode variar por momento.');
+  }
+
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
-    if (source.schema_version !== SCHEMA_VERSION) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if (![1,2].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
     if (!object(source.project) || !id(source.project.id) || typeof source.project.name !== 'string') fail('identidade do projeto inválida.');
     if (!Array.isArray(source.books) || !Array.isArray(source.documents) || !object(source.resources)) fail('estrutura autoral incompleta.');
     const books = new Map(), documents = new Set();
@@ -104,6 +134,7 @@
       const sequences = new Set();
       for (const sequence of document.narrative.sequences) {
         if (!object(sequence) || !id(sequence.id) || sequences.has(sequence.id) || typeof sequence.title !== 'string' || !object(sequence.presentation)) fail('sequência inválida ou com ID repetido no documento.');
+        validateLayerGroups(sequence.presentation,source.schema_version);
         sequences.add(sequence.id);
       }
     }
@@ -146,7 +177,8 @@
         order:Number.isFinite(record.sortOrder) ? record.sortOrder : 0, updatedAt:string(record.savedAt)
       };
     });
-    return validate({format:FORMAT, schema_version:SCHEMA_VERSION, project:createProject(state.project), books, documents, resources:registry(state.registry)});
+    const usesV2 = state.authoringSchemaVersion === 2 || (state.documents || []).some(record => (record.narrativeSequences || []).some(sequence => sequence?.presentation?.layer_groups_version === 1 || (sequence?.presentation?.groups || []).length || (sequence?.presentation?.elements || []).some(element => element?.group_id)));
+    return validate({format:FORMAT, schema_version:usesV2 ? 2 : 1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
   }
 
   function toEditor(value) {
@@ -163,7 +195,7 @@
       marginNotes:list(document.editorial.marginNotes), status:document.editorial.status, tags:document.editorial.tags, archivedAt:document.editorial.archivedAt, trashedAt:document.editorial.trashedAt, trashedBy:document.editorial.trashedBy,
       sortOrder:document.order, savedAt:document.updatedAt
     }));
-    return {project:source.project, documents, libraryFolders, registry:source.resources};
+    return {project:source.project, documents, libraryFolders, registry:source.resources, authoringSchemaVersion:source.schema_version};
   }
 
   const syncFields = ['remoteId','projectId','remoteUpdatedAt','remoteConflict','remoteVersion','lastEditor','lastEditedAt','dirty','editRevision','remoteCreateId','syncAttempt','remoteMissing','syncError'];

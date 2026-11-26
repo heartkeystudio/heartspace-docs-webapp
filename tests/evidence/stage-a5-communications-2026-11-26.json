@@ -1,0 +1,35 @@
+{
+  "product": "Heartspace Docs",
+  "scope": "A5 communication correction only",
+  "date": "2026-11-26",
+  "automated": {
+    "stage0_compatibility": { "passed": 26, "failed": 0, "executed": true },
+    "authoring_history_patch": { "passed": 10, "failed": 0, "executed": true },
+    "syntax_and_diff_checks": { "passed": true, "executed": true }
+  },
+  "browser": {
+    "fixture": "Disposable stage 0/A5 project copy served on loopback",
+    "filter": "A5-",
+    "passed": 8,
+    "failed": 0,
+    "cases": [
+      "A5-COMM-00 v1 save indicator remains unchanged before v2 upgrade",
+      "A5-COMM-01 canceling the v2 upgrade keeps a v1 document and history unchanged",
+      "A5-COMM-02 first v2 confirmation and local save distinguish local persistence from remote sync",
+      "A5-COMM-03 reopened v2 retains local-only status and blocks remote commit",
+      "A5-01 group and ungroup preserve z-order, moment data and enter document history once",
+      "A5-02 group duplication preserves IDs, links, animation and undo/redo",
+      "A5-03 nested hierarchy rename and remove preserve draw order and undo",
+      "M20 seed acknowledged body with both stacks for close/reopen validation"
+    ],
+    "remote_context": "Synthetic project/document identifiers only. The v2 branch retained dirty state, created no syncAttempt and made no network request.",
+    "v2_status": "The reopened v2 copy displayed Local · Salvo neste dispositivo, explicitly stated that remote sync was unavailable, and retained that status after the blocked sync invocation.",
+    "page_reload": "A full browser reload with a live remote session was not exercised; cache/reopened-copy behavior and the v2 startup/sync guard were checked in the isolated editor harness."
+  },
+  "previously_approved_a5_reference": {
+    "automated": "123/123 at A5 approval; historical evidence, not rerun for this communication correction",
+    "browser_matrix": "59/59 at A5 approval; historical evidence, not rerun for this communication correction"
+  },
+  "remote_support": "Not implemented. The preventive v2 remote-sync block remains enabled.",
+  "ai_art_generation": "excluded"
+}

@@ -29,6 +29,7 @@
     .scene-multi-actions button{width:30px;min-width:30px;height:28px;min-height:28px;padding:2px;border:1px solid #ffffff70;border-radius:4px;background:#092f48;color:#fff;font:600 12px/1 system-ui;cursor:pointer}
     .scene-multi-actions button:focus-visible,.scene-multi-tools [data-multi-handle]:focus-visible{outline:3px solid #ffe09b;outline-offset:2px}
     .scene-multi-marquee{position:absolute;z-index:119;border:1px solid #40a9ff;background:#40a9ff22;pointer-events:none}
+    .scene-layer-tree{display:grid;gap:3px;margin:8px 0}.scene-layer-tree ul{list-style:none;margin:0;padding-left:16px}.scene-layer-tree-row{display:flex;align-items:center;gap:4px;min-width:0}.scene-layer-tree-row>[data-layer-select]{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-layer-tree-row button{min-height:26px;padding:3px 6px}.scene-layer-tree-row [data-layer-select][aria-pressed=true]{outline:2px solid #40a9ff}.scene-layer-tree-row [data-layer-collapse]{width:26px;min-width:26px}
     .scene-parallax-preview .scene-element{pointer-events:none!important;outline:none!important}
     .scene-parallax-preview .scene-element-tools{display:none!important}
     .scene-parallax-preview .scene-element[data-element-type=hotspot]>.scene-element-content{visibility:hidden!important}
@@ -48,7 +49,10 @@
       </div></details>
       <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="project-image">+ Recurso do projeto</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
-      <label>Camadas · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select><small>Ctrl/Cmd ou Shift + clique seleciona vários. Arraste uma área vazia do palco para selecionar por área.</small></label>
+      <label>Elementos · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select></label>
+      <div class="scene-element-actions" data-group-actions><button type="button" data-layer-action="group">Agrupar seleção</button><button type="button" data-layer-action="ungroup">Desagrupar</button><button type="button" data-layer-action="duplicate">Duplicar grupo</button><button type="button" data-layer-action="delete">Remover grupo</button></div>
+      <small>Ctrl/Cmd ou Shift seleciona vários elementos. Arraste uma área vazia do palco para selecionar por área. Agrupar organiza a hierarquia sem mudar a ordem de desenho.</small>
+      <div class="scene-layer-tree" data-layer-tree role="tree" aria-label="Hierarquia persistente de camadas"></div>
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
       <section data-properties hidden aria-label="Propriedades do elemento"><div class="scene-composer-body">
         <label>Nome<input data-field="name" maxlength="120"></label>
@@ -87,7 +91,8 @@
     panel.querySelectorAll('[data-action="project-image"],[data-action="project-replace"]').forEach(button => { button.hidden = !options.pickAsset; });
     const screen = parent.querySelector('.scene-moment-controls') || parent.querySelector('.scene-screen-settings');
     parent.insertBefore(panel,screen ? screen.nextSibling : parent.firstChild); surface.classList.add('scene-editing');
-    const list = panel.querySelector('[data-list]'), properties = panel.querySelector('[data-properties]'), status = panel.querySelector('[role=status]'), upload = panel.querySelector('[data-upload]');
+    const list = panel.querySelector('[data-list]'), properties = panel.querySelector('[data-properties]'), status = panel.querySelector('[role=status]'), upload = panel.querySelector('[data-upload]'), layerTree = panel.querySelector('[data-layer-tree]');
+    list.closest('label').hidden=true;
     const motionEditor = doc.createElement('details'); motionEditor.dataset.motionEditor = '';
     motionEditor.innerHTML = `<summary>Animação neste bloco</summary><div class="scene-composer-body">
       <small data-motion-help>Escolha um bloco em Momento da cena. A composição anterior será o início e os ajustes acima serão o estado final. Para entradas e saídas suaves, altere Visível no bloco escolhido.</small>
@@ -123,7 +128,7 @@
     };
     parallaxPreview.addEventListener('change',() => setParallaxPreview(parallaxPreview.checked));
     doc.addEventListener('visibilitychange',() => { if (doc.hidden) setParallaxPreview(false); });
-    let key = '', selected = '', selectedIds = new Set(), uploadIntent = null, drag = null, marquee = null;
+    let key = '', selected = '', selectedIds = new Set(), selectedGroup = '', collapsedGroups = new Set(), uploadIntent = null, drag = null, marquee = null;
     const context = () => read();
     const getItem = state => selectedIds.size === 1 ? media.presentation(state.presentation).elements.find(item => item.id === selected) : null;
     const setSelection = ids => {
@@ -153,6 +158,35 @@
       panel.querySelector('[data-interaction-help]').textContent = linked && (!field || field.disabled) ? 'Este vínculo está ausente ou ambíguo. Selecione uma opção válida; a posição na lista não altera o vínculo.' : linked ? 'Vinculado por identificadores estáveis: reordenar blocos ou opções preserva esta ação.' : nodes.some(node => node.type === 'choice') ? 'Selecione a opção que este elemento deve acionar.' : 'Adicione um bloco de escolha à sequência em Escrever para configurar a interação.';
     };
     const id = () => `element-${win.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)}`;
+    const groupId = () => `group-${win.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)}`;
+    const descendants = (value,id) => {
+      const found=new Set(), groups=new Map((value.groups||[]).map(group=>[group.id,group]));
+      const visit=groupId=>{const group=groups.get(groupId);if(!group)return;group.element_ids.forEach(elementId=>found.add(elementId));(value.groups||[]).filter(child=>child.parent_id===groupId).forEach(child=>visit(child.id));};visit(id);return found;
+    };
+    const childGroupIds=(value,id)=>{const found=new Set(),visit=parent=>{(value.groups||[]).filter(group=>group.parent_id===parent).forEach(group=>{found.add(group.id);visit(group.id);});};visit(id);return found;};
+    const drawLayerTree = (value,editable=true) => {
+      const groups=value.groups||[],elements=value.elements||[],rank=new Map(elements.map((item,index)=>[item.id,index]));
+      const groupRank=id=>{const ids=descendants(value,id);return Math.max(-1,...[...ids].map(elementId=>rank.get(elementId)??-1));};
+      const build=(parent,container)=>{
+        const nodes=[...groups.filter(group=>group.parent_id===parent).map(group=>({type:'group',item:group,rank:groupRank(group.id)})),...elements.filter(item=>(item.group_id||'')===parent).map(item=>({type:'element',item,rank:rank.get(item.id)??-1}))].sort((a,b)=>b.rank-a.rank);
+        nodes.forEach(({type,item})=>{
+          const row=doc.createElement('div');row.className='scene-layer-tree-row';const li=doc.createElement('div');li.setAttribute('role','treeitem');li.setAttribute('aria-selected',String(type==='group'?selectedGroup===item.id:selectedIds.has(item.id)));
+          if(type==='group'){
+            const children=groups.some(group=>group.parent_id===item.id)||item.element_ids.length>0,collapsed=collapsedGroups.has(item.id);li.setAttribute('aria-expanded',String(children&&!collapsed));
+            const collapse=doc.createElement('button');collapse.type='button';collapse.dataset.layerCollapse=item.id;collapse.setAttribute('aria-label',(collapsed?'Expandir ':'Recolher ')+'grupo '+item.name);collapse.textContent=collapsed?'▸':'▾';collapse.disabled=!children;row.append(collapse);
+            const select=doc.createElement('button');select.type='button';select.dataset.layerSelect='group';select.dataset.groupId=item.id;select.textContent='▣';select.setAttribute('aria-pressed',String(selectedGroup===item.id));select.setAttribute('aria-label',`Selecionar grupo ${item.name}, ${descendants(value,item.id).size} elementos`);row.append(select);
+            const name=doc.createElement('input');name.type='text';name.value=item.name;name.maxLength=120;name.dataset.groupName=item.id;name.setAttribute('aria-label',`Nome do grupo ${item.name}`);name.disabled=!editable;row.append(name);
+            for(const [action,label,glyph] of [['nest','Aninhar grupo','↳'],['outdent','Retirar grupo do nível','↰'],['ungroup','Desagrupar','⊟'],['duplicate','Duplicar grupo','⧉']]){const button=doc.createElement('button');button.type='button';button.dataset.layerAction=action;button.dataset.groupId=item.id;button.setAttribute('aria-label',`${label}: ${item.name}`);button.title=label;button.textContent=glyph;button.disabled=!editable;row.append(button);}
+            li.append(row);container.append(li);
+            if(children){const nested=doc.createElement('ul');nested.hidden=collapsed;li.append(nested);if(!collapsed)build(item.id,nested);}
+          }else{
+            const select=doc.createElement('button');select.type='button';select.dataset.layerSelect='element';select.dataset.elementId=item.id;select.textContent=`${item.visible?'':'◌ '}${item.name}`;select.setAttribute('aria-pressed',String(selectedIds.has(item.id)));select.setAttribute('aria-label',`${item.name}${selectedIds.has(item.id)?', selecionado':''}`);row.append(select);li.append(row);container.append(li);
+          }
+        });
+      };
+      layerTree.replaceChildren();const rootList=doc.createElement('ul');rootList.setAttribute('role','group');layerTree.append(rootList);build('',rootList);
+      const valid=new Set(groups.map(group=>group.id));collapsedGroups=new Set([...collapsedGroups].filter(id=>valid.has(id)));
+    };
     let motionSelection = '', frameAt = null;
     const motionTrack = state => (state.animations || []).find(track => track.element_id === selected);
     const renderMotionEditor = populate => {
@@ -248,13 +282,19 @@
     };
     const render = (populate = true) => {
       const state = context(), value = media.presentation(state.presentation);
-      if (key !== state.key) { selected = ''; selectedIds = new Set(); key = state.key; status.textContent = ''; setParallaxPreview(false); }
+      if (key !== state.key) { selected = ''; selectedIds = new Set(); selectedGroup = ''; key = state.key; status.textContent = ''; setParallaxPreview(false); }
       selectedIds = new Set([...selectedIds].filter(id => value.elements.some(item => item.id === id)));
       selected = selectedIds.size === 1 ? [...selectedIds][0] : '';
       const active = getItem(state);
       panel.querySelector('[data-asset-description]').textContent = active?.asset ? options.describeAsset?.(active.asset) || active.asset.name : '';
       list.replaceChildren(...value.elements.slice().reverse().map(item => new Option(`${item.visible ? '' : '◌ '}${item.name}`,item.id)));
       list.multiple = true; [...list.options].forEach(option => { option.selected = selectedIds.has(option.value); }); list.disabled = !value.elements.length;
+      drawLayerTree(media.presentation(state.base || state.presentation),state.editable);
+      const groupCount=(state.base?.groups||[]).length, selectedGroupExists=(state.base?.groups||[]).some(group=>group.id===selectedGroup), groupActions=panel.querySelector('[data-group-actions]');
+      groupActions.querySelector('[data-layer-action="group"]').disabled=!state.editable||selectedIds.size<2||groupCount>=80;
+      groupActions.querySelector('[data-layer-action="ungroup"]').disabled=!state.editable||!selectedGroupExists;
+      groupActions.querySelector('[data-layer-action="duplicate"]').disabled=!state.editable||!selectedGroupExists||((state.base?.elements||[]).length>=80);
+      groupActions.querySelector('[data-layer-action="delete"]').disabled=!state.editable||!selectedGroupExists;
       properties.hidden = !active;
       panel.dispatchEvent(new win.CustomEvent('scene-selection-change',{detail:{id:active?.id || '',name:selectedIds.size > 1 ? `${selectedIds.size} elementos selecionados` : active?.name || '',count:selectedIds.size}}));
       if (populate) {
@@ -288,6 +328,61 @@
       const state = context();
       if (!state.editable || state.key !== expectedKey || !write(expectedKey,media.presentation(value))) return false;
       render(populate); return true;
+    };
+    const commitStructure = (value,state=context(),message='') => {
+      value.layer_groups_version=1;value.groups=Array.isArray(value.groups)?value.groups:[];
+      if(!state.editable||!options.writeStructure?.(state.key,media.presentation(value)))return false;
+      render(true);if(message)status.textContent=message;return true;
+    };
+      const groupAction = (action,target='') => {
+        const state=context();if(!state.editable)return;const value=media.presentation(state.base||state.presentation);value.groups=value.groups||[];
+        const groups=value.groups,group=groups.find(item=>item.id===target),elements=value.elements,wasV1=value.layer_groups_version!==1&&groups.length===0;
+      const v2Notice='O salvamento continuará local. A sincronização com projetos remotos ficará indisponível até que exista suporte remoto ao formato v2. Versões anteriores ao suporte a grupos não abrem este documento.';
+      const announce=message=>wasV1?`Formato v2: ${message} ${v2Notice} Exporte o arquivo .hdocs para transportar o documento.`:message;
+      if(action==='group'){
+        const ids=[...selectedIds].filter(id=>elements.some(item=>item.id===id));if(ids.length<2)return;
+        const parents=new Set(ids.map(id=>elements.find(item=>item.id===id)?.group_id||'')),parent_id=parents.size===1?[...parents][0]:'';
+        if(!ids.every(id=>state.presentation.elements.some(item=>item.id===id))){status.textContent='Agrupe elementos que existam na composição inicial da sequência.';return;}
+        ids.sort((a,b)=>value.elements.findIndex(item=>item.id===a)-value.elements.findIndex(item=>item.id===b));
+        const newGroupId=groupId(),name=`Grupo ${groups.length+1}`;
+        if(wasV1&&!win.confirm(`Este documento passará ao formato autoral v2 ao salvar. ${v2Notice} Continuar?`))return;
+        groups.forEach(group=>group.element_ids=group.element_ids.filter(id=>!ids.includes(id)));
+        groups.push({id:newGroupId,name,parent_id,element_ids:ids});value.elements=value.elements.map(item=>ids.includes(item.id)?media.element({...item,group_id:newGroupId}):item);
+        if(commitStructure(value,state,announce(`A cena passará a usar a versão autoral 2 ao salvar. O grupo “${name}” foi criado.`))){selectedGroup=newGroupId;setSelection(ids);render();status.textContent=announce(`A cena passará a usar a versão autoral 2 ao salvar. O grupo “${name}” foi criado.`);}return;
+      }
+      if(!group)return;
+      const children=groups.filter(item=>item.parent_id===group.id),memberIds=descendants(value,group.id);
+      if(action==='collapse'){collapsedGroups.has(group.id)?collapsedGroups.delete(group.id):collapsedGroups.add(group.id);render(false);return;}
+      if(action==='ungroup'){
+        const direct=new Set(group.element_ids),parentGroup=groups.find(item=>item.id===group.parent_id);
+        value.elements=value.elements.map(item=>{if(!direct.has(item.id))return item;const copy={...item};if(group.parent_id)copy.group_id=group.parent_id;else delete copy.group_id;return media.element(copy);});
+        if(parentGroup)parentGroup.element_ids=[...new Set([...parentGroup.element_ids,...group.element_ids])];
+        children.forEach(child=>child.parent_id=group.parent_id||'');groups.splice(groups.indexOf(group),1);selectedGroup='';setSelection(memberIds);commitStructure(value,state,'Grupo removido; os elementos, vínculos e a ordem de desenho foram preservados.');return;
+      }
+      if(action==='nest'||action==='outdent'){
+        if(action==='outdent'){if(!group.parent_id)return;const parent=groups.find(item=>item.id===group.parent_id);group.parent_id=parent?.parent_id||'';}
+        else {const siblings=groups.filter(item=>item.parent_id===group.parent_id&&item.id!==group.id);const rankOf=id=>Math.max(-1,...[...descendants(value,id)].map(elementId=>elements.findIndex(item=>item.id===elementId)));const previous=siblings.filter(item=>rankOf(item.id)<rankOf(group.id)).sort((a,b)=>rankOf(b.id)-rankOf(a.id))[0];if(!previous){status.textContent='Não há um grupo anterior neste nível para aninhar.';return;}group.parent_id=previous.id;}
+        if(group.parent_id===group.id||childGroupIds(value,group.id).has(group.parent_id)){status.textContent='Essa organização criaria um ciclo de grupos.';return;}
+        commitStructure(value,state,'Hierarquia reorganizada; a ordem visual da composição foi mantida.');return;
+      }
+      if(action==='delete'){
+        const ids=[...memberIds],groupIds=new Set([group.id,...childGroupIds(value,group.id)]);value.elements=value.elements.filter(item=>!memberIds.has(item.id));value.groups=groups.filter(item=>!groupIds.has(item.id));
+        value.cues=value.cues.map(cue=>({...cue,set:(cue.set||[]).filter(patch=>!memberIds.has(patch.id)),remove:(cue.remove||[]).filter(id=>!memberIds.has(id)),order:cue.order?.filter(id=>!memberIds.has(id))||null,animations:(cue.animations||[]).filter(track=>!memberIds.has(track.element_id))}));
+        selectedGroup='';setSelection([]);commitStructure(value,state,'Grupo e elementos removidos da composição. A operação pode ser desfeita.');return;
+      }
+      if(action==='duplicate'){
+        if(elements.length+memberIds.size>80){status.textContent='A cena não comporta a duplicação deste grupo: limite de 80 elementos.';return;}
+        const groupIds=new Set([group.id,...childGroupIds(value,group.id)]),oldGroups=[...groups].filter(item=>groupIds.has(item.id)),groupMap=new Map(oldGroups.map(item=>[item.id,groupId()])),elementMap=new Map([...memberIds].map(id=>[id,`element-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`]));
+        const copies=elements.filter(item=>memberIds.has(item.id)).map(item=>media.element({...item,id:elementMap.get(item.id),name:`${item.name} · cópia`,x:Math.min(200,item.x+2),y:Math.min(200,item.y+2),group_id:groupMap.get(item.group_id)||groupMap.get(group.id)}));
+        value.elements=[...elements,...copies];
+        oldGroups.forEach(item=>groups.push({...item,id:groupMap.get(item.id),name:item.id===group.id?`${item.name} · cópia`:item.name,parent_id:item.id===group.id?group.parent_id:groupMap.get(item.parent_id)||'',element_ids:item.element_ids.map(id=>elementMap.get(id)).filter(Boolean)}));
+        value.cues=value.cues.map(cue=>{
+          const patches=(cue.set||[]).filter(patch=>elementMap.has(patch.id)).map(patch=>({...patch,id:elementMap.get(patch.id)}));
+          const animations=(cue.animations||[]).filter(track=>elementMap.has(track.element_id)).map(track=>({...track,element_id:elementMap.get(track.element_id)}));
+          return {...cue,set:[...(cue.set||[]),...patches],remove:[...(cue.remove||[]),...(cue.remove||[]).filter(id=>elementMap.has(id)).map(id=>elementMap.get(id))],order:cue.order?cue.order.flatMap(id=>[id,...(elementMap.has(id)?[elementMap.get(id)]:[])]):null,animations:[...(cue.animations||[]),...animations]};
+        });
+        selectedGroup=groupMap.get(group.id);setSelection([...elementMap.values()]);commitStructure(value,state,'Grupo duplicado; identidades, vínculos de escolha, animações e posições relativas foram preservados. Revise as interações duplicadas.');return;
+      }
     };
     const boundsFor = (ids = selectedIds) => {
       const nodes = [...ids].map(id => surface.querySelector(`[data-scene-element="${id}"]`)).filter(Boolean);
@@ -363,6 +458,29 @@
     };
     list.multiple = true;
     list.addEventListener('change',() => { setSelection([...list.selectedOptions].map(option => option.value)); render(); });
+    panel.querySelector('[data-group-actions]').addEventListener('click',event=>{const action=event.target.closest('[data-layer-action]')?.dataset.layerAction;if(action)groupAction(action,selectedGroup);});
+    layerTree.addEventListener('click',event=>{
+      const button=event.target.closest('button');if(!button)return;
+      if(button.dataset.layerCollapse){groupAction('collapse',button.dataset.layerCollapse);return;}
+      if(button.dataset.layerAction){groupAction(button.dataset.layerAction,button.dataset.groupId);return;}
+      if(button.dataset.layerSelect==='group'){
+        selectedGroup=button.dataset.groupId;const base=media.presentation(context().base||context().presentation);setSelection(descendants(base,selectedGroup));render();return;
+      }
+      if(button.dataset.layerSelect==='element'){
+        const elementId=button.dataset.elementId,modifier=event.shiftKey||event.ctrlKey||event.metaKey;selectedGroup='';
+        if(modifier){const next=new Set(selectedIds);next.has(elementId)?next.delete(elementId):next.add(elementId);setSelection(next);}else setSelection([elementId]);render();
+      }
+    });
+    layerTree.addEventListener('change',event=>{
+      const input=event.target.closest('[data-group-name]');if(!input)return;const state=context(),value=media.presentation(state.base||state.presentation),group=value.groups?.find(item=>item.id===input.dataset.groupName);if(!group)return;
+      const name=input.value.trim().slice(0,120);if(!name){input.value=group.name;status.textContent='O nome do grupo não pode ficar vazio.';return;}if(name===group.name)return;group.name=name;commitStructure(value,state,'Nome do grupo atualizado.');
+    });
+    layerTree.addEventListener('keydown',event=>{
+      if(!['ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
+      const buttons=[...layerTree.querySelectorAll('button[data-layer-select]')];if(!buttons.length)return;
+      const index=buttons.indexOf(event.target.closest('button[data-layer-select]'));if(index<0)return;
+      event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:Math.max(0,Math.min(buttons.length-1,index+(event.key==='ArrowDown'?1:-1)));buttons[next].focus();
+    });
     interactionSelect.addEventListener('change',() => {
       let link = ['', ''];
       try { if (interactionSelect.value) link = JSON.parse(interactionSelect.value); } catch (_) { return; }

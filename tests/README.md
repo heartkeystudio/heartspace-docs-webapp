@@ -252,3 +252,12 @@ O runner estrito Node preserva 119/119 casos. O teste de navegador usa captura
 de ponteiro sintética para cancelar gestos e arquivos `.hdocs` descartáveis;
 não certifica hardware, dispositivo tátil ou tecnologias assistivas. Capturas e
 relatório: [SCENE_EDITOR_STAGE_A4_RESULTS.md](../SCENE_EDITOR_STAGE_A4_RESULTS.md).
+
+## Regressão comunicacional de v2
+
+`stage0-editor-matrix.js` inclui casos A5-COMM para confirmar a mudança v1→v2,
+cancelar sem alterações, acompanhar o estado de salvamento local, reabrir uma
+cópia `.hdocs` v2 e verificar que a tentativa remota continua bloqueada sem
+criar envio pendente. O caso remoto usa apenas um projeto sintético no harness;
+não contata serviço remoto. Execute a matriz direcionada com `?case=A5-COMM`.
+O teste de grupo A5-01 também confere o aviso e a operação de agrupamento.
