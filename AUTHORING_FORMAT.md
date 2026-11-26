@@ -1,9 +1,11 @@
 # Docs — formato autoral e entidades
 
-## Estado das fatias 1 a 4
+## Estado do formato
 
 Implementado em `authoring-project.js`, integrado à persistência do editor web e
-à entrada desktop. O formato é `heartspace.docs.authoring`, `schema_version: 1`.
+à entrada desktop. O formato é `heartspace.docs.authoring`, com schemas autorais
+1 e 2. O schema 1 continua sendo escrito quando não há recursos exclusivos de
+v2.
 O envelope interno de trabalho é `version: 3`. A fatia 2 acrescenta arquivos
 portáteis `.hdocs`, cópias de trabalho em IndexedDB e recuperação entre sessões.
 Um ponteiro pequeno `version: 4` em localStorage indica esse armazenamento;
@@ -121,6 +123,38 @@ Exemplo de projeto com um livro vazio e independente:
 }
 ```
 
+## Grupos persistentes — fonte autoral v2 opt-in
+
+O primeiro grupo persistente altera o schema da fonte `.hdocs` de 1 para 2.
+Documentos sem grupos continuam em v1. A composição que entra em v2 recebe
+`presentation.layer_groups_version: 1`, `presentation.groups` e
+`elements[].group_id`. Cada grupo contém `id`, `name`, `parent_id` e a lista
+ordenada `element_ids`; grupos podem ser aninhados. O marcador por apresentação
+permanece após desagrupar o último grupo, portanto salvar de novo não faz
+downgrade automático.
+
+A estrutura de grupos é autoral: fixa entre momentos e separada de `cues[].set`.
+Ela não altera a ordem de desenho (`elements` e `cues[].order`), identidades dos
+elementos, recursos, vínculos de escolha, transformações ou animações. Validadores
+rejeitam grupos malformados, ciclos, membros duplicados e metadados de grupo em
+uma fonte v1. Adaptadores, cache, recuperação e arquivos portáteis preservam a
+versão e a hierarquia. A primeira criação de grupo avisa que versões anteriores
+sem suporte a v2 não abrirão esse arquivo; a antiga versão consolidada
+0.1.0-internal.3 foi verificada com uma fonte v2 e a rejeitou sem instalá-la ou
+substituir o projeto aberto.
+
+Na exportação, os grupos e seus marcadores são removidos; as entidades visuais
+seguem planas na ordem anterior e cada momento é resolvido normalmente. Grupos
+não chegam ao runtime como objetos programáveis.
+
+O transporte remoto atual ainda não declara suporte ao schema autoral v2. Para
+evitar que consumidores antigos descartem a hierarquia, a sincronização de um
+documento que usa grupos fica bloqueada localmente e o trabalho permanece
+marcado como pendente até que o contrato e os consumidores remotos sejam
+atualizados. A fonte pode ser salva e recuperada localmente em `.hdocs`; a
+liberação de sync remoto exige decisão transversal do Heartspace Master. Não há
+migração em massa nem mudança de contrato remoto nesta entrega.
+
 A API `fromEditor` constrói a fonte por campos explícitos; `toEditor` restaura a
 projeção atual. `serialize` e `parse` atendem o JSON autoral. A validação verifica
 versão, identidades únicas, relações e estrutura básica. Ela **não** higieniza
@@ -202,12 +236,23 @@ portátil. Recuperação não equivale a colaboração ou resolução entre abas
   implementadas na fatia 4; publicação e adaptação remota de livros continuam
   pendentes. As falhas pré-QA ainda precisam de validação funcional.
 
-## Conferência desta entrega
+## Validação de A5 e v2
 
-Conferência estática realizada: leitura das mudanças, sintaxe dos scripts e
-`git diff --check`; a CSP desktop foi regenerada. Não há testes funcionais novos
-nem execução de cenários no navegador.
-Migração com dados reais, retomada offline e colaboração ficam para validação.
+Em 2026-11-25, fixtures descartáveis validaram os adaptadores v1/v2, cache,
+abertura/salvamento/reabertura de `.hdocs`, agrupamento, aninhamento, duplicação,
+remoção, undo/redo e a projeção de todos os momentos na exportação. Foram
+executados 26 casos de compatibilidade autoral, 59 cenários no editor, e as
+baterias de narrativa/runtime, histórico, herança e transações. Todos os casos
+executados passaram. A matriz utiliza eventos sintéticos para a entrada do
+seletor de arquivo; não certifica o seletor nativo, IME ou tecnologias
+assistivas.
+
+A versão consolidada 0.1.0-internal.3 foi aberta como artefato histórico e
+rejeitou uma fonte sintética com `schema_version: 2`, preservando a área já
+aberta. Essa constatação refere-se à versão/tag existente; ela não foi alterada.
+Não foram usados documentos de produção nem feitas migrações em massa. Os
+consumidores remotos não foram atualizados; a sincronização de fontes com grupos
+permanece bloqueada até decisão e contrato compatível.
 
 ## Integração de livros (fatia 5A)
 
@@ -249,3 +294,12 @@ pertence ao capítulo. Número automático é calculado pela ordem, sem alterar 
 texto do título. Fonte v1 e contratos de sincronização atuais são mantidos.
 Detalhes de uso, precedência, transporte e etapas seguintes em
 [BOOK_TYPOGRAPHY.md](BOOK_TYPOGRAPHY.md).
+
+
+## Controles de autoria — fonte v3 opt-in
+
+A primeira persistência de visibilidade ou bloqueio próprios de Camadas evolui a fonte `.hdocs` para schema 3. A apresentação afetada recebe `authoring_controls_version: 1`; elementos e grupos podem registrar `authoring_visible` e `locked`. A ausência desses campos significa visível e desbloqueado. A marca de versão é preservada após desfazer, remoção dos controles ou exclusão de grupos/documentos, sem downgrade automático. Documentos v1 e v2 que não usam esses controles permanecem nos formatos originais.
+
+`authoring_visible` é uma máscara exclusiva de autoria, combinada com os grupos ancestrais sem substituir as preferências locais dos descendentes. Ela é separada de `elements[].visible`, que continua representando a visibilidade narrativa existente. `locked` impede edição e transformação no editor; não altera reprodução, interações, condições ou efeitos. A exportação narrativa remove esses metadados e mantém elementos planos, sua visibilidade narrativa, vínculos e ordem.
+
+Versões anteriores que não reconhecem schema 3 rejeitam o documento antes de instalá-lo ou gravá-lo. A sincronização remota continua bloqueada para schemas 2 e 3 até confirmação de suporte dos consumidores remotos; gravação local permanece distinta de sincronização.

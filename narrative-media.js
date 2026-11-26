@@ -70,11 +70,12 @@
       return {aspect,width,height};
     };
     const number = (value,fallback,min,max) => value !== null && value !== '' && Number.isFinite(Number(value)) ? Math.max(min,Math.min(max,Number(value))) : fallback;
+    const has = (object,key) => Object.prototype.hasOwnProperty.call(object || {},key);
     const element = (input,index = 0) => {
       input = input && typeof input === 'object' ? input : {};
       const type = ['image','character','text','button','hotspot'].includes(input.type) ? input.type : 'image';
       const compact = ['text','button','hotspot'].includes(type);
-      return {
+      const normalized = {
         id:String(input.id || `element-${index + 1}`).replace(/[^a-z0-9_.-]/gi,'').slice(0,80) || `element-${index + 1}`,
         name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável'})[type]).slice(0,120), type,
         choice_block_id:String(input.choice_block_id || '').slice(0,160), choice_option_id:String(input.choice_option_id || '').slice(0,160),
@@ -91,6 +92,11 @@
         font_size:number(input.font_size,36,12,160), color:/^#[0-9a-f]{6}$/i.test(input.color || '') ? input.color : '#ffffff',
         align:['left','center','right'].includes(input.align) ? input.align : 'center'
       };
+      const groupId = String(input.group_id || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
+      if (groupId) normalized.group_id = groupId;
+      if (has(input,'authoring_visible')) normalized.authoring_visible = input.authoring_visible !== false;
+      if (has(input,'locked')) normalized.locked = input.locked === true;
+      return normalized;
     };
     const elements = value => {
       const seen = new Set();
@@ -118,9 +124,8 @@
         transition_ms:[200,400,700].includes(Number(input.transition_ms)) ? Number(input.transition_ms) : 400
       };
     };
-    const has = (object,key) => Object.prototype.hasOwnProperty.call(object || {},key);
     const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport'].includes(key));
-    const elementKeys = Object.keys(element()).filter(key => key !== 'id');
+    const elementKeys = [...new Set([...Object.keys(element()),'group_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
     const elementId = value => String(value || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
     const idList = value => [...new Set((Array.isArray(value) ? value : []).slice(0,80).map(elementId).filter(Boolean))];
     const motionKeys = ['x','y','width','height','scale','rotation','opacity','anchor_x','anchor_y'];
@@ -159,7 +164,27 @@
       });
       return [...byBlock.values()];
     };
-    const presentation = value => ({...sceneState(value),cues:sceneCues(value?.cues)});
+    const layerGroups = value => {
+      const ids = new Set(), groups = [];
+      (Array.isArray(value) ? value : []).slice(0,80).forEach(raw => {
+        const id = elementId(raw?.id), parent_id = raw?.parent_id ? elementId(raw.parent_id) : '';
+        if (!id || ids.has(id)) return;
+        ids.add(id);
+        const group={id,name:String(raw?.name || 'Grupo').trim().slice(0,120) || 'Grupo',parent_id,element_ids:idList(raw?.element_ids)};
+        if (has(raw,'authoring_visible')) group.authoring_visible=raw.authoring_visible!==false;
+        if (has(raw,'locked')) group.locked=raw.locked===true;
+        groups.push(group);
+      });
+      const groupIds = new Set(groups.map(group => group.id));
+      return groups.filter(group => (!group.parent_id || groupIds.has(group.parent_id)) && !group.element_ids.some(id => groupIds.has(id)));
+    };
+    const presentation = value => {
+      const input = value && typeof value === 'object' ? value : {}, result = {...sceneState(input),cues:sceneCues(input.cues)};
+      if (input.layer_groups_version === 1) result.layer_groups_version = 1;
+      if (input.authoring_controls_version === 1) result.authoring_controls_version = 1;
+      if (Object.prototype.hasOwnProperty.call(input,'groups') || input.layer_groups_version === 1) result.groups = layerGroups(input.groups);
+      return result;
+    };
     const same = (left,right) => left === right || Boolean(left && right && typeof left === 'object' && typeof right === 'object' && Object.keys(left).length === Object.keys(right).length && Object.keys(left).every(key => has(right,key) && left[key] === right[key]));
     const sceneDiff = (previous,next) => {
       const before = sceneState(previous), after = sceneState(next), byId = new Map(before.elements.map(item => [item.id,item]));
@@ -168,7 +193,7 @@
         settings:Object.fromEntries(sceneKeys.filter(key => !same(before[key],after[key])).map(key => [key,after[key]])),
         set:after.elements.flatMap(item => {
           const old = byId.get(item.id);
-          const values = Object.fromEntries(elementKeys.filter(key => !old || !same(old[key],item[key])).map(key => [key,item[key]]));
+          const values = Object.fromEntries(elementKeys.filter(key => key !== 'group_id' && (!old || !same(old[key],item[key]))).map(key => [key,item[key]]));
           return Object.keys(values).length ? [{id:item.id,...values}] : [];
         }),
         remove:before.elements.filter(item => !after.elements.some(candidate => candidate.id === item.id)).map(item => item.id),

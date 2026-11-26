@@ -2154,6 +2154,7 @@
       let documents = [];
       let libraryFolders = [];
       let authoringProject = HeartspaceDocsAuthoring.createProject();
+      let authoringSchemaVersion = 1;
       let authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
       let authoringRegistrySettingsDirty = false;
       let registrySync = HeartspaceDocsSync.registryState();
@@ -2831,7 +2832,7 @@
         if (!documentList.contains(event.relatedTarget)) documentDropIndicator()?.setAttribute('hidden', '');
       });
       const authoringCache = (overrides = {}) => HeartspaceDocsAuthoring.cacheFromEditor({
-        project:authoringProject, documents, libraryFolders, activeDocumentId, selectedCollectionId,
+        project:authoringProject, authoringSchemaVersion, documents, libraryFolders, activeDocumentId, selectedCollectionId,
         registry:authoringRegistry, registrySettingsDirty:authoringRegistrySettingsDirty, syncWorkspace:{schema_version:1,registry:registrySync,books:bookTransport?.serialize() || bookSyncState,recovery:syncRecovery}, ...overrides
       });
       const writeLibraryCache = cache => {
@@ -2901,7 +2902,7 @@
       const restoreLibrary = saved => {
         const sync = HeartspaceDocsSync.workspace(saved.syncWorkspace), nextBookSync = HeartspaceDocsBooks.read(sync.books);
         const nextDocuments = saved.documents.map(makeRecord), nextFolders = saved.libraryFolders.map(normalizeFolder);
-        authoringProject = saved.project; authoringRegistry = saved.registry;
+        authoringProject = saved.project; authoringSchemaVersion=saved.authoringSchemaVersion||1; authoringRegistry = saved.registry;
         authoringRegistrySettingsDirty = saved.registrySettingsDirty;
         registrySync = sync.registry; syncRecovery = sync.recovery;
         bookSyncState = nextBookSync; bookTransport?.reset(bookSyncState);
@@ -3795,10 +3796,23 @@
         snapshot.querySelectorAll('[data-image-insertion-marker]').forEach(marker => marker.remove());
         return snapshot.innerHTML;
       };
+      const recordAuthoringSchema = record => {
+        const presentations=(record?.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+        if(presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>Object.hasOwn(group,'authoring_visible')||Object.hasOwn(group,'locked'))||(presentation.elements||[]).some(element=>Object.hasOwn(element,'authoring_visible')||Object.hasOwn(element,'locked'))))return 3;
+        return presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id))?2:1;
+      };
+      const recordUsesAuthoringV2 = record => recordAuthoringSchema(record) >= 2;
       const setSaveStatus = (message, state = '') => {
         if (currentProjectId && /^(Sincronizado com|Recursos sincronizados)/.test(message) && (documents.some(record => record.dirty || record.remoteConflict || record.syncAttempt) || registrySync.dirty || registrySync.conflict || registrySync.attempt || bookTransport?.pending())) { message = 'Há alterações locais ou versões para revisar antes de concluir a sincronização.'; state = 'pending'; }
         const pendingLocalWrite = [...localWriteTasks.values()].includes(storageKey);
         if (pendingLocalWrite) state = 'pending';
+        const activeRecord = documents.find(record => record.id === activeDocumentId);
+        const authoringSchema=recordAuthoringSchema(activeRecord);
+        if (currentProjectId && recordUsesAuthoringV2(activeRecord) && !localPersistenceWarning && !authoringStorageError) {
+          const localSavePending = pendingEditorSave || pendingLocalWrite;
+          message = `${localSavePending ? 'Salvando' : 'Salvo'} neste dispositivo. A sincronização está indisponível para o formato autoral v${authoringSchema} até existir suporte remoto; alterações deste documento não foram enviadas.`;
+          state = 'pending';
+        }
         if (/^(Salvo neste|Rascunho salvo|Registro narrativo salvo|Planejamento salvo)/.test(message)) {
           if (localPersistenceWarning) { message = localPersistenceWarning; state = 'pending'; }
           else if ([...localWriteTasks.values()].includes(storageKey)) { message = 'Salvando recuperação local…'; state = 'pending'; }
@@ -6607,7 +6621,11 @@
         if (HeartspaceDocsHistoryPatch.equal(normalizeNarrativePresentation(context.presentation),normalizeNarrativePresentation(presentation))) return true;
         const historyMutation = captureSceneAuthoringMutation(sequence);
         const base = normalizeNarrativePresentation(sequence.presentation);
-        if (context.index < 0) sequence.presentation = normalizeNarrativePresentation({...presentation,cues:base.cues});
+        if (context.index < 0) {
+          const next=normalizeNarrativePresentation({...presentation,cues:base.cues}),ids=new Set(next.elements.map(item=>item.id));
+          if(base.groups?.length||base.layer_groups_version===1)next.groups=(base.groups||[]).map(group=>({...group,element_ids:[...new Set([...group.element_ids,...next.elements.filter(item=>item.group_id===group.id).map(item=>item.id)])].filter(id=>ids.has(id))}));
+          sequence.presentation=normalizeNarrativePresentation(next);
+        }
         else {
           const existing = base.cues.find(cue => cue.block_id === context.blockId);
           const before = existing?.reset ? HeartspaceNarrativeMedia.sceneState(base) : HeartspaceNarrativeMedia.resolveScene(base,context.nodes,context.index - 1);
@@ -6645,10 +6663,23 @@
         commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation); renderSceneMomentControls(); queueSave(); return true;
       };
+      const writeSceneStructure = (expected,presentation) => {
+        const context=sceneMomentContext();
+        if(context.key!==expected||!context.editable)return false;
+        const sequence=activeNarrativeSequence();if(!sequence)return false;
+        const base=normalizeNarrativePresentation(sequence.presentation),next=normalizeNarrativePresentation(presentation);
+        if(HeartspaceDocsHistoryPatch.equal(base,next))return true;
+        if(next.authoring_controls_version===1)authoringSchemaVersion=Math.max(authoringSchemaVersion,3);
+        // Once confirmed, the compatibility marker survives undo so an authoring
+        // action cannot silently downgrade a v3 source while redo remains available.
+        if(next.authoring_controls_version===1&&base.authoring_controls_version!==1)sequence.presentation=normalizeNarrativePresentation({...base,authoring_controls_version:1});
+        const historyMutation=captureSceneAuthoringMutation(sequence);sequence.presentation=next;commitSceneAuthoringMutation(historyMutation,sequence);
+        applyNarrativePresentationPreview(sceneMomentContext().presentation);renderSceneMomentControls();queueSave();return true;
+      };
       const sceneComposer = HeartspaceSceneComposer.create({
         parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
         pickAsset:(kind,options) => projectAssets.pick(kind,options),describeAsset:projectAssets.describe,
-        read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeAnimation:writeSceneAnimation,
+        read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeStructure:writeSceneStructure,writeAnimation:writeSceneAnimation,
         mergeGesture:(before,after,current) => HeartspaceDocsHistoryPatch.apply(current,HeartspaceDocsHistoryPatch.diff(before,after),true),
         previewParallax:enabled => narrativeSampleScene.setParallaxPreview(enabled),
         previewAnimationAt:(id,at) => {
@@ -8611,6 +8642,7 @@
           if (contextEpoch !== projectContextEpoch) return;
           storageKey = `${cloudCacheBase}:window:${cloudWindowId}`;
           authoringProject = HeartspaceDocsAuthoring.createProject({id:projectId,name:projectName || 'Projeto'});
+          authoringSchemaVersion=1;
           authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
           authoringRegistrySettingsDirty = false; registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; legacyProjectCacheKey = desktopMode ? '' : `heartspace-docs-project-${projectId}`; syncProtocolUnavailable = false; clearTimeout(syncRetryTimer); syncRetryTimer = 0; authoringStorageError = ''; legacyLibraryBackup = '';
           documents = []; libraryFolders = []; activeDocumentId = ''; selectedCollectionId = '';
@@ -8722,6 +8754,11 @@
         const targetProjectId = currentProjectId, context = syncContextKey();
         const current = () => context === syncContextKey() && ownsCloudWorkspace() && documents.includes(record) && !desktopBlocked && !authoringStorageError && canEditProject({capabilities:projectCapabilities});
         if (!targetProjectId || !currentAccessToken || (record.projectId && record.projectId !== targetProjectId) || record.remoteConflict || record.remoteMissing || isRecordSyncing(record) || syncProtocolUnavailable || !current()) return;
+        const authoringSchema=recordAuthoringSchema(record);
+        if (authoringSchema >= 2) {
+          record.dirty=true;record.syncError=`O documento usa o formato autoral ${authoringSchema}. A sincronização aguarda compatibilidade remota; as alterações permanecem locais e pendentes. Salve um arquivo .hdocs para preservar e transportar o trabalho.`;dirtyDocumentIds.add(record.id);
+          try{await persistLibrary();}catch(_){}renderLibrary();statusMessage(record.syncError,'pending');reportDesktopDocumentState();return;
+        }
         const syncKey = recordSyncKey(record); remoteSaveInProgress.add(syncKey);
         let retryAfterSave = false;
         try {
@@ -9111,7 +9148,7 @@
         currentAccessToken = ''; currentUser = null; projectCapabilities = {}; projectPicker.hidden = true;
         try { sessionStorage.removeItem('heartspace-docs-active-project'); } catch (_) {}
         if (!localWriteFailed) {
-          currentProjectId = ''; storageKey = ''; cloudCacheBase = ''; legacyProjectCacheKey = ''; authoringProject = HeartspaceDocsAuthoring.createProject();
+          currentProjectId = ''; storageKey = ''; cloudCacheBase = ''; legacyProjectCacheKey = ''; authoringProject = HeartspaceDocsAuthoring.createProject(); authoringSchemaVersion=1;
           documents = []; libraryFolders = []; dirtyDocumentIds.clear(); activeDocumentId = ''; selectedCollectionId = '';
           registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
           authoringRegistrySettingsDirty = false; narrativeCharacters = []; narrativeVariables = []; translationGlossary = []; narrativeGameViewport = null; narrativeGameSettingsDirty = false;

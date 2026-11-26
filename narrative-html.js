@@ -494,6 +494,13 @@
   const buildHtml = story => {
     // Public players include frozen media, never local project paths or catalog identities.
     story = JSON.parse(JSON.stringify(story,(key,value) => key === 'project_ref' ? undefined : value));
+    // Scene hierarchy, authoring visibility and edit locks are private authoring
+    // controls. The runtime remains flat and continues to use narrative `visible`.
+    (story.sequences||[]).forEach(sequence=>{
+      const presentation=sequence.presentation;if(!presentation)return;
+      (presentation.elements||[]).forEach(item=>{delete item.group_id;delete item.authoring_visible;delete item.locked;});
+      delete presentation.groups;delete presentation.layer_groups_version;delete presentation.authoring_controls_version;
+    });
     story = { ...story, persistence:{
       id:fingerprint(JSON.stringify([story.storage_id || [story.title,story.start_event_id],story.locale || 'pt-BR'])),
       revision:fingerprint(JSON.stringify({start:story.start_event_id,variables:story.variable_registry,characters:story.character_registry?.map(character => ({id:character.id,name:character.name})),sequences:(story.sequences || []).map(sequence => ({event_id:sequence.event_id,nodes:(sequence.nodes || []).map(node => {

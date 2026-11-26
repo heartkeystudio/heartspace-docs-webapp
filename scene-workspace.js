@@ -26,7 +26,7 @@
     sceneSettings.forEach(n=>composition.append(n));
     const add=body.querySelector('[data-action="image"]').parentElement;
     left.querySelector('[data-left-page="resources"]').append(add);
-    const list=body.querySelector('[data-list]');left.querySelector('[data-left-page="layers"]').append(list.closest('label'));
+    const layers=left.querySelector('[data-left-page="layers"]'),list=body.querySelector('[data-list]');layers.append(list.closest('label'),body.querySelector('[data-group-actions]'),body.querySelector('[data-layer-tree]'),body.querySelector(':scope > small'));
     const actions=body.querySelector('[data-action="up"]').parentElement;toolbar.append(actions);
     const properties=body.querySelector('[data-properties]');right.querySelector('[data-scope="element"]').append(properties);
     const status=body.querySelector('[role="status"]')||body.querySelector('.scene-composer-status');if(status)panel.append(status);
@@ -36,12 +36,12 @@
     const undo=moments.querySelector('[data-scene-history]');if(undo)toolbar.prepend(undo.parentElement);
     const sidebar=doc.querySelector('#sidebar'),home=doc.createComment('Docs sidebar home');sidebar.before(home);
     const sequenceLabel=doc.querySelector('.sequence-context'),sequenceHome=doc.createComment('Sequence context home');sequenceLabel.before(sequenceHome);
-    let lastMoment='',selected='',currentLeft='layers',explicitScope=false;
+    let lastMoment='',selected='',selectionCount=0,currentLeft='layers',explicitScope=false;
     const toggleScope=()=>{
       const value=scope.value;
       right.querySelectorAll('[data-scope]').forEach(n=>n.hidden=n.dataset.scope!==(value==='scene'||value==='moment'?'composition':value));
-      right.querySelector('[data-empty-selection]').hidden=Boolean(selected);
-      right.querySelector('[data-scope-help]').textContent=value==='experience'?'Formato geral da experiência. Não altera o tema de autoria.':value==='element'?selected?'Propriedades do elemento selecionado.':'Nenhum elemento selecionado.':value==='moment'?'Composição no momento ativo. Regras de herança existentes.':'Composição inicial da sequência.';
+      right.querySelector('[data-empty-selection]').hidden=selectionCount===1;
+      right.querySelector('[data-scope-help]').textContent=value==='experience'?'Formato geral da experiência. Não altera o tema de autoria.':value==='element'?selectionCount>1?'Transformações coletivas dos elementos selecionados; propriedades individuais aparecem para um único elemento.':selected?'Propriedades do elemento selecionado.':'Nenhum elemento selecionado.':value==='moment'?'Composição no momento ativo. Regras de herança existentes.':'Composição inicial da sequência.';
     };
     const sync=()=>{
       const active=doc.body.dataset.workArea==='scene';
@@ -63,7 +63,7 @@
     const updateMoment=()=>{if(momentSelect.value)lastMoment=momentSelect.value;if(!explicitScope||scope.value!=='experience'){scope.value=selected?'element':momentSelect.value?'moment':'scene';explicitScope=false;}toggleScope();};
     momentSelect.addEventListener('change',updateMoment);
     scope.addEventListener('change',()=>{explicitScope=true;if(scope.value==='scene'&&momentSelect.value){momentSelect.value='';momentSelect.dispatchEvent(new Event('change',{bubbles:true}));}else if(scope.value==='moment'&&!momentSelect.value){momentSelect.value=lastMoment||[...momentSelect.options].find(o=>o.value)?.value||'';momentSelect.dispatchEvent(new Event('change',{bubbles:true}));}toggleScope();});
-    panel.addEventListener('scene-selection-change',event=>{selected=event.detail.name||'';if(!explicitScope||scope.value!=='experience')scope.value=selected?'element':momentSelect.value?'moment':'scene';toggleScope();});
+    panel.addEventListener('scene-selection-change',event=>{selected=event.detail.name||'';selectionCount=Number(event.detail.count)||0;const hint=right.querySelector('[data-empty-selection]');hint.textContent=selectionCount>1?`${selectionCount} elementos selecionados. As propriedades individuais ficam disponíveis ao selecionar apenas um elemento.`:'Selecione um elemento no palco ou em Camadas.';if(!explicitScope||scope.value!=='experience')scope.value=selectionCount?'element':momentSelect.value?'moment':'scene';toggleScope();});
     // Resizers are local UI state, with pointer cancellation and keyboard alternatives.
     const narrow=doc.defaultView.matchMedia('(max-width:740px)');
     for(const [side,target,orientation,min,max,initial] of [['left',left,'vertical',180,380,224],['right',right,'vertical',220,420,286],['bottom',bottom,'horizontal',96,280,164]]){
