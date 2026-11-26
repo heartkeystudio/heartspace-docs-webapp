@@ -373,7 +373,7 @@
       if(field==='visibility'&&next===(item.authoring_visible!==false)||field==='lock'&&next===(item.locked===true))return;
       const upgrading=value.authoring_controls_version!==1;
       if(!ensureControlsSchema(value))return;
-      if(next)item[prop]=true;else delete item[prop];
+      item[prop]=next;
       if(commitStructure(value,state,`${type==='group'?'Grupo':'Elemento'} ${field==='visibility'?'visibilidade':'bloqueio'} atualizado.`)&&upgrading)status.textContent=`Formato autoral v3: ${controlsNotice}`;
     };
       const groupAction = (action,target='') => {
