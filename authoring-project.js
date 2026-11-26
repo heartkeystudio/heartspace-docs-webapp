@@ -71,14 +71,19 @@
   function validateLayerGroups(presentation, schemaVersion) {
     const groups = presentation.groups, elements = Array.isArray(presentation.elements) ? presentation.elements : [];
     const usesGroups = Array.isArray(groups) && groups.length > 0 || elements.some(element => element?.group_id) || presentation.layer_groups_version === 1;
+    const usesAuthoringControls = presentation.authoring_controls_version === 1 || groups?.some(group => own(group,'authoring_visible') || own(group,'locked')) || elements.some(element => own(element,'authoring_visible') || own(element,'locked'));
     if (schemaVersion === 1 && usesGroups) fail('grupos persistentes exigem a versão autoral 2. O conteúdo existente foi preservado.');
-    if (schemaVersion === 2 && presentation.layer_groups_version !== 1 && usesGroups) fail('marcador de hierarquia incompatível.');
-    if (schemaVersion !== 2) return;
+    if (schemaVersion < 3 && usesAuthoringControls) fail('visibilidade e bloqueio de autoria exigem a versão autoral 3. O conteúdo existente foi preservado.');
+    if (schemaVersion >= 2 && presentation.layer_groups_version !== 1 && usesGroups) fail('marcador de hierarquia incompatível.');
+    if (schemaVersion >= 3 && usesAuthoringControls && presentation.authoring_controls_version !== 1) fail('marcador de controles de autoria incompatível.');
+    if (presentation.authoring_controls_version !== undefined && presentation.authoring_controls_version !== 1) fail('versão dos controles de autoria inválida.');
+    if (schemaVersion < 2) return;
     if (presentation.layer_groups_version !== undefined && presentation.layer_groups_version !== 1) fail('versão de camadas inválida.');
     if (groups !== undefined && (!Array.isArray(groups) || groups.length > 80)) fail('hierarquia de camadas inválida.');
     const ids = new Set(elements.map(element => element?.id)), groupsById = new Map(), membership = new Map();
     for (const group of groups || []) {
       if (!object(group) || !id(group.id) || group.id.length > 80 || ids.has(group.id) || groupsById.has(group.id) || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 120 || typeof group.parent_id !== 'string' || !Array.isArray(group.element_ids) || group.element_ids.length > 80) fail('grupo persistente inválido.');
+      if (own(group,'authoring_visible') && typeof group.authoring_visible !== 'boolean' || own(group,'locked') && typeof group.locked !== 'boolean') fail('configuração de visibilidade ou bloqueio do grupo inválida.');
       groupsById.set(group.id,group);
       for (const elementId of group.element_ids) {
         if (!ids.has(elementId) || membership.has(elementId)) fail('um elemento possui vínculo de grupo inválido.');
@@ -91,6 +96,7 @@
       while (parent) { if (seen.has(parent)) fail('ciclo na hierarquia de grupos.'); seen.add(parent); parent = groupsById.get(parent)?.parent_id || ''; }
     }
     for (const element of elements) {
+      if (own(element,'authoring_visible') && typeof element.authoring_visible !== 'boolean' || own(element,'locked') && typeof element.locked !== 'boolean') fail('configuração de visibilidade ou bloqueio do elemento inválida.');
       const groupId = element?.group_id || '';
       if (groupId && (!groupsById.has(groupId) || membership.get(element.id) !== groupId)) fail('vínculo entre elemento e grupo inválido.');
       if (!groupId && membership.has(element?.id)) fail('composição de grupo inconsistente.');
@@ -101,7 +107,7 @@
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
-    if (![1,2].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if (![1,2,3].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
     if (!object(source.project) || !id(source.project.id) || typeof source.project.name !== 'string') fail('identidade do projeto inválida.');
     if (!Array.isArray(source.books) || !Array.isArray(source.documents) || !object(source.resources)) fail('estrutura autoral incompleta.');
     const books = new Map(), documents = new Set();
@@ -177,8 +183,10 @@
         order:Number.isFinite(record.sortOrder) ? record.sortOrder : 0, updatedAt:string(record.savedAt)
       };
     });
-    const usesV2 = state.authoringSchemaVersion === 2 || (state.documents || []).some(record => (record.narrativeSequences || []).some(sequence => sequence?.presentation?.layer_groups_version === 1 || (sequence?.presentation?.groups || []).length || (sequence?.presentation?.elements || []).some(element => element?.group_id)));
-    return validate({format:FORMAT, schema_version:usesV2 ? 2 : 1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
+    const presentations=(state.documents||[]).flatMap(record=>record.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+    const usesV3=state.authoringSchemaVersion===3||presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>own(group,'authoring_visible')||own(group,'locked'))||(presentation.elements||[]).some(element=>own(element,'authoring_visible')||own(element,'locked')));
+    const usesV2=state.authoringSchemaVersion>=2||presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id));
+    return validate({format:FORMAT, schema_version:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
   }
 
   function toEditor(value) {

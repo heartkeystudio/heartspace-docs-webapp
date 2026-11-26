@@ -216,3 +216,23 @@ test('C26 exported runtime flattens authoring groups and preserves every resolve
     assert.deepEqual(strip(actual),strip(expected));
   }
 });
+test('C27 v3 authoring controls survive normalization, cache and local re-open while v1/v2 stay opt-in',()=>{
+  const v1=makeSource(),v2=makeSource(),source=makeSource(),p=scene(source);
+  assert.equal(authoring.fromEditor(authoring.toEditor(v1)).schema_version,1);
+  p.layer_groups_version=1;p.groups=[{id:'group-room',name:'Sala',parent_id:'',element_ids:['door','label'],authoring_visible:false,locked:true}];
+  p.elements[0].group_id='group-room';p.elements[1].group_id='group-room';p.elements[0].authoring_visible=false;p.elements[1].locked=true;p.authoring_controls_version=1;source.schema_version=3;
+  authoring.validate(source);const invalidV2=makeSource();invalidV2.schema_version=2;const v2Scene=scene(invalidV2);v2Scene.authoring_controls_version=1;v2Scene.elements[0].locked=true;assert.throws(()=>authoring.validate(invalidV2),/versão autoral 3/);
+  const state=authoring.toEditor(source),cache=authoring.cacheFromEditor(state),reopened=authoring.readCache(cache),saved=authoring.fromEditor(reopened),result=scene(saved);
+  assert.equal(saved.schema_version,3);assert.equal(result.authoring_controls_version,1);assert.deepEqual(plain(result.groups),plain(p.groups));
+  assert.equal(result.elements.find(item=>item.id==='door').authoring_visible,false);assert.equal(result.elements.find(item=>item.id==='label').locked,true);
+  const packed=context.HeartspaceNarrativePackage.buildPackage(fixtures.story(saved)),runtime=packed.story.sequences[0].presentation;
+  assert.equal(runtime.groups,undefined);assert.equal(runtime.authoring_controls_version,undefined);assert.equal(runtime.elements.some(item=>'locked' in item||'authoring_visible' in item),false);assert.equal(runtime.elements.find(item=>item.id==='door').visible,true);
+  const html=extract(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(saved))),htmlPresentation=html.sequences[0].presentation;
+  assert.equal(htmlPresentation.groups,undefined);assert.equal(htmlPresentation.authoring_controls_version,undefined);assert.equal(htmlPresentation.elements.some(item=>'locked'in item||'authoring_visible'in item||'group_id'in item),false);
+  const retainedV2=makeSource();retainedV2.schema_version=2;scene(retainedV2).layer_groups_version=1;scene(retainedV2).groups=[];assert.equal(authoring.fromEditor(authoring.toEditor(retainedV2)).schema_version,2);
+  const emptied=authoring.toEditor(saved);emptied.documents=[];assert.equal(authoring.fromEditor(emptied).schema_version,3,'A exclusão do último documento apagou a versão opt-in já confirmada.');
+});
+test('C28 future incompatible schema is rejected before the supplied source can be replaced',()=>{
+  const source=makeSource(),original=JSON.stringify(source);source.schema_version=4;
+  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:4}));
+});

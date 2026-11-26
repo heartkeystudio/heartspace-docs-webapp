@@ -294,3 +294,12 @@ pertence ao capítulo. Número automático é calculado pela ordem, sem alterar 
 texto do título. Fonte v1 e contratos de sincronização atuais são mantidos.
 Detalhes de uso, precedência, transporte e etapas seguintes em
 [BOOK_TYPOGRAPHY.md](BOOK_TYPOGRAPHY.md).
+
+
+## Controles de autoria — fonte v3 opt-in
+
+A primeira persistência de visibilidade ou bloqueio próprios de Camadas evolui a fonte `.hdocs` para schema 3. A apresentação afetada recebe `authoring_controls_version: 1`; elementos e grupos podem registrar `authoring_visible` e `locked`. A ausência desses campos significa visível e desbloqueado. A marca de versão é preservada após desfazer, remoção dos controles ou exclusão de grupos/documentos, sem downgrade automático. Documentos v1 e v2 que não usam esses controles permanecem nos formatos originais.
+
+`authoring_visible` é uma máscara exclusiva de autoria, combinada com os grupos ancestrais sem substituir as preferências locais dos descendentes. Ela é separada de `elements[].visible`, que continua representando a visibilidade narrativa existente. `locked` impede edição e transformação no editor; não altera reprodução, interações, condições ou efeitos. A exportação narrativa remove esses metadados e mantém elementos planos, sua visibilidade narrativa, vínculos e ordem.
+
+Versões anteriores que não reconhecem schema 3 rejeitam o documento antes de instalá-lo ou gravá-lo. A sincronização remota continua bloqueada para schemas 2 e 3 até confirmação de suporte dos consumidores remotos; gravação local permanece distinta de sincronização.

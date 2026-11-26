@@ -30,6 +30,7 @@
     .scene-multi-actions button:focus-visible,.scene-multi-tools [data-multi-handle]:focus-visible{outline:3px solid #ffe09b;outline-offset:2px}
     .scene-multi-marquee{position:absolute;z-index:119;border:1px solid #40a9ff;background:#40a9ff22;pointer-events:none}
     .scene-layer-tree{display:grid;gap:3px;margin:8px 0}.scene-layer-tree ul{list-style:none;margin:0;padding-left:16px}.scene-layer-tree-row{display:flex;align-items:center;gap:4px;min-width:0}.scene-layer-tree-row>[data-layer-select]{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-layer-tree-row button{min-height:26px;padding:3px 6px}.scene-layer-tree-row [data-layer-select][aria-pressed=true]{outline:2px solid #40a9ff}.scene-layer-tree-row [data-layer-collapse]{width:26px;min-width:26px}
+    .scene-layer-tree-row [data-layer-control]{width:30px;min-width:30px;padding:2px}.scene-layer-tree-row [data-layer-control][aria-pressed=true]{border-color:#ffe09b;color:#ffe09b}.scene-editing .scene-element.scene-locked{cursor:not-allowed!important}.scene-editing .scene-element.scene-effectively-hidden{visibility:hidden!important}
     .scene-parallax-preview .scene-element{pointer-events:none!important;outline:none!important}
     .scene-parallax-preview .scene-element-tools{display:none!important}
     .scene-parallax-preview .scene-element[data-element-type=hotspot]>.scene-element-content{visibility:hidden!important}
@@ -51,7 +52,7 @@
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Elementos · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select></label>
       <div class="scene-element-actions" data-group-actions><button type="button" data-layer-action="group">Agrupar seleção</button><button type="button" data-layer-action="ungroup">Desagrupar</button><button type="button" data-layer-action="duplicate">Duplicar grupo</button><button type="button" data-layer-action="delete">Remover grupo</button></div>
-      <small>Ctrl/Cmd ou Shift seleciona vários elementos. Arraste uma área vazia do palco para selecionar por área. Agrupar organiza a hierarquia sem mudar a ordem de desenho.</small>
+      <small>Ctrl/Cmd ou Shift seleciona vários elementos. Arraste uma área vazia do palco para selecionar por área. Agrupar organiza a hierarquia sem mudar a ordem de desenho. Os controles de visibilidade e bloqueio desta árvore são de autoria; não alteram condições narrativas.</small>
       <div class="scene-layer-tree" data-layer-tree role="tree" aria-label="Hierarquia persistente de camadas"></div>
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
       <section data-properties hidden aria-label="Propriedades do elemento"><div class="scene-composer-body">
@@ -113,7 +114,7 @@
         </div>
       </div></div>`;
     properties.querySelector('.scene-composer-body').append(motionEditor);
-    const authoredControls = [...panel.querySelectorAll('input,textarea,select,button')];
+    const authoredControls = [...properties.querySelectorAll('input,textarea,select,button'),...['up','down','duplicate','remove'].map(action=>panel.querySelector(`[data-action="${action}"]`))];
     const fields = [...panel.querySelectorAll('[data-field]')];
     const sceneFields = new Set(['dialogue_visible','parallax_enabled','parallax_strength','parallax_smoothing_ms']);
     const percentFields = new Set(['scale','opacity','parallax_strength']);
@@ -154,11 +155,19 @@
       const value = linked ? JSON.stringify([item.choice_block_id,item.choice_option_id]) : '';
       const field = [...interactionSelect.options].find(option => option.value === value);
       if (linked && !field) interactionSelect.append(new Option('Vínculo ausente · escolha outra opção',value));
-      interactionSelect.value = value; interactionSelect.disabled = !state.editable || !item;
+      interactionSelect.value = value; interactionSelect.disabled = !state.editable || !item || authoringFlags(state.base||state.presentation,item).locked;
       panel.querySelector('[data-interaction-help]').textContent = linked && (!field || field.disabled) ? 'Este vínculo está ausente ou ambíguo. Selecione uma opção válida; a posição na lista não altera o vínculo.' : linked ? 'Vinculado por identificadores estáveis: reordenar blocos ou opções preserva esta ação.' : nodes.some(node => node.type === 'choice') ? 'Selecione a opção que este elemento deve acionar.' : 'Adicione um bloco de escolha à sequência em Escrever para configurar a interação.';
     };
     const id = () => `element-${win.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)}`;
     const groupId = () => `group-${win.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)}`;
+    const authoringFlags = (value,item) => {
+      const groups=new Map((value?.groups||[]).map(group=>[group.id,group]));let visible=item?.authoring_visible!==false,locked=item?.locked===true,parent=item?.group_id||'';
+      if(!parent&&groups.has(item?.id))parent=item.id;
+      const seen=new Set();while(parent&&groups.has(parent)&&!seen.has(parent)){seen.add(parent);const group=groups.get(parent);visible=visible&&group.authoring_visible!==false;locked=locked||group.locked===true;parent=group.parent_id||'';}
+      return {visible,locked};
+    };
+    const subtreeLocked = (value,ids) => [...ids].some(elementId=>{const item=(value.elements||[]).find(element=>element.id===elementId);return item&&authoringFlags(value,item).locked;});
+    const controlsNotice = 'Este documento passará ao formato autoral v3 ao salvar para preservar visibilidade e bloqueio de autoria. O salvamento continuará local; a sincronização com projetos remotos ficará indisponível até haver suporte remoto ao formato v3. Versões anteriores não abrirão este documento. Exporte um arquivo .hdocs para transportar o trabalho.';
     const descendants = (value,id) => {
       const found=new Set(), groups=new Map((value.groups||[]).map(group=>[group.id,group]));
       const visit=groupId=>{const group=groups.get(groupId);if(!group)return;group.element_ids.forEach(elementId=>found.add(elementId));(value.groups||[]).filter(child=>child.parent_id===groupId).forEach(child=>visit(child.id));};visit(id);return found;
@@ -172,15 +181,22 @@
         nodes.forEach(({type,item})=>{
           const row=doc.createElement('div');row.className='scene-layer-tree-row';const li=doc.createElement('div');li.setAttribute('role','treeitem');li.setAttribute('aria-selected',String(type==='group'?selectedGroup===item.id:selectedIds.has(item.id)));
           if(type==='group'){
+            const flags=authoringFlags(value,item),parentFlags=item.parent_id?authoringFlags(value,{id:item.parent_id}):{visible:true,locked:false};
             const children=groups.some(group=>group.parent_id===item.id)||item.element_ids.length>0,collapsed=collapsedGroups.has(item.id);li.setAttribute('aria-expanded',String(children&&!collapsed));
             const collapse=doc.createElement('button');collapse.type='button';collapse.dataset.layerCollapse=item.id;collapse.setAttribute('aria-label',(collapsed?'Expandir ':'Recolher ')+'grupo '+item.name);collapse.textContent=collapsed?'▸':'▾';collapse.disabled=!children;row.append(collapse);
             const select=doc.createElement('button');select.type='button';select.dataset.layerSelect='group';select.dataset.groupId=item.id;select.textContent='▣';select.setAttribute('aria-pressed',String(selectedGroup===item.id));select.setAttribute('aria-label',`Selecionar grupo ${item.name}, ${descendants(value,item.id).size} elementos`);row.append(select);
             const name=doc.createElement('input');name.type='text';name.value=item.name;name.maxLength=120;name.dataset.groupName=item.id;name.setAttribute('aria-label',`Nome do grupo ${item.name}`);name.disabled=!editable;row.append(name);
-            for(const [action,label,glyph] of [['nest','Aninhar grupo','↳'],['outdent','Retirar grupo do nível','↰'],['ungroup','Desagrupar','⊟'],['duplicate','Duplicar grupo','⧉']]){const button=doc.createElement('button');button.type='button';button.dataset.layerAction=action;button.dataset.groupId=item.id;button.setAttribute('aria-label',`${label}: ${item.name}`);button.title=label;button.textContent=glyph;button.disabled=!editable;row.append(button);}
+            const visibility=doc.createElement('button');visibility.type='button';visibility.dataset.layerControl='visibility';visibility.dataset.layerType='group';visibility.dataset.groupId=item.id;visibility.dataset.effective=String(flags.visible);visibility.setAttribute('aria-pressed',String(item.authoring_visible!==false));visibility.setAttribute('aria-label',`${item.authoring_visible===false?'Mostrar':'Ocultar'} grupo ${item.name}; ${flags.visible?'visível':'oculto'} efetivamente${parentFlags.visible?'':' por grupo superior'}`);visibility.title=`${flags.visible?'Visível':'Oculto'} efetivamente`;visibility.textContent=item.authoring_visible===false?'◌':'◉';visibility.disabled=!editable;row.append(visibility);
+            const lock=doc.createElement('button');lock.type='button';lock.dataset.layerControl='lock';lock.dataset.layerType='group';lock.dataset.groupId=item.id;lock.dataset.effective=String(flags.locked);lock.setAttribute('aria-pressed',String(item.locked===true));lock.setAttribute('aria-label',`${item.locked===true?'Desbloquear':'Bloquear'} grupo ${item.name}; ${flags.locked?'bloqueado':'desbloqueado'} efetivamente${parentFlags.locked?' por grupo superior':''}`);lock.title=`${flags.locked?'Bloqueado':'Desbloqueado'} efetivamente`;lock.textContent=item.locked===true?'🔒':'🔓';lock.disabled=!editable;row.append(lock);
+            const groupLocked=flags.locked||subtreeLocked(value,descendants(value,item.id));
+            for(const [action,label,glyph] of [['nest','Aninhar grupo','↳'],['outdent','Retirar grupo do nível','↰'],['ungroup','Desagrupar','⊟'],['duplicate','Duplicar grupo','⧉']]){const button=doc.createElement('button');button.type='button';button.dataset.layerAction=action;button.dataset.groupId=item.id;button.setAttribute('aria-label',`${label}: ${item.name}`);button.title=label;button.textContent=glyph;button.disabled=!editable||groupLocked;row.append(button);}
             li.append(row);container.append(li);
             if(children){const nested=doc.createElement('ul');nested.hidden=collapsed;li.append(nested);if(!collapsed)build(item.id,nested);}
           }else{
-            const select=doc.createElement('button');select.type='button';select.dataset.layerSelect='element';select.dataset.elementId=item.id;select.textContent=`${item.visible?'':'◌ '}${item.name}`;select.setAttribute('aria-pressed',String(selectedIds.has(item.id)));select.setAttribute('aria-label',`${item.name}${selectedIds.has(item.id)?', selecionado':''}`);row.append(select);li.append(row);container.append(li);
+            const flags=authoringFlags(value,item),inheritedLock=flags.locked&&item.locked!==true,inheritedVisibility=!flags.visible&&item.authoring_visible!==false;
+            const select=doc.createElement('button');select.type='button';select.dataset.layerSelect='element';select.dataset.elementId=item.id;select.textContent=`${item.visible?'':'◌ '}${item.name}`;select.setAttribute('aria-pressed',String(selectedIds.has(item.id)));select.setAttribute('aria-label',`${item.name}${selectedIds.has(item.id)?', selecionado':''}${inheritedVisibility?', oculto por visibilidade de grupo':''}${flags.locked?', bloqueado efetivamente':''}`);row.append(select);
+            const visibility=doc.createElement('button');visibility.type='button';visibility.dataset.layerControl='visibility';visibility.dataset.layerType='element';visibility.dataset.elementId=item.id;visibility.dataset.effective=String(flags.visible);visibility.setAttribute('aria-pressed',String(item.authoring_visible!==false));visibility.setAttribute('aria-label',`${item.authoring_visible===false?'Mostrar':'Ocultar'} ${item.name}; ${flags.visible?'visível':'oculto'} efetivamente${inheritedVisibility?' por grupo superior':''}`);visibility.title=`${flags.visible?'Visível':'Oculto'} efetivamente`;visibility.textContent=item.authoring_visible===false?'◌':'◉';visibility.disabled=!editable;row.append(visibility);
+            const lock=doc.createElement('button');lock.type='button';lock.dataset.layerControl='lock';lock.dataset.layerType='element';lock.dataset.elementId=item.id;lock.dataset.effective=String(flags.locked);lock.setAttribute('aria-pressed',String(item.locked===true));lock.setAttribute('aria-label',`${item.locked===true?'Desbloquear':'Bloquear'} ${item.name}; ${flags.locked?'bloqueado':'desbloqueado'} efetivamente${inheritedLock?' por grupo superior':''}`);lock.title=`${flags.locked?'Bloqueado':'Desbloqueado'} efetivamente`;lock.textContent=item.locked===true?'🔒':'🔓';lock.disabled=!editable;row.append(lock);li.append(row);container.append(li);
           }
         });
       };
@@ -192,7 +208,7 @@
     const renderMotionEditor = populate => {
       const state = context(), item = getItem(state), selection = `${state.key}:${selected}`;
       if (selection !== motionSelection) { motionSelection = selection; frameAt = null; populate = true; }
-      const track = motionTrack(state), editable = state.editable && state.index >= 0 && Boolean(item);
+      const track = motionTrack(state), editable = state.editable && state.index >= 0 && Boolean(item) && !authoringFlags(state.base||state.presentation,item).locked;
       const enabled = motionEditor.querySelector('[data-motion-enabled]'); enabled.checked = Boolean(track && track.enabled !== false); enabled.disabled = !editable;
       motionEditor.querySelector('[data-motion-settings]').hidden = !track || track.enabled === false;
       motionEditor.querySelector('[data-motion-help]').textContent = state.index < 0 ? 'Selecione um bloco em Momento da cena para animar este elemento.' : 'A composição anterior é o início. Os ajustes acima definem o estado final. Alterne Visível para entradas e saídas suaves; use atraso para encadear movimentos.';
@@ -214,7 +230,8 @@
     };
     const writeMotion = (track,populate = false) => {
       const state = context();
-      if (!state.editable || state.index < 0 || !selected || !options.writeAnimation?.(state.key,selected,track)) return false;
+      const item=(state.base?.elements||state.presentation.elements||[]).find(candidate=>candidate.id===selected);
+      if (!state.editable || state.index < 0 || !selected || !item || authoringFlags(state.base||state.presentation,item).locked || !options.writeAnimation?.(state.key,selected,track)) return false;
       render(populate); return true;
     };
     motionEditor.addEventListener('input',event => {
@@ -248,6 +265,7 @@
     const mark = () => {
       const state = context(), editable = state.editable;
       const items = new Map(media.presentation(state.presentation).elements.map(item => [item.id,item]));
+      const authoringBase=media.presentation(state.base||state.presentation),baseItems=new Map(authoringBase.elements.map(item=>[item.id,item]));
       const canvasScale = surface.getBoundingClientRect().width / Math.max(1,surface.offsetWidth);
       const layer = surface.querySelector('.scene-elements-layer');
       const focusedAction=layer?.querySelector('.scene-multi-tools [data-multi-action]:focus')?.dataset.multiAction;
@@ -258,7 +276,9 @@
         node.classList.toggle('scene-multi-selected',active && editable && selectedIds.size > 1);
         node.tabIndex = editable ? 0 : -1;
         const item = items.get(node.dataset.sceneElement);
-        node.setAttribute('aria-label',`${item?.name || 'Elemento de cena'}${active ? ', selecionado' : ''}`);
+        const flags=authoringFlags(authoringBase,baseItems.get(node.dataset.sceneElement)||item);
+        node.classList.toggle('scene-locked',editable&&flags.locked);node.classList.toggle('scene-effectively-hidden',editable&&!flags.visible);
+        node.setAttribute('aria-label',`${item?.name || 'Elemento de cena'}${active ? ', selecionado' : ''}${editable&&flags.locked?', bloqueado':''}${editable&&!flags.visible?', oculto na autoria':''}`);
         node.style.setProperty('--scene-handle-size',`${16 / Math.max(.01,canvasScale * (item?.scale || 1))}px`);
         node.querySelector('.scene-element-tools')?.remove();
         if (active && editable && selectedIds.size === 1) {
@@ -286,15 +306,16 @@
       selectedIds = new Set([...selectedIds].filter(id => value.elements.some(item => item.id === id)));
       selected = selectedIds.size === 1 ? [...selectedIds][0] : '';
       const active = getItem(state);
+      const authoringBase=media.presentation(state.base||state.presentation),activeBase=authoringBase.elements.find(item=>item.id===active?.id),activeLocked=Boolean(activeBase&&authoringFlags(authoringBase,activeBase).locked);
       panel.querySelector('[data-asset-description]').textContent = active?.asset ? options.describeAsset?.(active.asset) || active.asset.name : '';
       list.replaceChildren(...value.elements.slice().reverse().map(item => new Option(`${item.visible ? '' : '◌ '}${item.name}`,item.id)));
       list.multiple = true; [...list.options].forEach(option => { option.selected = selectedIds.has(option.value); }); list.disabled = !value.elements.length;
       drawLayerTree(media.presentation(state.base || state.presentation),state.editable);
       const groupCount=(state.base?.groups||[]).length, selectedGroupExists=(state.base?.groups||[]).some(group=>group.id===selectedGroup), groupActions=panel.querySelector('[data-group-actions]');
-      groupActions.querySelector('[data-layer-action="group"]').disabled=!state.editable||selectedIds.size<2||groupCount>=80;
-      groupActions.querySelector('[data-layer-action="ungroup"]').disabled=!state.editable||!selectedGroupExists;
-      groupActions.querySelector('[data-layer-action="duplicate"]').disabled=!state.editable||!selectedGroupExists||((state.base?.elements||[]).length>=80);
-      groupActions.querySelector('[data-layer-action="delete"]').disabled=!state.editable||!selectedGroupExists;
+      groupActions.querySelector('[data-layer-action="group"]').disabled=!state.editable||selectedIds.size<2||groupCount>=80||subtreeLocked(authoringBase,selectedIds);
+      groupActions.querySelector('[data-layer-action="ungroup"]').disabled=!state.editable||!selectedGroupExists||subtreeLocked(authoringBase,descendants(authoringBase,selectedGroup));
+      groupActions.querySelector('[data-layer-action="duplicate"]').disabled=!state.editable||!selectedGroupExists||((state.base?.elements||[]).length>=80)||subtreeLocked(authoringBase,descendants(authoringBase,selectedGroup));
+      groupActions.querySelector('[data-layer-action="delete"]').disabled=!state.editable||!selectedGroupExists||subtreeLocked(authoringBase,descendants(authoringBase,selectedGroup));
       properties.hidden = !active;
       panel.dispatchEvent(new win.CustomEvent('scene-selection-change',{detail:{id:active?.id || '',name:selectedIds.size > 1 ? `${selectedIds.size} elementos selecionados` : active?.name || '',count:selectedIds.size}}));
       if (populate) {
@@ -313,8 +334,8 @@
       }
       panel.querySelectorAll('[data-type]').forEach(node => { node.hidden = !active || (node.dataset.type === 'art' ? !['image','character'].includes(active.type) : !node.dataset.type.split(' ').includes(active.type)); });
       panel.querySelector('[data-action=replace]').hidden = active?.type !== 'image';
-      authoredControls.forEach(control => { if (control !== list) control.disabled = !state.editable; });
-      ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
+      authoredControls.forEach(control => { if (control) control.disabled = !state.editable||activeLocked; });
+      ['up','down','duplicate','remove'].forEach(action => { panel.querySelector(`[data-action=${action}]`).disabled = !state.editable || !active || activeLocked || (action === 'up' && value.elements.at(-1)?.id === selected) || (action === 'down' && value.elements[0]?.id === selected); });
       renderMotionEditor(populate);
       renderInteractions();
       const reduced = parallaxReduced.matches || state.displayProfile === 'eink', hover = parallaxHover.matches;
@@ -326,13 +347,34 @@
     };
     const commit = (value,expectedKey,populate = false) => {
       const state = context();
+      const before=media.presentation(state.presentation),after=media.presentation(value),oldItems=new Map(before.elements.map(item=>[item.id,item])),newItems=new Map(after.elements.map(item=>[item.id,item]));
+      const touched=[...new Set([...oldItems.keys(),...newItems.keys()])].filter(id=>JSON.stringify(oldItems.get(id))!==JSON.stringify(newItems.get(id)));
+      const locked=touched.find(id=>{const item=oldItems.get(id)||newItems.get(id);return item&&authoringFlags(state.base||state.presentation,item).locked;});
+      if(locked){status.textContent='A operação foi bloqueada porque incluiria um elemento bloqueado. Desbloqueie-o pela árvore de Camadas para continuar.';return false;}
       if (!state.editable || state.key !== expectedKey || !write(expectedKey,media.presentation(value))) return false;
       render(populate); return true;
     };
     const commitStructure = (value,state=context(),message='') => {
-      value.layer_groups_version=1;value.groups=Array.isArray(value.groups)?value.groups:[];
+      value.groups=Array.isArray(value.groups)?value.groups:[];
+      if(value.groups.length||value.layer_groups_version===1||value.elements.some(item=>item.group_id))value.layer_groups_version=1;
       if(!state.editable||!options.writeStructure?.(state.key,media.presentation(value)))return false;
       render(true);if(message)status.textContent=message;return true;
+    };
+    const ensureControlsSchema = value => {
+      if(value.authoring_controls_version===1)return true;
+      if(!win.confirm(controlsNotice))return false;
+      value.authoring_controls_version=1;return true;
+    };
+    const editLayerControl = button => {
+      const state=context(),value=media.presentation(state.base||state.presentation),type=button.dataset.layerType,field=button.dataset.layerControl;
+      const item=type==='group'?value.groups?.find(group=>group.id===button.dataset.groupId):value.elements.find(element=>element.id===button.dataset.elementId);
+      if(!state.editable||!item||!['visibility','lock'].includes(field))return;
+      const prop=field==='visibility'?'authoring_visible':'locked',next=field==='visibility'?item.authoring_visible===false:item.locked!==true;
+      if(field==='visibility'&&next===(item.authoring_visible!==false)||field==='lock'&&next===(item.locked===true))return;
+      const upgrading=value.authoring_controls_version!==1;
+      if(!ensureControlsSchema(value))return;
+      if(next)item[prop]=true;else delete item[prop];
+      if(commitStructure(value,state,`${type==='group'?'Grupo':'Elemento'} ${field==='visibility'?'visibilidade':'bloqueio'} atualizado.`)&&upgrading)status.textContent=`Formato autoral v3: ${controlsNotice}`;
     };
       const groupAction = (action,target='') => {
         const state=context();if(!state.editable)return;const value=media.presentation(state.base||state.presentation);value.groups=value.groups||[];
@@ -341,6 +383,7 @@
       const announce=message=>wasV1?`Formato v2: ${message} ${v2Notice} Exporte o arquivo .hdocs para transportar o documento.`:message;
       if(action==='group'){
         const ids=[...selectedIds].filter(id=>elements.some(item=>item.id===id));if(ids.length<2)return;
+        if(subtreeLocked(value,ids)){status.textContent='Não é possível agrupar elementos bloqueados. Desbloqueie-os pela árvore de Camadas.';return;}
         const parents=new Set(ids.map(id=>elements.find(item=>item.id===id)?.group_id||'')),parent_id=parents.size===1?[...parents][0]:'';
         if(!ids.every(id=>state.presentation.elements.some(item=>item.id===id))){status.textContent='Agrupe elementos que existam na composição inicial da sequência.';return;}
         ids.sort((a,b)=>value.elements.findIndex(item=>item.id===a)-value.elements.findIndex(item=>item.id===b));
@@ -353,6 +396,7 @@
       if(!group)return;
       const children=groups.filter(item=>item.parent_id===group.id),memberIds=descendants(value,group.id);
       if(action==='collapse'){collapsedGroups.has(group.id)?collapsedGroups.delete(group.id):collapsedGroups.add(group.id);render(false);return;}
+      if(authoringFlags(value,group).locked||subtreeLocked(value,memberIds)){status.textContent='A operação inclui conteúdo bloqueado. Desbloqueie o grupo e os elementos envolvidos pela árvore de Camadas.';return;}
       if(action==='ungroup'){
         const direct=new Set(group.element_ids),parentGroup=groups.find(item=>item.id===group.parent_id);
         value.elements=value.elements.map(item=>{if(!direct.has(item.id))return item;const copy={...item};if(group.parent_id)copy.group_id=group.parent_id;else delete copy.group_id;return media.element(copy);});
@@ -434,6 +478,7 @@
     const applyMultiAction = action => {
       if(selectedIds.size<2||parallaxPreview.checked)return;
       const state=context(),ids=[...selectedIds],bounds=boundsFor(ids),rect=surface.getBoundingClientRect();
+      if(subtreeLocked(state.base||state.presentation,ids)){status.textContent='A transformação foi cancelada: a seleção inclui elementos bloqueados. Desbloqueie-os pela árvore de Camadas.';return;}
       if(!bounds)return;
       let value;
       if(['left','right','up','down'].includes(action)){const step=1;value=moveSelection(state.presentation,ids,action==='left'?-step:action==='right'?step:0,action==='up'?-step:action==='down'?step:0);}
@@ -461,6 +506,7 @@
     panel.querySelector('[data-group-actions]').addEventListener('click',event=>{const action=event.target.closest('[data-layer-action]')?.dataset.layerAction;if(action)groupAction(action,selectedGroup);});
     layerTree.addEventListener('click',event=>{
       const button=event.target.closest('button');if(!button)return;
+      if(button.dataset.layerControl){editLayerControl(button);return;}
       if(button.dataset.layerCollapse){groupAction('collapse',button.dataset.layerCollapse);return;}
       if(button.dataset.layerAction){groupAction(button.dataset.layerAction,button.dataset.groupId);return;}
       if(button.dataset.layerSelect==='group'){
@@ -602,6 +648,7 @@
       if(!node&&!multiHandle){if(event.target===surface||event.target.classList.contains('scene-elements-layer')){event.preventDefault();const additive=event.shiftKey||event.ctrlKey||event.metaKey,point={x:event.clientX,y:event.clientY};marquee={key:state.key,pointerId:event.pointerId,start:point,point,initial:[...selectedIds],additive};surface.setPointerCapture(event.pointerId);}return;}
       event.preventDefault(); event.stopPropagation();
       if(node){const id=node.dataset.sceneElement,modifier=event.shiftKey||event.ctrlKey||event.metaKey;if(modifier){const next=new Set(selectedIds);if(next.has(id))next.delete(id);else next.add(id);setSelection(next);render();return;}if(!selectedIds.has(id))setSelection([id]);}
+      if(subtreeLocked(state.base||state.presentation,selectedIds)){render();status.textContent='A seleção contém conteúdo bloqueado. Você pode identificá-lo e desbloqueá-lo pela árvore de Camadas.';return;}
       const ids=[...selectedIds],base=media.presentation(state.presentation),items=base.elements.filter(item=>ids.includes(item.id));if(!items.length)return;
       const singleHandle=event.target.closest('[data-handle]')?.dataset.handle,groupMode=multiHandle?.dataset.multiHandle,mode=groupMode==='rotate'?'group-rotate':groupMode==='scale'?'group-scale':singleHandle||'move';
       render();
