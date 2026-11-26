@@ -18,6 +18,7 @@
     .scene-element-tools [data-handle=scale]{left:100%;top:100%;cursor:nwse-resize;border-radius:2px}
     .scene-element-tools [data-handle=rotate]{left:50%;top:-24px;cursor:grab}
     .scene-element-tools [data-handle=anchor]{left:var(--element-anchor-x);top:var(--element-anchor-y);width:var(--scene-handle-size,14px);height:var(--scene-handle-size,14px);background:#c69a41;cursor:crosshair}
+    .scene-element-tools [data-endpoint]{width:14px;height:14px;background:#ffbf47;border-radius:2px;cursor:crosshair}
     .scene-editing .scene-element-content{pointer-events:none}
     .scene-editing .scene-element:focus-visible{outline:3px solid #e6bd6e}
     .scene-editing .scene-multi-selected{outline:2px solid #40a9ff;outline-offset:2px}
@@ -49,6 +50,8 @@
         <small data-parallax-help>Mova o mouse sobre a cena para experimentar. Desative a experiência para voltar a arrastar elementos. Configure o deslocamento de cada camada abaixo.</small>
       </div></details>
       <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="project-image">+ Recurso do projeto</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
+      <div class="scene-element-actions" aria-label="Primitivas geométricas"><button type="button" data-action="rectangle">+ Retângulo</button><button type="button" data-action="ellipse">+ Elipse</button><button type="button" data-action="line">+ Linha</button><button type="button" data-action="arrow">+ Seta</button></div>
+      <div class="scene-element-actions"><label>Ferramenta de desenho<select data-shape-draw-type><option value="">Selecione uma forma</option><option value="rectangle">Retângulo</option><option value="ellipse">Elipse</option><option value="line">Linha</option><option value="arrow">Seta</option></select></label><button type="button" data-shape-draw>Desenhar no palco</button></div>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Elementos · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select></label>
       <div class="scene-element-actions" data-group-actions><button type="button" data-layer-action="group">Agrupar seleção</button><button type="button" data-layer-action="ungroup">Desagrupar</button><button type="button" data-layer-action="duplicate">Duplicar grupo</button><button type="button" data-layer-action="delete">Remover grupo</button></div>
@@ -65,6 +68,8 @@
         </div></details>
         <label data-type="character">Personagem<select data-field="character_id"></select></label>
         <label data-type="text button">Texto<textarea data-field="text" maxlength="10000"></textarea><small data-type="button">Deixe vazio para usar o texto da opção vinculada durante a apresentação.</small></label>
+        <div data-type="rectangle ellipse" class="scene-element-grid"><label>Preenchimento<input data-field="fill" type="color"></label><label>Contorno<input data-field="stroke" type="color"></label><label>Espessura do contorno<input data-field="stroke_width" type="number" min="0.5" max="20" step="0.5"></label></div>
+        <div data-type="line arrow" class="scene-element-grid"><label>Início X (%)<input data-field="x1" type="number" min="0" max="100" step="0.1"></label><label>Início Y (%)<input data-field="y1" type="number" min="0" max="100" step="0.1"></label><label>Fim X (%)<input data-field="x2" type="number" min="0" max="100" step="0.1"></label><label>Fim Y (%)<input data-field="y2" type="number" min="0" max="100" step="0.1"></label><label>Contorno<input data-field="stroke" type="color"></label><label>Espessura<input data-field="stroke_width" type="number" min="0.5" max="20" step="0.5"></label></div>
         <div data-type="text button" class="scene-element-grid"><label>Tamanho do texto<input data-field="font_size" type="number" min="12" max="160" step="1"></label><label>Cor<input data-field="color" type="color"></label><label>Alinhamento<select data-field="align"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label></div>
         <details data-interaction-editor open><summary>Ao clicar</summary><div class="scene-composer-body">
           <label>Escolha vinculada<select data-interaction-choice aria-label="Escolha acionada pelo elemento"></select></label>
@@ -129,7 +134,7 @@
     };
     parallaxPreview.addEventListener('change',() => setParallaxPreview(parallaxPreview.checked));
     doc.addEventListener('visibilitychange',() => { if (doc.hidden) setParallaxPreview(false); });
-    let key = '', selected = '', selectedIds = new Set(), selectedGroup = '', collapsedGroups = new Set(), uploadIntent = null, drag = null, marquee = null;
+    let key = '', selected = '', selectedIds = new Set(), selectedGroup = '', collapsedGroups = new Set(), uploadIntent = null, drag = null, marquee = null, shapeDrawType = '';
     const context = () => read();
     const getItem = state => selectedIds.size === 1 ? media.presentation(state.presentation).elements.find(item => item.id === selected) : null;
     const setSelection = ids => {
@@ -284,6 +289,7 @@
         if (active && editable && selectedIds.size === 1) {
           const tools = doc.createElement('div'); tools.className = 'scene-element-tools';
           tools.innerHTML = '<button type="button" data-handle="scale" tabindex="-1" aria-label="Alterar escala"></button><button type="button" data-handle="rotate" tabindex="-1" aria-label="Girar"></button><button type="button" data-handle="anchor" tabindex="-1" aria-label="Mover âncora"></button>';
+          if(['line','arrow'].includes(item?.type))for(const [point,x,y] of [['start',item.x1,item.y1],['end',item.x2,item.y2]]){const handle=doc.createElement('button');handle.type='button';handle.dataset.endpoint=point;handle.tabIndex=-1;handle.setAttribute('aria-label',point==='start'?'Mover início da linha':'Mover fim da linha');handle.textContent='•';handle.style.left=`${item.flip_x?100-x:x}%`;handle.style.top=`${item.flip_y?100-y:y}%`;tools.append(handle);}
           node.append(tools);
         }
       });
@@ -362,7 +368,8 @@
     };
     const ensureControlsSchema = value => {
       if(value.authoring_controls_version===1)return true;
-      if(!win.confirm(controlsNotice))return false;
+      const schemaVersion=Math.max(context().schemaVersion||1,context().base?.authoringSchemaVersion||1);
+      if(schemaVersion<3&&!win.confirm(controlsNotice))return false;
       value.authoring_controls_version=1;return true;
     };
     const editLayerControl = button => {
@@ -378,7 +385,7 @@
     };
       const groupAction = (action,target='') => {
         const state=context();if(!state.editable)return;const value=media.presentation(state.base||state.presentation);value.groups=value.groups||[];
-        const groups=value.groups,group=groups.find(item=>item.id===target),elements=value.elements,wasV1=value.layer_groups_version!==1&&groups.length===0;
+        const groups=value.groups,group=groups.find(item=>item.id===target),elements=value.elements,wasV1=state.schemaVersion<2&&value.layer_groups_version!==1&&groups.length===0;
       const v2Notice='O salvamento continuará local. A sincronização com projetos remotos ficará indisponível até que exista suporte remoto ao formato v2. Versões anteriores ao suporte a grupos não abrem este documento.';
       const announce=message=>wasV1?`Formato v2: ${message} ${v2Notice} Exporte o arquivo .hdocs para transportar o documento.`:message;
       if(action==='group'){
@@ -498,7 +505,9 @@
       const character = state.characters.find(item => item.portrait) || state.characters[0];
       if (type === 'character' && !character) { status.textContent = 'Cadastre um personagem na biblioteca do projeto primeiro.'; return; }
       selected = id(); setSelection([selected]); key = state.key;
-      value.elements.push(media.element({id:selected,type,asset,character_id:type === 'character' ? character?.id : '',name:asset?.name || (type === 'character' ? character?.name : ''),text:type === 'text' ? 'Seu texto aqui' : '',...(['button','hotspot'].includes(type) ? {font_size:24} : {})}));
+      const shape=['rectangle','ellipse','line','arrow'].includes(type);
+      value.elements.push(media.element({id:selected,type,asset,character_id:type === 'character' ? character?.id : '',name:asset?.name || (type === 'character' ? character?.name : ''),text:type === 'text' ? 'Seu texto aqui' : '',...(shape?{x:38,y:38,width:24,height:18,anchor_x:0,anchor_y:0,fill:'#477b9b',stroke:'#f2cf72',stroke_width:2,x1:0,y1:0,x2:100,y2:100}:{}),...(['button','hotspot'].includes(type) ? {font_size:24} : {})}));
+      if(shape)value.scene_primitives_version=1;
       if (commit(value,state.key,true)) { status.textContent = type === 'character' && !character?.portrait ? 'Adicione um retrato a este personagem na biblioteca do projeto.' : ''; fields.find(field => field.dataset.field === 'name').focus(); }
     };
     list.multiple = true;
@@ -545,6 +554,12 @@
     });
     panel.addEventListener('click',event => {
       const button = event.target.closest('button'); if (!button || button.closest('[data-motion-editor],[data-interaction-editor]') || !context().editable) return;
+      if(button.matches('[data-shape-draw]')){
+        shapeDrawType=panel.querySelector('[data-shape-draw-type]').value;
+        panel.querySelector('[data-shape-draw-type]').setAttribute('aria-label',shapeDrawType?`Ferramenta ativa: ${shapeDrawType}`:'Ferramenta de desenho');
+        status.textContent=shapeDrawType?`Ferramenta ${({rectangle:'retângulo',ellipse:'elipse',line:'linha',arrow:'seta'})[shapeDrawType]} ativa. Arraste no palco; um clique insere uma forma inicial.`:'Escolha uma forma para desenhar.';
+        button.setAttribute('aria-pressed',String(Boolean(shapeDrawType))); return;
+      }
       if (button.dataset.parallaxPreset !== undefined) { const [parallax_x,parallax_y] = button.dataset.parallaxPreset.split(',').map(Number); change({parallax_x,parallax_y},true); return; }
       if (button.dataset.preset) { change({x:Number(button.dataset.preset),y:100,anchor_x:50,anchor_y:100,scale:1,rotation:0},true); return; }
       const action = button.dataset.action, state = context(), value = media.presentation(state.presentation), index = value.elements.findIndex(item => item.id === selected);
@@ -564,7 +579,7 @@
         return;
       }
       if (action === 'image' || action === 'replace') { uploadIntent = {key:state.key,id:action === 'replace' ? selected : ''}; upload.click(); return; }
-      if (['character','text','button','hotspot'].includes(action)) { add(action); return; }
+      if (['character','text','button','hotspot','rectangle','ellipse','line','arrow'].includes(action)) { add(action); return; }
       if (index < 0) return;
       if (action === 'remove') { value.elements.splice(index,1); setSelection([]); }
       if (action === 'duplicate') {
@@ -592,6 +607,16 @@
     const pointer = event => {
       const rect = surface.getBoundingClientRect();
       return {x:(event.clientX - rect.left) / rect.width * 100,y:(event.clientY - rect.top) / rect.height * 100};
+    };
+    const drawnPrimitive = (current,point,quick=false) => {
+      const a=current.start,b=point,type=current.shapeType,dx=b.x-a.x,dy=b.y-a.y;
+      let x,y,width,height,x1=0,y1=0,x2=100,y2=100;
+      if(quick){width=24;height=18;x=a.x-width/2;y=a.y-height/2;}
+      else {x=Math.min(a.x,b.x);y=Math.min(a.y,b.y);width=Math.max(1,Math.abs(dx));height=Math.max(1,Math.abs(dy));if(dx<0){x1=100;x2=0;}if(dy<0){y1=100;y2=0;}}
+      const value=media.presentation(current.original);
+      value.scene_primitives_version=1;
+      value.elements.push(media.element({id:current.elementId,type,name:({rectangle:'Retângulo',ellipse:'Elipse',line:'Linha',arrow:'Seta'})[type],x,y,width,height,anchor_x:0,anchor_y:0,fill:'#477b9b',stroke:'#f2cf72',stroke_width:2,x1,y1,x2,y2}));
+      return value;
     };
     const paintMarquee = point => {
       const layer=surface.querySelector('.scene-elements-layer'); if(!layer||!marquee)return;
@@ -624,7 +649,11 @@
       if(ids.length>1)return moveSelection(original,ids,dx/rect.width*100,dy/rect.height*100);
       const item=items[0];if(!item)return media.presentation(original);
       let changes;
-      if(mode==='rotate'){
+      if(mode==='endpoint-start'||mode==='endpoint-end'){
+        const wx=(point.x-item.x)*rect.width/100,wy=(point.y-item.y)*rect.height/100,radians=item.rotation*Math.PI/180,localX=(wx*Math.cos(radians)+wy*Math.sin(radians))/item.scale,localY=(-wx*Math.sin(radians)+wy*Math.cos(radians))/item.scale;
+        let x=Math.max(0,Math.min(100,(localX/(item.width*rect.width/100)+item.anchor_x/100)*100)),y=Math.max(0,Math.min(100,(localY/(item.height*rect.height/100)+item.anchor_y/100)*100));if(item.flip_x)x=100-x;if(item.flip_y)y=100-y;
+        changes=mode==='endpoint-start'?{x1:x,y1:y}:{x2:x,y2:y};
+      }else if(mode==='rotate'){
         const angle=p=>Math.atan2((p.y-item.y)*rect.height,(p.x-item.x)*rect.width);
         changes={rotation:Math.round(item.rotation+(angle(point)-angle(start))*180/Math.PI)};
       }else if(mode==='scale'){
@@ -645,12 +674,12 @@
       const state=context(),node=event.target.closest('[data-scene-element]'),multiHandle=event.target.closest('[data-multi-handle]');
       if (!state.editable || event.button !== 0) return;
       if(event.target.closest('[data-multi-action]'))return;
-      if(!node&&!multiHandle){if(event.target===surface||event.target.classList.contains('scene-elements-layer')){event.preventDefault();const additive=event.shiftKey||event.ctrlKey||event.metaKey,point={x:event.clientX,y:event.clientY};marquee={key:state.key,pointerId:event.pointerId,start:point,point,initial:[...selectedIds],additive};surface.setPointerCapture(event.pointerId);}return;}
+      if(!node&&!multiHandle){if(event.target===surface||event.target.classList.contains('scene-elements-layer')){event.preventDefault();if(shapeDrawType){const start=pointer(event),elementId=id(),original=media.presentation(state.presentation);drag={key:state.key,pointerId:event.pointerId,start,rect:surface.getBoundingClientRect(),mode:'shape-insert',shapeType:shapeDrawType,elementId,original,value:drawnPrimitive({start,shapeType:shapeDrawType,elementId,original},start,true)};preview(drag.value);surface.setPointerCapture(event.pointerId);return;}const additive=event.shiftKey||event.ctrlKey||event.metaKey,point={x:event.clientX,y:event.clientY};marquee={key:state.key,pointerId:event.pointerId,start:point,point,initial:[...selectedIds],additive};surface.setPointerCapture(event.pointerId);}return;}
       event.preventDefault(); event.stopPropagation();
       if(node){const id=node.dataset.sceneElement,modifier=event.shiftKey||event.ctrlKey||event.metaKey;if(modifier){const next=new Set(selectedIds);if(next.has(id))next.delete(id);else next.add(id);setSelection(next);render();return;}if(!selectedIds.has(id))setSelection([id]);}
       if(subtreeLocked(state.base||state.presentation,selectedIds)){render();status.textContent='A seleção contém conteúdo bloqueado. Você pode identificá-lo e desbloqueá-lo pela árvore de Camadas.';return;}
       const ids=[...selectedIds],base=media.presentation(state.presentation),items=base.elements.filter(item=>ids.includes(item.id));if(!items.length)return;
-      const singleHandle=event.target.closest('[data-handle]')?.dataset.handle,groupMode=multiHandle?.dataset.multiHandle,mode=groupMode==='rotate'?'group-rotate':groupMode==='scale'?'group-scale':singleHandle||'move';
+      const endpoint=event.target.closest('[data-endpoint]')?.dataset.endpoint,singleHandle=event.target.closest('[data-handle]')?.dataset.handle,groupMode=multiHandle?.dataset.multiHandle,mode=endpoint?`endpoint-${endpoint}`:groupMode==='rotate'?'group-rotate':groupMode==='scale'?'group-scale':singleHandle||'move';
       render();
       const start=mode==='group-rotate'||mode==='group-scale'?{x:event.clientX,y:event.clientY}:pointer(event),rect=surface.getBoundingClientRect();
       drag={key:state.key,pointerId:event.pointerId,ids,items,start,mode,value:base,original:base,bounds:boundsFor(ids),rect};
@@ -660,6 +689,7 @@
       if(marquee&&marquee.pointerId===event.pointerId){const point={x:event.clientX,y:event.clientY};marquee.point=point;if(Math.hypot(point.x-marquee.start.x,point.y-marquee.start.y)>=4)paintMarquee(point);return;}
       if (!drag || drag.pointerId !== event.pointerId) return;
       const state=context();if(!state.editable||state.key!==drag.key){drag=null;preview(state.presentation);render();return;}
+      if(drag.mode==='shape-insert'){const point=pointer(event),distance=Math.hypot((point.x-drag.start.x)*drag.rect.width/100,(point.y-drag.start.y)*drag.rect.height/100);if(distance>=3){drag.value=drawnPrimitive(drag,point);preview(drag.value);mark();}return;}
       const point=drag.mode==='group-rotate'||drag.mode==='group-scale'?{x:event.clientX,y:event.clientY}:pointer(event);
       drag.value=applyGroupPreview(drag,point);
       preview(drag.value); mark();
@@ -669,6 +699,13 @@
       if (!drag || event.pointerId !== drag.pointerId) return;
       const current = drag; drag = null;
       if (surface.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId);
+      if(current.mode==='shape-insert'){
+        const latest=context();if(cancelled||latest.key!==current.key||!latest.editable){preview(latest.presentation);render();return;}
+        const point=pointer(event),distance=Math.hypot((point.x-current.start.x)*current.rect.width/100,(point.y-current.start.y)*current.rect.height/100);
+        setSelection([current.elementId]);const value=distance>=3?drawnPrimitive(current,point):drawnPrimitive(current,current.start,true);
+        if(commit(value,current.key,true))status.textContent='Primitiva inserida e pronta para edição.';else {setSelection([]);preview(latest.presentation);render();}
+        return;
+      }
       if (cancelled) { preview(context().presentation); render(); }
       else {
         const latest=context();

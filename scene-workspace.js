@@ -26,6 +26,9 @@
     sceneSettings.forEach(n=>composition.append(n));
     const add=body.querySelector('[data-action="image"]').parentElement;
     left.querySelector('[data-left-page="resources"]').append(add);
+    const resources=left.querySelector('[data-left-page="resources"]');
+    resources.append(body.querySelector('[aria-label="Primitivas geométricas"]'));
+    resources.append(body.querySelector('[data-shape-draw]').parentElement);
     const layers=left.querySelector('[data-left-page="layers"]'),list=body.querySelector('[data-list]');layers.append(list.closest('label'),body.querySelector('[data-group-actions]'),body.querySelector('[data-layer-tree]'),body.querySelector(':scope > small'));
     const actions=body.querySelector('[data-action="up"]').parentElement;toolbar.append(actions);
     const properties=body.querySelector('[data-properties]');right.querySelector('[data-scope="element"]').append(properties);

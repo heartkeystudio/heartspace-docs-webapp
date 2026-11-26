@@ -233,6 +233,28 @@ test('C27 v3 authoring controls survive normalization, cache and local re-open w
   const emptied=authoring.toEditor(saved);emptied.documents=[];assert.equal(authoring.fromEditor(emptied).schema_version,3,'A exclusão do último documento apagou a versão opt-in já confirmada.');
 });
 test('C28 future incompatible schema is rejected before the supplied source can be replaced',()=>{
-  const source=makeSource(),original=JSON.stringify(source);source.schema_version=4;
-  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:4}));
+  const source=makeSource(),original=JSON.stringify(source);source.schema_version=5;
+  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:5}));
+});
+test('C29 v4 geometric primitives roundtrip through cache and export without losing editable source',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=4;p.scene_primitives_version=1;
+  p.elements=[
+    {id:'rect',type:'rectangle',name:'Parede',x:10,y:20,width:30,height:25,fill:'#123456',stroke:'#abcdef',stroke_width:3},
+    {id:'oval',type:'ellipse',x:45,y:20,width:20,height:25,fill:'#234567',stroke:'#bcdefa',stroke_width:2},
+    {id:'line',type:'line',x:15,y:60,width:40,height:20,x1:0,y1:100,x2:100,y2:0,stroke:'#345678',stroke_width:4},
+    {id:'arrow',type:'arrow',x:60,y:60,width:25,height:20,x1:10,y1:90,x2:90,y2:5,stroke:'#456789',stroke_width:5}
+  ];
+  p.cues=[{block_id:'detail',set:[{id:'arrow',x2:75,y2:15}],reset:false,animations:[],settings:{},remove:[],order:null}];
+  authoring.validate(source);
+  const state=authoring.toEditor(source),cache=authoring.cacheFromEditor(state),reopened=authoring.readCache(cache),saved=authoring.fromEditor(reopened),restored=scene(saved);
+  assert.equal(saved.schema_version,4);assert.equal(restored.scene_primitives_version,1);
+  for(const id of ['rect','oval','line','arrow'])assert.deepEqual(plain(restored.elements.find(item=>item.id===id)),plain(p.elements.find(item=>item.id===id)));
+  assert.deepEqual(plain(restored.cues[0].set),plain(p.cues[0].set));
+  const oldReaderSource=structuredClone(saved);oldReaderSource.schema_version=3;
+  assert.throws(()=>authoring.validate(oldReaderSource),/exigem a versão autoral 4/);
+  const packed=context.HeartspaceNarrativePackage.buildPackage(fixtures.story(saved)),runtime=packed.story.sequences[0].presentation;
+  assert.equal(runtime.scene_primitives_version,undefined);assert.deepEqual(plain(runtime.elements.map(item=>item.type)),['rectangle','ellipse','line','arrow']);
+  assert.deepEqual(plain(runtime.elements.map(item=>item.stroke_width)),[3,2,4,5]);
+  const html=extract(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(saved))).sequences[0].presentation;
+  assert.equal(html.scene_primitives_version,undefined);assert.deepEqual(plain(html.elements.map(item=>item.type)),['rectangle','ellipse','line','arrow']);
 });

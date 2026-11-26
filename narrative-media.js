@@ -73,11 +73,11 @@
     const has = (object,key) => Object.prototype.hasOwnProperty.call(object || {},key);
     const element = (input,index = 0) => {
       input = input && typeof input === 'object' ? input : {};
-      const type = ['image','character','text','button','hotspot'].includes(input.type) ? input.type : 'image';
+      const type = ['image','character','text','button','hotspot','rectangle','ellipse','line','arrow'].includes(input.type) ? input.type : 'image';
       const compact = ['text','button','hotspot'].includes(type);
       const normalized = {
         id:String(input.id || `element-${index + 1}`).replace(/[^a-z0-9_.-]/gi,'').slice(0,80) || `element-${index + 1}`,
-        name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável'})[type]).slice(0,120), type,
+        name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável',rectangle:'Retângulo',ellipse:'Elipse',line:'Linha',arrow:'Seta'})[type]).slice(0,120), type,
         choice_block_id:String(input.choice_block_id || '').slice(0,160), choice_option_id:String(input.choice_option_id || '').slice(0,160),
         parallax_x:number(input.parallax_x,0,-15,15), parallax_y:number(input.parallax_y,0,-15,15),
         asset:normalize(input.asset,'image',true), character_id:String(input.character_id || '').slice(0,160),
@@ -92,6 +92,13 @@
         font_size:number(input.font_size,36,12,160), color:/^#[0-9a-f]{6}$/i.test(input.color || '') ? input.color : '#ffffff',
         align:['left','center','right'].includes(input.align) ? input.align : 'center'
       };
+      if (['rectangle','ellipse','line','arrow'].includes(type)) {
+        normalized.fill=/^#[0-9a-f]{6}$/i.test(input.fill || '') ? input.fill.toLowerCase() : '#477b9b';
+        normalized.stroke=/^#[0-9a-f]{6}$/i.test(input.stroke || '') ? input.stroke.toLowerCase() : '#f2cf72';
+        normalized.stroke_width=number(input.stroke_width,2,.5,20);
+        normalized.x1=number(input.x1,0,0,100); normalized.y1=number(input.y1,0,0,100);
+        normalized.x2=number(input.x2,100,0,100); normalized.y2=number(input.y2,100,0,100);
+      }
       const groupId = String(input.group_id || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
       if (groupId) normalized.group_id = groupId;
       if (has(input,'authoring_visible')) normalized.authoring_visible = input.authoring_visible !== false;
@@ -105,7 +112,7 @@
     const sceneState = value => {
       const input = value && typeof value === 'object' ? value : {};
       const color = (candidate,fallback) => /^#[0-9a-f]{6}$/i.test(String(candidate || '')) ? String(candidate).toLowerCase() : fallback;
-      return {
+      const result = {
         viewport:viewport(input.viewport), // Legacy input only; current games override this with their global viewport.
         elements:elements(input.elements), dialogue_visible:input.dialogue_visible !== false,
         parallax_enabled:input.parallax_enabled === true,
@@ -123,9 +130,11 @@
         transition:['none','fade','slide'].includes(input.transition) ? input.transition : 'fade',
         transition_ms:[200,400,700].includes(Number(input.transition_ms)) ? Number(input.transition_ms) : 400
       };
+      if (input.scene_primitives_version === 1) result.scene_primitives_version = 1;
+      return result;
     };
-    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport'].includes(key));
-    const elementKeys = [...new Set([...Object.keys(element()),'group_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
+    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport','scene_primitives_version'].includes(key));
+    const elementKeys = [...new Set([...Object.keys(element()),'fill','stroke','stroke_width','x1','y1','x2','y2','group_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
     const elementId = value => String(value || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
     const idList = value => [...new Set((Array.isArray(value) ? value : []).slice(0,80).map(elementId).filter(Boolean))];
     const motionKeys = ['x','y','width','height','scale','rotation','opacity','anchor_x','anchor_y'];
@@ -180,6 +189,7 @@
     };
     const presentation = value => {
       const input = value && typeof value === 'object' ? value : {}, result = {...sceneState(input),cues:sceneCues(input.cues)};
+      if (input.scene_primitives_version === 1) result.scene_primitives_version = 1;
       if (input.layer_groups_version === 1) result.layer_groups_version = 1;
       if (input.authoring_controls_version === 1) result.authoring_controls_version = 1;
       if (Object.prototype.hasOwnProperty.call(input,'groups') || input.layer_groups_version === 1) result.groups = layerGroups(input.groups);
@@ -641,8 +651,9 @@
           if (!node || node.dataset.elementType !== item.type) {
             node?.remove(); node = doc.createElement('div'); node.className = 'scene-element';
             node.dataset.sceneElement = item.id; node.dataset.elementType = item.type;
-            const art = ['image','character'].includes(item.type);
-            const content = doc.createElement(art ? 'img' : 'div'); content.className = 'scene-element-content';
+            const art = ['image','character'].includes(item.type), shape = ['rectangle','ellipse','line','arrow'].includes(item.type);
+            const content = shape ? doc.createElementNS('http://www.w3.org/2000/svg','svg') : doc.createElement(art ? 'img' : 'div'); content.className = 'scene-element-content';
+            if (shape) { content.setAttribute('viewBox','0 0 100 100'); content.setAttribute('preserveAspectRatio','none'); content.setAttribute('aria-hidden','true'); }
             if (art) { content.alt = ''; content.draggable = false; content.addEventListener('error',() => { content.hidden = true; refreshInteractions(); options.onImageIssue?.('Uma imagem da composição não pôde ser exibida.'); }); }
             node.append(content); objects.append(node); elementNodes.set(item.id,node);
           }
@@ -652,7 +663,21 @@
             transform:transform(item),
             transformOrigin:`${item.anchor_x}% ${item.anchor_y}%`,opacity:String(item.opacity),zIndex:String(index + 1)});
           node.style.setProperty('--element-anchor-x',`${item.anchor_x}%`); node.style.setProperty('--element-anchor-y',`${item.anchor_y}%`);
-          if (!['image','character'].includes(item.type)) {
+          if (['rectangle','ellipse','line','arrow'].includes(item.type)) {
+            const ns='http://www.w3.org/2000/svg', make=(name,attrs)=>{const child=doc.createElementNS(ns,name);Object.entries(attrs).forEach(([key,value])=>child.setAttribute(key,String(value)));return child;};
+            content.replaceChildren();
+            if(item.type==='rectangle') content.append(make('rect',{x:1,y:1,width:98,height:98,fill:item.fill,stroke:item.stroke,'stroke-width':item.stroke_width,vectorEffect:'non-scaling-stroke'}));
+            else if(item.type==='ellipse') content.append(make('ellipse',{cx:50,cy:50,rx:48,ry:48,fill:item.fill,stroke:item.stroke,'stroke-width':item.stroke_width,vectorEffect:'non-scaling-stroke'}));
+            else {
+              content.append(make('line',{x1:item.x1,y1:item.y1,x2:item.x2,y2:item.y2,stroke:item.stroke,'stroke-width':item.stroke_width,'stroke-linecap':'round',vectorEffect:'non-scaling-stroke'}));
+              if(item.type==='arrow') {
+                const angle=Math.atan2(item.y2-item.y1,item.x2-item.x1),length=10,spread=.55;
+                const bx=item.x2-Math.cos(angle)*length,by=item.y2-Math.sin(angle)*length;
+                const points=`${item.x2},${item.y2} ${bx+Math.sin(angle)*length*spread},${by-Math.cos(angle)*length*spread} ${bx-Math.sin(angle)*length*spread},${by+Math.cos(angle)*length*spread}`;
+                content.append(make('polygon',{points,fill:item.stroke}));
+              }
+            }
+          } else if (!['image','character'].includes(item.type)) {
             content.textContent = item.type === 'hotspot' ? item.name : item.text || (item.type === 'button' ? item.name : '');
             Object.assign(content.style,{fontSize:`${item.font_size}px`,color:item.color,textAlign:item.align,justifyContent:item.align === 'left' ? 'flex-start' : item.align === 'right' ? 'flex-end' : 'center'});
           } else {
@@ -730,7 +755,7 @@
         finalElements = new Map(value.elements.map(item => [item.id,item]));
         const nextBackground = source(value.background,'image');
         const nextPortrait = value.elements.some(item => item.type === 'character') ? '' : source(character?.portrait,'image');
-        container.dataset.sceneArtwork = String(Boolean(nextBackground || nextPortrait || value.elements.some(item => item.visible && item.opacity > 0 && (item.type === 'button' || item.type === 'text' && item.text || item.type === 'image' && source(item.asset,'image') || item.type === 'character' && source(options.characters?.().find(candidate => candidate.id === item.character_id)?.portrait,'image')))));
+      container.dataset.sceneArtwork = String(Boolean(nextBackground || nextPortrait || value.elements.some(item => item.visible && item.opacity > 0 && (['rectangle','ellipse','line','arrow','button'].includes(item.type) || item.type === 'text' && item.text || item.type === 'image' && source(item.asset,'image') || item.type === 'character' && source(options.characters?.().find(candidate => candidate.id === item.character_id)?.portrait,'image')))));
         container.dataset.dialogueVisible = String(value.dialogue_visible);
         updateElements(value.elements);
         const nextMusic = source(value.music,'audio');

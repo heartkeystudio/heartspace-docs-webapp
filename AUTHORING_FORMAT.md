@@ -302,4 +302,10 @@ A primeira persistência de visibilidade ou bloqueio próprios de Camadas evolui
 
 `authoring_visible` é uma máscara exclusiva de autoria, combinada com os grupos ancestrais sem substituir as preferências locais dos descendentes. Ela é separada de `elements[].visible`, que continua representando a visibilidade narrativa existente. `locked` impede edição e transformação no editor; não altera reprodução, interações, condições ou efeitos. A exportação narrativa remove esses metadados e mantém elementos planos, sua visibilidade narrativa, vínculos e ordem.
 
-Versões anteriores que não reconhecem schema 3 rejeitam o documento antes de instalá-lo ou gravá-lo. A sincronização remota continua bloqueada para schemas 2 e 3 até confirmação de suporte dos consumidores remotos; gravação local permanece distinta de sincronização.
+Versões anteriores que não reconhecem schema 3 rejeitam o documento antes de instalá-lo ou gravá-lo. A sincronização remota continua bloqueada para schemas 2, 3 e 4 até confirmação de suporte dos consumidores remotos; gravação local permanece distinta de sincronização.
+
+## Primitivas geométricas — fonte v4 opt-in
+
+A primeira criação persistente de retângulo, elipse, linha ou seta marca a fonte autoral como schema 4, após confirmação explícita. A cena que utiliza as primitivas guarda `scene_primitives_version: 1`; as formas permanecem elementos editáveis com identidade e transformações comuns. Retângulos e elipses persistem preenchimento, contorno e espessura. Linhas e setas persistem os extremos locais, contorno e espessura. A ausência de primitivas não remove o marcador de uma fonte v4 já confirmada; não há downgrade automático.
+
+O schema v4 é local. A sincronização remota permanece bloqueada até que os consumidores declarem suporte. O editor diferencia gravação local de sincronização e informa a incompatibilidade antes de confirmar a primeira primitiva. Leitores anteriores que aceitam apenas schemas 1–3 rejeitam a fonte v4 antes de instalá-la ou gravá-la. A exportação usa a projeção de Cena, remove o marcador e os metadados autorais, e conserva as primitivas necessárias à apresentação.

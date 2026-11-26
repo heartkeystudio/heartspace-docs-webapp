@@ -500,6 +500,7 @@
       const presentation=sequence.presentation;if(!presentation)return;
       (presentation.elements||[]).forEach(item=>{delete item.group_id;delete item.authoring_visible;delete item.locked;});
       delete presentation.groups;delete presentation.layer_groups_version;delete presentation.authoring_controls_version;
+      delete presentation.scene_primitives_version;
     });
     story = { ...story, persistence:{
       id:fingerprint(JSON.stringify([story.storage_id || [story.title,story.start_event_id],story.locale || 'pt-BR'])),

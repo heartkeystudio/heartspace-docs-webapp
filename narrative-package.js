@@ -83,6 +83,7 @@
       // existing flat element order, with group metadata removed deliberately.
       presentation.elements = presentation.elements.map(item => { const copy = {...item}; delete copy.group_id; delete copy.authoring_visible; delete copy.locked; return copy; });
       delete presentation.groups; delete presentation.layer_groups_version; delete presentation.authoring_controls_version;
+      delete presentation.scene_primitives_version;
       const mapAssets = (state,partial = false) => {
         if (!partial || Object.prototype.hasOwnProperty.call(state,'background')) state.background = add(state.background,'image');
         if (!partial || Object.prototype.hasOwnProperty.call(state,'music')) state.music = add(state.music,'audio');
