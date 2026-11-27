@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const FORMAT = 'heartspace.docs.authoring';
-  const SCHEMA_VERSION = 4;
+  const SCHEMA_VERSION = 5;
   const CACHE_VERSION = 3;
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const string = value => typeof value === 'string' ? value : '';
@@ -116,10 +116,29 @@
     if (shapes.length && presentation.scene_primitives_version !== 1) fail('primitivas geométricas sem marcador de versão.');
   }
 
+  function validateArtNeeds(presentation,schemaVersion) {
+    const elements=[...(Array.isArray(presentation.elements)?presentation.elements:[]),...(presentation.cues||[]).flatMap(cue=>Array.isArray(cue.set)?cue.set:[])];
+    const needs=presentation.art_needs,hasMarker=presentation.art_needs_version!==undefined;
+    const uses=hasMarker||Array.isArray(needs)&&needs.length>0||elements.some(item=>item?.type==='native'||item?.art_need_id);
+    if(hasMarker&&presentation.art_needs_version!==1)fail('versão das necessidades artísticas inválida.');
+    if(uses&&schemaVersion<5)fail('objetos nativos e placeholders exigem a versão autoral 5. O conteúdo existente foi preservado.');
+    if(schemaVersion>=5&&uses&&!hasMarker)fail('representações nativas ou placeholders sem marcador de versão.');
+    if(needs!==undefined&&(!Array.isArray(needs)||needs.length>1000))fail('lista de necessidades artísticas inválida.');
+    const byId=new Map();
+    for(const need of needs||[]){
+      if(!object(need)||!id(need.id)||need.id.length>80||byId.has(need.id)||typeof need.name!=='string'||need.name.length>120||typeof need.description!=='string'||need.description.length>2000||typeof need.category!=='string'||need.category&&!['object','character','environment','other'].includes(need.category))fail('identificação de necessidade artística inválida.');
+      byId.set(need.id,need);
+    }
+    for(const item of elements){
+      if(item?.type==='native'&&!['door','window','table','chair','phone','book','key','box','portrait-silhouette','full-body-silhouette','group-silhouette'].includes(item.native_id))fail('representação nativa desconhecida.');
+      if(item?.art_need_id&&!byId.has(item.art_need_id))fail('ocorrência vinculada a uma necessidade artística inexistente.');
+    }
+  }
+
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
-    if (![1,2,3,4].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if (![1,2,3,4,5].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
     if (!object(source.project) || !id(source.project.id) || typeof source.project.name !== 'string') fail('identidade do projeto inválida.');
     if (!Array.isArray(source.books) || !Array.isArray(source.documents) || !object(source.resources)) fail('estrutura autoral incompleta.');
     const books = new Map(), documents = new Set();
@@ -154,6 +173,7 @@
         if (!object(sequence) || !id(sequence.id) || sequences.has(sequence.id) || typeof sequence.title !== 'string' || !object(sequence.presentation)) fail('sequência inválida ou com ID repetido no documento.');
         validateLayerGroups(sequence.presentation,source.schema_version);
         validateScenePrimitives(sequence.presentation,source.schema_version);
+        validateArtNeeds(sequence.presentation,source.schema_version);
         sequences.add(sequence.id);
       }
     }
@@ -197,10 +217,11 @@
       };
     });
     const presentations=(state.documents||[]).flatMap(record=>record.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+    const usesV5=state.authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id)));
     const usesV4=state.authoringSchemaVersion>=4||presentations.some(presentation=>presentation.scene_primitives_version===1||(presentation.elements||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))));
     const usesV3=state.authoringSchemaVersion>=3||presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>own(group,'authoring_visible')||own(group,'locked'))||(presentation.elements||[]).some(element=>own(element,'authoring_visible')||own(element,'locked')));
     const usesV2=state.authoringSchemaVersion>=2||presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id));
-    return validate({format:FORMAT, schema_version:usesV4?4:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
+    return validate({format:FORMAT, schema_version:usesV5?5:usesV4?4:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
   }
 
   function toEditor(value) {

@@ -498,9 +498,11 @@
     // controls. The runtime remains flat and continues to use narrative `visible`.
     (story.sequences||[]).forEach(sequence=>{
       const presentation=sequence.presentation;if(!presentation)return;
-      (presentation.elements||[]).forEach(item=>{delete item.group_id;delete item.authoring_visible;delete item.locked;});
+      (presentation.elements||[]).forEach(item=>{delete item.group_id;delete item.authoring_visible;delete item.locked;delete item.art_need_id;});
+      (presentation.cues||[]).forEach(cue=>(cue.set||[]).forEach(item=>{delete item.art_need_id;}));
       delete presentation.groups;delete presentation.layer_groups_version;delete presentation.authoring_controls_version;
       delete presentation.scene_primitives_version;
+      delete presentation.art_needs;delete presentation.art_needs_version;
     });
     story = { ...story, persistence:{
       id:fingerprint(JSON.stringify([story.storage_id || [story.title,story.start_event_id],story.locale || 'pt-BR'])),

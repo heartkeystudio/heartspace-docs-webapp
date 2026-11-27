@@ -73,7 +73,7 @@
     const has = (object,key) => Object.prototype.hasOwnProperty.call(object || {},key);
     const element = (input,index = 0) => {
       input = input && typeof input === 'object' ? input : {};
-      const type = ['image','character','text','button','hotspot','rectangle','ellipse','line','arrow'].includes(input.type) ? input.type : 'image';
+      const type = ['image','character','text','button','hotspot','rectangle','ellipse','line','arrow','native'].includes(input.type) ? input.type : 'image';
       const compact = ['text','button','hotspot'].includes(type);
       const normalized = {
         id:String(input.id || `element-${index + 1}`).replace(/[^a-z0-9_.-]/gi,'').slice(0,80) || `element-${index + 1}`,
@@ -92,6 +92,10 @@
         font_size:number(input.font_size,36,12,160), color:/^#[0-9a-f]{6}$/i.test(input.color || '') ? input.color : '#ffffff',
         align:['left','center','right'].includes(input.align) ? input.align : 'center'
       };
+      const nativeIds=['door','window','table','chair','phone','book','key','box','portrait-silhouette','full-body-silhouette','group-silhouette'];
+      if(type==='native') normalized.native_id=nativeIds.includes(input.native_id)?input.native_id:'box';
+      const needId=String(input.art_need_id||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
+      if(needId)normalized.art_need_id=needId;
       if (['rectangle','ellipse','line','arrow'].includes(type)) {
         normalized.fill=/^#[0-9a-f]{6}$/i.test(input.fill || '') ? input.fill.toLowerCase() : '#477b9b';
         normalized.stroke=/^#[0-9a-f]{6}$/i.test(input.stroke || '') ? input.stroke.toLowerCase() : '#f2cf72';
@@ -131,10 +135,15 @@
         transition_ms:[200,400,700].includes(Number(input.transition_ms)) ? Number(input.transition_ms) : 400
       };
       if (input.scene_primitives_version === 1) result.scene_primitives_version = 1;
+      if (input.art_needs_version === 1) result.art_needs_version = 1;
+      if (Array.isArray(input.art_needs)) result.art_needs=input.art_needs.slice(0,1000).filter(item=>item&&typeof item==='object').map(item=>({
+        id:String(item.id||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,80),name:String(item.name||'').slice(0,120),
+        category:['object','character','environment','other'].includes(item.category)?item.category:'',description:String(item.description||'').slice(0,2000)
+      })).filter(item=>item.id);
       return result;
     };
-    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport','scene_primitives_version'].includes(key));
-    const elementKeys = [...new Set([...Object.keys(element()),'fill','stroke','stroke_width','x1','y1','x2','y2','group_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
+    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport','scene_primitives_version','art_needs_version','art_needs'].includes(key));
+    const elementKeys = [...new Set([...Object.keys(element()),'fill','stroke','stroke_width','x1','y1','x2','y2','group_id','art_need_id','native_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
     const elementId = value => String(value || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
     const idList = value => [...new Set((Array.isArray(value) ? value : []).slice(0,80).map(elementId).filter(Boolean))];
     const motionKeys = ['x','y','width','height','scale','rotation','opacity','anchor_x','anchor_y'];
@@ -193,6 +202,8 @@
       if (input.layer_groups_version === 1) result.layer_groups_version = 1;
       if (input.authoring_controls_version === 1) result.authoring_controls_version = 1;
       if (Object.prototype.hasOwnProperty.call(input,'groups') || input.layer_groups_version === 1) result.groups = layerGroups(input.groups);
+      if(input.art_needs_version===1)result.art_needs_version=1;
+      if(Array.isArray(input.art_needs))result.art_needs=sceneState(input).art_needs||[];
       return result;
     };
     const same = (left,right) => left === right || Boolean(left && right && typeof left === 'object' && typeof right === 'object' && Object.keys(left).length === Object.keys(right).length && Object.keys(left).every(key => has(right,key) && left[key] === right[key]));
@@ -652,8 +663,8 @@
             node?.remove(); node = doc.createElement('div'); node.className = 'scene-element';
             node.dataset.sceneElement = item.id; node.dataset.elementType = item.type;
             const art = ['image','character'].includes(item.type), shape = ['rectangle','ellipse','line','arrow'].includes(item.type);
-            const content = shape ? doc.createElementNS('http://www.w3.org/2000/svg','svg') : doc.createElement(art ? 'img' : 'div'); content.className = 'scene-element-content';
-            if (shape) { content.setAttribute('viewBox','0 0 100 100'); content.setAttribute('preserveAspectRatio','none'); content.setAttribute('aria-hidden','true'); }
+            const content = shape || item.type==='native' ? doc.createElementNS('http://www.w3.org/2000/svg','svg') : doc.createElement(art ? 'img' : 'div'); content.className = 'scene-element-content';
+            if (shape || item.type==='native') { content.setAttribute('viewBox','0 0 100 100'); content.setAttribute('preserveAspectRatio',item.type==='native'?'xMidYMid meet':'none'); content.setAttribute('aria-hidden','true'); }
             if (art) { content.alt = ''; content.draggable = false; content.addEventListener('error',() => { content.hidden = true; refreshInteractions(); options.onImageIssue?.('Uma imagem da composição não pôde ser exibida.'); }); }
             node.append(content); objects.append(node); elementNodes.set(item.id,node);
           }
@@ -676,6 +687,23 @@
                 const points=`${item.x2},${item.y2} ${bx+Math.sin(angle)*length*spread},${by-Math.cos(angle)*length*spread} ${bx-Math.sin(angle)*length*spread},${by+Math.cos(angle)*length*spread}`;
                 content.append(make('polygon',{points,fill:item.stroke}));
               }
+            }
+          } else if(item.type==='native'){
+            const ns='http://www.w3.org/2000/svg',make=(name,attrs)=>{const child=doc.createElementNS(ns,name);Object.entries(attrs).forEach(([key,value])=>child.setAttribute(key,String(value)));return child;};
+            content.replaceChildren();content.setAttribute('viewBox','0 0 100 100');content.setAttribute('preserveAspectRatio','xMidYMid meet');content.setAttribute('aria-hidden','true');
+            const stroke='#263747',fill='#d6bd8a',accent='#567a94',line=(x1,y1,x2,y2,w=5)=>content.append(make('line',{x1,y1,x2,y2,stroke,'stroke-width':w,'stroke-linecap':'round'})),rect=(x,y,width,height,rx=2,color=fill)=>content.append(make('rect',{x,y,width,height,rx,fill:color,stroke,'stroke-width':3})),circle=(cx,cy,r,color=fill)=>content.append(make('circle',{cx,cy,r,fill:color,stroke,'stroke-width':3}));
+            switch(item.native_id){
+              case'door':rect(22,8,56,84);circle(67,52,3,accent);break;
+              case'window':rect(12,14,76,70);line(50,15,50,83,4);line(14,49,86,49,4);break;
+              case'table':rect(12,27,76,12,3);line(22,40,18,88);line(78,40,82,88);break;
+              case'chair':rect(27,14,46,38,5);rect(20,52,60,12,3,accent);line(26,64,20,90);line(74,64,80,90);break;
+              case'phone':rect(31,8,38,84,9,accent);rect(36,18,28,52,2,'#f1ead9');circle(50,80,4);break;
+              case'book':rect(18,12,64,76,4);line(50,14,50,86,3);line(29,25,43,25,2);line(57,25,71,25,2);break;
+              case'key':circle(31,42,19,'none');line(49,42,88,42,7);line(72,43,72,59,5);line(84,43,84,54,5);break;
+              case'portrait-silhouette':circle(50,30,17,accent);content.append(make('path',{d:'M18 92c2-23 15-37 32-37s30 14 32 37z',fill:accent,stroke,'stroke-width':3}));break;
+              case'full-body-silhouette':circle(50,17,13,accent);content.append(make('path',{d:'M39 33h22l9 34-8 2-2 27H40l-2-27-8-2z',fill:accent,stroke,'stroke-width':3}));line(35,43,17,68,8);line(65,43,83,68,8);break;
+              case'group-silhouette':circle(31,27,13,accent);circle(69,27,13,accent);content.append(make('path',{d:'M7 83c1-22 9-34 24-34 8 0 14 4 19 12 5-8 11-12 19-12 15 0 23 12 24 34z',fill:accent,stroke,'stroke-width':3}));break;
+              default:rect(18,20,64,64,8);
             }
           } else if (!['image','character'].includes(item.type)) {
             content.textContent = item.type === 'hotspot' ? item.name : item.text || (item.type === 'button' ? item.name : '');

@@ -3798,6 +3798,7 @@
       };
       const recordAuthoringSchema = record => {
         const presentations=(record?.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+        if(authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id))))return 5;
         if(authoringSchemaVersion>=4||presentations.some(presentation=>presentation.scene_primitives_version===1||(presentation.elements||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type)))))return 4;
         if(presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>Object.hasOwn(group,'authoring_visible')||Object.hasOwn(group,'locked'))||(presentation.elements||[]).some(element=>Object.hasOwn(element,'authoring_visible')||Object.hasOwn(element,'locked'))))return 3;
         return presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id))?2:1;
@@ -6559,7 +6560,10 @@
           const base = normalizeNarrativePresentation(sequence?.presentation);
           sceneMomentStateCache = {source:sequence?.presentation,nodes,index,sequenceKey,base,presentation:HeartspaceNarrativeMedia.resolveScene(base,nodes,index),motion:HeartspaceNarrativeMedia.sceneMotion(base,nodes,index)};
         }
-        const {base,presentation} = sceneMomentStateCache;
+        const {base} = sceneMomentStateCache;
+        const presentation={...HeartspaceNarrativeMedia.resolveScene(base,nodes,index)};
+        if(base.art_needs_version===1)presentation.art_needs_version=1;
+        if(Array.isArray(base.art_needs))presentation.art_needs=base.art_needs;
         return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,schemaVersion:authoringSchemaVersion,
           key:JSON.stringify([sequenceKey,sceneMomentBlockId]),
           presentation,motion:sceneMomentStateCache.motion,animations:base.cues.find(cue => cue.block_id === sceneMomentBlockId)?.animations || [],characters:narrativeCharacters,displayProfile:sceneDisplayProfile,
@@ -6622,17 +6626,23 @@
         if (HeartspaceDocsHistoryPatch.equal(normalizeNarrativePresentation(context.presentation),normalizeNarrativePresentation(presentation))) return true;
         const needsV4=presentation.scene_primitives_version===1||presentation.elements.some(item=>['rectangle','ellipse','line','arrow'].includes(item.type));
         if(needsV4&&authoringSchemaVersion<4&&!window.confirm('Este documento passará ao formato autoral v4 para preservar primitivas geométricas editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v4. Versões anteriores não abrirão o documento e poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
+        const needsV5=presentation.art_needs_version===1||(presentation.art_needs||[]).length>0||presentation.elements.some(item=>item.type==='native'||item.art_need_id)||presentation.cues.some(cue=>(cue.set||[]).some(item=>item.type==='native'||item.art_need_id));
+        if(needsV5&&authoringSchemaVersion<5&&!window.confirm('Este documento passará ao formato autoral v5 para preservar objetos nativos e placeholders editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v5. Versões anteriores não abrirão o documento e poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
         const historyMutation = captureSceneAuthoringMutation(sequence);
         const base = normalizeNarrativePresentation(sequence.presentation);
         if (context.index < 0) {
           const next=normalizeNarrativePresentation({...presentation,cues:base.cues}),ids=new Set(next.elements.map(item=>item.id));
-          for(const marker of ['layer_groups_version','authoring_controls_version','scene_primitives_version'])if(base[marker]===1)next[marker]=1;
+          for(const marker of ['layer_groups_version','authoring_controls_version','scene_primitives_version','art_needs_version'])if(base[marker]===1)next[marker]=1;
+          if(base.art_needs&&!presentation.art_needs)next.art_needs=base.art_needs;
           if(needsV4)next.scene_primitives_version=1;
+          if(needsV5)next.art_needs_version=1;
           if(base.groups?.length||base.layer_groups_version===1)next.groups=(base.groups||[]).map(group=>({...group,element_ids:[...new Set([...group.element_ids,...next.elements.filter(item=>item.group_id===group.id).map(item=>item.id)])].filter(id=>ids.has(id))}));
           sequence.presentation=normalizeNarrativePresentation(next);
         }
         else {
           if(needsV4)base.scene_primitives_version=1;
+          if(needsV5)base.art_needs_version=1;
+          if(Array.isArray(presentation.art_needs))base.art_needs=presentation.art_needs;
           const existing = base.cues.find(cue => cue.block_id === context.blockId);
           const before = existing?.reset ? HeartspaceNarrativeMedia.sceneState(base) : HeartspaceNarrativeMedia.resolveScene(base,context.nodes,context.index - 1);
           const patch = HeartspaceNarrativeMedia.sceneDiff(before,presentation);
@@ -6645,6 +6655,7 @@
           sequence.presentation = normalizeNarrativePresentation(base);
         }
         if(needsV4)authoringSchemaVersion=Math.max(authoringSchemaVersion,4);
+        if(needsV5)authoringSchemaVersion=Math.max(authoringSchemaVersion,5);
         commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation);
         renderSceneMomentControls(); queueSave(); return true;

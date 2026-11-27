@@ -261,3 +261,12 @@ cópia `.hdocs` v2 e verificar que a tentativa remota continua bloqueada sem
 criar envio pendente. O caso remoto usa apenas um projeto sintético no harness;
 não contata serviço remoto. Execute a matriz direcionada com `?case=A5-COMM`.
 O teste de grupo A5-01 também confere o aviso e a operação de agrupamento.
+
+## Parcela B2 — objetos e placeholders
+
+`stage0-editor-matrix.js` acrescenta B2-01–08 para a biblioteca nativa offline,
+cancelamento da evolução v5, metadados opcionais com salvamento/reabertura,
+conversão com identidade e histórico, associações explícitas, projeção de
+exportação sem metadados de autoria e bloqueio remoto. Execute no harness
+descartável com `?case=B2`. A matriz usa documento sintético; seu ciclo de
+salvar/reabrir passa por arquivo `.hdocs` local e não valida dados de produção.

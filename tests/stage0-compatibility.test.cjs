@@ -233,8 +233,8 @@ test('C27 v3 authoring controls survive normalization, cache and local re-open w
   const emptied=authoring.toEditor(saved);emptied.documents=[];assert.equal(authoring.fromEditor(emptied).schema_version,3,'A exclusão do último documento apagou a versão opt-in já confirmada.');
 });
 test('C28 future incompatible schema is rejected before the supplied source can be replaced',()=>{
-  const source=makeSource(),original=JSON.stringify(source);source.schema_version=5;
-  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:5}));
+  const source=makeSource(),original=JSON.stringify(source);source.schema_version=6;
+  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:6}));
 });
 test('C29 v4 geometric primitives roundtrip through cache and export without losing editable source',()=>{
   const source=makeSource(),p=scene(source);source.schema_version=4;p.scene_primitives_version=1;
@@ -257,4 +257,33 @@ test('C29 v4 geometric primitives roundtrip through cache and export without los
   assert.deepEqual(plain(runtime.elements.map(item=>item.stroke_width)),[3,2,4,5]);
   const html=extract(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(saved))).sequences[0].presentation;
   assert.equal(html.scene_primitives_version,undefined);assert.deepEqual(plain(html.elements.map(item=>item.type)),['rectangle','ellipse','line','arrow']);
+});
+test('B2-01 generic native objects stay distinct from art needs and v5 is opt-in',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=5;p.scene_primitives_version=1;p.elements=[{id:'door-instance',type:'native',native_id:'door',name:'Porta',x:12,y:20,width:20,height:50,scale:1,rotation:0,anchor_x:50,anchor_y:50}];p.art_needs_version=1;
+  const state=authoring.toEditor(source);assert.equal(authoring.fromEditor(state).schema_version,5);assert.equal(scene(authoring.fromEditor(state)).art_needs,undefined);
+  const plain=makeSource();assert.equal(authoring.fromEditor(authoring.toEditor(plain)).schema_version,1,'Documento sem capacidades novas evoluiu incidentalmente.');
+});
+test('B2-02 explicit placeholder links roundtrip through editor, cache and portable source',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=5;p.scene_primitives_version=1;p.art_needs_version=1;p.art_needs=[{id:'need-door',name:'Porta da estação',category:'object',description:'Porta antiga de madeira.'}];
+  p.elements=[{id:'door-a',type:'rectangle',name:'Representação provisória',x:18,y:22,width:19,height:44,rotation:12,anchor_x:4,anchor_y:7,group_id:'set-group',art_need_id:'need-door'},{id:'door-b',type:'native',native_id:'door',name:'Outra ocorrência',x:50,y:22,width:19,height:44,art_need_id:'need-door'}];
+  p.groups=[{id:'set-group',name:'Cenário',parent_id:'',element_ids:['door-a']}];p.layer_groups_version=1;
+  const state=authoring.toEditor(source),cache=authoring.cacheFromEditor(state),saved=authoring.fromEditor(authoring.readCache(cache)),restored=scene(saved);
+  assert.equal(saved.schema_version,5);assert.equal(restored.elements[0].id,'door-a');assert.equal(restored.elements[0].art_need_id,'need-door');assert.equal(restored.elements[0].rotation,12);assert.equal(restored.elements[0].group_id,'set-group');
+  assert.equal(restored.elements[1].art_need_id,'need-door');assert.equal(restored.art_needs[0].description,'Porta antiga de madeira.');
+  assert.equal(saved.schema_version,5);assert.equal(authoring.validate(saved).schema_version,5);
+});
+test('B2-03 removing one placeholder link preserves its representation and other linked occurrences',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=5;p.scene_primitives_version=1;p.art_needs_version=1;p.art_needs=[{id:'need-shared',name:'',category:'object',description:''}];
+  p.elements=[{id:'a',type:'ellipse',art_need_id:'need-shared',x:10,y:20,width:10,height:10},{id:'b',type:'native',native_id:'box',art_need_id:'need-shared',x:30,y:20,width:10,height:10}];
+  delete p.elements[0].art_need_id;const saved=authoring.fromEditor(authoring.toEditor(source)),restored=scene(saved);
+  assert.equal(restored.elements[0].id,'a');assert.equal(restored.elements[0].type,'ellipse');assert.equal(restored.elements[0].art_need_id,undefined);assert.equal(restored.elements[1].art_need_id,'need-shared');assert.equal(restored.art_needs[0].id,'need-shared');assert.equal(saved.schema_version,5);
+});
+test('B2-04 authoring metadata is omitted from HTML and ZIP while the provisional visual remains',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=5;p.art_needs_version=1;p.art_needs=[{id:'private-need',name:'Do not show',category:'character',description:'Art note'}];
+  p.elements=[{id:'silhouette',type:'native',native_id:'full-body-silhouette',name:'Placeholder',art_need_id:'private-need',x:30,y:10,width:25,height:70}];
+  p.cues=[{block_id:'detail',set:[{id:'silhouette',art_need_id:'private-need'}],settings:{},remove:[],order:null,animations:[]}];
+  const saved=authoring.fromEditor(authoring.toEditor(source)),packed=context.HeartspaceNarrativePackage.buildPackage(fixtures.story(saved)).story.sequences[0].presentation;
+  assert.equal(packed.art_needs,undefined);assert.equal(packed.art_needs_version,undefined);assert.equal(packed.elements[0].art_need_id,undefined);assert.equal(packed.elements[0].native_id,'full-body-silhouette');assert.equal(packed.cues[0].set[0].art_need_id,undefined);
+  const html=extract(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(saved))).sequences[0].presentation;
+  assert.equal(html.art_needs,undefined);assert.equal(html.elements[0].art_need_id,undefined);assert.equal(html.elements[0].type,'native');
 });

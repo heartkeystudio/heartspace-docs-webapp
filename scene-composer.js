@@ -32,6 +32,7 @@
     .scene-multi-marquee{position:absolute;z-index:119;border:1px solid #40a9ff;background:#40a9ff22;pointer-events:none}
     .scene-layer-tree{display:grid;gap:3px;margin:8px 0}.scene-layer-tree ul{list-style:none;margin:0;padding-left:16px}.scene-layer-tree-row{display:flex;align-items:center;gap:4px;min-width:0}.scene-layer-tree-row>[data-layer-select]{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-layer-tree-row button{min-height:26px;padding:3px 6px}.scene-layer-tree-row [data-layer-select][aria-pressed=true]{outline:2px solid #40a9ff}.scene-layer-tree-row [data-layer-collapse]{width:26px;min-width:26px}
     .scene-layer-tree-row [data-layer-control]{width:30px;min-width:30px;padding:2px}.scene-layer-tree-row [data-layer-control][aria-pressed=true]{border-color:#ffe09b;color:#ffe09b}.scene-editing .scene-element.scene-locked{cursor:not-allowed!important}.scene-editing .scene-element.scene-effectively-hidden{visibility:hidden!important}
+    .scene-editing .scene-element[data-authoring-placeholder=true]::after{content:'PLACEHOLDER';position:absolute;left:2px;top:2px;padding:2px 4px;border-radius:3px;background:#673ab7;color:white;font:600 9px/1.2 system-ui;letter-spacing:.04em;pointer-events:none;white-space:nowrap}
     .scene-parallax-preview .scene-element{pointer-events:none!important;outline:none!important}
     .scene-parallax-preview .scene-element-tools{display:none!important}
     .scene-parallax-preview .scene-element[data-element-type=hotspot]>.scene-element-content{visibility:hidden!important}
@@ -52,6 +53,7 @@
       <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="project-image">+ Recurso do projeto</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <div class="scene-element-actions" aria-label="Primitivas geométricas"><button type="button" data-action="rectangle">+ Retângulo</button><button type="button" data-action="ellipse">+ Elipse</button><button type="button" data-action="line">+ Linha</button><button type="button" data-action="arrow">+ Seta</button></div>
       <div class="scene-element-actions"><label>Ferramenta de desenho<select data-shape-draw-type><option value="">Selecione uma forma</option><option value="rectangle">Retângulo</option><option value="ellipse">Elipse</option><option value="line">Linha</option><option value="arrow">Seta</option></select></label><button type="button" data-shape-draw>Desenhar no palco</button></div>
+      <details data-native-library><summary>Biblioteca offline de blocagem</summary><div class="scene-composer-body"><strong>Objetos genéricos</strong><div class="scene-element-actions"><button type="button" data-native-insert="door">Porta</button><button type="button" data-native-insert="window">Janela</button><button type="button" data-native-insert="table">Mesa</button><button type="button" data-native-insert="chair">Cadeira</button><button type="button" data-native-insert="phone">Telefone</button><button type="button" data-native-insert="book">Livro</button><button type="button" data-native-insert="key">Chave</button><button type="button" data-native-insert="box">Caixa</button></div><strong>Placeholders de personagem</strong><div class="scene-element-actions"><button type="button" data-native-insert="portrait-silhouette">Silhueta de retrato</button><button type="button" data-native-insert="full-body-silhouette">Silhueta de corpo inteiro</button><button type="button" data-native-insert="group-silhouette">Silhueta de grupo</button></div><small>Elementos locais do Docs; não exigem conexão ou recurso artístico. Objetos genéricos não criam necessidades artísticas.</small></div></details>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Elementos · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select></label>
       <div class="scene-element-actions" data-group-actions><button type="button" data-layer-action="group">Agrupar seleção</button><button type="button" data-layer-action="ungroup">Desagrupar</button><button type="button" data-layer-action="duplicate">Duplicar grupo</button><button type="button" data-layer-action="delete">Remover grupo</button></div>
@@ -60,6 +62,7 @@
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
       <section data-properties hidden aria-label="Propriedades do elemento"><div class="scene-composer-body">
         <label>Nome<input data-field="name" maxlength="120"></label>
+        <details data-placeholder-editor><summary>Necessidade artística</summary><div class="scene-composer-body"><label class="scene-check"><input type="checkbox" data-placeholder-toggle>Tratar esta ocorrência como placeholder</label><label>Vincular explicitamente a necessidade<select data-placeholder-link></select></label><button type="button" data-placeholder-action="new">Criar necessidade e vincular</button><label>Nome da necessidade<input data-placeholder-name maxlength="120"></label><label>Categoria<select data-placeholder-category><option value="">Sem categoria</option><option value="object">Objeto</option><option value="character">Personagem</option><option value="environment">Ambiente</option><option value="other">Outro</option></select></label><label>Descrição artística<textarea data-placeholder-description maxlength="2000"></textarea></label><small>Esses metadados pertencem à autoria e não são apresentados automaticamente ao jogador.</small></div></details>
         <label class="scene-check"><input data-field="visible" type="checkbox">Visível</label>
         <details><summary>Parallax desta camada</summary><div class="scene-composer-body">
           <div class="scene-element-actions"><button type="button" data-parallax-preset="0,0">Fixo</button><button type="button" data-parallax-preset="0.6,0.4">Fundo</button><button type="button" data-parallax-preset="1.5,1">Meio</button><button type="button" data-parallax-preset="3,2">Frente</button></div>
@@ -283,7 +286,8 @@
         const item = items.get(node.dataset.sceneElement);
         const flags=authoringFlags(authoringBase,baseItems.get(node.dataset.sceneElement)||item);
         node.classList.toggle('scene-locked',editable&&flags.locked);node.classList.toggle('scene-effectively-hidden',editable&&!flags.visible);
-        node.setAttribute('aria-label',`${item?.name || 'Elemento de cena'}${active ? ', selecionado' : ''}${editable&&flags.locked?', bloqueado':''}${editable&&!flags.visible?', oculto na autoria':''}`);
+      node.setAttribute('aria-label',`${item?.name || 'Elemento de cena'}${active ? ', selecionado' : ''}${editable&&flags.locked?', bloqueado':''}${editable&&!flags.visible?', oculto na autoria':''}`);
+        if(item?.art_need_id)node.dataset.authoringPlaceholder='true';else delete node.dataset.authoringPlaceholder;
         node.style.setProperty('--scene-handle-size',`${16 / Math.max(.01,canvasScale * (item?.scale || 1))}px`);
         node.querySelector('.scene-element-tools')?.remove();
         if (active && editable && selectedIds.size === 1) {
@@ -337,6 +341,13 @@
           const pair = `${active.anchor_x},${active.anchor_y}`, anchor = panel.querySelector('[data-anchor]');
           anchor.value = [...anchor.options].some(option => option.value === pair) ? pair : 'custom';
         }
+        const needs=value.art_needs||[],need=needs.find(candidate=>candidate.id===active?.art_need_id);
+        const placeholderToggle=panel.querySelector('[data-placeholder-toggle]'),needLink=panel.querySelector('[data-placeholder-link]');
+        placeholderToggle.checked=Boolean(need);placeholderToggle.disabled=!state.editable||activeLocked;
+        needLink.replaceChildren(new Option('Sem vínculo',''),...needs.map(candidate=>new Option(candidate.name||`${candidate.category||'Necessidade'} · ${candidate.id.slice(-8)}`,candidate.id)));
+        needLink.value=active?.art_need_id||'';needLink.disabled=!state.editable||!active||activeLocked;
+        for(const [selector,property] of [['[data-placeholder-name]','name'],['[data-placeholder-category]','category'],['[data-placeholder-description]','description']]){const input=panel.querySelector(selector);input.value=need?.[property]||'';input.disabled=!state.editable||!need||activeLocked;}
+        panel.querySelector('[data-placeholder-action="new"]').disabled=!state.editable||!active||activeLocked;
       }
       panel.querySelectorAll('[data-type]').forEach(node => { node.hidden = !active || (node.dataset.type === 'art' ? !['image','character'].includes(active.type) : !node.dataset.type.split(' ').includes(active.type)); });
       panel.querySelector('[data-action=replace]').hidden = active?.type !== 'image';
@@ -357,7 +368,8 @@
       const touched=[...new Set([...oldItems.keys(),...newItems.keys()])].filter(id=>JSON.stringify(oldItems.get(id))!==JSON.stringify(newItems.get(id)));
       const locked=touched.find(id=>{const item=oldItems.get(id)||newItems.get(id);return item&&authoringFlags(state.base||state.presentation,item).locked;});
       if(locked){status.textContent='A operação foi bloqueada porque incluiria um elemento bloqueado. Desbloqueie-o pela árvore de Camadas para continuar.';return false;}
-      if (!state.editable || state.key !== expectedKey || !write(expectedKey,media.presentation(value))) return false;
+      if (!state.editable || state.key !== expectedKey) return false;
+      if (!write(expectedKey,media.presentation(value))) { render(true); return false; }
       render(populate); return true;
     };
     const commitStructure = (value,state=context(),message='') => {
@@ -424,7 +436,8 @@
       if(action==='duplicate'){
         if(elements.length+memberIds.size>80){status.textContent='A cena não comporta a duplicação deste grupo: limite de 80 elementos.';return;}
         const groupIds=new Set([group.id,...childGroupIds(value,group.id)]),oldGroups=[...groups].filter(item=>groupIds.has(item.id)),groupMap=new Map(oldGroups.map(item=>[item.id,groupId()])),elementMap=new Map([...memberIds].map(id=>[id,`element-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`]));
-        const copies=elements.filter(item=>memberIds.has(item.id)).map(item=>media.element({...item,id:elementMap.get(item.id),name:`${item.name} · cópia`,x:Math.min(200,item.x+2),y:Math.min(200,item.y+2),group_id:groupMap.get(item.group_id)||groupMap.get(group.id)}));
+        const needMap=new Map();
+        const copies=elements.filter(item=>memberIds.has(item.id)).map(item=>{const copy={...item,id:elementMap.get(item.id),name:`${item.name} · cópia`,x:Math.min(200,item.x+2),y:Math.min(200,item.y+2),group_id:groupMap.get(item.group_id)||groupMap.get(group.id)};if(copy.art_need_id){if(!needMap.has(copy.art_need_id)){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;needMap.set(copy.art_need_id,newNeedId);value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});}}if(needMap.has(copy.art_need_id))copy.art_need_id=needMap.get(copy.art_need_id);}return media.element(copy);});
         value.elements=[...elements,...copies];
         oldGroups.forEach(item=>groups.push({...item,id:groupMap.get(item.id),name:item.id===group.id?`${item.name} · cópia`:item.name,parent_id:item.id===group.id?group.parent_id:groupMap.get(item.parent_id)||'',element_ids:item.element_ids.map(id=>elementMap.get(id)).filter(Boolean)}));
         value.cues=value.cues.map(cue=>{
@@ -549,11 +562,29 @@
       if (sceneFields.has(property)) { const state = context(); commit({...state.presentation,[property]:value},state.key); }
       else change({[property]:value});
     });
+    const artNeedId=()=>`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
+    const updateNeed=changes=>{const state=context(),value=media.presentation(state.presentation),item=value.elements.find(candidate=>candidate.id===selected);if(!item||!item.art_need_id)return;value.art_needs=value.art_needs||[];value.art_needs=value.art_needs.map(need=>need.id===item.art_need_id?{...need,...changes}:need);commit(value,state.key,true);};
+    panel.addEventListener('change',event=>{
+      const field=event.target,state=context(),item=getItem(state);if(!item||!state.editable)return;
+      if(field.matches('[data-placeholder-toggle]')){const value=media.presentation(state.presentation);if(field.checked){const id=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id,name:'',category:'',description:''});value.art_needs_version=1;value.elements=value.elements.map(candidate=>candidate.id===item.id?media.element({...candidate,art_need_id:id}):candidate);}else value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};delete copy.art_need_id;return media.element(copy);});commit(value,state.key,true);return;}
+      if(field.matches('[data-placeholder-link]')){const value=media.presentation(state.presentation);value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};if(field.value)copy.art_need_id=field.value;else delete copy.art_need_id;return media.element(copy);});if(field.value)value.art_needs_version=1;commit(value,state.key,true);return;}
+      if(field.matches('[data-placeholder-category]')){updateNeed({category:field.value});return;}
+      if(field.matches('[data-placeholder-name]')){updateNeed({name:field.value});return;}
+      if(field.matches('[data-placeholder-description]')){updateNeed({description:field.value});return;}
+    });
     panel.querySelector('[data-anchor]').addEventListener('change',event => {
       if (event.target.value !== 'custom') { const [anchor_x,anchor_y] = event.target.value.split(',').map(Number); change({anchor_x,anchor_y},true); }
     });
     panel.addEventListener('click',event => {
       const button = event.target.closest('button'); if (!button || button.closest('[data-motion-editor],[data-interaction-editor]') || !context().editable) return;
+      if(button.dataset.nativeInsert){
+        const state=context(),value=media.presentation(state.presentation),nativeId=button.dataset.nativeInsert;if(value.elements.length>=80){status.textContent='A cena já possui 80 elementos.';return;}
+        const labels={door:'Porta',window:'Janela',table:'Mesa',chair:'Cadeira',phone:'Telefone',book:'Livro',key:'Chave',box:'Caixa','portrait-silhouette':'Silhueta de retrato','full-body-silhouette':'Silhueta de corpo inteiro','group-silhouette':'Silhueta de grupo'},isCharacter=nativeId.includes('silhouette'),elementId=id();
+        const element={id:elementId,type:'native',native_id:nativeId,name:labels[nativeId],x:38,y:28,width:24,height:42,anchor_x:50,anchor_y:50,fill:'#d6bd8a',stroke:'#263747',stroke_width:2};
+        if(isCharacter){const needId=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id:needId,name:'',category:'character',description:''});value.art_needs_version=1;element.art_need_id=needId;}
+        value.elements.push(media.element(element));selected=elementId;setSelection([elementId]);commit(value,state.key,true);status.textContent=isCharacter?'Placeholder de personagem inserido.':'Objeto genérico inserido sem necessidade artística.';return;
+      }
+      if(button.matches('[data-placeholder-action="new"]')){const state=context(),value=media.presentation(state.presentation),item=value.elements.find(candidate=>candidate.id===selected);if(!item)return;const needId=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id:needId,name:'',category:'',description:''});value.art_needs_version=1;value.elements=value.elements.map(candidate=>candidate.id===item.id?media.element({...candidate,art_need_id:needId}):candidate);commit(value,state.key,true);status.textContent='Necessidade artística criada e vinculada a esta ocorrência.';return;}
       if(button.matches('[data-shape-draw]')){
         shapeDrawType=panel.querySelector('[data-shape-draw-type]').value;
         panel.querySelector('[data-shape-draw-type]').setAttribute('aria-label',shapeDrawType?`Ferramenta ativa: ${shapeDrawType}`:'Ferramenta de desenho');
@@ -585,6 +616,7 @@
       if (action === 'duplicate') {
         if (value.elements.length >= 80) { status.textContent = 'A cena já possui 80 elementos.'; return; }
         const copy = {...value.elements[index],id:id(),name:value.elements[index].name + ' · cópia',x:value.elements[index].x + 2,y:value.elements[index].y + 2};
+        if(copy.art_need_id){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});copy.art_need_id=newNeedId;}}
         value.elements.splice(index + 1,0,media.element(copy)); setSelection([copy.id]);
       }
       if (action === 'up' && index < value.elements.length - 1) [value.elements[index],value.elements[index + 1]] = [value.elements[index + 1],value.elements[index]];

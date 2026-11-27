@@ -81,9 +81,11 @@
       const presentation = media.presentation(sequence.presentation);
       // Persistent groups organize authoring only. The runtime receives the
       // existing flat element order, with group metadata removed deliberately.
-      presentation.elements = presentation.elements.map(item => { const copy = {...item}; delete copy.group_id; delete copy.authoring_visible; delete copy.locked; return copy; });
+      presentation.elements = presentation.elements.map(item => { const copy = {...item}; delete copy.group_id; delete copy.authoring_visible; delete copy.locked; delete copy.art_need_id; return copy; });
+      presentation.cues.forEach(cue=>cue.set.forEach(item=>{delete item.art_need_id;}));
       delete presentation.groups; delete presentation.layer_groups_version; delete presentation.authoring_controls_version;
       delete presentation.scene_primitives_version;
+      delete presentation.art_needs; delete presentation.art_needs_version;
       const mapAssets = (state,partial = false) => {
         if (!partial || Object.prototype.hasOwnProperty.call(state,'background')) state.background = add(state.background,'image');
         if (!partial || Object.prototype.hasOwnProperty.call(state,'music')) state.music = add(state.music,'audio');
