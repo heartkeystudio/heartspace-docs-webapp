@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const FORMAT = 'heartspace.docs.authoring';
-  const SCHEMA_VERSION = 6;
+  const SCHEMA_VERSION = 7;
   const CACHE_VERSION = 3;
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const string = value => typeof value === 'string' ? value : '';
@@ -116,7 +116,7 @@
     if (shapes.length && presentation.scene_primitives_version !== 1) fail('primitivas geométricas sem marcador de versão.');
   }
 
-  function validateArtNeeds(presentation,schemaVersion) {
+  function validateArtNeeds(presentation,schemaVersion,projectArtNeeds = null) {
     const elements=[...(Array.isArray(presentation.elements)?presentation.elements:[]),...(presentation.cues||[]).flatMap(cue=>Array.isArray(cue.set)?cue.set:[])];
     const needs=presentation.art_needs,hasMarker=presentation.art_needs_version!==undefined;
     const uses=hasMarker||Array.isArray(needs)&&needs.length>0||elements.some(item=>item?.type==='native'||item?.art_need_id);
@@ -125,10 +125,11 @@
     if(schemaVersion>=5&&uses&&!hasMarker)fail('representações nativas ou placeholders sem marcador de versão.');
     if(needs!==undefined&&(!Array.isArray(needs)||needs.length>1000))fail('lista de necessidades artísticas inválida.');
     const byId=new Map();
-    for(const need of needs||[]){
+    for(const need of (schemaVersion>=7 ? projectArtNeeds : needs)||[]){
       if(!object(need)||!id(need.id)||need.id.length>80||byId.has(need.id)||typeof need.name!=='string'||need.name.length>120||typeof need.description!=='string'||need.description.length>2000||typeof need.category!=='string'||need.category&&!['object','character','environment','other'].includes(need.category))fail('identificação de necessidade artística inválida.');
       byId.set(need.id,need);
     }
+    if(schemaVersion>=7&&((hasMarker&&presentation.art_needs_version!==1)||needs!==undefined))fail('necessidades artísticas v7 devem ser mantidas no registro do projeto.');
     for(const item of elements){
       if(item?.type==='native'&&!['door','window','table','chair','phone','book','key','box','portrait-silhouette','full-body-silhouette','group-silhouette'].includes(item.native_id))fail('representação nativa desconhecida.');
       if(item?.art_need_id&&!byId.has(item.art_need_id))fail('ocorrência vinculada a uma necessidade artística inexistente.');
@@ -159,7 +160,14 @@
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
-    if (![1,2,3,4,5,6].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if (![1,2,3,4,5,6,7].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if(source.schema_version<7&&(own(source,'project_art_needs_version')||own(source,'art_needs')))fail('registro compartilhado de necessidades artísticas exige a versão autoral 7. O conteúdo existente foi preservado.');
+    if(source.schema_version>=7&&(source.project_art_needs_version!==1||!Array.isArray(source.art_needs)||source.art_needs.length>10000))fail('registro compartilhado de necessidades artísticas v7 inválido.');
+    const projectNeedsById=new Map();
+    for(const need of source.schema_version>=7?source.art_needs:[]){
+      if(!object(need)||!id(need.id)||need.id.length>80||projectNeedsById.has(need.id)||typeof need.name!=='string'||need.name.length>120||typeof need.description!=='string'||need.description.length>2000||typeof need.category!=='string'||need.category&&!['object','character','environment','other'].includes(need.category))fail('identificação compartilhada de necessidade artística inválida.');
+      projectNeedsById.set(need.id,need);
+    }
     if (!object(source.project) || !id(source.project.id) || typeof source.project.name !== 'string') fail('identidade do projeto inválida.');
     if (!Array.isArray(source.books) || !Array.isArray(source.documents) || !object(source.resources)) fail('estrutura autoral incompleta.');
     const books = new Map(), documents = new Set();
@@ -194,7 +202,7 @@
         if (!object(sequence) || !id(sequence.id) || sequences.has(sequence.id) || typeof sequence.title !== 'string' || !object(sequence.presentation)) fail('sequência inválida ou com ID repetido no documento.');
         validateLayerGroups(sequence.presentation,source.schema_version);
         validateScenePrimitives(sequence.presentation,source.schema_version);
-        validateArtNeeds(sequence.presentation,source.schema_version);
+        validateArtNeeds(sequence.presentation,source.schema_version,source.art_needs);
         validateSceneInk(sequence.presentation,source.schema_version);
         sequences.add(sequence.id);
       }
@@ -202,6 +210,50 @@
     for (const key of ['characters','variables','glossary']) if (!Array.isArray(source.resources[key])) fail('recursos do projeto inválidos.');
     if (!object(source.resources.sceneSettings)) fail('configuração de cena inválida.');
     return source;
+  }
+
+  // Explicit, local conversion. Existing sequence-scoped identities remain distinct;
+  // only colliding IDs are remapped, and only inside the affected sequence.
+  function promoteArtNeeds(value) {
+    const source=clone(validate(value));
+    if(source.schema_version>=7)return source;
+    const needs=[],used=new Set();
+    for(let documentIndex=0;documentIndex<source.documents.length;documentIndex++){
+      const document=source.documents[documentIndex];
+      for(let sequenceIndex=0;sequenceIndex<document.narrative.sequences.length;sequenceIndex++){
+        const sequence=document.narrative.sequences[sequenceIndex],presentation=sequence.presentation,local=Array.isArray(presentation.art_needs)?presentation.art_needs:[],remap=new Map();
+        for(let needIndex=0;needIndex<local.length;needIndex++){
+          const need=local[needIndex];let nextId=need.id;
+          if(used.has(nextId)){
+            const base=nextId.slice(0,48)||'art-need';let suffix=`-v7-${documentIndex+1}-${sequenceIndex+1}-${needIndex+1}`,candidate=`${base}${suffix}`.slice(0,80),counter=1;
+            while(used.has(candidate)){suffix=`-v7-${documentIndex+1}-${sequenceIndex+1}-${needIndex+1}-${counter++}`;candidate=`${base}${suffix}`.slice(0,80);}
+            nextId=candidate;
+          }
+          used.add(nextId);remap.set(need.id,nextId);needs.push({...need,id:nextId});
+        }
+        const rewrite=item=>{if(item?.art_need_id&&remap.has(item.art_need_id))item.art_need_id=remap.get(item.art_need_id);};
+        (presentation.elements||[]).forEach(rewrite);(presentation.cues||[]).forEach(cue=>(cue.set||[]).forEach(rewrite));
+        delete presentation.art_needs;presentation.art_needs_version=1;
+      }
+    }
+    source.schema_version=7;source.project_art_needs_version=1;source.art_needs=needs;
+    return validate(source);
+  }
+
+  function reconcileProjectArtNeeds(state,documents) {
+    const needs=new Map((Array.isArray(state.artNeeds)?state.artNeeds:[]).map(need=>[need.id,clone(need)]));
+    const variants=new Map();
+    for(const document of documents)for(const sequence of document.narrativeSequences||[])for(const need of sequence.presentation?.art_needs||[]){
+      if(!need?.id)continue;const key=JSON.stringify([need.name,need.category,need.description]);
+      if(!variants.has(need.id))variants.set(need.id,new Map());variants.get(need.id).set(key,need);
+    }
+    for(const [needId,versions] of variants){
+      const current=needs.get(needId),baseKey=current?JSON.stringify([current.name,current.category,current.description]):'';
+      const changed=[...versions.entries()].filter(([key])=>!current||key!==baseKey);
+      if(new Set(changed.map(([key])=>key)).size>1||!current&&versions.size>1)fail('uma identidade artística compartilhada foi alterada de maneiras diferentes em mais de uma sequência; nenhuma versão foi sobrescrita.');
+      if(changed.length)needs.set(needId,clone(changed[0][1]));
+    }
+    return [...needs.values()];
   }
 
   function fromEditor(state) {
@@ -239,12 +291,16 @@
       };
     });
     const presentations=(state.documents||[]).flatMap(record=>record.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+    const usesV7=state.authoringSchemaVersion>=7;
+    const projectArtNeeds=usesV7?reconcileProjectArtNeeds(state,state.documents||[]):[];
+    if(usesV7)for(const document of documents)for(const sequence of document.narrative.sequences){delete sequence.presentation.art_needs;sequence.presentation.art_needs_version=1;}
     const usesV6=state.authoringSchemaVersion>=6||presentations.some(presentation=>presentation.scene_ink_version===1||(presentation.elements||[]).some(element=>element?.type==='sketch')||(presentation.annotations||[]).length);
     const usesV5=state.authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id)));
     const usesV4=state.authoringSchemaVersion>=4||presentations.some(presentation=>presentation.scene_primitives_version===1||(presentation.elements||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))));
     const usesV3=state.authoringSchemaVersion>=3||presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>own(group,'authoring_visible')||own(group,'locked'))||(presentation.elements||[]).some(element=>own(element,'authoring_visible')||own(element,'locked')));
     const usesV2=state.authoringSchemaVersion>=2||presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id));
-    return validate({format:FORMAT, schema_version:usesV6?6:usesV5?5:usesV4?4:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
+    const schemaVersion=usesV7?7:usesV6?6:usesV5?5:usesV4?4:usesV3?3:usesV2?2:1;
+    return validate({format:FORMAT, schema_version:schemaVersion, project:createProject(state.project), books, documents, resources:registry(state.registry),...(usesV7?{project_art_needs_version:1,art_needs:projectArtNeeds}:{})});
   }
 
   function toEditor(value) {
@@ -261,7 +317,14 @@
       marginNotes:list(document.editorial.marginNotes), status:document.editorial.status, tags:document.editorial.tags, archivedAt:document.editorial.archivedAt, trashedAt:document.editorial.trashedAt, trashedBy:document.editorial.trashedBy,
       sortOrder:document.order, savedAt:document.updatedAt
     }));
-    return {project:source.project, documents, libraryFolders, registry:source.resources, authoringSchemaVersion:source.schema_version};
+    if(source.schema_version>=7){
+      const byNeed=new Map(source.art_needs.map(need=>[need.id,need]));
+      for(const document of documents)for(const sequence of document.narrativeSequences){
+        const presentation=sequence.presentation,ids=new Set([...(presentation.elements||[]),...(presentation.cues||[]).flatMap(cue=>cue.set||[])].map(item=>item?.art_need_id).filter(Boolean));
+        presentation.art_needs_version=1;presentation.art_needs=[...ids].map(needId=>byNeed.get(needId)).filter(Boolean).map(clone);
+      }
+    }
+    return {project:source.project, documents, libraryFolders, registry:source.resources, artNeeds:source.schema_version>=7?source.art_needs:[], authoringSchemaVersion:source.schema_version};
   }
 
   const syncFields = ['remoteId','projectId','remoteUpdatedAt','remoteConflict','remoteVersion','lastEditor','lastEditedAt','dirty','editRevision','remoteCreateId','syncAttempt','remoteMissing','syncError'];
@@ -319,7 +382,7 @@
 
   function serialize(source) { return JSON.stringify(validate(source), null, 2); }
   function parse(text) { return clone(validate(JSON.parse(text))); }
-  const api = Object.freeze({FORMAT, SCHEMA_VERSION, CACHE_VERSION, createProject, validate, fromEditor, toEditor, cacheFromEditor, readCache, serialize, parse});
+  const api = Object.freeze({FORMAT, SCHEMA_VERSION, CACHE_VERSION, createProject, validate, promoteArtNeeds, fromEditor, toEditor, cacheFromEditor, readCache, serialize, parse});
   root.HeartspaceDocsAuthoring = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(globalThis);

@@ -2155,6 +2155,7 @@
       let libraryFolders = [];
       let authoringProject = HeartspaceDocsAuthoring.createProject();
       let authoringSchemaVersion = 1;
+      let authoringArtNeeds = [];
       let authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
       let authoringRegistrySettingsDirty = false;
       let registrySync = HeartspaceDocsSync.registryState();
@@ -2832,7 +2833,7 @@
         if (!documentList.contains(event.relatedTarget)) documentDropIndicator()?.setAttribute('hidden', '');
       });
       const authoringCache = (overrides = {}) => HeartspaceDocsAuthoring.cacheFromEditor({
-        project:authoringProject, authoringSchemaVersion, documents, libraryFolders, activeDocumentId, selectedCollectionId,
+        project:authoringProject, authoringSchemaVersion, artNeeds:authoringArtNeeds, documents, libraryFolders, activeDocumentId, selectedCollectionId,
         registry:authoringRegistry, registrySettingsDirty:authoringRegistrySettingsDirty, syncWorkspace:{schema_version:1,registry:registrySync,books:bookTransport?.serialize() || bookSyncState,recovery:syncRecovery}, ...overrides
       });
       const writeLibraryCache = cache => {
@@ -2902,7 +2903,7 @@
       const restoreLibrary = saved => {
         const sync = HeartspaceDocsSync.workspace(saved.syncWorkspace), nextBookSync = HeartspaceDocsBooks.read(sync.books);
         const nextDocuments = saved.documents.map(makeRecord), nextFolders = saved.libraryFolders.map(normalizeFolder);
-        authoringProject = saved.project; authoringSchemaVersion=saved.authoringSchemaVersion||1; authoringRegistry = saved.registry;
+        authoringProject = saved.project; authoringSchemaVersion=saved.authoringSchemaVersion||1; authoringArtNeeds=saved.artNeeds||[]; authoringRegistry = saved.registry;
         authoringRegistrySettingsDirty = saved.registrySettingsDirty;
         registrySync = sync.registry; syncRecovery = sync.recovery;
         bookSyncState = nextBookSync; bookTransport?.reset(bookSyncState);
@@ -3797,6 +3798,7 @@
         return snapshot.innerHTML;
       };
       const recordAuthoringSchema = record => {
+        if(authoringSchemaVersion>=7)return 7;
         const presentations=(record?.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
         if(authoringSchemaVersion>=6||presentations.some(presentation=>presentation.scene_ink_version===1||(presentation.annotations||[]).length||(presentation.elements||[]).some(element=>element?.type==='sketch')||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='sketch'))))return 6;
         if(authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id))))return 5;
@@ -8695,6 +8697,7 @@
           storageKey = `${cloudCacheBase}:window:${cloudWindowId}`;
           authoringProject = HeartspaceDocsAuthoring.createProject({id:projectId,name:projectName || 'Projeto'});
           authoringSchemaVersion=1;
+          authoringArtNeeds=[];
           authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
           authoringRegistrySettingsDirty = false; registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; legacyProjectCacheKey = desktopMode ? '' : `heartspace-docs-project-${projectId}`; syncProtocolUnavailable = false; clearTimeout(syncRetryTimer); syncRetryTimer = 0; authoringStorageError = ''; legacyLibraryBackup = '';
           documents = []; libraryFolders = []; activeDocumentId = ''; selectedCollectionId = '';
@@ -9200,7 +9203,7 @@
         currentAccessToken = ''; currentUser = null; projectCapabilities = {}; projectPicker.hidden = true;
         try { sessionStorage.removeItem('heartspace-docs-active-project'); } catch (_) {}
         if (!localWriteFailed) {
-          currentProjectId = ''; storageKey = ''; cloudCacheBase = ''; legacyProjectCacheKey = ''; authoringProject = HeartspaceDocsAuthoring.createProject(); authoringSchemaVersion=1;
+          currentProjectId = ''; storageKey = ''; cloudCacheBase = ''; legacyProjectCacheKey = ''; authoringProject = HeartspaceDocsAuthoring.createProject(); authoringSchemaVersion=1; authoringArtNeeds=[];
           documents = []; libraryFolders = []; dirtyDocumentIds.clear(); activeDocumentId = ''; selectedCollectionId = '';
           registrySync = HeartspaceDocsSync.registryState(); bookSyncState = HeartspaceDocsBooks.read(); bookTransport?.reset(bookSyncState); syncRecovery = []; authoringRegistry = {characters:[],variables:[],glossary:[],sceneSettings:{}};
           authoringRegistrySettingsDirty = false; narrativeCharacters = []; narrativeVariables = []; translationGlossary = []; narrativeGameViewport = null; narrativeGameSettingsDirty = false;
@@ -12449,7 +12452,7 @@
         return {text:[value.title,value.subtitle,template.content.textContent].filter(Boolean).join('\n\n'),details};
       };
       const bookReviewPreview = (book,deleted = false) => book ? {text:`${book.name}${deleted ? ' · removido' : ''}\n\n${[book.storyPlanning?.beginning,book.storyPlanning?.middle,book.storyPlanning?.ending].filter(Boolean).join('\n\n')}`,details:JSON.stringify(book,(key,item) => typeof item === 'string' && item.startsWith('data:') ? '[Mídia incorporada]' : item,2)} : null;
-      const sourceForBackup = backup => HeartspaceDocsAuthoring.fromEditor({project:authoringProject,documents:backup.kind === 'document' ? [backup.record] : backup.kind === 'book' ? backup.records || [] : [],libraryFolders:backup.book ? [normalizeFolder(backup.book)] : [],registry:backup.resources});
+      const sourceForBackup = backup => HeartspaceDocsAuthoring.fromEditor({project:authoringProject,authoringSchemaVersion,artNeeds:authoringArtNeeds,documents:backup.kind === 'document' ? [backup.record] : backup.kind === 'book' ? backup.records || [] : [],libraryFolders:backup.book ? [normalizeFolder(backup.book)] : [],registry:backup.resources});
       const downloadSyncSource = async (source,name,context = syncContextKey()) => {
         const blob = await HeartspaceDocsProjectFiles.build(source,{document,resolveImage:resolveProjectFileImage});
         if (context !== syncContextKey()) throw new Error('O projeto mudou antes da exportação. Abra a recuperação novamente.');

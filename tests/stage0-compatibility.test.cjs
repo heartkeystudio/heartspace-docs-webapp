@@ -233,8 +233,8 @@ test('C27 v3 authoring controls survive normalization, cache and local re-open w
   const emptied=authoring.toEditor(saved);emptied.documents=[];assert.equal(authoring.fromEditor(emptied).schema_version,3,'A exclusão do último documento apagou a versão opt-in já confirmada.');
 });
 test('C28 future incompatible schema is rejected before the supplied source can be replaced',()=>{
-  const source=makeSource(),original=JSON.stringify(source);source.schema_version=7;
-  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:7}));
+  const source=makeSource(),original=JSON.stringify(source);source.schema_version=8;
+  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:8}));
 });
 test('C29 v4 geometric primitives roundtrip through cache and export without losing editable source',()=>{
   const source=makeSource(),p=scene(source);source.schema_version=4;p.scene_primitives_version=1;
