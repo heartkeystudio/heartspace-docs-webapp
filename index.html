@@ -3798,6 +3798,7 @@
       };
       const recordAuthoringSchema = record => {
         const presentations=(record?.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+        if(authoringSchemaVersion>=6||presentations.some(presentation=>presentation.scene_ink_version===1||(presentation.annotations||[]).length||(presentation.elements||[]).some(element=>element?.type==='sketch')||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='sketch'))))return 6;
         if(authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id))))return 5;
         if(authoringSchemaVersion>=4||presentations.some(presentation=>presentation.scene_primitives_version===1||(presentation.elements||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type)))))return 4;
         if(presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>Object.hasOwn(group,'authoring_visible')||Object.hasOwn(group,'locked'))||(presentation.elements||[]).some(element=>Object.hasOwn(element,'authoring_visible')||Object.hasOwn(element,'locked'))))return 3;
@@ -6564,6 +6565,9 @@
         const presentation={...HeartspaceNarrativeMedia.resolveScene(base,nodes,index)};
         if(base.art_needs_version===1)presentation.art_needs_version=1;
         if(Array.isArray(base.art_needs))presentation.art_needs=base.art_needs;
+        if(base.scene_ink_version===1)presentation.scene_ink_version=1;
+        if(Array.isArray(base.annotations))presentation.annotations=base.annotations;
+        if(typeof base.annotations_visible==='boolean')presentation.annotations_visible=base.annotations_visible;
         return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,schemaVersion:authoringSchemaVersion,
           key:JSON.stringify([sequenceKey,sceneMomentBlockId]),
           presentation,motion:sceneMomentStateCache.motion,animations:base.cues.find(cue => cue.block_id === sceneMomentBlockId)?.animations || [],characters:narrativeCharacters,displayProfile:sceneDisplayProfile,
@@ -6628,21 +6632,38 @@
         if(needsV4&&authoringSchemaVersion<4&&!window.confirm('Este documento passará ao formato autoral v4 para preservar primitivas geométricas editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v4. Versões anteriores não abrirão o documento e poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
         const needsV5=presentation.art_needs_version===1||(presentation.art_needs||[]).length>0||presentation.elements.some(item=>item.type==='native'||item.art_need_id)||presentation.cues.some(cue=>(cue.set||[]).some(item=>item.type==='native'||item.art_need_id));
         if(needsV5&&authoringSchemaVersion<5&&!window.confirm('Este documento passará ao formato autoral v5 para preservar objetos nativos e placeholders editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v5. Versões anteriores não abrirão o documento e poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
+        const needsV6=presentation.scene_ink_version===1||presentation.annotations?.length||presentation.elements.some(item=>item.type==='sketch')||presentation.cues.some(cue=>(cue.set||[]).some(item=>item.type==='sketch'));
+        if(needsV6&&authoringSchemaVersion<6&&!window.confirm('Este documento passará ao formato autoral v6 para preservar esboços e anotações editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v6. Versões anteriores poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
         const historyMutation = captureSceneAuthoringMutation(sequence);
         const base = normalizeNarrativePresentation(sequence.presentation);
+        if(context.index<0&&Array.isArray(base.annotations)){
+          const nextIds=new Set(presentation.elements.map(item=>item.id));
+          base.annotations=base.annotations.map(annotation=>{
+            if(!annotation.anchor_element_id||nextIds.has(annotation.anchor_element_id))return annotation;
+            const target=context.presentation.elements.find(item=>item.id===annotation.anchor_element_id)||base.elements.find(item=>item.id===annotation.anchor_element_id);
+            if(!target)return annotation;
+            const detached={...annotation,x:target.x+target.width*annotation.anchor.x/100,y:target.y+target.height*annotation.anchor.y/100};delete detached.anchor_element_id;delete detached.anchor;return detached;
+          });
+        }
         if (context.index < 0) {
           const next=normalizeNarrativePresentation({...presentation,cues:base.cues}),ids=new Set(next.elements.map(item=>item.id));
-          for(const marker of ['layer_groups_version','authoring_controls_version','scene_primitives_version','art_needs_version'])if(base[marker]===1)next[marker]=1;
+          for(const marker of ['layer_groups_version','authoring_controls_version','scene_primitives_version','art_needs_version','scene_ink_version'])if(base[marker]===1)next[marker]=1;
           if(base.art_needs&&!presentation.art_needs)next.art_needs=base.art_needs;
+          if(Array.isArray(base.annotations))next.annotations=base.annotations;
+          if(typeof base.annotations_visible==='boolean')next.annotations_visible=base.annotations_visible;
           if(needsV4)next.scene_primitives_version=1;
           if(needsV5)next.art_needs_version=1;
+          if(needsV6)next.scene_ink_version=1;
           if(base.groups?.length||base.layer_groups_version===1)next.groups=(base.groups||[]).map(group=>({...group,element_ids:[...new Set([...group.element_ids,...next.elements.filter(item=>item.group_id===group.id).map(item=>item.id)])].filter(id=>ids.has(id))}));
           sequence.presentation=normalizeNarrativePresentation(next);
         }
         else {
           if(needsV4)base.scene_primitives_version=1;
           if(needsV5)base.art_needs_version=1;
+          if(needsV6)base.scene_ink_version=1;
           if(Array.isArray(presentation.art_needs))base.art_needs=presentation.art_needs;
+          if(Array.isArray(presentation.annotations))base.annotations=presentation.annotations;
+          if(typeof presentation.annotations_visible==='boolean')base.annotations_visible=presentation.annotations_visible;
           const existing = base.cues.find(cue => cue.block_id === context.blockId);
           const before = existing?.reset ? HeartspaceNarrativeMedia.sceneState(base) : HeartspaceNarrativeMedia.resolveScene(base,context.nodes,context.index - 1);
           const patch = HeartspaceNarrativeMedia.sceneDiff(before,presentation);
@@ -6656,6 +6677,7 @@
         }
         if(needsV4)authoringSchemaVersion=Math.max(authoringSchemaVersion,4);
         if(needsV5)authoringSchemaVersion=Math.max(authoringSchemaVersion,5);
+        if(needsV6)authoringSchemaVersion=Math.max(authoringSchemaVersion,6);
         commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation);
         renderSceneMomentControls(); queueSave(); return true;
@@ -6689,10 +6711,21 @@
         if(HeartspaceDocsHistoryPatch.equal(base,next))return true;
         if(next.authoring_controls_version===1)authoringSchemaVersion=Math.max(authoringSchemaVersion,3);
         if(next.scene_primitives_version===1)authoringSchemaVersion=Math.max(authoringSchemaVersion,4);
+        const needsV6=next.scene_ink_version===1||(next.annotations||[]).length>0||(next.elements||[]).some(item=>item.type==='sketch');
+        if(needsV6&&authoringSchemaVersion<6&&!window.confirm('Este documento passará ao formato autoral v6 para preservar esboços e anotações editáveis. O salvamento será local; a sincronização remota ficará indisponível até haver suporte ao formato v6. Versões anteriores poderão rejeitá-lo por segurança. Cancelar preserva o documento sem alterações. Continuar?'))return false;
+        if(needsV6)authoringSchemaVersion=Math.max(authoringSchemaVersion,6);
+        if(Array.isArray(next.annotations)){
+          const ids=new Set(next.elements.map(item=>item.id));
+          next.annotations=next.annotations.map(annotation=>{
+            if(!annotation.anchor_element_id||ids.has(annotation.anchor_element_id))return annotation;
+            const target=base.elements.find(item=>item.id===annotation.anchor_element_id);if(!target)return annotation;
+            const detached={...annotation,x:target.x+target.width*annotation.anchor.x/100,y:target.y+target.height*annotation.anchor.y/100};delete detached.anchor_element_id;delete detached.anchor;return detached;
+          });
+        }
         // Once confirmed, the compatibility marker survives undo so an authoring
         // action cannot silently downgrade a v3 source while redo remains available.
         if(next.authoring_controls_version===1&&base.authoring_controls_version!==1)sequence.presentation=normalizeNarrativePresentation({...base,authoring_controls_version:1});
-        const historyMutation=captureSceneAuthoringMutation(sequence);sequence.presentation=next;commitSceneAuthoringMutation(historyMutation,sequence);
+        const historyMutation=captureSceneAuthoringMutation(sequence);sequence.presentation=normalizeNarrativePresentation({...next,cues:base.cues,annotations:next.annotations||base.annotations,scene_ink_version:needsV6?1:base.scene_ink_version});commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation);renderSceneMomentControls();queueSave();return true;
       };
       const sceneComposer = HeartspaceSceneComposer.create({

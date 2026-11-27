@@ -503,6 +503,7 @@
       delete presentation.groups;delete presentation.layer_groups_version;delete presentation.authoring_controls_version;
       delete presentation.scene_primitives_version;
       delete presentation.art_needs;delete presentation.art_needs_version;
+      delete presentation.annotations;delete presentation.annotations_visible;delete presentation.scene_ink_version;
     });
     story = { ...story, persistence:{
       id:fingerprint(JSON.stringify([story.storage_id || [story.title,story.start_event_id],story.locale || 'pt-BR'])),

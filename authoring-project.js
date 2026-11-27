@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const FORMAT = 'heartspace.docs.authoring';
-  const SCHEMA_VERSION = 5;
+  const SCHEMA_VERSION = 6;
   const CACHE_VERSION = 3;
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const string = value => typeof value === 'string' ? value : '';
@@ -135,10 +135,31 @@
     }
   }
 
+  function validateSceneInk(presentation,schemaVersion) {
+    const sketches=[...(Array.isArray(presentation.elements)?presentation.elements:[]),...(presentation.cues||[]).flatMap(cue=>Array.isArray(cue.set)?cue.set:[])].filter(item=>item?.type==='sketch');
+    const annotations=presentation.annotations;
+    if(presentation.annotations_visible!==undefined&&typeof presentation.annotations_visible!=='boolean')fail('visibilidade das anotações inválida.');
+    const uses=presentation.scene_ink_version===1||sketches.length>0||Array.isArray(annotations)&&annotations.length>0;
+    if(presentation.scene_ink_version!==undefined&&presentation.scene_ink_version!==1)fail('versão de esboços e anotações inválida.');
+    if(uses&&schemaVersion<6)fail('esboços e anotações autorais exigem a versão autoral 6. O conteúdo existente foi preservado.');
+    if(uses&&presentation.scene_ink_version!==1)fail('esboços ou anotações sem marcador de versão.');
+    const elementIds=new Set((presentation.elements||[]).map(item=>item?.id)),annotationIds=new Set();
+    for(const sketch of sketches){
+      if(!Array.isArray(sketch.points)||sketch.points.length<2||sketch.points.length>2048||!/^#[0-9a-f]{6}$/i.test(sketch.stroke||'')||typeof sketch.stroke_width!=='number'||!Number.isFinite(sketch.stroke_width)||sketch.stroke_width<.5||sketch.stroke_width>20)fail('traço de esboço inválido.');
+      for(const point of sketch.points)if(!point||typeof point.x!=='number'||!Number.isFinite(point.x)||point.x<0||point.x>100||typeof point.y!=='number'||!Number.isFinite(point.y)||point.y<0||point.y>100)fail('ponto de esboço inválido.');
+    }
+    if(annotations!==undefined&&(!Array.isArray(annotations)||annotations.length>500))fail('lista de anotações inválida.');
+    for(const note of annotations||[]){
+      if(!note||typeof note!=='object'||!note.id||typeof note.id!=='string'||note.id.length>80||annotationIds.has(note.id)||elementIds.has(note.id)||!['arrow','note','mark'].includes(note.type)||typeof note.x!=='number'||!Number.isFinite(note.x)||note.x<0||note.x>100||typeof note.y!=='number'||!Number.isFinite(note.y)||note.y<0||note.y>100||typeof note.width!=='number'||!Number.isFinite(note.width)||note.width < (note.type==='arrow'?-100:0)||note.width>100||typeof note.height!=='number'||!Number.isFinite(note.height)||note.height < (note.type==='arrow'?-100:0)||note.height>100||!/^#[0-9a-f]{6}$/i.test(note.color||'')||typeof note.text!=='string'||note.text.length>1000)fail('anotação autoral inválida.');
+      if(note.anchor_element_id&&(!elementIds.has(note.anchor_element_id)||!note.anchor||typeof note.anchor.x!=='number'||!Number.isFinite(note.anchor.x)||typeof note.anchor.y!=='number'||!Number.isFinite(note.anchor.y)))fail('vínculo de anotação inválido.');
+      annotationIds.add(note.id);
+    }
+  }
+
   // This is a format/relationship check, not an HTML sanitizer or an authorization check.
   function validate(source) {
     if (!object(source) || source.format !== FORMAT) fail('formato autoral não reconhecido.');
-    if (![1,2,3,4,5].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
+    if (![1,2,3,4,5,6].includes(source.schema_version)) fail('versão autoral incompatível; o conteúdo existente deve ser preservado.');
     if (!object(source.project) || !id(source.project.id) || typeof source.project.name !== 'string') fail('identidade do projeto inválida.');
     if (!Array.isArray(source.books) || !Array.isArray(source.documents) || !object(source.resources)) fail('estrutura autoral incompleta.');
     const books = new Map(), documents = new Set();
@@ -174,6 +195,7 @@
         validateLayerGroups(sequence.presentation,source.schema_version);
         validateScenePrimitives(sequence.presentation,source.schema_version);
         validateArtNeeds(sequence.presentation,source.schema_version);
+        validateSceneInk(sequence.presentation,source.schema_version);
         sequences.add(sequence.id);
       }
     }
@@ -217,11 +239,12 @@
       };
     });
     const presentations=(state.documents||[]).flatMap(record=>record.narrativeSequences||[]).map(sequence=>sequence?.presentation||{});
+    const usesV6=state.authoringSchemaVersion>=6||presentations.some(presentation=>presentation.scene_ink_version===1||(presentation.elements||[]).some(element=>element?.type==='sketch')||(presentation.annotations||[]).length);
     const usesV5=state.authoringSchemaVersion>=5||presentations.some(presentation=>presentation.art_needs_version===1||(presentation.art_needs||[]).length||(presentation.elements||[]).some(element=>element?.type==='native'||element?.art_need_id)||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>element?.type==='native'||element?.art_need_id)));
     const usesV4=state.authoringSchemaVersion>=4||presentations.some(presentation=>presentation.scene_primitives_version===1||(presentation.elements||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))||(presentation.cues||[]).some(cue=>(cue.set||[]).some(element=>['rectangle','ellipse','line','arrow'].includes(element?.type))));
     const usesV3=state.authoringSchemaVersion>=3||presentations.some(presentation=>presentation.authoring_controls_version===1||(presentation.groups||[]).some(group=>own(group,'authoring_visible')||own(group,'locked'))||(presentation.elements||[]).some(element=>own(element,'authoring_visible')||own(element,'locked')));
     const usesV2=state.authoringSchemaVersion>=2||presentations.some(presentation=>presentation.layer_groups_version===1||(presentation.groups||[]).length||(presentation.elements||[]).some(element=>element?.group_id));
-    return validate({format:FORMAT, schema_version:usesV5?5:usesV4?4:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
+    return validate({format:FORMAT, schema_version:usesV6?6:usesV5?5:usesV4?4:usesV3?3:usesV2?2:1, project:createProject(state.project), books, documents, resources:registry(state.registry)});
   }
 
   function toEditor(value) {

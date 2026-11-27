@@ -233,8 +233,8 @@ test('C27 v3 authoring controls survive normalization, cache and local re-open w
   const emptied=authoring.toEditor(saved);emptied.documents=[];assert.equal(authoring.fromEditor(emptied).schema_version,3,'A exclusão do último documento apagou a versão opt-in já confirmada.');
 });
 test('C28 future incompatible schema is rejected before the supplied source can be replaced',()=>{
-  const source=makeSource(),original=JSON.stringify(source);source.schema_version=6;
-  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:6}));
+  const source=makeSource(),original=JSON.stringify(source);source.schema_version=7;
+  assert.throws(()=>authoring.validate(source),/versão autoral incompatível/);assert.equal(JSON.stringify(source),JSON.stringify({...JSON.parse(original),schema_version:7}));
 });
 test('C29 v4 geometric primitives roundtrip through cache and export without losing editable source',()=>{
   const source=makeSource(),p=scene(source);source.schema_version=4;p.scene_primitives_version=1;
@@ -286,4 +286,36 @@ test('B2-04 authoring metadata is omitted from HTML and ZIP while the provisiona
   assert.equal(packed.art_needs,undefined);assert.equal(packed.art_needs_version,undefined);assert.equal(packed.elements[0].art_need_id,undefined);assert.equal(packed.elements[0].native_id,'full-body-silhouette');assert.equal(packed.cues[0].set[0].art_need_id,undefined);
   const html=extract(context.HeartspaceNarrativeHtml.buildHtml(fixtures.story(saved))).sequences[0].presentation;
   assert.equal(html.art_needs,undefined);assert.equal(html.elements[0].art_need_id,undefined);assert.equal(html.elements[0].type,'native');
+});
+test('B3-01 v1-v5 sources remain at their existing schema when no ink data is authored',()=>{
+  for(const version of [1,2,3,4,5]){const source=makeSource();source.schema_version=version;const state=authoring.toEditor(source);assert.equal(authoring.fromEditor(state).schema_version,version);}
+});
+test('B3-02 sketches and private annotations roundtrip through v6 source, cache, save and recovery projection',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=6;p.scene_ink_version=1;
+  p.elements=[{id:'pencil-a',type:'sketch',name:'Esboço',x:12,y:20,width:22,height:15,anchor_x:0,anchor_y:0,stroke:'#ff8844',stroke_width:3,points:[{x:0,y:50},{x:24,y:5},{x:60,y:80},{x:100,y:50}],group_id:'sketches',locked:false}];
+  p.layer_groups_version=1;p.authoring_controls_version=1;p.groups=[{id:'sketches',name:'Rabiscos',parent_id:'',element_ids:['pencil-a']}];
+  p.annotations=[{id:'private-note',type:'note',x:24,y:33,width:18,height:8,color:'#f2cf72',text:'Nota apenas para produção',anchor_element_id:'pencil-a',anchor:{x:50,y:50}}];p.annotations_visible=false;
+  authoring.validate(source);const state=authoring.toEditor(source),cache=authoring.cacheFromEditor(state),restored=authoring.fromEditor(authoring.readCache(cache)),out=scene(restored);
+  assert.equal(restored.schema_version,6);assert.deepEqual(plain(out.elements[0].points),plain(p.elements[0].points));assert.equal(out.elements[0].id,'pencil-a');assert.equal(out.elements[0].group_id,'sketches');assert.equal(out.annotations[0].anchor_element_id,'pencil-a');assert.equal(out.annotations[0].text,'Nota apenas para produção');assert.equal(out.annotations_visible,false);
+  const stripped=authoring.toEditor(restored);stripped.documents[0].narrativeSequences[0].presentation.elements=[];stripped.documents[0].narrativeSequences[0].presentation.groups=[];stripped.documents[0].narrativeSequences[0].presentation.annotations=[];stripped.documents[0].narrativeSequences[0].presentation.annotations_visible=undefined;assert.equal(authoring.fromEditor(stripped).schema_version,6,'A remoção dos últimos traços não deve fazer downgrade do formato confirmado.');
+});
+test('B3-03 moment cues inherit and locally override sketch geometry without changing base source',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=6;p.scene_ink_version=1;p.elements=[{id:'ink',type:'sketch',x:10,y:10,width:20,height:20,stroke:'#ffffff',stroke_width:2,points:[{x:0,y:0},{x:100,y:100}]}];
+  const before=media.sceneState(p),after=media.sceneState({...p,elements:[{...p.elements[0],points:[{x:0,y:100},{x:100,y:0}]}]});
+  const cue=media.sceneDiff(before,after),resolved=media.resolveScene({...p,cues:[{...cue,block_id:'detail',animations:[]}]},[{id:'detail'}],0);
+  assert.deepEqual(plain(resolved.elements[0].points),[{x:0,y:100},{x:100,y:0}]);assert.deepEqual(plain(p.elements[0].points),[{x:0,y:0},{x:100,y:100}]);
+});
+test('B3-04 export retains sketch visuals and removes annotation content and authoring controls',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=6;p.scene_ink_version=1;p.annotations_visible=false;
+  p.elements=[{id:'visible-ink',type:'sketch',x:15,y:25,width:20,height:15,stroke:'#aabbcc',stroke_width:4,points:[{x:0,y:20},{x:100,y:80}]}];
+  p.annotations=[{id:'private-secret-id',type:'note',x:35,y:40,width:18,height:8,color:'#f2cf72',text:'private author note'}];
+  const saved=authoring.fromEditor(authoring.toEditor(source)),storyValue=fixtures.story(saved),packed=context.HeartspaceNarrativePackage.buildPackage(storyValue).story.sequences[0].presentation,html=extract(context.HeartspaceNarrativeHtml.buildHtml(storyValue)).sequences[0].presentation;
+  for(const output of [packed,html]){assert.equal(output.elements[0].type,'sketch');assert.deepEqual(plain(output.elements[0].points),plain(p.elements[0].points));assert.equal(output.annotations,undefined);assert.equal(output.annotations_visible,undefined);assert.equal(output.scene_ink_version,undefined);}
+  const publicText=JSON.stringify(packed)+context.HeartspaceNarrativeHtml.buildHtml(storyValue);assert.equal(publicText.includes('private author note'),false);assert.equal(publicText.includes('private-secret-id'),false);
+});
+test('B3-05 v6 refuses invalid or excessive strokes and invalid annotation references without altering the source',()=>{
+  const source=makeSource(),p=scene(source);source.schema_version=6;p.scene_ink_version=1;p.elements=[{id:'ink',type:'sketch',stroke:'#ffffff',stroke_width:2,points:[{x:0,y:0}]}];const original=JSON.stringify(source);
+  assert.throws(()=>authoring.validate(source),/traço de esboço inválido/);assert.equal(JSON.stringify(source),original);
+  p.elements[0].points=Array.from({length:2049},(_,index)=>({x:index%101,y:index%99}));assert.throws(()=>authoring.validate(source),/traço de esboço inválido/);
+  p.elements[0].points=[{x:0,y:0},{x:100,y:100}];p.annotations=[{id:'note',type:'note',x:1,y:1,width:18,height:8,color:'#ffffff',text:'note',anchor_element_id:'missing',anchor:{x:50,y:50}}];assert.throws(()=>authoring.validate(source),/vínculo de anotação inválido/);
 });

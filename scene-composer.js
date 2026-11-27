@@ -36,6 +36,10 @@
     .scene-parallax-preview .scene-element{pointer-events:none!important;outline:none!important}
     .scene-parallax-preview .scene-element-tools{display:none!important}
     .scene-parallax-preview .scene-element[data-element-type=hotspot]>.scene-element-content{visibility:hidden!important}
+    .scene-annotation-layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:115}
+    .scene-annotation-layer [data-annotation-id]{pointer-events:visiblePainted;cursor:pointer}
+    .scene-annotation-layer [data-annotation-id].is-selected{filter:drop-shadow(0 0 3px #fff)}
+    .scene-ink-active{touch-action:none!important}
   `;
   const create = options => {
     const {parent,surface,read,write,preview} = options;
@@ -53,6 +57,13 @@
       <div class="scene-element-actions"><button type="button" data-action="image">+ Imagem</button><button type="button" data-action="project-image">+ Recurso do projeto</button><button type="button" data-action="character">+ Personagem</button><button type="button" data-action="text">+ Texto</button><button type="button" data-action="button">+ Botão</button><button type="button" data-action="hotspot">+ Região clicável</button></div>
       <div class="scene-element-actions" aria-label="Primitivas geométricas"><button type="button" data-action="rectangle">+ Retângulo</button><button type="button" data-action="ellipse">+ Elipse</button><button type="button" data-action="line">+ Linha</button><button type="button" data-action="arrow">+ Seta</button></div>
       <div class="scene-element-actions"><label>Ferramenta de desenho<select data-shape-draw-type><option value="">Selecione uma forma</option><option value="rectangle">Retângulo</option><option value="ellipse">Elipse</option><option value="line">Linha</option><option value="arrow">Seta</option></select></label><button type="button" data-shape-draw>Desenhar no palco</button></div>
+      <details data-ink-editor><summary>Esboços e anotações</summary><div class="scene-composer-body">
+        <div class="scene-element-actions" role="group" aria-label="Intenção de autoria"><button type="button" data-ink-mode="pencil" aria-pressed="false">Esboçar · lápis</button><button type="button" data-ink-mode="eraser" aria-pressed="false">Esboçar · apagar traço</button><button type="button" data-ink-mode="arrow" aria-pressed="false">Anotar · seta</button><button type="button" data-ink-mode="note" aria-pressed="false">Anotar · texto</button><button type="button" data-ink-mode="mark" aria-pressed="false">Anotar · marca</button><button type="button" data-ink-mode="" aria-pressed="true">Selecionar</button></div>
+        <div class="scene-element-grid"><label>Cor<input data-ink-color type="color" value="#f2cf72"></label><label>Espessura<input data-ink-width type="number" min="0.5" max="20" step="0.5" value="2"></label></div>
+        <label class="scene-check"><input data-annotations-visible type="checkbox" checked>Mostrar anotações no editor</label>
+        <div class="scene-element-actions"><button type="button" data-annotation-action="detach" disabled>Desvincular anotação</button><button type="button" data-annotation-action="remove" disabled>Remover anotação</button></div>
+        <small data-ink-help>Escolha “Esboçar” para desenhar na cena ou “Anotar” para registrar conteúdo apenas autoral. Cada gesto confirmado pode ser desfeito.</small>
+      </div></details>
       <details data-native-library><summary>Biblioteca offline de blocagem</summary><div class="scene-composer-body"><strong>Objetos genéricos</strong><div class="scene-element-actions"><button type="button" data-native-insert="door">Porta</button><button type="button" data-native-insert="window">Janela</button><button type="button" data-native-insert="table">Mesa</button><button type="button" data-native-insert="chair">Cadeira</button><button type="button" data-native-insert="phone">Telefone</button><button type="button" data-native-insert="book">Livro</button><button type="button" data-native-insert="key">Chave</button><button type="button" data-native-insert="box">Caixa</button></div><strong>Placeholders de personagem</strong><div class="scene-element-actions"><button type="button" data-native-insert="portrait-silhouette">Silhueta de retrato</button><button type="button" data-native-insert="full-body-silhouette">Silhueta de corpo inteiro</button><button type="button" data-native-insert="group-silhouette">Silhueta de grupo</button></div><small>Elementos locais do Docs; não exigem conexão ou recurso artístico. Objetos genéricos não criam necessidades artísticas.</small></div></details>
       <input type="file" accept="image/png,image/jpeg,image/webp" data-upload hidden>
       <label>Elementos · da frente para o fundo<select data-list size="5" aria-label="Elementos da cena" multiple></select></label>
@@ -137,7 +148,17 @@
     };
     parallaxPreview.addEventListener('change',() => setParallaxPreview(parallaxPreview.checked));
     doc.addEventListener('visibilitychange',() => { if (doc.hidden) setParallaxPreview(false); });
-    let key = '', selected = '', selectedIds = new Set(), selectedGroup = '', collapsedGroups = new Set(), uploadIntent = null, drag = null, marquee = null, shapeDrawType = '';
+    let key = '', selected = '', selectedIds = new Set(), selectedGroup = '', collapsedGroups = new Set(), uploadIntent = null, drag = null, marquee = null, shapeDrawType = '', inkMode = '', selectedAnnotationId = '';
+    const annotationLayer=doc.createElementNS('http://www.w3.org/2000/svg','svg');annotationLayer.classList.add('scene-annotation-layer');annotationLayer.setAttribute('viewBox','0 0 100 100');annotationLayer.setAttribute('preserveAspectRatio','none');annotationLayer.setAttribute('aria-label','Anotações exclusivas de autoria');surface.append(annotationLayer);
+    const inkColor=panel.querySelector('[data-ink-color]'),inkWidth=panel.querySelector('[data-ink-width]');
+    const setInkMode=mode=>{inkMode=mode;surface.classList.toggle('scene-ink-active',Boolean(mode));panel.querySelectorAll('[data-ink-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.inkMode===mode)));panel.querySelector('[data-ink-help]').textContent=({pencil:'Modo Esboçar ativo: arraste no palco para criar um traço visual que será incluído na apresentação.',eraser:'Borracha de esboço ativa: clique em um traço para removê-lo inteiro. Anotações não serão apagadas.',arrow:'Modo Anotar ativo: arraste para adicionar uma seta autoral; sobre um elemento, a anotação acompanhará sua posição.',note:'Modo Anotar ativo: clique no palco para escrever uma nota privada; sobre um elemento, ela ficará vinculada.',mark:'Modo Anotar ativo: clique no palco para adicionar uma marca privada.'})[mode]||'Modo Selecionar ativo.';};
+    const annotationPoint=(annotation,presentation)=>{const item=(presentation.elements||[]).find(candidate=>candidate.id===annotation.anchor_element_id);return item?{x:item.x+item.width*annotation.anchor.x/100,y:item.y+item.height*annotation.anchor.y/100}:{x:annotation.x,y:annotation.y};};
+    const renderAnnotations=()=>{const state=context(),presentation=media.presentation(state.presentation),visible=presentation.annotations_visible!==false;annotationLayer.replaceChildren();annotationLayer.hidden=!visible;const ns='http://www.w3.org/2000/svg',defs=doc.createElementNS(ns,'defs'),marker=doc.createElementNS(ns,'marker'),tip=doc.createElementNS(ns,'path');marker.id='docs-annotation-arrow';marker.setAttribute('markerWidth','4');marker.setAttribute('markerHeight','4');marker.setAttribute('refX','3');marker.setAttribute('refY','2');marker.setAttribute('orient','auto');marker.setAttribute('markerUnits','strokeWidth');tip.setAttribute('d','M0 0L4 2L0 4z');tip.setAttribute('fill','context-stroke');marker.append(tip);defs.append(marker);annotationLayer.append(defs);for(const annotation of presentation.annotations||[]){const point=annotationPoint(annotation,presentation),group=doc.createElementNS(ns,'g');group.dataset.annotationId=annotation.id;group.classList.toggle('is-selected',selectedAnnotationId===annotation.id);group.setAttribute('stroke',annotation.color);group.setAttribute('fill','none');group.setAttribute('stroke-width','0.45');group.setAttribute('vector-effect','non-scaling-stroke');
+      if(annotation.type==='arrow'){const line=doc.createElementNS(ns,'line');line.setAttribute('x1',point.x);line.setAttribute('y1',point.y);line.setAttribute('x2',point.x+annotation.width);line.setAttribute('y2',point.y+annotation.height);line.setAttribute('marker-end','url(#docs-annotation-arrow)');group.append(line);}
+      else if(annotation.type==='mark'){const circle=doc.createElementNS(ns,'circle');circle.setAttribute('cx',point.x);circle.setAttribute('cy',point.y);circle.setAttribute('r','1.4');circle.setAttribute('fill',annotation.color);group.append(circle);}
+      else{const rect=doc.createElementNS(ns,'rect');rect.setAttribute('x',point.x);rect.setAttribute('y',point.y);rect.setAttribute('width','18');rect.setAttribute('height','8');rect.setAttribute('rx','1');rect.setAttribute('fill','#16191ddd');group.append(rect);const text=doc.createElementNS(ns,'text');text.setAttribute('x',point.x+1);text.setAttribute('y',point.y+5.2);text.setAttribute('fill',annotation.color);text.setAttribute('stroke','none');text.setAttribute('font-size','3.1');text.textContent=annotation.text;group.append(text);}
+      group.style.pointerEvents='visiblePainted';annotationLayer.append(group);
+    }};
     const context = () => read();
     const getItem = state => selectedIds.size === 1 ? media.presentation(state.presentation).elements.find(item => item.id === selected) : null;
     const setSelection = ids => {
@@ -361,6 +382,11 @@
       if (parallaxPreview.disabled && parallaxPreview.checked) setParallaxPreview(false);
       panel.querySelector('[data-parallax-help]').textContent = !parallaxSupported ? 'Este navegador exibe a composição estática, sem parallax.' : reduced ? 'Movimento reduzido está ativo: o parallax permanece estático.' : !hover ? 'O parallax requer um mouse ou ponteiro com hover. Em telas somente de toque a cena permanece estática.' : !value.parallax_enabled || !hasParallax ? 'Ative o parallax e escolha um deslocamento em Parallax desta camada. Depois, experimente movendo o mouse sobre a cena.' : 'Mova o mouse sobre a cena. Desative Experimentar parallax para voltar a arrastar elementos. A experiência não altera posições salvas.';
       mark();
+      renderAnnotations();
+      const annotation=(value.annotations||[]).find(item=>item.id===selectedAnnotationId);
+      panel.querySelector('[data-annotation-action="detach"]').disabled=!state.editable||!annotation?.anchor_element_id;
+      panel.querySelector('[data-annotation-action="remove"]').disabled=!state.editable||!annotation;
+      panel.querySelector('[data-annotations-visible]').checked=value.annotations_visible!==false;
     };
     const commit = (value,expectedKey,populate = false) => {
       const state = context();
@@ -565,7 +591,9 @@
     const artNeedId=()=>`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
     const updateNeed=changes=>{const state=context(),value=media.presentation(state.presentation),item=value.elements.find(candidate=>candidate.id===selected);if(!item||!item.art_need_id)return;value.art_needs=value.art_needs||[];value.art_needs=value.art_needs.map(need=>need.id===item.art_need_id?{...need,...changes}:need);commit(value,state.key,true);};
     panel.addEventListener('change',event=>{
-      const field=event.target,state=context(),item=getItem(state);if(!item||!state.editable)return;
+      const field=event.target,state=context(),item=getItem(state);
+      if(field.matches('[data-annotations-visible]')){if(!state.editable)return;const value=media.presentation(state.base||state.presentation);if(!(value.annotations||[]).length){field.checked=true;status.textContent='Crie uma anotação antes de alterar sua visibilidade global.';return;}writeAnnotation(state,value.annotations,field.checked);status.textContent=field.checked?'Anotações visíveis no ambiente de autoria.':'Anotações ocultas apenas no ambiente de autoria.';return;}
+      if(!item||!state.editable)return;
       if(field.matches('[data-placeholder-toggle]')){const value=media.presentation(state.presentation);if(field.checked){const id=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id,name:'',category:'',description:''});value.art_needs_version=1;value.elements=value.elements.map(candidate=>candidate.id===item.id?media.element({...candidate,art_need_id:id}):candidate);}else value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};delete copy.art_need_id;return media.element(copy);});commit(value,state.key,true);return;}
       if(field.matches('[data-placeholder-link]')){const value=media.presentation(state.presentation);value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};if(field.value)copy.art_need_id=field.value;else delete copy.art_need_id;return media.element(copy);});if(field.value)value.art_needs_version=1;commit(value,state.key,true);return;}
       if(field.matches('[data-placeholder-category]')){updateNeed({category:field.value});return;}
@@ -577,6 +605,8 @@
     });
     panel.addEventListener('click',event => {
       const button = event.target.closest('button'); if (!button || button.closest('[data-motion-editor],[data-interaction-editor]') || !context().editable) return;
+      if(button.matches('[data-ink-mode]')){selectedAnnotationId='';setInkMode(button.dataset.inkMode);render();return;}
+      if(button.matches('[data-annotation-action]')){const state=context(),value=media.presentation(state.base||state.presentation),annotation=value.annotations.find(item=>item.id===selectedAnnotationId);if(!annotation)return;const action=button.dataset.annotationAction;if(action==='remove'){writeAnnotation(state,value.annotations.filter(item=>item.id!==annotation.id));status.textContent='Anotação removida. Desfaça para restaurá-la.';return;}if(action==='detach'&&annotation.anchor_element_id){const position=annotationPoint(annotation,state.presentation),copy={...annotation,x:position.x,y:position.y};delete copy.anchor_element_id;delete copy.anchor;writeAnnotation(state,value.annotations.map(item=>item.id===annotation.id?copy:item));status.textContent='Anotação desanexada sem alterar sua posição visível.';return;}}
       if(button.dataset.nativeInsert){
         const state=context(),value=media.presentation(state.presentation),nativeId=button.dataset.nativeInsert;if(value.elements.length>=80){status.textContent='A cena já possui 80 elementos.';return;}
         const labels={door:'Porta',window:'Janela',table:'Mesa',chair:'Cadeira',phone:'Telefone',book:'Livro',key:'Chave',box:'Caixa','portrait-silhouette':'Silhueta de retrato','full-body-silhouette':'Silhueta de corpo inteiro','group-silhouette':'Silhueta de grupo'},isCharacter=nativeId.includes('silhouette'),elementId=id();
@@ -640,6 +670,15 @@
       const rect = surface.getBoundingClientRect();
       return {x:(event.clientX - rect.left) / rect.width * 100,y:(event.clientY - rect.top) / rect.height * 100};
     };
+    const inkId=prefix=>`${prefix}-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
+    const sketchFromPoints=(current,points)=>{
+      const xs=points.map(point=>point.x),ys=points.map(point=>point.y),x=Math.max(-100,Math.min(200,Math.min(...xs))),y=Math.max(-100,Math.min(200,Math.min(...ys))),width=Math.max(1,Math.min(300,Math.max(...xs)-x)),height=Math.max(1,Math.min(300,Math.max(...ys)-y));
+      const normalized=points.map(point=>({x:Math.max(0,Math.min(100,(point.x-x)/width*100)),y:Math.max(0,Math.min(100,(point.y-y)/height*100))}));
+      const value=media.presentation(current.original);value.scene_ink_version=1;value.elements.push(media.element({id:current.id,type:'sketch',name:'Esboço',x,y,width,height,anchor_x:0,anchor_y:0,stroke:inkColor.value,stroke_width:Number(inkWidth.value)||2,points:normalized}));return value;
+    };
+    const anchorFor=(item,point)=>item?{anchor_element_id:item.id,anchor:{x:Math.max(-300,Math.min(300,(point.x-item.x)/Math.max(1,item.width)*100)),y:Math.max(-300,Math.min(300,(point.y-item.y)/Math.max(1,item.height)*100))}}:{};
+    const writeAnnotation=(state,annotations,visible)=>{const value=media.presentation(state.base||state.presentation);value.scene_ink_version=1;value.annotations=annotations;if(visible!==undefined)value.annotations_visible=visible;if(options.writeStructure?.(state.key,value)){selectedAnnotationId=annotations.some(item=>item.id===selectedAnnotationId)?selectedAnnotationId:'';render();return true;}return false;};
+    let inkDrag=null;
     const drawnPrimitive = (current,point,quick=false) => {
       const a=current.start,b=point,type=current.shapeType,dx=b.x-a.x,dy=b.y-a.y;
       let x,y,width,height,x1=0,y1=0,x2=100,y2=100;
@@ -705,6 +744,15 @@
       if (parallaxPreview.checked) return;
       const state=context(),node=event.target.closest('[data-scene-element]'),multiHandle=event.target.closest('[data-multi-handle]');
       if (!state.editable || event.button !== 0) return;
+      const annotationNode=event.target.closest('[data-annotation-id]');if(annotationNode){selectedAnnotationId=annotationNode.dataset.annotationId;selectedGroup='';setSelection([]);render();return;}
+      if(inkMode==='eraser'&&node){const item=state.presentation.elements.find(candidate=>candidate.id===node.dataset.sceneElement);if(item?.type==='sketch'){event.preventDefault();event.stopPropagation();if(authoringFlags(state.base||state.presentation,item).locked){status.textContent='O traço está bloqueado. Desbloqueie-o pela árvore de Camadas antes de apagar.';return;}const value=media.presentation(state.presentation);value.elements=value.elements.filter(candidate=>candidate.id!==item.id);setSelection([]);commit(value,state.key,true);status.textContent='Traço removido inteiro. Desfaça para restaurá-lo.';return;}}
+      if(['pencil','arrow','note','mark'].includes(inkMode)&&(event.target===surface||event.target.classList.contains('scene-elements-layer')||node)){
+        if(inkMode==='pencil'&&state.presentation.elements.length>=80){status.textContent='A composição chegou ao limite atual de 80 elementos; nenhum traço foi descartado.';return;}
+        event.preventDefault();event.stopPropagation();const point=pointer(event),item=node?state.presentation.elements.find(candidate=>candidate.id===node.dataset.sceneElement):null;
+        inkDrag={key:state.key,pointerId:event.pointerId,mode:inkMode,start:point,points:[point],rect:surface.getBoundingClientRect(),original:media.presentation(state.presentation),link:anchorFor(item,point)};
+        if(inkMode==='pencil'){inkDrag.id=inkId('element');inkDrag.value=sketchFromPoints(inkDrag,inkDrag.points);options.preview(inkDrag.value);}
+        surface.setPointerCapture(event.pointerId);return;
+      }
       if(event.target.closest('[data-multi-action]'))return;
       if(!node&&!multiHandle){if(event.target===surface||event.target.classList.contains('scene-elements-layer')){event.preventDefault();if(shapeDrawType){const start=pointer(event),elementId=id(),original=media.presentation(state.presentation);drag={key:state.key,pointerId:event.pointerId,start,rect:surface.getBoundingClientRect(),mode:'shape-insert',shapeType:shapeDrawType,elementId,original,value:drawnPrimitive({start,shapeType:shapeDrawType,elementId,original},start,true)};preview(drag.value);surface.setPointerCapture(event.pointerId);return;}const additive=event.shiftKey||event.ctrlKey||event.metaKey,point={x:event.clientX,y:event.clientY};marquee={key:state.key,pointerId:event.pointerId,start:point,point,initial:[...selectedIds],additive};surface.setPointerCapture(event.pointerId);}return;}
       event.preventDefault(); event.stopPropagation();
@@ -718,6 +766,7 @@
       surface.setPointerCapture(event.pointerId);
     });
     surface.addEventListener('pointermove',event => {
+      if(inkDrag&&inkDrag.pointerId===event.pointerId){const point=pointer(event),last=inkDrag.points.at(-1),distance=Math.hypot((point.x-last.x)*inkDrag.rect.width/100,(point.y-last.y)*inkDrag.rect.height/100);if(distance>=1){if(inkDrag.points.length>=2048){inkDrag.overflow=true;status.textContent='Gesto muito detalhado: limite seguro atingido. Solte para cancelar sem salvar ou desfaça o gesto.';return;}inkDrag.points.push(point);if(inkDrag.mode==='pencil'){inkDrag.value=sketchFromPoints(inkDrag,inkDrag.points);options.preview(inkDrag.value);}}return;}
       if(marquee&&marquee.pointerId===event.pointerId){const point={x:event.clientX,y:event.clientY};marquee.point=point;if(Math.hypot(point.x-marquee.start.x,point.y-marquee.start.y)>=4)paintMarquee(point);return;}
       if (!drag || drag.pointerId !== event.pointerId) return;
       const state=context();if(!state.editable||state.key!==drag.key){drag=null;preview(state.presentation);render();return;}
@@ -727,6 +776,13 @@
       preview(drag.value); mark();
     });
     const finish = (event,cancelled = false) => {
+      if(inkDrag&&event.pointerId===inkDrag.pointerId){const current=inkDrag;inkDrag=null;if(surface.hasPointerCapture(event.pointerId))surface.releasePointerCapture(event.pointerId);const latest=context();if(cancelled||current.overflow||latest.key!==current.key||!latest.editable){if(current.overflow)status.textContent='Gesto cancelado: a composição foi preservada sem cortes.';options.preview(latest.presentation);render();return;}
+        if(current.mode==='pencil'){if(current.points.length<2){options.preview(latest.presentation);render();return;}const value=sketchFromPoints(current,current.points);if(value.elements.length>80){status.textContent='A composição chegou ao limite atual de 80 elementos; o traço foi cancelado sem descartar conteúdo.';options.preview(latest.presentation);render();return;}setSelection([current.id]);commit(value,current.key,true);status.textContent='Esboço registrado como um gesto. Desfaça para removê-lo.';return;}
+        const start=current.start,end=current.points.at(-1),annotations=[...(current.original.annotations||[])],color=inkColor.value;
+        if(current.mode==='note'){const text=win.prompt('Texto da anotação autoral (não será exibido ao jogador):');if(text===null||!text.trim())return;annotations.push({id:inkId('annotation'),type:'note',x:start.x,y:start.y,width:18,height:8,color,text:text.slice(0,1000),...current.link});}
+        else if(current.mode==='mark'){annotations.push({id:inkId('annotation'),type:'mark',x:start.x,y:start.y,width:0,height:0,color,text:'',...current.link});}
+        else{const moved=Math.hypot((end.x-start.x)*current.rect.width/100,(end.y-start.y)*current.rect.height/100);if(moved<3){options.preview(latest.presentation);render();return;}annotations.push({id:inkId('annotation'),type:'arrow',x:start.x,y:start.y,width:end.x-start.x,height:end.y-start.y,color,text:'',...current.link});}
+        writeAnnotation(latest,annotations);status.textContent='Anotação autoral salva. Ela não aparece na apresentação ao jogador.';return;}
       if(marquee&&event.pointerId===marquee.pointerId){marquee.point={x:event.clientX,y:event.clientY};if(surface.hasPointerCapture(event.pointerId))surface.releasePointerCapture(event.pointerId);finishMarquee(cancelled);return;}
       if (!drag || event.pointerId !== drag.pointerId) return;
       const current = drag; drag = null;

@@ -86,6 +86,7 @@
       delete presentation.groups; delete presentation.layer_groups_version; delete presentation.authoring_controls_version;
       delete presentation.scene_primitives_version;
       delete presentation.art_needs; delete presentation.art_needs_version;
+      delete presentation.annotations; delete presentation.annotations_visible; delete presentation.scene_ink_version;
       const mapAssets = (state,partial = false) => {
         if (!partial || Object.prototype.hasOwnProperty.call(state,'background')) state.background = add(state.background,'image');
         if (!partial || Object.prototype.hasOwnProperty.call(state,'music')) state.music = add(state.music,'audio');

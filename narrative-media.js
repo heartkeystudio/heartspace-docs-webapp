@@ -73,11 +73,11 @@
     const has = (object,key) => Object.prototype.hasOwnProperty.call(object || {},key);
     const element = (input,index = 0) => {
       input = input && typeof input === 'object' ? input : {};
-      const type = ['image','character','text','button','hotspot','rectangle','ellipse','line','arrow','native'].includes(input.type) ? input.type : 'image';
+      const type = ['image','character','text','button','hotspot','rectangle','ellipse','line','arrow','native','sketch'].includes(input.type) ? input.type : 'image';
       const compact = ['text','button','hotspot'].includes(type);
       const normalized = {
         id:String(input.id || `element-${index + 1}`).replace(/[^a-z0-9_.-]/gi,'').slice(0,80) || `element-${index + 1}`,
-        name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável',rectangle:'Retângulo',ellipse:'Elipse',line:'Linha',arrow:'Seta'})[type]).slice(0,120), type,
+        name:String(input.name || ({image:'Imagem',character:'Personagem',text:'Texto',button:'Botão',hotspot:'Região clicável',rectangle:'Retângulo',ellipse:'Elipse',line:'Linha',arrow:'Seta',sketch:'Esboço'})[type]).slice(0,120), type,
         choice_block_id:String(input.choice_block_id || '').slice(0,160), choice_option_id:String(input.choice_option_id || '').slice(0,160),
         parallax_x:number(input.parallax_x,0,-15,15), parallax_y:number(input.parallax_y,0,-15,15),
         asset:normalize(input.asset,'image',true), character_id:String(input.character_id || '').slice(0,160),
@@ -102,6 +102,11 @@
         normalized.stroke_width=number(input.stroke_width,2,.5,20);
         normalized.x1=number(input.x1,0,0,100); normalized.y1=number(input.y1,0,0,100);
         normalized.x2=number(input.x2,100,0,100); normalized.y2=number(input.y2,100,0,100);
+      }
+      if(type==='sketch'||has(input,'points')){
+        normalized.stroke=/^#[0-9a-f]{6}$/i.test(input.stroke||'')?input.stroke.toLowerCase():'#f2cf72';
+        normalized.stroke_width=number(input.stroke_width,2,.5,20);
+        normalized.points=(Array.isArray(input.points)?input.points:[]).slice(0,2048).map(point=>({x:number(point?.x,0,0,100),y:number(point?.y,0,0,100)}));
       }
       const groupId = String(input.group_id || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
       if (groupId) normalized.group_id = groupId;
@@ -136,14 +141,15 @@
       };
       if (input.scene_primitives_version === 1) result.scene_primitives_version = 1;
       if (input.art_needs_version === 1) result.art_needs_version = 1;
+      if (input.scene_ink_version === 1) result.scene_ink_version = 1;
       if (Array.isArray(input.art_needs)) result.art_needs=input.art_needs.slice(0,1000).filter(item=>item&&typeof item==='object').map(item=>({
         id:String(item.id||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,80),name:String(item.name||'').slice(0,120),
         category:['object','character','environment','other'].includes(item.category)?item.category:'',description:String(item.description||'').slice(0,2000)
       })).filter(item=>item.id);
       return result;
     };
-    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport','scene_primitives_version','art_needs_version','art_needs'].includes(key));
-    const elementKeys = [...new Set([...Object.keys(element()),'fill','stroke','stroke_width','x1','y1','x2','y2','group_id','art_need_id','native_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
+    const sceneKeys = Object.keys(sceneState()).filter(key => !['elements','viewport','scene_primitives_version','scene_ink_version','art_needs_version','art_needs'].includes(key));
+    const elementKeys = [...new Set([...Object.keys(element()),'fill','stroke','stroke_width','x1','y1','x2','y2','points','group_id','art_need_id','native_id'])].filter(key => key !== 'id' && !['authoring_visible','locked'].includes(key));
     const elementId = value => String(value || '').replace(/[^a-z0-9_.-]/gi,'').slice(0,80);
     const idList = value => [...new Set((Array.isArray(value) ? value : []).slice(0,80).map(elementId).filter(Boolean))];
     const motionKeys = ['x','y','width','height','scale','rotation','opacity','anchor_x','anchor_y'];
@@ -204,6 +210,14 @@
       if (Object.prototype.hasOwnProperty.call(input,'groups') || input.layer_groups_version === 1) result.groups = layerGroups(input.groups);
       if(input.art_needs_version===1)result.art_needs_version=1;
       if(Array.isArray(input.art_needs))result.art_needs=sceneState(input).art_needs||[];
+      if(input.scene_ink_version===1)result.scene_ink_version=1;
+      if(typeof input.annotations_visible==='boolean')result.annotations_visible=input.annotations_visible;
+      if(Array.isArray(input.annotations))result.annotations=input.annotations.slice(0,500).filter(item=>item&&typeof item==='object').map(item=>({
+        id:String(item.id||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,80),type:['arrow','note','mark'].includes(item.type)?item.type:'note',
+        x:number(item.x,0,0,100),y:number(item.y,0,0,100),width:number(item.width,0,item.type==='arrow'?-100:0,100),height:number(item.height,0,item.type==='arrow'?-100:0,100),
+        color:/^#[0-9a-f]{6}$/i.test(item.color||'')?item.color.toLowerCase():'#f2cf72',text:String(item.text||'').slice(0,1000),
+        ...(item.anchor_element_id?{anchor_element_id:String(item.anchor_element_id).replace(/[^a-z0-9_.-]/gi,'').slice(0,80),anchor:{x:number(item.anchor?.x,50,-300,300),y:number(item.anchor?.y,50,-300,300)}}:{})
+      })).filter(item=>item.id);
       return result;
     };
     const same = (left,right) => left === right || Boolean(left && right && typeof left === 'object' && typeof right === 'object' && Object.keys(left).length === Object.keys(right).length && Object.keys(left).every(key => has(right,key) && left[key] === right[key]));
@@ -662,7 +676,7 @@
           if (!node || node.dataset.elementType !== item.type) {
             node?.remove(); node = doc.createElement('div'); node.className = 'scene-element';
             node.dataset.sceneElement = item.id; node.dataset.elementType = item.type;
-            const art = ['image','character'].includes(item.type), shape = ['rectangle','ellipse','line','arrow'].includes(item.type);
+            const art = ['image','character'].includes(item.type), shape = ['rectangle','ellipse','line','arrow','sketch'].includes(item.type);
             const content = shape || item.type==='native' ? doc.createElementNS('http://www.w3.org/2000/svg','svg') : doc.createElement(art ? 'img' : 'div'); content.className = 'scene-element-content';
             if (shape || item.type==='native') { content.setAttribute('viewBox','0 0 100 100'); content.setAttribute('preserveAspectRatio',item.type==='native'?'xMidYMid meet':'none'); content.setAttribute('aria-hidden','true'); }
             if (art) { content.alt = ''; content.draggable = false; content.addEventListener('error',() => { content.hidden = true; refreshInteractions(); options.onImageIssue?.('Uma imagem da composição não pôde ser exibida.'); }); }
@@ -674,7 +688,12 @@
             transform:transform(item),
             transformOrigin:`${item.anchor_x}% ${item.anchor_y}%`,opacity:String(item.opacity),zIndex:String(index + 1)});
           node.style.setProperty('--element-anchor-x',`${item.anchor_x}%`); node.style.setProperty('--element-anchor-y',`${item.anchor_y}%`);
-          if (['rectangle','ellipse','line','arrow'].includes(item.type)) {
+          if (item.type==='sketch') {
+            const ns='http://www.w3.org/2000/svg',path=doc.createElementNS(ns,'path'),points=(item.points||[]);
+            content.replaceChildren();content.setAttribute('viewBox','0 0 100 100');content.setAttribute('preserveAspectRatio','none');
+            path.setAttribute('d',points.map((point,index)=>`${index?'L':'M'}${point.x} ${point.y}`).join(' '));
+            path.setAttribute('fill','none');path.setAttribute('stroke',item.stroke);path.setAttribute('stroke-width',String(item.stroke_width));path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');path.setAttribute('vector-effect','non-scaling-stroke');content.append(path);
+          } else if (['rectangle','ellipse','line','arrow'].includes(item.type)) {
             const ns='http://www.w3.org/2000/svg', make=(name,attrs)=>{const child=doc.createElementNS(ns,name);Object.entries(attrs).forEach(([key,value])=>child.setAttribute(key,String(value)));return child;};
             content.replaceChildren();
             if(item.type==='rectangle') content.append(make('rect',{x:1,y:1,width:98,height:98,fill:item.fill,stroke:item.stroke,'stroke-width':item.stroke_width,vectorEffect:'non-scaling-stroke'}));
