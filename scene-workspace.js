@@ -1,7 +1,7 @@
 /* Docs-only workspace layout. Moves existing controls; never writes authoring data. */
 (function(root){
   'use strict';
-  root.HeartspaceSceneWorkspace={create({view,form,surface,moments}){
+  root.HeartspaceSceneWorkspace={create({view,form,surface,moments,artNeeds}){
     const doc=view.ownerDocument, panel=form.querySelector('.scene-composer');
     const node=(tag,cls,html='')=>{const n=doc.createElement(tag);n.className=cls;n.innerHTML=html;return n;};
     const body=panel.querySelector(':scope > .scene-composer-body');
@@ -27,6 +27,51 @@
     const add=body.querySelector('[data-action="image"]').parentElement;
     left.querySelector('[data-left-page="resources"]').append(add);
     const resources=left.querySelector('[data-left-page="resources"]');
+    const needPanel=node('section','scene-art-needs','<h3>Necessidades artísticas</h3><p class="scene-art-needs-intro">Fichas de produção do projeto e necessidades locais da sequência. Consultar não altera o documento.</p><label>Escopo<select data-art-needs-scope><option value="context">Esta sequência</option><option value="project">Projeto</option></select></label><label>Pesquisar<input type="search" data-art-needs-search placeholder="Nome, categoria ou descrição"></label><label>Ocorrências<select data-art-needs-occurrences><option value="all">Todas</option><option value="with">Com ocorrências</option><option value="without">Sem ocorrências</option></select></label><div data-art-needs-list role="list" aria-label="Necessidades artísticas"></div><button type="button" data-art-needs-create>Nova necessidade independente no projeto…</button><div data-art-needs-editor hidden></div><p data-art-needs-status role="status" aria-live="polite"></p>');
+    resources.append(needPanel);
+    const needList=needPanel.querySelector('[data-art-needs-list]'),needEditor=needPanel.querySelector('[data-art-needs-editor]'),needSearch=needPanel.querySelector('[data-art-needs-search]'),needScope=needPanel.querySelector('[data-art-needs-scope]'),needOccurrences=needPanel.querySelector('[data-art-needs-occurrences]'),needStatus=needPanel.querySelector('[data-art-needs-status]');
+    let selectedNeedKey='',queryToken=0;
+    const renderNeeds=()=>{
+      if(!artNeeds)return;
+      const token=++queryToken,query=needSearch.value.trim().toLocaleLowerCase('pt-BR'),scope=needScope.value,occurrences=needOccurrences.value;
+      const rows=artNeeds.read(scope).filter(item=>{
+        const haystack=[item.name,item.categoryLabel||item.category,item.description,item.origin].join(' ').toLocaleLowerCase('pt-BR');
+        return (!query||haystack.includes(query))&&(occurrences==='all'||occurrences==='with'&&item.occurrenceCount>0||occurrences==='without'&&item.occurrenceCount===0);
+      });
+      if(token!==queryToken)return;
+      needList.replaceChildren();
+      if(!rows.length){const empty=doc.createElement('p');empty.className='scene-art-needs-empty';empty.textContent=query?'Nenhuma necessidade corresponde à pesquisa.':'Nenhuma necessidade neste escopo ainda.';needList.append(empty);}
+      for(const item of rows){
+        const button=doc.createElement('button');button.type='button';button.className='scene-art-need-row';button.setAttribute('role','listitem');button.setAttribute('aria-pressed',String(item.key===selectedNeedKey));button.dataset.artNeedKey=item.key;
+        const title=doc.createElement('strong');title.textContent=item.name||'Sem nome';
+        const kind=doc.createElement('span');kind.textContent=`${item.categoryLabel||'Sem categoria'} · ${item.shared?'Compartilhada no projeto':'Local à sequência'}`;
+        const count=doc.createElement('small');count.textContent=item.occurrenceCount?`${item.occurrenceCount} ocorrência${item.occurrenceCount===1?'':'s'}`:'Sem ocorrências';
+        button.append(title,kind,count);button.addEventListener('click',()=>{selectedNeedKey=item.key;renderNeeds();renderNeedEditor(item);});needList.append(button);
+      }
+    };
+    const renderNeedEditor=item=>{
+      needEditor.replaceChildren();needEditor.hidden=!item;if(!item)return;
+      const formNode=doc.createElement('form');formNode.className='scene-art-need-form';
+      const heading=doc.createElement('h4');heading.textContent=item.name||'Necessidade sem nome';
+      const origin=doc.createElement('p');origin.className='scene-art-need-origin';origin.textContent=item.shared?'Identidade compartilhada no projeto; alterações aparecem nas sequências vinculadas.':`Registro local de ${item.sequenceTitle} · ${item.documentTitle}.`;formNode.append(heading,origin);
+      const fields=[];
+      for(const [key,labelText,max] of [['name','Nome',120],['category','Categoria',24],['description','Descrição',2000]]){
+        const label=doc.createElement('label');label.textContent=labelText;let control;
+        if(key==='category'){control=doc.createElement('select');[['','Sem categoria'],['object','Objeto'],['character','Personagem'],['environment','Ambiente'],['other','Outro']].forEach(([value,label])=>control.add(new Option(label,value)));}
+        else if(key==='description'){control=doc.createElement('textarea');control.rows=4;control.maxLength=max;}
+        else {control=doc.createElement('input');control.type='text';control.maxLength=max;}
+        control.name=key;control.value=item[key]||'';control.disabled=artNeeds.canEdit?.()===false;label.append(control);fields.push(control);formNode.append(label);
+      }
+      const occurrences=doc.createElement('div');occurrences.className='scene-art-need-occurrences';const occurrenceHeading=doc.createElement('strong');occurrenceHeading.textContent='Ocorrências';occurrences.append(occurrenceHeading);
+      if(!item.occurrences.length){const empty=doc.createElement('p');empty.textContent='Esta necessidade ainda não está vinculada a uma ocorrência.';occurrences.append(empty);}
+      else {const list=doc.createElement('ul');item.occurrences.forEach(value=>{const li=doc.createElement('li');li.textContent=value;list.append(li);});occurrences.append(list);}formNode.append(occurrences);
+      const actions=doc.createElement('div');actions.className='scene-art-need-actions';const save=doc.createElement('button');save.type='submit';save.textContent='Salvar ficha';save.disabled=artNeeds.canEdit?.()===false;const cancel=doc.createElement('button');cancel.type='button';cancel.textContent='Cancelar edição';cancel.addEventListener('click',()=>{selectedNeedKey='';needEditor.hidden=true;needStatus.textContent='';});actions.append(save,cancel);formNode.append(actions);
+      formNode.addEventListener('submit',async event=>{event.preventDefault();save.disabled=true;needStatus.textContent='Salvando ficha localmente…';const changes=Object.fromEntries(fields.map(field=>[field.name,field.value]));try{await artNeeds.update(item,changes);needStatus.textContent=artNeeds.syncLabel?.()||'Ficha salva localmente. A sincronização remota permanece indisponível.';selectedNeedKey=item.key;renderNeeds();renderNeedEditor(artNeeds.read(scope).find(row=>row.key===item.key)||null);}catch(error){save.disabled=false;needStatus.textContent=error.message||'Não foi possível salvar a ficha.';if(error.draft){const copy=doc.createElement('textarea');copy.readOnly=true;copy.setAttribute('aria-label','Cópia da edição rejeitada');copy.value=JSON.stringify(error.draft,null,2);copy.addEventListener('focus',()=>copy.select());needEditor.append(copy);}}});
+      needEditor.append(formNode);
+    };
+    needSearch.addEventListener('input',()=>{selectedNeedKey='';needEditor.hidden=true;renderNeeds();});needScope.addEventListener('change',()=>{selectedNeedKey='';needEditor.hidden=true;renderNeeds();});needOccurrences.addEventListener('change',()=>{selectedNeedKey='';needEditor.hidden=true;renderNeeds();});
+    needPanel.querySelector('[data-art-needs-create]').addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;needStatus.textContent='Criando necessidade independente…';try{const created=await artNeeds.createProject();needScope.value='project';needOccurrences.value='without';needSearch.value='';selectedNeedKey=created.key;renderNeeds();renderNeedEditor(artNeeds.read('project').find(item=>item.key===created.key));needStatus.textContent=created.upgraded?'Formato v7 confirmado; necessidade criada e salva localmente. Sincronização remota indisponível.':'Necessidade criada e salva localmente. Sincronização remota indisponível.';}catch(error){needStatus.textContent=error.message||'A criação foi cancelada ou não pôde ser concluída.';}finally{button.disabled=artNeeds.canEdit?.()===false;}});
+    renderNeeds();
     resources.append(body.querySelector('[aria-label="Primitivas geométricas"]'));
     resources.append(body.querySelector('[data-shape-draw]').parentElement);
     const layers=left.querySelector('[data-left-page="layers"]'),list=body.querySelector('[data-list]');layers.append(list.closest('label'),body.querySelector('[data-group-actions]'),body.querySelector('[data-layer-tree]'),body.querySelector(':scope > small'));
@@ -53,6 +98,7 @@
       else if(!active&&sidebar.previousSibling!==home)home.after(sidebar);
       header.querySelector('[data-scene-context]').textContent=doc.querySelector('#narrative-sequence-select')?.selectedOptions[0]?.textContent||'Sequência ativa';
       toggleScope();
+      renderNeeds();
     };
     const setLeft=value=>{currentLeft=value;left.querySelectorAll('[data-left]').forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.left===value));b.tabIndex=b.dataset.left===value?0:-1;});left.querySelectorAll('[data-left-page]').forEach(p=>p.hidden=p.dataset.leftPage!==value);};
     left.querySelectorAll('[data-left]').forEach((b,i,buttons)=>{
@@ -63,6 +109,7 @@
     header.querySelectorAll('[data-toggle]').forEach(b=>b.setAttribute('aria-label','Alternar painel de '+({left:'navegação',right:'propriedades',bottom:'momentos'}[b.dataset.toggle])));
     header.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{const collapsed=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',String(!collapsed));view.classList.toggle('scene-hide-'+b.dataset.toggle,collapsed);const target={left,right,bottom}[b.dataset.toggle];target.hidden=collapsed;}));
     const momentSelect=moments.querySelector('#scene-moment-select');
+    const sequenceSelect=doc.querySelector('#narrative-sequence-select');sequenceSelect?.addEventListener('change',sync);
     const updateMoment=()=>{if(momentSelect.value)lastMoment=momentSelect.value;if(!explicitScope||scope.value!=='experience'){scope.value=selected?'element':momentSelect.value?'moment':'scene';explicitScope=false;}toggleScope();};
     momentSelect.addEventListener('change',updateMoment);
     scope.addEventListener('change',()=>{explicitScope=true;if(scope.value==='scene'&&momentSelect.value){momentSelect.value='';momentSelect.dispatchEvent(new Event('change',{bubbles:true}));}else if(scope.value==='moment'&&!momentSelect.value){momentSelect.value=lastMoment||[...momentSelect.options].find(o=>o.value)?.value||'';momentSelect.dispatchEvent(new Event('change',{bubbles:true}));}toggleScope();});

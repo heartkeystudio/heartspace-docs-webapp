@@ -43,3 +43,7 @@ As alterações permanecem sem commit em `master`. `HEAD` continua em `5837ff391
 ## Encaminhamento transversal
 
 O Master foi notificado da autorização específica de v7 para atualização de OI-27 e da manutenção do bloqueio de sincronização remota para v2–v7 até suporte confirmado. A notificação não solicita alteração transversal.
+
+## Nota editorial posterior à consolidação
+
+As referências a “implementação local, ainda não consolidada”, ausência da experiência de interface e estado Git neste relatório descrevem o momento em que os resultados de B4.0 foram redigidos. O encerramento e a consolidação foram posteriormente aprovados em `0.1.0-internal.9`, commit `8a32e2e2f492b7f009a108ce1aa552e7b9e2669e`, tag anotada do mesmo nome. Esse marco é a referência recuperável de B4.0; este adendo contextualiza o histórico sem reescrever suas evidências datadas nem alterar a versão tagueada. B4.1 é uma parcela subsequente e independente.

@@ -36,6 +36,25 @@ body[data-work-area] .scene-workspace #narrative-presentation-form,
 .scene-left-panel [data-list] { height:min(45vh,320px)!important; }
 .scene-left-panel [data-action] { width:100%;text-align:left; }
 .scene-left-panel .scene-element-actions { display:grid;gap:7px; }
+.scene-art-needs { margin-top:16px;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:8px; }
+.scene-art-needs h3 { margin:0;color:#e5e5e5;font-size:13px; }
+.scene-art-needs-intro,.scene-art-need-origin,.scene-art-needs-empty { margin:0;color:#999;font-size:11px;line-height:1.5; }
+.scene-art-needs > label,.scene-art-need-form > label { display:grid;gap:4px;color:#b8b8b8;font-size:11px; }
+.scene-art-needs :is(input,select,textarea) { box-sizing:border-box;width:100%;min-width:0;padding:6px 7px;border:1px solid #ffffff24;border-radius:5px;background:#111;color:#ddd;font:inherit; }
+.scene-art-needs [data-art-needs-create] { width:100%;text-align:left;white-space:normal; }
+.scene-art-need-row { display:grid;gap:3px;width:100%;text-align:left!important;white-space:normal; }
+.scene-art-need-row[aria-pressed=true] { border-color:#0c8ce980;background:#0c8ce918; }
+.scene-art-need-row strong { color:#eee;font-size:12px; }
+.scene-art-need-row span,.scene-art-need-row small { color:#aaa;font-size:10px;line-height:1.35; }
+.scene-art-need-form { display:grid;gap:8px;margin-top:6px;padding:10px;border:1px solid #ffffff20;border-radius:7px;background:#111; }
+.scene-art-need-form h4 { margin:0;color:#eee;font-size:12px; }
+.scene-art-need-form textarea { resize:vertical;line-height:1.5; }
+.scene-art-need-occurrences { padding-top:7px;border-top:1px solid #ffffff18;color:#bbb;font-size:10px; }
+.scene-art-need-occurrences ul { margin:5px 0 0;padding-left:18px;line-height:1.45; }
+.scene-art-need-occurrences p { margin:5px 0 0;color:#999;line-height:1.45; }
+.scene-art-need-actions { display:flex;gap:6px; }
+.scene-art-need-actions button { flex:1; }
+.scene-art-needs [data-art-needs-status] { min-height:1em;margin:0;color:#b8d7ed;font-size:10px;line-height:1.45;overflow-wrap:anywhere; }
 .scene-workspace #sidebar { display:block!important;position:static!important;width:auto!important;height:auto!important;padding:0;border:0;transform:none!important;background:transparent;overflow:visible; }
 .scene-workspace #sidebar .sidebar-shortcuts { flex-wrap:wrap; }
 .scene-composition-toolbar { grid-column:3;grid-row:2;display:flex;align-items:center;gap:10px;padding:5px 10px;overflow-x:auto;border-bottom:1px solid var(--line);background:#191919; }

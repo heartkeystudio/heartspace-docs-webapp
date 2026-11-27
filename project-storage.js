@@ -49,6 +49,33 @@
     task.finally(() => { if (chains.get(key) === task) chains.delete(key); }).catch(() => {});
     return task;
   }
+  function writeIfSourceUnchanged(key,cache,expectedSource,legacy = '') {
+    const task = (chains.get(key) || Promise.resolve()).catch(() => {}).then(async () => {
+      const db = await open();
+      await new Promise((resolve,reject) => {
+        const transaction = db.transaction('projects','readwrite'), store = transaction.objectStore('projects');
+        let failure = null;
+        const request = store.get(key);
+        request.onsuccess = () => {
+          const previous = request.result;
+          const currentSource = previous?.current?.cache?.source;
+          if (!currentSource || JSON.stringify(currentSource) !== expectedSource) {
+            failure = new Error('O projeto foi alterado em outra janela. Sua edição foi preservada nesta tela; copie o rascunho antes de recarregar.');
+            transaction.abort();
+            return;
+          }
+          store.put({key,session,current:{cache,savedAt:new Date().toISOString()},
+            previous:previous?.session !== session ? previous?.current || previous?.previous || null : previous?.previous || null,
+            legacy:previous?.legacy || legacy || ''});
+        };
+        transaction.oncomplete = resolve;
+        transaction.onerror = transaction.onabort = () => reject(failure || transaction.error || new Error('Não foi possível salvar a ficha artística localmente.'));
+      });
+    });
+    chains.set(key,task);
+    task.finally(() => { if (chains.get(key) === task) chains.delete(key); }).catch(() => {});
+    return task;
+  }
   async function listLocal() {
     const db = await open();
     return new Promise((resolve,reject) => {
@@ -99,5 +126,5 @@
       tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Não foi possível proteger o pedido de publicação.'));
     });
   }
-  root.HeartspaceDocsProjectStorage = Object.freeze({read,write,listLocal,listScope,publicationWrite});
+  root.HeartspaceDocsProjectStorage = Object.freeze({read,write,writeIfSourceUnchanged,listLocal,listScope,publicationWrite});
 })(globalThis);
