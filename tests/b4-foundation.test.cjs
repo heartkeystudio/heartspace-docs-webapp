@@ -62,3 +62,13 @@ test('B4.0 incompatible v6 reader rejects v7 registry and conflicting projection
   assert.throws(()=>authoring.fromEditor(state),/alterada de maneiras diferentes/);
   assert.equal(promoted.art_needs.find(item=>item.id===needId).name,'Porta A','a fonte v7 original permaneceu intacta');
 });
+
+test('B4.2 v7 association is stored on an occurrence and survives projection/cache round-trip across moments',()=>{
+  const source=authoring.promoteArtNeeds(v6Source()),needId=source.art_needs[0].id,document=source.documents[0];
+  const element={id:'cross-sequence-occurrence',type:'native',native_id:'door',name:'Porta do corredor',art_need_id:needId,x:63,y:41,rotation:17,choice_block_id:'choice-a',choice_option_id:'open'};
+  document.narrative.sequences.push({id:'seq-c',title:'Corredor',presentation:{art_needs_version:1,elements:[element],cues:[{block_id:'beat-c',set:[{id:element.id,art_need_id:needId,x:64}]}]}});
+  const validated=authoring.validate(source),state=authoring.toEditor(validated),cache=authoring.cacheFromEditor(state),restored=authoring.fromEditor(authoring.readCache(cache));
+  const sequence=restored.documents[0].narrative.sequences.find(item=>item.id==='seq-c'),stored=sequence.presentation.elements[0];
+  assert.equal(restored.schema_version,7);assert.equal(stored.art_need_id,needId);assert.equal(sequence.presentation.cues[0].set[0].art_need_id,needId);
+  assert.deepEqual(plain({x:stored.x,y:stored.y,rotation:stored.rotation,choice_block_id:stored.choice_block_id,choice_option_id:stored.choice_option_id}),{x:63,y:41,rotation:17,choice_block_id:'choice-a',choice_option_id:'open'});
+});

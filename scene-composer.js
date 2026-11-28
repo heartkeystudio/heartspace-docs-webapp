@@ -73,7 +73,7 @@
       <div class="scene-element-actions"><button type="button" data-action="up">Subir camada</button><button type="button" data-action="down">Descer camada</button><button type="button" data-action="duplicate">Duplicar</button><button type="button" data-action="remove">Remover</button></div>
       <section data-properties hidden aria-label="Propriedades do elemento"><div class="scene-composer-body">
         <label>Nome<input data-field="name" maxlength="120"></label>
-        <details data-placeholder-editor><summary>Necessidade artística</summary><div class="scene-composer-body"><label class="scene-check"><input type="checkbox" data-placeholder-toggle>Tratar esta ocorrência como placeholder</label><label>Vincular explicitamente a necessidade<select data-placeholder-link></select></label><button type="button" data-placeholder-action="new">Criar necessidade e vincular</button><label>Nome da necessidade<input data-placeholder-name maxlength="120"></label><label>Categoria<select data-placeholder-category><option value="">Sem categoria</option><option value="object">Objeto</option><option value="character">Personagem</option><option value="environment">Ambiente</option><option value="other">Outro</option></select></label><label>Descrição artística<textarea data-placeholder-description maxlength="2000"></textarea></label><small>Esses metadados pertencem à autoria e não são apresentados automaticamente ao jogador.</small></div></details>
+        <details data-placeholder-editor><summary>Necessidade artística</summary><div class="scene-composer-body"><label class="scene-check"><input type="checkbox" data-placeholder-toggle>Tratar esta ocorrência como placeholder</label><label>Vincular explicitamente a necessidade<select data-placeholder-link></select></label><button type="button" data-placeholder-action="new">Criar necessidade e vincular</button><button type="button" data-placeholder-action="independent" hidden>Tornar esta ocorrência independente</button><label>Nome da necessidade<input data-placeholder-name maxlength="120"></label><label>Categoria<select data-placeholder-category><option value="">Sem categoria</option><option value="object">Objeto</option><option value="character">Personagem</option><option value="environment">Ambiente</option><option value="other">Outro</option></select></label><label>Descrição artística<textarea data-placeholder-description maxlength="2000"></textarea></label><small>Esses metadados pertencem à autoria e não são apresentados automaticamente ao jogador.</small></div></details>
         <label class="scene-check"><input data-field="visible" type="checkbox">Visível</label>
         <details><summary>Parallax desta camada</summary><div class="scene-composer-body">
           <div class="scene-element-actions"><button type="button" data-parallax-preset="0,0">Fixo</button><button type="button" data-parallax-preset="0.6,0.4">Fundo</button><button type="button" data-parallax-preset="1.5,1">Meio</button><button type="button" data-parallax-preset="3,2">Frente</button></div>
@@ -362,11 +362,12 @@
           const pair = `${active.anchor_x},${active.anchor_y}`, anchor = panel.querySelector('[data-anchor]');
           anchor.value = [...anchor.options].some(option => option.value === pair) ? pair : 'custom';
         }
-        const needs=value.art_needs||[],need=needs.find(candidate=>candidate.id===active?.art_need_id);
+        const needs=state.schemaVersion>=7?(options.artNeedOptions?.()||value.art_needs||[]):(value.art_needs||[]),activeNeedId=activeBase?.art_need_id||active?.art_need_id,need=needs.find(candidate=>candidate.id===activeNeedId);
         const placeholderToggle=panel.querySelector('[data-placeholder-toggle]'),needLink=panel.querySelector('[data-placeholder-link]');
         placeholderToggle.checked=Boolean(need);placeholderToggle.disabled=!state.editable||activeLocked;
         needLink.replaceChildren(new Option('Sem vínculo',''),...needs.map(candidate=>new Option(candidate.name||`${candidate.category||'Necessidade'} · ${candidate.id.slice(-8)}`,candidate.id)));
-        needLink.value=active?.art_need_id||'';needLink.disabled=!state.editable||!active||activeLocked;
+        needLink.value=activeNeedId||'';needLink.disabled=!state.editable||!active||activeLocked;
+        const independentButton=panel.querySelector('[data-placeholder-action="independent"]');independentButton.hidden=state.schemaVersion<7||!activeNeedId;independentButton.disabled=!state.editable||activeLocked;
         for(const [selector,property] of [['[data-placeholder-name]','name'],['[data-placeholder-category]','category'],['[data-placeholder-description]','description']]){const input=panel.querySelector(selector);input.value=need?.[property]||'';input.disabled=!state.editable||!need||activeLocked;}
         panel.querySelector('[data-placeholder-action="new"]').disabled=!state.editable||!active||activeLocked;
       }
@@ -463,7 +464,7 @@
         if(elements.length+memberIds.size>80){status.textContent='A cena não comporta a duplicação deste grupo: limite de 80 elementos.';return;}
         const groupIds=new Set([group.id,...childGroupIds(value,group.id)]),oldGroups=[...groups].filter(item=>groupIds.has(item.id)),groupMap=new Map(oldGroups.map(item=>[item.id,groupId()])),elementMap=new Map([...memberIds].map(id=>[id,`element-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`]));
         const needMap=new Map();
-        const copies=elements.filter(item=>memberIds.has(item.id)).map(item=>{const copy={...item,id:elementMap.get(item.id),name:`${item.name} · cópia`,x:Math.min(200,item.x+2),y:Math.min(200,item.y+2),group_id:groupMap.get(item.group_id)||groupMap.get(group.id)};if(copy.art_need_id){if(!needMap.has(copy.art_need_id)){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;needMap.set(copy.art_need_id,newNeedId);value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});}}if(needMap.has(copy.art_need_id))copy.art_need_id=needMap.get(copy.art_need_id);}return media.element(copy);});
+        const copies=elements.filter(item=>memberIds.has(item.id)).map(item=>{const copy={...item,id:elementMap.get(item.id),name:`${item.name} · cópia`,x:Math.min(200,item.x+2),y:Math.min(200,item.y+2),group_id:groupMap.get(item.group_id)||groupMap.get(group.id)};if(copy.art_need_id&&state.schemaVersion<7){if(!needMap.has(copy.art_need_id)){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;needMap.set(copy.art_need_id,newNeedId);value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});}}if(needMap.has(copy.art_need_id))copy.art_need_id=needMap.get(copy.art_need_id);}return media.element(copy);});
         value.elements=[...elements,...copies];
         oldGroups.forEach(item=>groups.push({...item,id:groupMap.get(item.id),name:item.id===group.id?`${item.name} · cópia`:item.name,parent_id:item.id===group.id?group.parent_id:groupMap.get(item.parent_id)||'',element_ids:item.element_ids.map(id=>elementMap.get(id)).filter(Boolean)}));
         value.cues=value.cues.map(cue=>{
@@ -595,7 +596,11 @@
       if(field.matches('[data-annotations-visible]')){if(!state.editable)return;const value=media.presentation(state.base||state.presentation);if(!(value.annotations||[]).length){field.checked=true;status.textContent='Crie uma anotação antes de alterar sua visibilidade global.';return;}writeAnnotation(state,value.annotations,field.checked);status.textContent=field.checked?'Anotações visíveis no ambiente de autoria.':'Anotações ocultas apenas no ambiente de autoria.';return;}
       if(!item||!state.editable)return;
       if(field.matches('[data-placeholder-toggle]')){const value=media.presentation(state.presentation);if(field.checked){const id=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id,name:'',category:'',description:''});value.art_needs_version=1;value.elements=value.elements.map(candidate=>candidate.id===item.id?media.element({...candidate,art_need_id:id}):candidate);}else value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};delete copy.art_need_id;return media.element(copy);});commit(value,state.key,true);return;}
-      if(field.matches('[data-placeholder-link]')){const value=media.presentation(state.presentation);value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};if(field.value)copy.art_need_id=field.value;else delete copy.art_need_id;return media.element(copy);});if(field.value)value.art_needs_version=1;commit(value,state.key,true);return;}
+      if(field.matches('[data-placeholder-link]')){
+        const previous=(state.base||state.presentation).elements.find(candidate=>candidate.id===item.id)?.art_need_id||item.art_need_id,selectedNeed=field.value,identityId=selectedNeed||previous;
+        if(options.artNeedLink){field.disabled=true;options.artNeedLink({documentId:state.documentId,sequenceId:state.sequenceId,elementId:item.id},{shared:state.schemaVersion>=7,id:identityId,documentId:state.documentId,sequenceId:state.sequenceId},selectedNeed).then(()=>{status.textContent=selectedNeed?'Ocorrência associada à identidade artística.':'Ocorrência desassociada; a representação foi preservada.';}).catch(error=>{status.textContent=error.message||'Não foi possível alterar a associação.';}).finally(()=>{render();});return;}
+        const value=media.presentation(state.presentation);value.elements=value.elements.map(candidate=>{if(candidate.id!==item.id)return candidate;const copy={...candidate};if(selectedNeed)copy.art_need_id=selectedNeed;else delete copy.art_need_id;return media.element(copy);});if(selectedNeed)value.art_needs_version=1;commit(value,state.key,true);return;
+      }
       if(field.matches('[data-placeholder-category]')){updateNeed({category:field.value});return;}
       if(field.matches('[data-placeholder-name]')){updateNeed({name:field.value});return;}
       if(field.matches('[data-placeholder-description]')){updateNeed({description:field.value});return;}
@@ -614,7 +619,8 @@
         if(isCharacter){const needId=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id:needId,name:'',category:'character',description:''});value.art_needs_version=1;element.art_need_id=needId;}
         value.elements.push(media.element(element));selected=elementId;setSelection([elementId]);commit(value,state.key,true);status.textContent=isCharacter?'Placeholder de personagem inserido.':'Objeto genérico inserido sem necessidade artística.';return;
       }
-      if(button.matches('[data-placeholder-action="new"]')){const state=context(),value=media.presentation(state.presentation),item=value.elements.find(candidate=>candidate.id===selected);if(!item)return;const needId=artNeedId();value.art_needs=value.art_needs||[];value.art_needs.push({id:needId,name:'',category:'',description:''});value.art_needs_version=1;value.elements=value.elements.map(candidate=>candidate.id===item.id?media.element({...candidate,art_need_id:needId}):candidate);commit(value,state.key,true);status.textContent='Necessidade artística criada e vinculada a esta ocorrência.';return;}
+      if(button.matches('[data-placeholder-action="new"]')){const state=context(),item=getItem(state);if(!item)return;button.disabled=true;options.artNeedCreateForOccurrence?.({documentId:state.documentId,sequenceId:state.sequenceId,elementId:item.id}).then(result=>{status.textContent=result?.upgraded?'Formato v5 confirmado; necessidade local criada e vinculada em uma operação.':'Necessidade criada e vinculada em uma operação reversível.';}).catch(error=>{status.textContent=error.message||'A criação foi cancelada ou não pôde ser concluída.';}).finally(()=>render());return;}
+      if(button.matches('[data-placeholder-action="independent"]')){const state=context(),item=getItem(state),baseItem=(state.base||state.presentation).elements.find(candidate=>candidate.id===item?.id),needId=baseItem?.art_need_id||item?.art_need_id;if(!item||!needId||state.schemaVersion<7)return;button.disabled=true;options.artNeedIndependent?.({documentId:state.documentId,sequenceId:state.sequenceId,elementId:item.id},{shared:true,id:needId}).then(()=>{status.textContent='Ocorrência tornada independente; nome, categoria e descrição foram copiados para uma nova identidade.';}).catch(error=>{status.textContent=error.message||'Não foi possível tornar a ocorrência independente.';}).finally(()=>render());return;}
       if(button.matches('[data-shape-draw]')){
         shapeDrawType=panel.querySelector('[data-shape-draw-type]').value;
         panel.querySelector('[data-shape-draw-type]').setAttribute('aria-label',shapeDrawType?`Ferramenta ativa: ${shapeDrawType}`:'Ferramenta de desenho');
@@ -646,12 +652,23 @@
       if (action === 'duplicate') {
         if (value.elements.length >= 80) { status.textContent = 'A cena já possui 80 elementos.'; return; }
         const copy = {...value.elements[index],id:id(),name:value.elements[index].name + ' · cópia',x:value.elements[index].x + 2,y:value.elements[index].y + 2};
-        if(copy.art_need_id){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});copy.art_need_id=newNeedId;}}
+        if(copy.art_need_id&&state.schemaVersion<7){const need=value.art_needs?.find(candidate=>candidate.id===copy.art_need_id);if(need){const newNeedId=`art-need-${win.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`;value.art_needs=value.art_needs||[];value.art_needs.push({...need,id:newNeedId});copy.art_need_id=newNeedId;}}
         value.elements.splice(index + 1,0,media.element(copy)); setSelection([copy.id]);
       }
       if (action === 'up' && index < value.elements.length - 1) [value.elements[index],value.elements[index + 1]] = [value.elements[index + 1],value.elements[index]];
       if (action === 'down' && index > 0) [value.elements[index],value.elements[index - 1]] = [value.elements[index - 1],value.elements[index]];
       commit(value,state.key,true);
+    });
+    panel.addEventListener('scene-create-art-need-occurrence',event=>{
+      const needId=String(event.detail?.needId||''),state=context(),item=getItem(state);
+      if(!needId||!item||selectedIds.size!==1||!state.editable)return;
+      const value=media.presentation(state.presentation),source=value.elements.find(candidate=>candidate.id===item.id);
+      if(!source||value.elements.length>=80){status.textContent='Não foi possível criar a ocorrência: selecione uma representação disponível e respeite o limite atual da cena.';return;}
+      if(state.schemaVersion<7){status.textContent='Uma identidade compartilhada precisa do formato v7. Crie ou associe a ficha pelo fluxo de confirmação antes de reutilizá-la.';return;}
+      if(authoringFlags(state.base||state.presentation,source).locked){status.textContent='A representação selecionada está bloqueada. Desbloqueie-a pela árvore de Camadas para reutilizá-la.';return;}
+      if(!(options.artNeedOptions?.()||[]).some(need=>need.id===needId)){status.textContent='A necessidade compartilhada não está disponível. Atualize a consulta.';return;}
+      const copy={...source,id:id(),name:`${source.name||'Representação'} · ocorrência`,x:Math.min(200,source.x+2),y:Math.min(200,source.y+2),art_need_id:needId};delete copy.choice_block_id;delete copy.choice_option_id;delete copy.character_id;if(state.index>=0)delete copy.group_id;
+      value.elements.push(media.element(copy));setSelection([copy.id]);if(commit(value,state.key,true))status.textContent='Nova ocorrência criada a partir da representação selecionada, sem copiar vínculos narrativos.';
     });
     upload.addEventListener('change',async () => {
       const file = upload.files?.[0], intent = uploadIntent; upload.value = ''; uploadIntent = null;
@@ -818,7 +835,7 @@
     });
     parallaxHover.addEventListener('change',() => render(false));
     parallaxReduced.addEventListener('change',() => render(false));
-    return {render,stopParallaxPreview:() => setParallaxPreview(false)};
+    return {render,selectElement(elementId){const state=context();if(!state.presentation.elements.some(item=>item.id===elementId))return false;selectedGroup='';setSelection([elementId]);render();return true;},stopParallaxPreview:() => setParallaxPreview(false)};
   };
   root.HeartspaceSceneComposer = {create};
 })(globalThis);

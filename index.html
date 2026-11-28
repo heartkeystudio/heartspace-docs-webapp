@@ -6577,7 +6577,7 @@
         if(base.scene_ink_version===1)presentation.scene_ink_version=1;
         if(Array.isArray(base.annotations))presentation.annotations=base.annotations;
         if(typeof base.annotations_visible==='boolean')presentation.annotations_visible=base.annotations_visible;
-        return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,schemaVersion:authoringSchemaVersion,
+        return {sequenceKey,nodes,index,blockId:sceneMomentBlockId,base,schemaVersion:authoringSchemaVersion,documentId:activeDocumentId,sequenceId:sequence?.id||'',
           key:JSON.stringify([sequenceKey,sceneMomentBlockId]),
           presentation,motion:sceneMomentStateCache.motion,animations:base.cues.find(cue => cue.block_id === sceneMomentBlockId)?.animations || [],characters:narrativeCharacters,displayProfile:sceneDisplayProfile,
           editable:Boolean(sequence) && (!currentProjectId || canEditProject({capabilities:projectCapabilities}))};
@@ -6737,10 +6737,15 @@
         const historyMutation=captureSceneAuthoringMutation(sequence);sequence.presentation=normalizeNarrativePresentation({...next,cues:base.cues,annotations:next.annotations||base.annotations,scene_ink_version:needsV6?1:base.scene_ink_version});commitSceneAuthoringMutation(historyMutation,sequence);
         applyNarrativePresentationPreview(sceneMomentContext().presentation);renderSceneMomentControls();queueSave();return true;
       };
+      let artNeedRowsProvider=null;
       const sceneComposer = HeartspaceSceneComposer.create({
         parent:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,
         pickAsset:(kind,options) => projectAssets.pick(kind,options),describeAsset:projectAssets.describe,
         read:sceneMomentContext,preview:applyNarrativePresentationPreview,write:writeSceneComposition,writeStructure:writeSceneStructure,writeAnimation:writeSceneAnimation,
+        artNeedOptions:()=>artNeedRowsProvider?.('project')||[],
+        artNeedLink:(occurrence,identity,selectedNeed)=>selectedNeed?associateArtNeedOccurrence(occurrence,{shared:identity.shared,id:selectedNeed,documentId:identity.documentId,sequenceId:identity.sequenceId}):detachArtNeedOccurrence(occurrence,identity),
+        artNeedIndependent:(occurrence,identity)=>makeOccurrenceIndependent(occurrence,identity),
+        artNeedCreateForOccurrence:occurrence=>createArtNeedForOccurrence(occurrence),
         mergeGesture:(before,after,current) => HeartspaceDocsHistoryPatch.apply(current,HeartspaceDocsHistoryPatch.diff(before,after),true),
         previewParallax:enabled => narrativeSampleScene.setParallaxPreview(enabled),
         previewAnimationAt:(id,at) => {
@@ -10185,13 +10190,45 @@
       };
       const makeArtNeedId=()=>`art-need-${crypto.randomUUID?.()||`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
       const normalizeArtNeedChanges=changes=>({name:String(changes.name||'').slice(0,120),category:['','object','character','environment','other'].includes(changes.category)?changes.category:'',description:String(changes.description||'').slice(0,2000)});
+      const artNeedOccurrences=(source,filterNeedId='')=>{
+        const result=[];
+        for(const record of source.documents||[])for(const sequence of record.narrative?.sequences||[]){
+          const presentation=sequence.presentation||{},items=new Map();
+          for(const item of presentation.elements||[])items.set(item.id,{id:item.id,needId:item.art_need_id||'',name:item.name||item.native_id||item.type||'Elemento'});
+          for(const cue of presentation.cues||[])for(const item of cue.set||[]){if(!items.has(item.id))items.set(item.id,{id:item.id,needId:item.art_need_id||'',name:item.name||item.native_id||item.type||'Elemento'});else if(!items.get(item.id).needId&&item.art_need_id)items.get(item.id).needId=item.art_need_id;}
+          for(const item of items.values())if(!filterNeedId||item.needId===filterNeedId)result.push({documentId:record.id,documentTitle:record.title||'Documento',sequenceId:sequence.id,sequenceTitle:sequence.title||'Sequência',elementId:item.id,elementName:item.name,needId:item.needId});
+        }
+        return result;
+      };
+      const artNeedLocation=(source,identity)=>{
+        const document=(source.documents||[]).find(item=>item.id===identity.documentId),sequence=document?.narrative?.sequences?.find(item=>item.id===identity.sequenceId),needs=sequence?.presentation?.art_needs||[],index=needs.findIndex(item=>item.id===identity.id);
+        if(index<0)return null;
+        let globalIndex=index;
+        for(const candidate of source.documents||[]){for(const item of candidate.narrative?.sequences||[]){if(candidate===document&&item===sequence)return {document,sequence,index,globalIndex};globalIndex+=(item.presentation?.art_needs||[]).length;}}
+        return null;
+      };
+      const artNeedItemsForOccurrence=(source,occurrence)=>{
+        const document=(source.documents||[]).find(item=>item.id===occurrence.documentId),sequence=document?.narrative?.sequences?.find(item=>item.id===occurrence.sequenceId);if(!sequence)return null;
+        const matches=item=>item?.id===occurrence.elementId;
+        const base=(sequence.presentation?.elements||[]).find(matches),cues=(sequence.presentation?.cues||[]).flatMap(cue=>cue.set||[]).filter(matches);
+        return base||cues.length?{document,sequence,items:[...(base?[base]:[]),...cues]}:null;
+      };
+      const artNeedOccurrenceKey=occurrence=>JSON.stringify([occurrence.documentId,occurrence.sequenceId,occurrence.elementId]);
+      const artNeedIsLinked=(source,occurrence,identity)=>artNeedOccurrences(source,identity.id).some(item=>artNeedOccurrenceKey(item)===artNeedOccurrenceKey(occurrence)&&(!identity.shared?(item.documentId===identity.documentId&&item.sequenceId===identity.sequenceId):true));
+      const assignArtNeedToOccurrence=(source,occurrence,needId)=>{
+        const found=artNeedItemsForOccurrence(source,occurrence);if(!found)return false;
+        for(const item of found.items){if(needId)item.art_need_id=needId;else delete item.art_need_id;}
+        return true;
+      };
       const artNeedRows=scope=>{
         const context=activeNarrativeSequence(),activeRecord=documents.find(record=>record.id===activeDocumentId),rows=[];
-        const occurrenceList=(needId,sequence)=>{const result=[],seen=new Set();for(const item of [...(sequence.presentation?.elements||[]),...(sequence.presentation?.cues||[]).flatMap(cue=>cue.set||[])])if(item?.art_need_id===needId&&!seen.has(item.id)){seen.add(item.id);result.push(`${sequence.title||'Sequência'} · ${item.name||item.native_id||item.type||'Elemento'}`);}return result;};
-        if(authoringSchemaVersion>=7){for(const need of authoringArtNeeds){const occurrences=[];for(const record of documents)for(const sequence of record.narrativeSequences||[])occurrences.push(...occurrenceList(need.id,sequence));const inContext=context&&activeRecord&&occurrenceList(need.id,context).length>0;if(scope==='context'&&!inContext)continue;rows.push({key:`shared:${need.id}`,id:need.id,shared:true,documentId:'',sequenceId:'',documentTitle:'Projeto',sequenceTitle:'Projeto',origin:'Compartilhada no projeto',name:need.name,category:need.category,categoryLabel:({object:'Objeto',character:'Personagem',environment:'Ambiente',other:'Outro'})[need.category]||'',description:need.description,occurrences,occurrenceCount:occurrences.length});}return rows;}
-        for(const record of documents)for(const sequence of record.narrativeSequences||[])for(const need of sequence.presentation?.art_needs||[]){const inContext=record.id===activeDocumentId&&sequence.id===context?.id;if(scope==='context'&&!inContext)continue;const occurrences=occurrenceList(need.id,sequence);rows.push({key:`local:${record.id}:${sequence.id}:${need.id}`,id:need.id,shared:false,documentId:record.id,sequenceId:sequence.id,documentTitle:record.title||'Documento',sequenceTitle:sequence.title||'Sequência',origin:'Local à sequência',name:need.name,category:need.category,categoryLabel:({object:'Objeto',character:'Personagem',environment:'Ambiente',other:'Outro'})[need.category]||'',description:need.description,occurrences,occurrenceCount:occurrences.length});}
+        const source=authoringCache().source,occurrencesFor=needId=>artNeedOccurrences(source,needId);
+        const sequenceScope=scope&&typeof scope==='object'?scope:null;
+        if(authoringSchemaVersion>=7){for(const need of authoringArtNeeds){const occurrences=occurrencesFor(need.id),inContext=context&&activeRecord&&occurrences.some(item=>item.documentId===activeRecord.id&&item.sequenceId===context.id);if(scope==='context'&&!inContext)continue;const scoped=sequenceScope?occurrences.filter(item=>item.documentId===sequenceScope.documentId&&item.sequenceId===sequenceScope.sequenceId):occurrences;if(sequenceScope&&!scoped.length)continue;rows.push({key:`shared:${need.id}`,id:need.id,shared:true,documentId:'',sequenceId:'',documentTitle:'Projeto',sequenceTitle:'Projeto',origin:'Compartilhada no projeto',name:need.name,category:need.category,categoryLabel:({object:'Objeto',character:'Personagem',environment:'Ambiente',other:'Outro'})[need.category]||'',description:need.description,occurrences:scoped,occurrenceCount:scoped.length});}return rows;}
+        for(const record of documents)for(const sequence of record.narrativeSequences||[]){const inContext=record.id===activeDocumentId&&sequence.id===context?.id;if(scope==='context'&&!inContext)continue;if(sequenceScope&&(record.id!==sequenceScope.documentId||sequence.id!==sequenceScope.sequenceId))continue;for(const need of sequence.presentation?.art_needs||[]){const occurrences=occurrencesFor(need.id).filter(item=>item.documentId===record.id&&item.sequenceId===sequence.id);rows.push({key:`local:${record.id}:${sequence.id}:${need.id}`,id:need.id,shared:false,documentId:record.id,sequenceId:sequence.id,documentTitle:record.title||'Documento',sequenceTitle:sequence.title||'Sequência',origin:'Local à sequência',name:need.name,category:need.category,categoryLabel:({object:'Objeto',character:'Personagem',environment:'Ambiente',other:'Outro'})[need.category]||'',description:need.description,occurrences,occurrenceCount:occurrences.length});}}
         return rows;
       };
+      artNeedRowsProvider=artNeedRows;sceneComposer.render();
       const rememberArtNeedHistory=(before,after)=>{const mutation={...rememberNarrativeMutation(),kind:'art-need',stateBefore:before,stateAfter:after};appendAuthoringEntry(mutation);};
       const updateArtNeed=async(identity,changes)=>{
         if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
@@ -10210,6 +10247,76 @@
         const next=cloneAuthoringValue(upgraded?HeartspaceDocsAuthoring.promoteArtNeeds(source):source),need={id:makeArtNeedId(),name:'',category:'',description:''};next.art_needs.push(need);const after=captureArtNeedState(next);
         await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{identity:{shared:true,id:need.id},changes:need});rememberArtNeedHistory(before,after);return {key:`shared:${need.id}`,upgraded};
       };
+      const mutateArtNeedOccurrence=async(occurrence,identity)=>{
+        if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
+        if(!occurrence?.documentId||!occurrence?.sequenceId||!occurrence?.elementId)throw new Error('A ocorrência não está mais disponível. Atualize a consulta.');
+        const initial=authoringCache().source,localIdentity=identity.shared?null:{documentId:identity.documentId,sequenceId:identity.sequenceId,id:identity.id};
+        if(identity.shared&&initial.schema_version<7)throw new Error('A identidade compartilhada exige o formato v7.');
+        const crossSequence=localIdentity&&(localIdentity.documentId!==occurrence.documentId||localIdentity.sequenceId!==occurrence.sequenceId);
+        const requiresV7=initial.schema_version<7&&Boolean(crossSequence);
+        if(requiresV7&&!window.confirm('Esta associação compartilhada evoluirá o formato autoral para v7. Versões anteriores poderão rejeitar o documento e a sincronização remota permanecerá indisponível; o salvamento será local. Cancelar preserva as sequências sem alterações. Continuar aplica a associação como uma única operação reversível.'))throw new Error('Associação cancelada. O documento permanece inalterado.');
+        await settleArtNeedWrite({occurrence,identity});
+        const source=authoringCache().source,before=captureArtNeedState(source);let next=cloneAuthoringValue(source),needId=identity.id;
+        if(source.schema_version>=7){if(!next.art_needs.some(item=>item.id===needId))throw new Error('A necessidade artística foi removida. Atualize a consulta.');}
+        else if(requiresV7){const location=artNeedLocation(source,localIdentity);if(!location)throw new Error('A necessidade local não está mais disponível. Atualize a consulta.');next=HeartspaceDocsAuthoring.promoteArtNeeds(source);needId=next.art_needs[location.globalIndex]?.id;if(!needId)throw new Error('Não foi possível preservar a identidade durante a evolução para v7.');}
+        else{const found=artNeedItemsForOccurrence(source,occurrence),sequence=source.documents.find(item=>item.id===occurrence.documentId)?.narrative?.sequences?.find(item=>item.id===occurrence.sequenceId),need=sequence?.presentation?.art_needs?.find(item=>item.id===needId);if(!found||!need||localIdentity.documentId!==occurrence.documentId||localIdentity.sequenceId!==occurrence.sequenceId)throw new Error('Em formatos anteriores ao v7, a necessidade precisa pertencer à mesma sequência da ocorrência.');}
+        const target={...occurrence};if(!assignArtNeedToOccurrence(next,target,needId))throw new Error('A ocorrência foi removida. Nenhuma associação foi alterada.');
+        const after=captureArtNeedState(next);if(artNeedStateEqual(before,after))return false;
+        await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{occurrence,identity});rememberArtNeedHistory(before,after);return {upgraded:requiresV7,needId};
+      };
+      const associateArtNeedOccurrence=(occurrence,identity)=>mutateArtNeedOccurrence(occurrence,identity);
+      const createArtNeedForOccurrence=async occurrence=>{
+        if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
+        const initial=authoringCache().source,requiresV5=initial.schema_version<5;
+        if(requiresV5&&!window.confirm('Esta operação evoluirá o formato autoral para v5 para preservar a identidade da necessidade artística. Versões anteriores poderão rejeitar o documento e a sincronização remota permanecerá indisponível. Cancelar preserva a composição sem alterações. Continuar aplica a ficha e o vínculo como uma operação reversível.'))throw new Error('Criação cancelada. O documento permanece inalterado.');
+        await settleArtNeedWrite({occurrence,createNeed:true});const source=authoringCache().source,before=captureArtNeedState(source),next=cloneAuthoringValue(source),need={id:makeArtNeedId(),name:'',category:'',description:''};
+        const upgraded=source.schema_version<5;
+        if(source.schema_version>=7)next.art_needs.push(need);
+        else{const document=next.documents.find(item=>item.id===occurrence.documentId),sequence=document?.narrative?.sequences?.find(item=>item.id===occurrence.sequenceId);if(!sequence)throw new Error('A sequência ativa não está mais disponível. Atualize o editor.');sequence.presentation.art_needs=sequence.presentation.art_needs||[];sequence.presentation.art_needs.push(need);sequence.presentation.art_needs_version=1;if(upgraded)next.schema_version=5;}
+        if(!assignArtNeedToOccurrence(next,occurrence,need.id))throw new Error('A ocorrência foi removida. Nenhuma necessidade foi criada.');
+        const after=captureArtNeedState(next);await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{occurrence,createNeed:true,need});rememberArtNeedHistory(before,after);return {key:`${source.schema_version>=7?'shared':'local'}:${need.id}`,need,upgraded};
+      };
+      const detachArtNeedOccurrence=async(occurrence,identity)=>{
+        if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
+        await settleArtNeedWrite({occurrence,identity,detach:true});const source=authoringCache().source,before=captureArtNeedState(source),next=cloneAuthoringValue(source);
+        if(identity.shared&&source.schema_version<7)throw new Error('A identidade compartilhada exige o formato v7.');
+        if(!artNeedIsLinked(source,occurrence,identity))throw new Error('A ocorrência não está mais vinculada a esta necessidade. Nenhum dado foi alterado.');
+        const found=artNeedItemsForOccurrence(next,occurrence);if(!found)throw new Error('A ocorrência foi removida. Atualize a consulta.');
+        if(!identity.shared&&(identity.documentId!==occurrence.documentId||identity.sequenceId!==occurrence.sequenceId))throw new Error('A necessidade local pertence a outra sequência.');
+        if(!assignArtNeedToOccurrence(next,occurrence,''))throw new Error('A ocorrência foi removida. Atualize a consulta.');
+        const after=captureArtNeedState(next);if(artNeedStateEqual(before,after))return false;
+        await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{occurrence,identity,detach:true});rememberArtNeedHistory(before,after);return true;
+      };
+      const makeOccurrenceIndependent=async(occurrence,identity)=>{
+        if(!identity.shared)throw new Error('A independência artística explícita está disponível para identidades compartilhadas no projeto.');
+        if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
+        await settleArtNeedWrite({occurrence,identity,independent:true});const source=authoringCache().source,before=captureArtNeedState(source),next=cloneAuthoringValue(source);
+        if(source.schema_version<7)throw new Error('A identidade compartilhada exige o formato v7.');
+        const original=next.art_needs.find(item=>item.id===identity.id);if(!original)throw new Error('A necessidade compartilhada foi removida. Atualize a consulta.');
+        if(!artNeedIsLinked(source,occurrence,identity))throw new Error('A ocorrência não está mais vinculada a esta identidade. Nenhum dado foi alterado.');
+        const independent={...original,id:makeArtNeedId()};next.art_needs.push(independent);
+        if(!assignArtNeedToOccurrence(next,occurrence,independent.id))throw new Error('A ocorrência foi removida. Nenhuma identidade foi criada.');
+        const after=captureArtNeedState(next);await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{occurrence,identity,independent:true});rememberArtNeedHistory(before,after);return {key:`shared:${independent.id}`,need:independent};
+      };
+      const deleteArtNeed=async identity=>{
+        if(artNeedsStaleConflict)throw new Error('Há uma edição protegida por conflito. Copie o rascunho antes de recarregar.');
+        await settleArtNeedWrite({identity,delete:true});const source=authoringCache().source,before=captureArtNeedState(source),next=cloneAuthoringValue(source);
+        if(identity.shared){if(source.schema_version<7)throw new Error('A identidade compartilhada exige o formato v7.');if(!next.art_needs.some(item=>item.id===identity.id))throw new Error('A necessidade foi removida. Atualize a consulta.');next.art_needs=next.art_needs.filter(item=>item.id!==identity.id);for(const record of next.documents||[])for(const sequence of record.narrative?.sequences||[]){for(const item of sequence.presentation?.elements||[])if(item.art_need_id===identity.id)delete item.art_need_id;for(const cue of sequence.presentation?.cues||[])for(const item of cue.set||[])if(item.art_need_id===identity.id)delete item.art_need_id;}}
+        else{const location=artNeedLocation(next,identity);if(!location)throw new Error('A necessidade local foi removida. Atualize a consulta.');location.sequence.presentation.art_needs=location.sequence.presentation.art_needs.filter(item=>item.id!==identity.id);for(const item of location.sequence.presentation.elements||[])if(item.art_need_id===identity.id)delete item.art_need_id;for(const cue of location.sequence.presentation.cues||[])for(const item of cue.set||[])if(item.art_need_id===identity.id)delete item.art_need_id;}
+        const after=captureArtNeedState(next);await persistArtNeedSource(HeartspaceDocsAuthoring.validate(next),before,{identity,delete:true});rememberArtNeedHistory(before,after);return true;
+      };
+      const locateArtNeedOccurrence=occurrence=>{
+        const record=documents.find(item=>item.id===occurrence.documentId),sequence=record?.narrativeSequences?.find(item=>item.id===occurrence.sequenceId);if(!record||!sequence)return false;
+        if(activeDocumentId!==record.id)openDocument(record.id);
+        record.activeNarrativeSequenceId=sequence.id;renderNarrativePanel();narrativeSequenceSelect.value=sequence.id;narrativeSequenceSelect.dispatchEvent(new Event('change',{bubbles:true}));
+        const root=record.id===activeDocumentId?editor:document.createElement('div');if(record.id!==activeDocumentId)root.innerHTML=record.body||'';
+        const nodes=collectNarrativeNodesFromRoot(root,false,sequence.id).map(entry=>entry.node).filter(node=>node.sequence_id===sequence.id);
+        const visibleAt=index=>HeartspaceNarrativeMedia.resolveScene(sequence.presentation,nodes,index).elements.some(item=>item.id===occurrence.elementId&&item.visible!==false);
+        let targetBlock='';
+        if(record.id===activeDocumentId&&sceneMomentBlockId&&visibleAt(nodes.findIndex(node=>node.id===sceneMomentBlockId)))targetBlock=sceneMomentBlockId;
+        else{let found=visibleAt(-1)?-1:nodes.findIndex((_,index)=>visibleAt(index));if(found>=0)targetBlock=nodes[found]?.id||'';}
+        sceneMomentBlockId=targetBlock;renderNarrativePresentation();sceneComposer.selectElement?.(occurrence.elementId);setTimeout(()=>sceneComposer.selectElement?.(occurrence.elementId),0);return true;
+      };
       const applyArtNeedHistory=async(mutation,redo)=>{
         if(desktopBlocked||authoringStorageError||(currentProjectId&&!canEditProject({capabilities:projectCapabilities})))return false;
         await settleArtNeedWrite({history:true,redo});
@@ -10223,7 +10330,7 @@
         try{if(!await applyArtNeedHistory(mutation,redo))return;const from=redo?narrativeMutationRedo:narrativeMutationHistory,to=redo?narrativeMutationHistory:narrativeMutationRedo;if(from.at(-1)!==mutation)return;from.pop();to.push(mutation);}
         finally{artNeedHistoryBusy=false;}
       };
-      HeartspaceSceneWorkspace.create({view:narrativePresentationView,form:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,moments:sceneMomentControls,artNeeds:{read:artNeedRows,update:updateArtNeed,createProject:createProjectArtNeed,canEdit:()=>!artNeedsStaleConflict&&!desktopBlocked&&!authoringStorageError&&(!currentProjectId||canEditProject({capabilities:projectCapabilities}))}});
+      HeartspaceSceneWorkspace.create({view:narrativePresentationView,form:document.querySelector('#narrative-presentation-form'),surface:narrativePresentationPreview,moments:sceneMomentControls,artNeeds:{read:artNeedRows,readOccurrences:()=>artNeedOccurrences(authoringCache().source),update:updateArtNeed,createProject:createProjectArtNeed,associate:associateArtNeedOccurrence,detach:detachArtNeedOccurrence,independent:makeOccurrenceIndependent,delete:deleteArtNeed,locate:locateArtNeedOccurrence,canEdit:()=>!artNeedsStaleConflict&&!desktopBlocked&&!authoringStorageError&&(!currentProjectId||canEditProject({capabilities:projectCapabilities}))}});
       const applySceneHistoryEntry = (mutation,redo) => {
         if(desktopBlocked || authoringStorageError || (currentProjectId && !canEditProject({capabilities:projectCapabilities})))return false;
         const record=documents.find(d=>d.id===activeDocumentId),sequence=record?.narrativeSequences?.find(s=>s.id===mutation.sequenceId);
