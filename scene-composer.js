@@ -838,6 +838,7 @@
     });
     parallaxHover.addEventListener('change',() => render(false));
     parallaxReduced.addEventListener('change',() => render(false));
+    panel.addEventListener('scene-art-needs-change',() => render(true));
     return {render,selectElement(elementId){const state=context();if(!state.presentation.elements.some(item=>item.id===elementId))return false;selectedGroup='';setSelection([elementId]);render();return true;},stopParallaxPreview:() => setParallaxPreview(false)};
   };
   root.HeartspaceSceneComposer = {create};

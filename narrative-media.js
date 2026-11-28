@@ -379,7 +379,10 @@
       let value = presentation(), frame = 0, profile = 'standard', readingPanel = options.panel || null;
       const layout = () => {
         host.dataset.sceneProfile = surface.dataset.sceneProfile = profile;
-        const fixed = profile === 'eink' || value.viewport.aspect !== 'free';
+        // The authoring sample always represents the configured scene frame.
+        // Its size must not be inferred from dialogue or artwork content when
+        // the player's aspect mode is free; the player itself remains fluid.
+        const fixed = options.kind === 'sample' || profile === 'eink' || value.viewport.aspect !== 'free';
         host.dataset.sceneFixed = surface.dataset.sceneFixed = String(fixed);
         if (profile === 'eink') {
           if (readerArt.parentElement !== host) host.prepend(readerArt);
@@ -395,7 +398,8 @@
       const fit = () => {
         host.hidden = surface.hidden;
         if (profile === 'eink') readerArt.hidden = surface.dataset.sceneArtwork === 'false';
-        if (surface.hidden || profile !== 'eink' && value.viewport.aspect === 'free') return;
+        const fixed = options.kind === 'sample' || profile === 'eink' || value.viewport.aspect !== 'free';
+        if (surface.hidden || !fixed) return;
         if (profile === 'eink') readerArt.style.height = `${Math.max(120,Math.min(host.clientWidth * value.viewport.height / value.viewport.width,host.clientHeight / 2))}px`;
         const frameHost = profile === 'eink' ? readerArt : host;
         const width = frameHost.clientWidth, height = frameHost.clientHeight;

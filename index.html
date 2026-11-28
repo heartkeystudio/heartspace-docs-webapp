@@ -10149,7 +10149,7 @@
           const pending=sceneFieldEdit;sceneFieldEdit=null;const sequence=activeNarrativeSequence();
           if(sequence?.id===pending.mutation.sequenceId&&pending.mutation.context===syncNarrativeHistoryContext()&&pending.mutation.documentId===activeDocumentId){if(pending.mutation.changes?.length){const value=HeartspaceDocsHistoryPatch.apply(sequence.presentation,pending.mutation.changes);if(!value){sceneFieldEdit=pending;statusMessage('Os dados mudaram durante a edição. O cancelamento não sobrescreveu as alterações atuais.','pending');event.preventDefault();event.stopPropagation();return;}sequence.presentation=value;queueSave();}renderNarrativePresentation();}
           event.preventDefault();event.stopPropagation();
-        }else if(event.key==='Enter'&&!event.isComposing&&event.target.matches('input')){finishSceneTextEdit();}
+        }else if(event.key==='Enter'&&!event.isComposing&&event.target.matches('input')&&!event.target.closest('.scene-art-need-form')){finishSceneTextEdit();}
       },true);
       const sceneHistoryKeydown = event=>{
         if(event.target.closest('#sidebar')||event.target.closest('.scene-art-need-form input,.scene-art-need-form textarea,.scene-art-need-form select'))return;
