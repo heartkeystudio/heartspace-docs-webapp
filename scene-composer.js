@@ -397,7 +397,9 @@
       if(locked){status.textContent='A operação foi bloqueada porque incluiria um elemento bloqueado. Desbloqueie-o pela árvore de Camadas para continuar.';return false;}
       if (!state.editable || state.key !== expectedKey) return false;
       if (!write(expectedKey,media.presentation(value))) { render(true); return false; }
-      render(populate); return true;
+      render(populate);
+      panel.dispatchEvent(new win.CustomEvent('scene-composition-change',{bubbles:true,detail:{key:expectedKey}}));
+      return true;
     };
     const commitStructure = (value,state=context(),message='') => {
       value.groups=Array.isArray(value.groups)?value.groups:[];
@@ -660,14 +662,15 @@
       commit(value,state.key,true);
     });
     panel.addEventListener('scene-create-art-need-occurrence',event=>{
-      const needId=String(event.detail?.needId||''),state=context(),item=getItem(state);
-      if(!needId||!item||selectedIds.size!==1||!state.editable)return;
-      const value=media.presentation(state.presentation),source=value.elements.find(candidate=>candidate.id===item.id);
-      if(!source||value.elements.length>=80){status.textContent='Não foi possível criar a ocorrência: selecione uma representação disponível e respeite o limite atual da cena.';return;}
+      const needId=String(event.detail?.needId||''),sourceLocation=event.detail?.source,state=context();
+      if(!needId||!state.editable)return;
+      const value=media.presentation(state.presentation),selectedItem=selectedIds.size===1?getItem(state):null;
+      const sourceRepresentation=sourceLocation?options.artNeedRepresentation?.(sourceLocation):selectedItem;
+      if(!sourceRepresentation||value.elements.length>=80){status.textContent='Não foi possível criar a ocorrência: escolha uma representação disponível e respeite o limite atual da cena.';return;}
       if(state.schemaVersion<7){status.textContent='Uma identidade compartilhada precisa do formato v7. Crie ou associe a ficha pelo fluxo de confirmação antes de reutilizá-la.';return;}
-      if(authoringFlags(state.base||state.presentation,source).locked){status.textContent='A representação selecionada está bloqueada. Desbloqueie-a pela árvore de Camadas para reutilizá-la.';return;}
+      if(!sourceLocation&&authoringFlags(state.base||state.presentation,sourceRepresentation).locked){status.textContent='A representação selecionada está bloqueada. Desbloqueie-a pela árvore de Camadas para reutilizá-la.';return;}
       if(!(options.artNeedOptions?.()||[]).some(need=>need.id===needId)){status.textContent='A necessidade compartilhada não está disponível. Atualize a consulta.';return;}
-      const copy={...source,id:id(),name:`${source.name||'Representação'} · ocorrência`,x:Math.min(200,source.x+2),y:Math.min(200,source.y+2),art_need_id:needId};delete copy.choice_block_id;delete copy.choice_option_id;delete copy.character_id;if(state.index>=0)delete copy.group_id;
+      const copy={...sourceRepresentation,id:id(),name:`${sourceRepresentation.name||'Representação'} · ocorrência`,x:Math.min(200,sourceRepresentation.x+2),y:Math.min(200,sourceRepresentation.y+2),art_need_id:needId};delete copy.choice_block_id;delete copy.choice_option_id;delete copy.character_id;delete copy.group_id;
       value.elements.push(media.element(copy));setSelection([copy.id]);if(commit(value,state.key,true))status.textContent='Nova ocorrência criada a partir da representação selecionada, sem copiar vínculos narrativos.';
     });
     upload.addEventListener('change',async () => {
